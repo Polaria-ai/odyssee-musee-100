@@ -20,7 +20,8 @@ main.tsx → App.tsx
 ## Deux états
 
 - `src/state/gameStore.ts` (zustand) : état « froid » — écran, langue, avatar, fiche ouverte, visites, tampons, dialogue, toast.
-- `src/state/runtime.ts` : état « chaud » mis à jour à chaque image — entrée joystick/clavier (`input`) et position du joueur (`player`). Objets mutables, **jamais** dans React.
+- `src/state/runtime.ts` : état « chaud » mis à jour à chaque image — entrée joystick/clavier (`input`), position du joueur (`player`) et ponts DOM↔Canvas (`bridges.screenToFloor`). Objets mutables, **jamais** dans React.
+- Action principale unique : `useGame.getState().interact()` (bouton rond du HUD, Entrée/E) — regarde le portrait proche, sinon parle à Minerve. `Player` alimente `nearbyPersonId`, `nearCurator` et `currentRoom`.
 
 ## Contrat
 

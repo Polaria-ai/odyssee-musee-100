@@ -42,3 +42,11 @@ export function placePlayer(x: number, z: number, rotY = 0): void {
   player.moving = false
   player.speed = 0
 }
+
+/**
+ * Ponts entre le DOM et le Canvas, enregistrés par les composants 3D.
+ * `screenToFloor` : convertit un tap écran (clientX/Y) en point au sol, ou null (enregistré par `Player`).
+ */
+export const bridges = {
+  screenToFloor: null as null | ((clientX: number, clientY: number) => Vec2 | null),
+}

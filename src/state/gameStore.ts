@@ -14,8 +14,10 @@ import type {
   MuseumLayout,
   Person,
   Screen,
+  WingId,
 } from '../types'
 import { DEFAULT_AVATAR, sanitizeAvatar } from '../features/avatar/options'
+import { minerveDialogue } from '../npc/minerveScript'
 import { loadPersisted, savePersisted } from './persist'
 
 export type Quality = 'low' | 'high'
@@ -39,6 +41,10 @@ export interface GameState {
 
   /** Portrait le plus proche à portée d'interaction (bouton « Regarder »). */
   nearbyPersonId: string | null
+  /** Le joueur est à portée du comptoir de Minerve (bouton « Parler »). */
+  nearCurator: boolean
+  /** Salle où se trouve le joueur (pastille du HUD). */
+  currentRoom: WingId | null
   /** Fiche ouverte en plein écran. */
   openPersonId: string | null
   /** Personnes déjà consultées : id → horodatage ms. */
@@ -60,6 +66,10 @@ export interface GameState {
   setAvatar: (avatar: AvatarConfig) => void
   setMuseum: (people: Person[], layout: MuseumLayout, source: DataSource) => void
   setNearby: (personId: string | null) => void
+  setNearCurator: (near: boolean) => void
+  setCurrentRoom: (room: WingId | null) => void
+  /** Action principale (bouton rond, Entrée) : regarder le portrait proche, sinon parler à Minerve. */
+  interact: () => void
   openPerson: (personId: string) => void
   closePerson: () => void
   markVisited: (personId: string) => void
@@ -107,6 +117,8 @@ export const useGame = create<GameState>()((set, get) => ({
   dataSource: 'placeholder',
 
   nearbyPersonId: null,
+  nearCurator: false,
+  currentRoom: null,
   openPersonId: null,
   visited: (persisted.visited as Record<string, number>) ?? {},
   stamps: (persisted.stamps as Partial<Record<ExhibitWingId, number>>) ?? {},
@@ -131,6 +143,30 @@ export const useGame = create<GameState>()((set, get) => ({
   setMuseum: (people, layout, dataSource) => set({ people, layout, dataSource }),
   setNearby: (nearbyPersonId) => {
     if (get().nearbyPersonId !== nearbyPersonId) set({ nearbyPersonId })
+  },
+  setNearCurator: (nearCurator) => {
+    if (get().nearCurator !== nearCurator) set({ nearCurator })
+  },
+  setCurrentRoom: (currentRoom) => {
+    if (get().currentRoom !== currentRoom) set({ currentRoom })
+  },
+  interact: () => {
+    const s = get()
+    if (isOverlayOpen(s)) return
+    if (s.nearbyPersonId) {
+      s.openPerson(s.nearbyPersonId)
+      return
+    }
+    if (s.nearCurator) {
+      s.startDialogue(
+        minerveDialogue({
+          kind: 'talk',
+          visitedCount: Object.keys(s.visited).length,
+          stampsCount: Object.keys(s.stamps).length,
+          total: s.people.length,
+        }),
+      )
+    }
   },
   openPerson: (openPersonId) => {
     get().markVisited(openPersonId)
