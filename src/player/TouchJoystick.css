@@ -1,0 +1,83 @@
+/**
+ * Joystick tactile flottant. Propriétaire : agent joueur.
+ * z-index bas : reste sous le HUD (z-index 15 dans src/ui/ui.css) pour que ses boutons restent cliquables.
+ */
+
+.joystick-zone {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  touch-action: none;
+}
+
+.joystick-base {
+  position: fixed;
+  width: 120px;
+  height: 120px;
+  margin-left: -60px;
+  margin-top: -60px;
+  border-radius: 50%;
+  background: rgba(255, 248, 231, 0.32);
+  border: 2px solid rgba(74, 55, 40, 0.22);
+  box-shadow: var(--shadow-soft);
+  pointer-events: none;
+  animation: joystick-base-in 140ms ease-out both;
+}
+
+.joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 56px;
+  height: 56px;
+  margin-left: -28px;
+  margin-top: -28px;
+  border-radius: 50%;
+  background: var(--leaf);
+  box-shadow:
+    0 4px 0 var(--leaf-dark),
+    0 6px 14px rgba(59, 42, 30, 0.25);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.joystick-tap-marker {
+  position: fixed;
+  width: 46px;
+  height: 46px;
+  margin-left: -23px;
+  margin-top: -23px;
+  border: 3px solid var(--leaf);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: joystick-tap-ring 480ms ease-out forwards;
+}
+
+@keyframes joystick-base-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes joystick-tap-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .joystick-base,
+  .joystick-tap-marker {
+    animation: none;
+  }
+}

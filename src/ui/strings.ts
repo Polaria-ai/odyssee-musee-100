@@ -1,0 +1,39 @@
+/** Textes de l'interface (surimpressions DOM). Propriétaire : agent interface. */
+import { defineStrings } from '../i18n'
+
+export const strings = defineStrings({
+  // Écran titre
+  titleEyebrow: { fr: "L'Odyssée de l'IA · 2026", en: 'The AI Odyssey · 2026' },
+  titleHeading: { fr: 'Le Musée des 100', en: 'The Museum of the 100' },
+  titleSubtitle: { fr: "Les 100 qui font l'IA en Europe", en: 'The 100 people shaping AI in Europe' },
+  titleEnter: { fr: 'Entrer au musée', en: 'Enter the museum' },
+  titleFooter: {
+    fr: "L'Opinion × Polaria · d'après l'étude Oliver Wyman",
+    en: 'L’Opinion × Polaria · based on the Oliver Wyman study',
+  },
+  titlePlaceholderBanner: {
+    fr: 'Aperçu : la liste officielle sera dévoilée le 6 octobre',
+    en: 'Preview: the official list will be revealed on October 6',
+  },
+  langSwitch: { fr: 'Changer de langue', en: 'Switch language' },
+
+  // Écran de chargement
+  loadingText: { fr: 'Ouverture du musée…', en: 'Opening the museum…' },
+
+  // HUD
+  hudLook: { fr: 'Regarder {name}', en: 'Look at {name}' },
+  hudTalkCurator: { fr: 'Parler à Minerve', en: 'Talk to Minerva' },
+  hudStamps: { fr: 'Carnet de tampons', en: 'Stamp card' },
+  hudStampsCount: { fr: '{n}/{total}', en: '{n}/{total}' },
+  hudPeers: { fr: '{n} visiteurs en ligne', en: '{n} visitors online' },
+
+  // Fiche portrait
+  portraitClose: { fr: 'Fermer la fiche', en: 'Close the card' },
+  portraitPrev: { fr: '‹ Précédent', en: '‹ Previous' },
+  portraitNext: { fr: 'Suivant ›', en: 'Next ›' },
+  portraitWaiting: { fr: "Fiche d'attente", en: 'Placeholder card' },
+  portraitCredit: { fr: 'Photo : {credit}', en: 'Photo: {credit}' },
+
+  // Dialogue
+  dialogueSkip: { fr: 'Passer', en: 'Skip' },
+})

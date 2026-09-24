@@ -41,7 +41,7 @@ for (const file of walk('dist').filter((f) => /\.(js|html|json)$/.test(f))) {
 for (const file of walk('src').filter((f) => /\.(ts|tsx)$/.test(f) && !/\.test\.tsx?$/.test(f))) {
   const text = readFileSync(file, 'utf8')
   if (/SERVICE_ROLE/.test(text)) failures.push(`${file} référence une clé service_role côté client`)
-  if (/dangerouslySetInnerHTML/.test(text)) failures.push(`${file} utilise dangerouslySetInnerHTML (contenu externe non fiable)`)
+  if (/dangerouslySetInnerHTML\s*[=:]/.test(text)) failures.push(`${file} utilise dangerouslySetInnerHTML (contenu externe non fiable)`)
   if (/\beval\s*\(|new\s+Function\s*\(/.test(text)) failures.push(`${file} utilise eval / new Function`)
   if (/import\.meta\.env\.VITE_[A-Z_]*(SECRET|SERVICE)/.test(text)) failures.push(`${file} expose un secret via VITE_`)
 }

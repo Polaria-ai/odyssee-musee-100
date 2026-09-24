@@ -1,0 +1,110 @@
+/**
+ * Styles du carnet de tampons. Propriétaire : agent avatar+tampons.
+ * Utilise les jetons de `src/styles/global.css`.
+ */
+
+.stamp-card-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(59, 42, 30, 0.45);
+  padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom)) calc(16px + var(--safe-left));
+}
+
+.stamp-card {
+  position: relative;
+  width: min(460px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--paper);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  padding: 30px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  outline: none;
+}
+
+.stamp-card__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(74, 55, 40, 0.08);
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.stamp-card__title {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: 24px;
+  color: var(--ink);
+}
+
+.stamp-card__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+@media (max-width: 360px) {
+  .stamp-card__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stamp-card__slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  background: var(--cream);
+  border-radius: var(--radius-md);
+  padding: 14px 6px;
+}
+
+.stamp-icon {
+  display: block;
+}
+
+.stamp-card__wing-name {
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.stamp-card__progress {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.stamp-card__share {
+  align-self: center;
+  min-height: 48px;
+  padding: 0 26px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: var(--leaf);
+  color: #fff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 5px 0 var(--leaf-dark);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.stamp-card__share:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--leaf-dark);
+}

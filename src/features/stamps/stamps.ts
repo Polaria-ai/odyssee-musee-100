@@ -1,4 +1,4 @@
-// STUB — propriétaire : agent avatar+tampons. Logique pure, testée.
+// Propriétaire : agent avatar+tampons. Logique pure, testée. API contractuelle.
 import type { ExhibitWingId, Person } from '../../types'
 import { EXHIBIT_WINGS } from '../../types'
 
@@ -36,6 +36,11 @@ export function stampsToAward(
   return EXHIBIT_WINGS.filter((w) => !stamps[w] && progress[w].total > 0 && progress[w].seen >= progress[w].required)
 }
 
-export function isCardComplete(stamps: Partial<Record<ExhibitWingId, number>>): boolean {
-  return EXHIBIT_WINGS.every((w) => Boolean(stamps[w]))
+/**
+ * Carte complète = un tampon par aile. Si `people` est fourni, ignore les ailes vides
+ * (aucune personne à exposer) : elles ne comptent ni pour ni contre la complétion.
+ */
+export function isCardComplete(stamps: Partial<Record<ExhibitWingId, number>>, people?: Person[]): boolean {
+  const relevantWings = people ? EXHIBIT_WINGS.filter((w) => people.some((p) => p.wing === w)) : EXHIBIT_WINGS
+  return relevantWings.length > 0 && relevantWings.every((w) => Boolean(stamps[w]))
 }
