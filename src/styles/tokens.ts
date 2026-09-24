@@ -52,3 +52,29 @@ export const dims = {
   playerHeight: 1.15,
   interactRadius: 2.2,
 } as const
+
+/**
+ * Caméra 3e personne à orientation fixe (regarde vers −Z), partagée par le joueur
+ * (qui la pilote) et le monde (qui estompe les cloisons situées entre elle et le joueur).
+ * `pitchDeg` : plongée ; la distance réelle s'adapte au format d'écran entre min et max.
+ */
+export const cameraRig = {
+  pitchDeg: 48,
+  fovDeg: 42,
+  /** Largeur de sol visible visée à la profondeur du joueur, en mètres. */
+  targetVisibleWidth: 11,
+  minDistance: 9,
+  maxDistance: 17,
+  /** Hauteur du point visé au-dessus des pieds du joueur. */
+  lookHeight: 1,
+} as const
+
+/** Position de caméra pour un joueur en (x, z) et une distance donnée (fonction pure). */
+export function cameraPositionFor(x: number, z: number, distance: number): { x: number; y: number; z: number } {
+  const pitch = (cameraRig.pitchDeg * Math.PI) / 180
+  return {
+    x,
+    y: cameraRig.lookHeight + Math.sin(pitch) * distance,
+    z: z + Math.cos(pitch) * distance,
+  }
+}
