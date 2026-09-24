@@ -1,0 +1,10 @@
+{
+  "name": "Le Musée des 100 — L'Odyssée de l'IA",
+  "short_name": "Musée des 100",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#fff8e7",
+  "theme_color": "#9ed9f0",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
