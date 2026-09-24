@@ -41,6 +41,36 @@ const geo = {
   bubble: new THREE.PlaneGeometry(0.52, 0.4),
 }
 
+// --- Placement des yeux sur la tête ------------------------------------------
+// Les yeux doivent se lire comme de grands yeux ronds et ouverts (docs/DESIGN.md),
+// pas comme des fentes : la sphère du blanc de l'œil doit donc dépasser largement
+// de la tête plutôt que d'y être engloutie. `EYE_POKE_RATIO` fixe la fraction du
+// diamètre de l'œil qui reste visible hors de la tête (le reste s'enfonce dedans,
+// pour un contact solide sans laisser de vide). Rayons repris de `geo` (source
+// unique) pour que la formule ne se désynchronise jamais de la géométrie rendue.
+// `eyePokeRatio` (exporté) est vérifié par un test unitaire pour empêcher de
+// réintroduire des yeux engloutis.
+export function eyePokeRatio(headRadius: number, eyeRadius: number, eyeX: number, eyeY: number, eyeZ: number): number {
+  const distance = Math.hypot(eyeX, eyeY, eyeZ)
+  const pokeDepth = distance + eyeRadius - headRadius
+  return pokeDepth / (2 * eyeRadius)
+}
+
+export const HEAD_RADIUS = geo.head.parameters.radius
+export const EYE_RADIUS = geo.eyeWhite.parameters.radius
+export const EYE_POKE_RATIO = 0.75
+export const EYE_X = 0.15
+/** Décalage vertical du groupe `eyesRef` par rapport au centre de la tête. */
+export const EYE_GROUP_Y = 0.02
+/** Distance du centre de la tête au centre de l'œil pour obtenir `EYE_POKE_RATIO`. */
+const EYE_DISTANCE = HEAD_RADIUS - EYE_RADIUS + EYE_POKE_RATIO * 2 * EYE_RADIUS
+// `EYE_X` et `EYE_GROUP_Y` fixés, on résout `z` pour obtenir la distance voulue.
+export const EYE_Z = Math.sqrt(Math.max(0, EYE_DISTANCE * EYE_DISTANCE - EYE_X * EYE_X - EYE_GROUP_Y * EYE_GROUP_Y))
+/** La pupille se peint légèrement en avant du blanc de l'œil (sur sa surface visible). */
+const PUPIL_Z = EYE_Z + 0.08
+/** L'anneau des lunettes encercle l'œil désormais bien visible, entre le blanc et la pupille. */
+const GLASSES_Z = EYE_Z + 0.04
+
 // --- Matériaux partagés (Lambert uniquement, pas d'ombres temps réel) -----------
 // Gris-lilas pâle, distinct du conservateur du jeu d'inspiration (pas de gilet vert).
 const OWL_PLUMAGE = '#c9bfe3'
@@ -240,15 +270,20 @@ export function Minerve({ placement }: { placement: Placement }) {
             <mesh geometry={geo.head} material={mat.plumage} />
             <mesh geometry={geo.tuft} material={mat.plumage} position={[-0.14, 0.27, 0.02]} rotation={[0, 0, 0.4]} />
             <mesh geometry={geo.tuft} material={mat.plumage} position={[0.14, 0.27, 0.02]} rotation={[0, 0, -0.4]} />
-            <group ref={eyesRef} position={[0, 0.02, 0]}>
-              <mesh geometry={geo.eyeWhite} material={mat.eyeWhite} position={[-0.13, 0, 0.23]} />
-              <mesh geometry={geo.pupil} material={mat.pupil} position={[-0.13, 0, 0.31]} />
-              <mesh geometry={geo.eyeWhite} material={mat.eyeWhite} position={[0.13, 0, 0.23]} />
-              <mesh geometry={geo.pupil} material={mat.pupil} position={[0.13, 0, 0.31]} />
+            <group ref={eyesRef} position={[0, EYE_GROUP_Y, 0]}>
+              <mesh geometry={geo.eyeWhite} material={mat.eyeWhite} position={[-EYE_X, 0, EYE_Z]} />
+              <mesh geometry={geo.pupil} material={mat.pupil} position={[-EYE_X, 0, PUPIL_Z]} />
+              <mesh geometry={geo.eyeWhite} material={mat.eyeWhite} position={[EYE_X, 0, EYE_Z]} />
+              <mesh geometry={geo.pupil} material={mat.pupil} position={[EYE_X, 0, PUPIL_Z]} />
             </group>
-            <mesh geometry={geo.glassesRing} material={mat.glasses} position={[-0.13, 0.02, 0.27]} />
-            <mesh geometry={geo.glassesRing} material={mat.glasses} position={[0.13, 0.02, 0.27]} />
-            <mesh geometry={geo.glassesBridge} material={mat.glasses} position={[0, 0.02, 0.27]} rotation={[0, 0, Math.PI / 2]} />
+            <mesh geometry={geo.glassesRing} material={mat.glasses} position={[-EYE_X, EYE_GROUP_Y, GLASSES_Z]} />
+            <mesh geometry={geo.glassesRing} material={mat.glasses} position={[EYE_X, EYE_GROUP_Y, GLASSES_Z]} />
+            <mesh
+              geometry={geo.glassesBridge}
+              material={mat.glasses}
+              position={[0, EYE_GROUP_Y, GLASSES_Z]}
+              rotation={[0, 0, Math.PI / 2]}
+            />
             <mesh geometry={geo.beak} material={mat.beak} position={[0, -0.08, 0.28]} rotation={[Math.PI / 2, 0, 0]} />
           </group>
         </group>

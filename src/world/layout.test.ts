@@ -144,10 +144,14 @@ describe.each(Object.entries(distributions))('buildMuseumLayout — %s', (_label
     }
   })
 
-  it('aucun cadre ne regarde vers -Z', () => {
+  // La caméra du jeu est fixe et ne regarde jamais que vers -Z (voir `src/player/Player.tsx`,
+  // `FIXED_CAMERA_QUATERNION`, jamais recalculée à partir de la rotation du joueur) : un cadre n'est
+  // jamais visible de face sauf s'il fait face à +Z (rotationY = 0). Un cadre en épi (±π/2, face à
+  // l'axe X) ou au mur du fond (π, face à -Z) reste vu par la tranche depuis n'importe quel point de
+  // vue, quelle que soit la position du joueur (régression : voir docs de `buildXWing`).
+  it('tout cadre fait face à +Z (rotationY = 0) : seule orientation visible par la caméra fixe', () => {
     for (const f of layout.frames) {
-      const allowed = [0, Math.PI / 2, -Math.PI / 2].some((r) => Math.abs(r - f.rotationY) < 1e-6)
-      expect(allowed, `rotationY inattendu: ${f.rotationY}`).toBe(true)
+      expect(f.rotationY, `rotationY inattendu pour ${f.personId}: ${f.rotationY}`).toBeCloseTo(0)
     }
   })
 

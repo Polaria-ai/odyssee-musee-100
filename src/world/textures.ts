@@ -55,28 +55,55 @@ const placeholderCache = new Map<string, CanvasTexture>()
 export function drawPlaceholderPortrait(accentColor: string, order: number, lang: Lang): CanvasTexture {
   return cachedTexture(placeholderCache, `${accentColor}|${order}|${lang}`, () => paintPlaceholderPortrait(accentColor, order, lang))
 }
+/**
+ * Portrait d'attente. Comme les 100 fiches actuelles sont toutes des placeholders (liste officielle
+ * pas encore reçue), ce dessin est tout le contenu visuellement présent dans le musée pour l'instant :
+ * il doit rester lisible à distance de jeu, pas seulement en zoomant sur l'image. Fond pastel très
+ * clair + silhouette nettement plus foncée (grand écart, pas 23 points de blanc) ; le numéro est posé
+ * sur un bandeau encre plein contraste (texte blanc), jamais directement sur le pastel : sa lisibilité
+ * ne dépend alors jamais de la couleur (parfois claire) de l'aile.
+ */
+/**
+ * Écart (0..1, part de blanc mélangée) entre le fond pastel et la silhouette d'un portrait d'attente.
+ * Grand et fixe : `textures.test.ts` vérifie qu'il reste large quelle que soit `accentColor`, pour
+ * qu'une régression future (fond et silhouette qui se rapprochent à nouveau) échoue au lint des tests
+ * plutôt qu'en revue visuelle.
+ */
+export const PLACEHOLDER_BG_MIX = 0.88
+export const PLACEHOLDER_SILHOUETTE_MIX = 0.08
+
 function paintPlaceholderPortrait(accentColor: string, order: number, lang: Lang): CanvasTexture {
   const size = 256
   const { canvas, ctx } = context2d(size, size)
-  ctx.fillStyle = mixWithWhite(accentColor, 0.78)
+
+  // Fond : pastel très clair de l'aile (le plus loin possible d'une silhouette qui doit foncer).
+  ctx.fillStyle = mixWithWhite(accentColor, PLACEHOLDER_BG_MIX)
   ctx.fillRect(0, 0, size, size)
-  ctx.fillStyle = mixWithWhite(accentColor, 0.55)
+
+  // Silhouette : couleur d'aile presque pure, sans blanc — contraste large et stable avec le fond,
+  // quelle que soit la teinte (claire ou foncée) de l'aile.
+  ctx.fillStyle = mixWithWhite(accentColor, PLACEHOLDER_SILHOUETTE_MIX)
   ctx.beginPath()
-  ctx.arc(size / 2, size * 0.4, size * 0.19, 0, Math.PI * 2)
+  ctx.arc(size / 2, size * 0.38, size * 0.2, 0, Math.PI * 2)
   ctx.fill()
   ctx.beginPath()
-  ctx.moveTo(size * 0.22, size * 0.98)
-  ctx.quadraticCurveTo(size * 0.22, size * 0.62, size * 0.5, size * 0.6)
-  ctx.quadraticCurveTo(size * 0.78, size * 0.62, size * 0.78, size * 0.98)
+  ctx.moveTo(size * 0.2, size * 0.98)
+  ctx.quadraticCurveTo(size * 0.2, size * 0.58, size * 0.5, size * 0.56)
+  ctx.quadraticCurveTo(size * 0.8, size * 0.58, size * 0.8, size * 0.98)
   ctx.closePath()
   ctx.fill()
+
+  // Bandeau du numéro : encre pleine opacité + texte blanc, jamais posé nu sur le pastel — contraste
+  // garanti indépendamment de `accentColor`, et police bien plus grande (34px) pour rester lisible à
+  // distance de jeu, pas seulement en zoomant sur la capture.
+  const bandHeight = size * 0.22
   ctx.fillStyle = palette.ink
-  ctx.globalAlpha = 0.85
-  ctx.font = '600 22px system-ui, sans-serif'
+  ctx.fillRect(0, size - bandHeight, size, bandHeight)
+  ctx.fillStyle = '#ffffff'
+  ctx.font = '700 34px system-ui, sans-serif'
   ctx.textAlign = 'center'
-  ctx.textBaseline = 'alphabetic'
-  ctx.fillText(pick(worldStrings.waitingPortraitNumber, lang).replace('{order}', String(order)), size / 2, size * 0.92)
-  ctx.globalAlpha = 1
+  ctx.textBaseline = 'middle'
+  ctx.fillText(pick(worldStrings.waitingPortraitNumber, lang).replace('{order}', String(order)), size / 2, size - bandHeight / 2)
   return toTexture(canvas)
 }
 
@@ -134,7 +161,7 @@ function truncate(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return `${s}…`
 }
 
-function mixWithWhite(hex: string, amount: number): string {
+export function mixWithWhite(hex: string, amount: number): string {
   const c = hexToRgb(hex)
   const mix = (v: number) => Math.round(v + (255 - v) * amount)
   return `rgb(${mix(c.r)}, ${mix(c.g)}, ${mix(c.b)})`

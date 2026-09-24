@@ -1,6 +1,7 @@
 // Propriétaire : agent avatar+tampons.
-import { Suspense, useRef, useState } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Suspense, useLayoutEffect, useRef, useState } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
+import { Box3 } from 'three'
 import type { Group } from 'three'
 import { useGame } from '../../state/gameStore'
 import { useT } from '../../i18n'
@@ -15,12 +16,40 @@ import {
   randomAppearance,
   resolveDisplayName,
 } from './options'
+import { fitVerticalBounds } from './preview'
 import { strings, outfitLabels, accessoryLabels } from './strings'
 import './AvatarCustomizer.css'
 
-/** Fait tourner lentement l'aperçu (aucune allocation par image : on mute `rotation.y`). */
+/** Champ de vision vertical de l'aperçu (doit rester identique entre le Canvas et le cadrage calculé). */
+const PREVIEW_FOV = 32
+/** Marge autour du personnage dans le cadre carré : de l'air au-dessus de la tête (casquette, béret…). */
+const PREVIEW_MARGIN = 1.35
+
+/**
+ * Fait tourner lentement l'aperçu (aucune allocation par image : on mute `rotation.y`) et cadre la
+ * caméra sur le personnage réellement rendu — mesuré via `Box3`, jamais deviné à partir de
+ * proportions fixes (celles-ci vivent dans `src/player/AvatarMesh.tsx`, hors contrat de ce module,
+ * et varient déjà selon l'accessoire, ex. casquette). Corrige le bug où la tête sortait du cadre :
+ * sans caméra explicite, react-three-fiber vise (0,0,0) par défaut, c'est-à-dire les pieds du
+ * personnage, pas son centre.
+ */
 function RotatingPreview({ config }: { config: AvatarConfig }) {
   const groupRef = useRef<Group>(null)
+  const { camera } = useThree()
+
+  useLayoutEffect(() => {
+    const group = groupRef.current
+    if (!group) return
+    group.updateMatrixWorld(true)
+    const box = new Box3().setFromObject(group)
+    if (box.isEmpty()) return
+    const { distance, targetY } = fitVerticalBounds({ minY: box.min.y, maxY: box.max.y }, PREVIEW_FOV, PREVIEW_MARGIN)
+    camera.position.set(0, targetY, distance)
+    camera.lookAt(0, targetY, 0)
+    // La rotation du groupe (tourne en continu) ne change pas son étendue verticale : seuls la
+    // tenue et l'accessoire, qui changent la géométrie affichée, doivent redéclencher le cadrage.
+  }, [config.outfit, config.accessory, camera])
+
   useFrame((_, delta) => {
     if (groupRef.current) groupRef.current.rotation.y += delta * 0.6
   })
@@ -38,7 +67,7 @@ function PreviewCanvas({ config }: { config: AvatarConfig }) {
       className="avatar-customizer__preview-canvas"
       dpr={[1, 1.5]}
       frameloop="always"
-      camera={{ fov: 32, near: 0.1, far: 10, position: [0, 1.05, 2.5] }}
+      camera={{ fov: PREVIEW_FOV, near: 0.1, far: 10, position: [0, 0.6, 2.7] }}
       gl={{ antialias: true, powerPreference: 'low-power' }}
     >
       <color attach="background" args={['#fdf1d6']} />

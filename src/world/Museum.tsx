@@ -60,8 +60,10 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
         <meshLambertMaterial vertexColors />
       </mesh>
 
+      {/* Rayons de lumière du hall : fins, hauts (près du plafond) et discrets — une suggestion de
+          verrière, jamais un aplat qui recouvre la bannière ou le décor (voir roomGeometry.ts). */}
       <mesh geometry={lightRaysGeometry}>
-        <meshBasicMaterial vertexColors transparent opacity={0.14} blending={AdditiveBlending} depthWrite={false} side={DoubleSide} />
+        <meshBasicMaterial vertexColors transparent opacity={0.07} blending={AdditiveBlending} depthWrite={false} side={DoubleSide} />
       </mesh>
 
       {archesGeometry && (

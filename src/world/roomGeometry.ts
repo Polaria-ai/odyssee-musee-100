@@ -126,18 +126,28 @@ export function buildDoorArchesGeometry(arches: DoorArch[]): BufferGeometry | nu
   return merged
 }
 
-/** Rayons de lumière suggérant une verrière : quelques plans additifs légers, fusionnés en un seul appel. */
-export function buildLightRaysGeometry(center: Vec2, count = 5, radius = 6): BufferGeometry {
+/**
+ * Rayons de lumière suggérant une verrière : quelques fins plans additifs, près du plafond, fusionnés
+ * en un seul appel. Fins (`RAY_WIDTH`) et espacés (`radius`) pour ne jamais se chevaucher entre eux
+ * (l'« additive blending » accumule sinon leur opacité) ni recouvrir la bannière du hall : hauts
+ * (`RAY_Y`, proches du plafond à `dims.wallHeight`) et peu opaques (mission : lumière chaleureuse
+ * suggérée, jamais un aplat qui masque le décor — voir docs/DESIGN.md, « musée cosy »).
+ */
+const RAY_WIDTH = 0.5
+const RAY_LENGTH = 4.5
+const RAY_Y = 4.8
+const RAY_OPACITY_HINT = '#fff6d8' // couleur peinte ici ; l'opacité elle-même est réglée côté matériau (Museum.tsx)
+export function buildLightRaysGeometry(center: Vec2, count = 4, radius = 6): BufferGeometry {
   const parts: BufferGeometry[] = []
   for (let i = 0; i < count; i++) {
-    const angle = (i / count) * Math.PI * 2
-    const x = center.x + Math.cos(angle) * radius * 0.4
-    const z = center.z + Math.sin(angle) * radius * 0.4
-    const geo = new PlaneGeometry(1.4, 7)
+    const angle = (i / count) * Math.PI * 2 + Math.PI / count // décalé : jamais aligné sur les portes/la bannière
+    const x = center.x + Math.cos(angle) * radius
+    const z = center.z + Math.sin(angle) * radius
+    const geo = new PlaneGeometry(RAY_WIDTH, RAY_LENGTH)
     geo.rotateX(-Math.PI / 2.6)
     geo.rotateY(angle)
-    geo.applyMatrix4(_m.makeTranslation(x, 4.6, z))
-    paint(geo, '#fff6d8')
+    geo.applyMatrix4(_m.makeTranslation(x, RAY_Y, z))
+    paint(geo, RAY_OPACITY_HINT)
     parts.push(geo)
   }
   const merged = mergeGeometries(parts, false)

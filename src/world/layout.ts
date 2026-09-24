@@ -13,21 +13,24 @@ import {
   DOOR_WIDTH,
   dims,
   END_MARGIN,
-  EPI_DEPTH,
-  EPI_THICKNESS,
   FRAME_WALL_OFFSET,
   HALL_HALF_DEPTH,
   HALL_HALF_WIDTH,
   NEAR_MARGIN,
+  NORTH_ROW_DEPTH,
+  NORTH_ROW_HALF_SPAN,
+  NORTH_ROW_X,
   ROW_STEP,
   STAMP_STATION_SIZE,
   VIEW_DISTANCE,
   WING_WIDTH,
+  XWING_LANE_COUNT,
+  XWING_LANE_ENTRY,
+  XWING_LANE_STEP,
 } from './constants'
 import { aabb, aabbUnion, xWall, zWall } from './collision'
 import { roomLabels } from './strings'
 
-const HALF_PI = Math.PI / 2
 const DOOR_HALF = DOOR_WIDTH / 2
 
 /** Emplacement d'un cadre avant qu'on lui attribue une personne. */
@@ -103,20 +106,25 @@ function furniture(box: AABB): ArchBox {
   return { box, kind: 'furniture', cut: false }
 }
 
-/** Aile est/ouest (axe X) : mur principal côté nord de l'aile + épis en alternance. */
+/**
+ * Aile est/ouest (axe X) : mur principal côté nord de l'aile + cimaises intérieures, toutes
+ * parallèles (jamais en épi). La caméra est fixe et ne regarde jamais que vers -Z : un cadre n'est
+ * jamais lisible sauf s'il fait face à +Z (`rotationY = 0`), quelle que soit la position du joueur
+ * (voir `docs/ARCHITECTURE.md` et `src/player/Player.tsx::FIXED_CAMERA_QUATERNION`). On empile donc
+ * `XWING_LANE_COUNT` cimaises parallèles au mur principal (une rangée de cadres face à +Z chacune)
+ * plutôt que des cloisons perpendiculaires (« épis », face ±X, invisibles de face dans tous les cas).
+ * Les cimaises intérieures démarrent après `NEAR_MARGIN` : le joueur peut se répartir librement entre
+ * les couloirs juste après la porte, avant la première rangée.
+ */
 function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: number): WingBuild | null {
   if (count <= 0) return null
-  const wallZFar = -WING_WIDTH / 2 // mur plein (non côté caméra), porte les cadres
-  const wallZNear = WING_WIDTH / 2 // côté caméra, coupé, sans cadre
+  const wallZFar = -WING_WIDTH / 2 // mur plein (non côté caméra), porte la 1ère rangée de cadres
+  const wallZNear = WING_WIDTH / 2 // côté caméra, coupé, jamais de cadre
 
-  let rows = 0
-  let capacity = 0
-  while (capacity < count) {
-    capacity += rows % 2 === 0 ? 1 : 2
-    rows++
-  }
+  const rows = Math.ceil(count / XWING_LANE_COUNT)
   const length = NEAR_MARGIN + rows * ROW_STEP + END_MARGIN
   const farX = hallWallX + dir * length
+  const laneStartX = hallWallX + dir * XWING_LANE_ENTRY
 
   const slots: FrameCandidate[] = []
   const walls: ArchBox[] = [
@@ -125,21 +133,22 @@ function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: 
     wall(zWall(farX, wallZFar, wallZNear, dims.wallThickness)),
   ]
 
+  // Face « avant » (côté joueur, +Z) de chaque cimaise : le mur principal lui-même pour la 1ère,
+  // puis la face sud de chaque cimaise intérieure suivante.
+  const laneFrontZ: number[] = [wallZFar]
+  for (let lane = 1; lane < XWING_LANE_COUNT; lane++) {
+    const laneCenterZ = wallZFar + lane * XWING_LANE_STEP
+    walls.push(wall(xWall(laneCenterZ, laneStartX, farX, CIMAISE_THICKNESS)))
+    laneFrontZ.push(laneCenterZ + CIMAISE_THICKNESS / 2)
+  }
+
   for (let i = 0; i < rows; i++) {
-    if (i % 2 === 0) {
-      const u = NEAR_MARGIN + i * ROW_STEP + ROW_STEP * 0.75
-      const x = hallWallX + dir * u
-      const z = wallZFar + FRAME_WALL_OFFSET
+    const u = NEAR_MARGIN + i * ROW_STEP + ROW_STEP * 0.5
+    const x = hallWallX + dir * u
+    for (let lane = 0; lane < XWING_LANE_COUNT; lane++) {
+      if (i * XWING_LANE_COUNT + lane >= count) break
+      const z = laneFrontZ[lane] + FRAME_WALL_OFFSET
       slots.push({ position: [x, dims.frameCenterY, z], rotationY: 0, viewPoint: { x, z: z + VIEW_DISTANCE } })
-    } else {
-      const u = NEAR_MARGIN + i * ROW_STEP + ROW_STEP * 0.25
-      const xEpi = hallWallX + dir * u
-      const zEpi = wallZFar + EPI_DEPTH / 2
-      walls.push(wall(zWall(xEpi, wallZFar, wallZFar + EPI_DEPTH, EPI_THICKNESS)))
-      const xNeg = xEpi - EPI_THICKNESS / 2 - FRAME_WALL_OFFSET
-      const xPos = xEpi + EPI_THICKNESS / 2 + FRAME_WALL_OFFSET
-      slots.push({ position: [xNeg, dims.frameCenterY, zEpi], rotationY: -HALF_PI, viewPoint: { x: xNeg - VIEW_DISTANCE, z: zEpi } })
-      slots.push({ position: [xPos, dims.frameCenterY, zEpi], rotationY: HALF_PI, viewPoint: { x: xPos + VIEW_DISTANCE, z: zEpi } })
     }
   }
 
@@ -149,43 +158,40 @@ function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: 
   return { room, walls, slots: slots.slice(0, count), stampStation }
 }
 
-/** Aile nord (axe Z) : murs ouest/est + cimaise centrale + mur du fond. */
+/**
+ * Aile nord (axe Z, on s'y enfonce en s'éloignant du hall) : murs ouest/est pleins, sans cadre (ils
+ * feraient face à ±X : invisibles pour la caméra fixe, voir la note de `buildXWing`), et une rangée
+ * de cadres face à +Z empilée en profondeur pour chaque tranche de `NORTH_ROW_X.length` personnes.
+ * Chaque rangée est une cimaise transversale courte (`NORTH_ROW_HALF_SPAN`), pas un mur plein : elle
+ * laisse un passage de chaque côté pour que le joueur atteigne les rangées suivantes, plus au nord.
+ */
 function buildNorthWing(count: number): WingBuild | null {
   if (count <= 0) return null
   const hallWallZ = -HALL_HALF_DEPTH
   const dir = -1
   const xWest = -WING_WIDTH / 2
   const xEast = WING_WIDTH / 2
-  const backXs = [-3.6, -1.2, 1.2, 3.6]
 
-  let rows = 0
-  while (rows * 4 + backXs.length < count) rows++
-  const length = NEAR_MARGIN + rows * ROW_STEP + END_MARGIN
+  const rows = Math.ceil(count / NORTH_ROW_X.length)
+  const length = NEAR_MARGIN + rows * NORTH_ROW_DEPTH + END_MARGIN
   const farZ = hallWallZ + dir * length
 
   const slots: FrameCandidate[] = []
   const walls: ArchBox[] = [wall(zWall(xWest, farZ, hallWallZ, dims.wallThickness)), wall(zWall(xEast, farZ, hallWallZ, dims.wallThickness)), wall(xWall(farZ, xWest, xEast, dims.wallThickness))]
 
-  if (rows > 0) {
-    const zNear = hallWallZ + dir * NEAR_MARGIN
-    const zFar = hallWallZ + dir * (NEAR_MARGIN + rows * ROW_STEP)
-    walls.push(wall(zWall(0, zFar, zNear, CIMAISE_THICKNESS)))
-  }
-
   for (let i = 0; i < rows; i++) {
-    const z = hallWallZ + dir * (NEAR_MARGIN + i * ROW_STEP + ROW_STEP / 2)
-    const xW = xWest + FRAME_WALL_OFFSET
-    const xE = xEast - FRAME_WALL_OFFSET
-    slots.push({ position: [xW, dims.frameCenterY, z], rotationY: HALF_PI, viewPoint: { x: xW + VIEW_DISTANCE, z } })
-    slots.push({ position: [xE, dims.frameCenterY, z], rotationY: -HALF_PI, viewPoint: { x: xE - VIEW_DISTANCE, z } })
-    const xCimNeg = -CIMAISE_THICKNESS / 2 - FRAME_WALL_OFFSET
-    const xCimPos = CIMAISE_THICKNESS / 2 + FRAME_WALL_OFFSET
-    slots.push({ position: [xCimNeg, dims.frameCenterY, z], rotationY: -HALF_PI, viewPoint: { x: xCimNeg - VIEW_DISTANCE, z } })
-    slots.push({ position: [xCimPos, dims.frameCenterY, z], rotationY: HALF_PI, viewPoint: { x: xCimPos + VIEW_DISTANCE, z } })
-  }
-  for (const x of backXs) {
-    const z = farZ - FRAME_WALL_OFFSET * dir
-    slots.push({ position: [x, dims.frameCenterY, z], rotationY: 0, viewPoint: { x, z: z + VIEW_DISTANCE } })
+    // Point de vue à NEAR_MARGIN + i*NORTH_ROW_DEPTH du mur du hall (même logique que les autres
+    // ailes) ; le cadre et sa cimaise sont plus loin encore (vers le nord), pour que le joueur les
+    // découvre en s'avançant depuis le point de vue.
+    const viewZ = hallWallZ + dir * (NEAR_MARGIN + i * NORTH_ROW_DEPTH)
+    const frameZ = viewZ + dir * VIEW_DISTANCE
+    const rowWallZ = frameZ + dir * (FRAME_WALL_OFFSET + CIMAISE_THICKNESS / 2)
+    walls.push(wall(xWall(rowWallZ, -NORTH_ROW_HALF_SPAN, NORTH_ROW_HALF_SPAN, CIMAISE_THICKNESS)))
+    for (let j = 0; j < NORTH_ROW_X.length; j++) {
+      if (i * NORTH_ROW_X.length + j >= count) break
+      const x = NORTH_ROW_X[j]
+      slots.push({ position: [x, dims.frameCenterY, frameZ], rotationY: 0, viewPoint: { x, z: viewZ } })
+    }
   }
 
   const bounds = aabb(xWest, xEast, farZ, hallWallZ)
