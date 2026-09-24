@@ -39,6 +39,7 @@ main.tsx → App.tsx
 | Avatar + tampons | agent `features` | `src/features/avatar/**`, `src/features/stamps/**` |
 | Présence | agent `presence` | `src/features/presence/**` |
 | Données | agent `data` | `src/data/**`, `supabase/**`, `scripts/import-people.ts`, `scripts/export-local.ts`, `scripts/content-invariants.ts`, `data/`, `docs/IMPORT.md` |
+| Audio | agent `audio` | `src/audio/**` |
 | QA | agent `qa` | `e2e/**`, `docs/TESTS.md` |
 
 Textes : chaque module a son `strings.ts` (`defineStrings`) — `src/i18n/strings.test.ts` impose FR + EN complets.

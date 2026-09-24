@@ -12,6 +12,8 @@ export interface MuseeDebugApi {
   teleport: (x: number, z: number, rotY?: number) => void
   /** Téléporte devant le portrait de `personId` et renvoie true si trouvé. */
   goToPerson: (personId: string) => boolean
+  /** Compteurs du renderer (dernière image), fournis par DebugProbe. */
+  renderInfo?: () => { calls: number; triangles: number; geometries: number; textures: number }
 }
 
 declare global {

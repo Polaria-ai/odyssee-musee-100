@@ -12,6 +12,7 @@ import { Minerve } from '../npc/Minerve'
 import { RemoteVisitors } from '../features/presence/RemoteVisitors'
 import { StampStations } from '../features/stamps/StampStations'
 import { AttractCamera } from './AttractCamera'
+import { DebugProbe } from './DebugProbe'
 import { palette } from '../styles/tokens'
 
 // Le rendu logiciel (SwiftShader, utilisé en CI et sur certains appareils sans GPU) peut parfois
@@ -59,6 +60,7 @@ export function Experience() {
       <fog attach="fog" args={[palette.sky, 28, 70]} />
       <hemisphereLight args={['#fff6e0', '#c8a27a', 1.1]} />
       <directionalLight position={[8, 14, 6]} intensity={1.3} color="#fff1d6" />
+      <DebugProbe />
       <PerformanceMonitor onDecline={() => setQuality('low')} flipflops={2} />
       <Suspense fallback={null}>
         <Museum layout={layout} people={people} />

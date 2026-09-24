@@ -18,6 +18,7 @@ import { usePresence } from './features/presence/usePresence'
 import { TouchJoystick } from './player/TouchJoystick'
 import { useKeyboardControls } from './player/useKeyboardControls'
 import { minerveDialogue } from './npc/minerveScript'
+import { useAudioDirector } from './audio'
 
 export function App() {
   const screen = useGame((s) => s.screen)
@@ -53,6 +54,7 @@ export function App() {
   const playing = screen === 'play'
   useStampWatcher()
   usePresence(playing)
+  useAudioDirector(playing)
   useKeyboardControls(playing && !overlay)
 
   return (

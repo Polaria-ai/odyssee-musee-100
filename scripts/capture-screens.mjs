@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global window -- code évalué dans la page via page.evaluate */
 /**
  * Captures d'écran de vérification visuelle (téléphone portrait, paysage).
  * Prérequis : `pnpm build && pnpm preview` sur 127.0.0.1:4173.
