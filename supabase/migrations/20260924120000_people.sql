@@ -48,6 +48,7 @@ create index if not exists people_wing_ord_idx on public.people (wing, ord);
 create or replace function public.people_set_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();
@@ -87,12 +88,9 @@ insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_typ
 values ('portraits', 'portraits', true, 2097152, array['image/webp', 'image/jpeg', 'image/png'])
 on conflict (id) do nothing;
 
+-- Aucune policy SELECT sur storage.objects : un bucket public sert ses fichiers par
+-- URL publique sans policy, et une policy SELECT large permettrait de lister le bucket.
 drop policy if exists "portraits_public_read" on storage.objects;
-create policy "portraits_public_read"
-  on storage.objects
-  for select
-  to anon, authenticated
-  using (bucket_id = 'portraits');
 
--- Pas de policy d'écriture sur storage.objects pour ce bucket : l'upload se fait
--- avec la clé de service (script d'import), jamais depuis le navigateur.
+-- Pas de policy d'écriture non plus : l'upload se fait avec la clé de service
+-- (script d'import), jamais depuis le navigateur.

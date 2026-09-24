@@ -1,0 +1,66 @@
+#!/usr/bin/env node
+/**
+ * Captures d'écran de vérification visuelle (téléphone portrait, paysage).
+ * Prérequis : `pnpm build && pnpm preview` sur 127.0.0.1:4173.
+ * Usage : PW_CHROMIUM_PATH=… node scripts/capture-screens.mjs [dossier=screens]
+ */
+import { mkdirSync } from 'node:fs'
+import { chromium, devices } from '@playwright/test'
+
+const out = process.argv[2] || 'screens'
+const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:4173'
+mkdirSync(out, { recursive: true })
+
+const browser = await chromium.launch({
+  executablePath: process.env.PW_CHROMIUM_PATH || undefined,
+  args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+})
+
+async function session(name, contextOptions) {
+  const ctx = await browser.newContext(contextOptions)
+  const page = await ctx.newPage()
+  const errors = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const shot = async (label, wait = 1500) => {
+    await page.waitForTimeout(wait)
+    await page.screenshot({ path: `${out}/${name}-${label}.png` })
+  }
+  await page.goto(`${base}/?e2e=1`)
+  await page.getByTestId('title-screen').waitFor()
+  await shot('01-titre', 2500)
+  await page.getByTestId('enter-button').click()
+  await page.getByTestId('customizer').waitFor()
+  await shot('02-perso', 2000)
+  await page.getByTestId('customizer-done').click()
+  await shot('03-accueil-minerve', 3500)
+  await page.evaluate(() => window.__musee.state().closeDialogue())
+  await shot('04-hall-spawn')
+  const rooms = await page.evaluate(() => window.__musee.state().layout.rooms.map((r) => ({ id: r.id, b: r.bounds })))
+  for (const r of rooms.filter((x) => x.id !== 'hall')) {
+    const cx = (r.b.minX + r.b.maxX) / 2
+    const cz = (r.b.minZ + r.b.maxZ) / 2
+    await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [cx, cz])
+    await shot(`05-aile-${r.id}`, 2000)
+    // point au fond de l'aile (derrière les cimaises éventuelles)
+    const deepZ = r.id === 'industrialisation' ? r.b.minZ + 2 : r.b.minZ + 1.2
+    await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [cx, deepZ])
+    await shot(`06-aile-${r.id}-fond`, 2000)
+  }
+  const firstId = await page.evaluate(() => window.__musee.state().layout.frames[5].personId)
+  await page.evaluate((id) => window.__musee.goToPerson(id), firstId)
+  await shot('07-devant-portrait', 2000)
+  await page.evaluate(() => window.__musee.state().interact())
+  await shot('08-fiche', 1500)
+  await page.keyboard.press('Escape')
+  const curator = await page.evaluate(() => window.__musee.state().layout.curator.position)
+  await page.evaluate(([x, z]) => window.__musee.teleport(x, z + 2.2), [curator.x, curator.z])
+  await shot('09-pres-minerve', 2000)
+  await page.evaluate(() => window.__musee.state().setStampCardOpen(true))
+  await shot('10-carnet', 1200)
+  console.log(name, errors.length ? `erreurs : ${errors.join(' | ')}` : 'aucune erreur de page')
+  await ctx.close()
+}
+
+await session('iphone', { ...devices['iPhone 13'] })
+await session('paysage', { ...devices['iPhone 13 landscape'] })
+await browser.close()
