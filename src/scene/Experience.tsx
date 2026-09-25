@@ -9,6 +9,7 @@ import { useGame } from '../state/gameStore'
 import { Museum } from '../world/Museum'
 import { Player } from '../player/Player'
 import { Minerve } from '../npc/Minerve'
+import { ArchivesRoom } from '../archives/ArchivesRoom'
 import { RemoteVisitors } from '../features/presence/RemoteVisitors'
 import { StampStations } from '../features/stamps/StampStations'
 import { AttractCamera } from './AttractCamera'
@@ -37,6 +38,7 @@ function useCanvasRecovery() {
 
 export function Experience() {
   const layout = useGame((s) => s.layout)
+  const archivesLayout = useGame((s) => s.archivesLayout)
   const people = useGame((s) => s.people)
   const screen = useGame((s) => s.screen)
   const quality = useGame((s) => s.quality)
@@ -66,6 +68,7 @@ export function Experience() {
         <Museum layout={layout} people={people} />
         <StampStations layout={layout} />
         <Minerve placement={layout.curator} />
+        {archivesLayout && <ArchivesRoom archives={archivesLayout} />}
         {playing ? <Player layout={layout} /> : <AttractCamera layout={layout} />}
         {playing && <RemoteVisitors />}
       </Suspense>

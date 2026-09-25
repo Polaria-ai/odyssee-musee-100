@@ -139,4 +139,28 @@ export const roomThemes: Record<WingId, RoomTheme> = {
     ],
     bassDegrees: [0, -3, 0, 4],
   },
+  // Archives de 2040 : même boîte à musique, plus lente et plus feutrée (le module archives peut l'affiner).
+  archives: {
+    id: 'archives',
+    rootHz: 261.6, // do4
+    scale: PENTATONIC_MAJOR_STEPS,
+    bpm: 76,
+    barsPerLoop: 2,
+    leadType: 'sine',
+    bassType: 'sine',
+    filterHz: 1500,
+    noteAttack: 0.008,
+    noteRelease: 1.1,
+    bell: true,
+    melody: [
+      { beat: 0, degree: 9, beats: 1 },
+      { beat: 1, degree: 7, beats: 1 },
+      { beat: 2, degree: 4, beats: 1 },
+      { beat: 3, degree: 2, beats: 1 },
+      { beat: 4, degree: 0, beats: 1 },
+      { beat: 5, degree: 4, beats: 1 },
+      { beat: 6, degree: 7, beats: 2 },
+    ],
+    bassDegrees: [0, -3, 0, 4],
+  },
 }

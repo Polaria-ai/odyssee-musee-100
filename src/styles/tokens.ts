@@ -37,7 +37,17 @@ export const wingThemes: Record<WingId, WingTheme> = {
   industrialisation: { floor: '#d8a57c', wall: '#fbe7d3', accent: '#f2a65a', trim: '#b86a35' },
   // Culture : galerie d'art, velours violet.
   culture: { floor: '#b9a3c9', wall: '#f1e8f7', accent: '#b48cd9', trim: '#7a5a9e' },
+  // Archives de 2040 : bleu nuit doux et lueurs holographiques, restées chaleureuses.
+  archives: { floor: '#5d6b8f', wall: '#e6ecfa', accent: '#7fd6e8', trim: '#3d4a6e' },
 }
+
+/**
+ * Zones du hall réservées à d'autres modules : le décor du monde ne doit rien y poser.
+ * `timePortal` : la Porte de 2040 (module archives), à droite du point d'apparition.
+ */
+export const hallReservedSpots = {
+  timePortal: { x: 7.8, z: 5.6, radius: 1.4 },
+} as const
 
 export const exhibitWingOrder: readonly ExhibitWingId[] = ['infrastructures', 'industrialisation', 'culture']
 

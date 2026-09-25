@@ -4,6 +4,10 @@ import { isOverlayOpen, useGame } from './state/gameStore'
 import { placePlayer, resetInput } from './state/runtime'
 import { loadPeople } from './data/repository'
 import { buildMuseumLayout } from './world/layout'
+import { loadEvening } from './data/evening'
+import { buildArchivesLayout, mergeArchivesIntoLayout } from './archives/layout'
+import { ArchiveCard } from './archives/ArchiveCard'
+import { PortalFade } from './archives/PortalFade'
 import { Experience } from './scene/Experience'
 import { LoadingScreen } from './ui/LoadingScreen'
 import { TitleScreen } from './ui/TitleScreen'
@@ -27,10 +31,15 @@ export function App() {
 
   useEffect(() => {
     let cancelled = false
-    void loadPeople().then(({ people, source }) => {
+    // Les 100 et le programme de la soirée arrivent ensemble : le plan n'est calculé qu'une fois
+    // (un second calcul relancerait l'effet d'entrée et renverrait le joueur au point d'apparition).
+    void Promise.all([loadPeople(), loadEvening()]).then(([{ people, source }, evening]) => {
       if (cancelled) return
       const g = useGame.getState()
-      g.setMuseum(people, buildMuseumLayout(people), source)
+      const archivesLayout = buildArchivesLayout(evening.sessions)
+      g.setEvening(evening.sessions, evening.archives, evening.source)
+      g.setArchivesLayout(archivesLayout)
+      g.setMuseum(people, mergeArchivesIntoLayout(buildMuseumLayout(people), archivesLayout), source)
       g.setScreen('title')
     })
     return () => {
@@ -68,10 +77,12 @@ export function App() {
           <Hud />
           {!overlay && <TouchJoystick />}
           <PortraitCard />
+          <ArchiveCard />
           <StampCard />
           <DialogueBox />
         </>
       )}
+      <PortalFade />
       <Toast />
     </div>
   )

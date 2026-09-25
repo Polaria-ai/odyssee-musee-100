@@ -50,3 +50,25 @@ describe('gameStore', () => {
     expect(useGame.getState().dialogue).toBeNull()
   })
 })
+
+describe('gameStore — Archives de 2040', () => {
+  beforeEach(() => {
+    useGame.setState({ nearbyPersonId: null, nearbySessionId: null, nearArchivist: false, nearCurator: false, openPersonId: null, openSessionId: null, dialogue: null, stampCardOpen: false, mapOpen: false, visitedSessions: {} })
+  })
+
+  it('interact : portrait > archive > Archiviste > Minerve', () => {
+    useGame.setState({ nearbySessionId: 'table-ronde-1', nearArchivist: true, nearCurator: true })
+    useGame.getState().interact()
+    expect(useGame.getState().openSessionId).toBe('table-ronde-1')
+    expect(useGame.getState().visitedSessions['table-ronde-1']).toBeTypeOf('number')
+    useGame.getState().closeSession()
+    useGame.setState({ nearbySessionId: null })
+    useGame.getState().interact()
+    expect(useGame.getState().dialogue?.id).toMatch(/^archivist/)
+  })
+
+  it('une fiche d’archive ouverte compte comme surimpression', () => {
+    useGame.getState().openSession('keynote-ouverture')
+    expect(isOverlayOpen(useGame.getState())).toBe(true)
+  })
+})

@@ -5,8 +5,12 @@
  */
 import { create } from 'zustand'
 import type {
+  ArchivesLayout,
   AvatarConfig,
   DataSource,
+  EveningSession,
+  EveningSource,
+  SessionArchive,
   Dialogue,
   ExhibitWingId,
   Lang,
@@ -18,6 +22,7 @@ import type {
 } from '../types'
 import { DEFAULT_AVATAR, sanitizeAvatar } from '../features/avatar/options'
 import { minerveDialogue } from '../npc/minerveScript'
+import { archivistDialogue } from '../archives/archivistScript'
 import { loadPersisted, savePersisted } from './persist'
 
 export type Quality = 'low' | 'high'
@@ -47,6 +52,24 @@ export interface GameState {
   currentRoom: WingId | null
   /** Fiche ouverte en plein écran. */
   openPersonId: string | null
+
+  /** Programme de la soirée et archives déposées (Les Archives de 2040). */
+  sessions: EveningSession[]
+  /** Archives publiées, par identifiant de séquence. */
+  archives: Record<string, SessionArchive>
+  eveningSource: EveningSource
+  /** Plan de la salle des Archives (déjà fusionné dans `layout`, gardé pour le rendu). */
+  archivesLayout: ArchivesLayout | null
+  /** Vitrine d'archive la plus proche (bouton « Consulter »). */
+  nearbySessionId: string | null
+  /** Fiche d'archive ouverte. */
+  openSessionId: string | null
+  /** Le joueur est à portée de l'hologramme de l'Archiviste. */
+  nearArchivist: boolean
+  /** Archives consultées : id de séquence → horodatage ms. */
+  visitedSessions: Record<string, number>
+  /** Passage par la Porte de 2040 en cours (fondu d'écran). */
+  portalTransition: 'to-archives' | 'to-hall' | null
   /** Personnes déjà consultées : id → horodatage ms. */
   visited: Record<string, number>
   /** Tampons obtenus : aile → horodatage ms. */
@@ -67,6 +90,13 @@ export interface GameState {
   setLang: (lang: Lang) => void
   setAvatar: (avatar: AvatarConfig) => void
   setMuseum: (people: Person[], layout: MuseumLayout, source: DataSource) => void
+  setEvening: (sessions: EveningSession[], archives: Record<string, SessionArchive>, source: EveningSource) => void
+  setArchivesLayout: (archivesLayout: ArchivesLayout | null) => void
+  setNearbySession: (sessionId: string | null) => void
+  setNearArchivist: (near: boolean) => void
+  openSession: (sessionId: string) => void
+  closeSession: () => void
+  setPortalTransition: (transition: 'to-archives' | 'to-hall' | null) => void
   setNearby: (personId: string | null) => void
   setNearCurator: (near: boolean) => void
   setCurrentRoom: (room: WingId | null) => void
@@ -121,6 +151,15 @@ export const useGame = create<GameState>()((set, get) => ({
 
   nearbyPersonId: null,
   nearCurator: false,
+  sessions: [],
+  archives: {},
+  eveningSource: 'program',
+  archivesLayout: null,
+  nearbySessionId: null,
+  openSessionId: null,
+  nearArchivist: false,
+  visitedSessions: (persisted.visitedSessions as Record<string, number>) ?? {},
+  portalTransition: null,
   currentRoom: null,
   openPersonId: null,
   visited: (persisted.visited as Record<string, number>) ?? {},
@@ -145,6 +184,25 @@ export const useGame = create<GameState>()((set, get) => ({
     set({ avatar })
   },
   setMuseum: (people, layout, dataSource) => set({ people, layout, dataSource }),
+  setEvening: (sessions, archives, eveningSource) => set({ sessions, archives, eveningSource }),
+  setArchivesLayout: (archivesLayout) => set({ archivesLayout }),
+  setNearbySession: (nearbySessionId) => {
+    if (get().nearbySessionId !== nearbySessionId) set({ nearbySessionId })
+  },
+  setNearArchivist: (nearArchivist) => {
+    if (get().nearArchivist !== nearArchivist) set({ nearArchivist })
+  },
+  openSession: (openSessionId) => {
+    const visited = get().visitedSessions
+    if (!visited[openSessionId]) {
+      const next = { ...visited, [openSessionId]: Date.now() }
+      savePersisted({ visitedSessions: next })
+      set({ visitedSessions: next })
+    }
+    set({ openSessionId })
+  },
+  closeSession: () => set({ openSessionId: null }),
+  setPortalTransition: (portalTransition) => set({ portalTransition }),
   setNearby: (nearbyPersonId) => {
     if (get().nearbyPersonId !== nearbyPersonId) set({ nearbyPersonId })
   },
@@ -159,6 +217,21 @@ export const useGame = create<GameState>()((set, get) => ({
     if (isOverlayOpen(s)) return
     if (s.nearbyPersonId) {
       s.openPerson(s.nearbyPersonId)
+      return
+    }
+    if (s.nearbySessionId) {
+      s.openSession(s.nearbySessionId)
+      return
+    }
+    if (s.nearArchivist) {
+      s.startDialogue(
+        archivistDialogue({
+          kind: 'talk',
+          consulted: Object.keys(s.visitedSessions).length,
+          total: s.sessions.length,
+          published: Object.keys(s.archives).length,
+        }),
+      )
       return
     }
     if (s.nearCurator) {
@@ -208,14 +281,14 @@ export const useGame = create<GameState>()((set, get) => ({
   },
   setQuality: (quality) => set({ quality }),
   resetProgress: () => {
-    savePersisted({ visited: {}, stamps: {} })
-    set({ visited: {}, stamps: {}, openPersonId: null, stampCardOpen: false })
+    savePersisted({ visited: {}, stamps: {}, visitedSessions: {} })
+    set({ visited: {}, stamps: {}, visitedSessions: {}, openPersonId: null, openSessionId: null, stampCardOpen: false })
   },
 }))
 
 /** Vrai quand une interface recouvre le jeu : le joueur ne doit pas bouger. */
 export function isOverlayOpen(
-  s: Pick<GameState, 'openPersonId' | 'dialogue' | 'stampCardOpen' | 'mapOpen'>,
+  s: Pick<GameState, 'openPersonId' | 'openSessionId' | 'dialogue' | 'stampCardOpen' | 'mapOpen'>,
 ): boolean {
-  return s.openPersonId !== null || s.dialogue !== null || s.stampCardOpen || s.mapOpen
+  return s.openPersonId !== null || s.openSessionId !== null || s.dialogue !== null || s.stampCardOpen || s.mapOpen
 }

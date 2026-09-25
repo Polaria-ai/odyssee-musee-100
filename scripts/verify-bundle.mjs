@@ -11,6 +11,7 @@ const BUDGET_TOTAL_JS_GZ = 650 * 1024
 const BUDGET_ENTRY_JS_GZ = 160 * 1024
 const BUDGET_TOTAL_CSS_GZ = 40 * 1024
 const BUDGET_PUBLIC_ASSET = 400 * 1024 // par fichier dans dist hors JS/CSS (images, modèles)
+const BUDGET_MODELS_TOTAL = 6 * 1024 * 1024 // tous les modèles 3D (dist/models), téléchargés à la demande
 
 const dist = 'dist'
 const assets = join(dist, 'assets')
@@ -43,10 +44,22 @@ for (const file of walk(dist)) {
   if (size > BUDGET_PUBLIC_ASSET) failures.push(`${file} pèse ${(size / 1024).toFixed(0)} Ko (> ${BUDGET_PUBLIC_ASSET / 1024} Ko) : compresser en WebP/AVIF`)
 }
 
+let modelsTotal = 0
+if (statSync(dist).isDirectory()) {
+  const modelsDir = join(dist, 'models')
+  try {
+    for (const f of walk(modelsDir)) modelsTotal += statSync(f).size
+  } catch {
+    // pas de modèles
+  }
+}
+if (modelsTotal > BUDGET_MODELS_TOTAL) failures.push(`modèles 3D : ${(modelsTotal / 1024 / 1024).toFixed(1)} Mo (> ${BUDGET_MODELS_TOTAL / 1024 / 1024} Mo)`)
+
 const kb = (n) => `${(n / 1024).toFixed(1)} Ko`
 console.log(`JS total gzip : ${kb(totalJs)} / ${kb(BUDGET_TOTAL_JS_GZ)}`)
 console.log(`JS entrée gzip : ${kb(entry)} / ${kb(BUDGET_ENTRY_JS_GZ)}`)
 console.log(`CSS total gzip : ${kb(totalCss)} / ${kb(BUDGET_TOTAL_CSS_GZ)}`)
+console.log(`Modèles 3D : ${kb(modelsTotal)} / ${kb(BUDGET_MODELS_TOTAL)}`)
 if (totalJs > BUDGET_TOTAL_JS_GZ) failures.push(`JS total ${kb(totalJs)} dépasse ${kb(BUDGET_TOTAL_JS_GZ)}`)
 if (entry > BUDGET_ENTRY_JS_GZ) failures.push(`JS d'entrée ${kb(entry)} dépasse ${kb(BUDGET_ENTRY_JS_GZ)}`)
 if (totalCss > BUDGET_TOTAL_CSS_GZ) failures.push(`CSS ${kb(totalCss)} dépasse ${kb(BUDGET_TOTAL_CSS_GZ)}`)

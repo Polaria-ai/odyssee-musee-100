@@ -12,11 +12,15 @@ export interface Localized {
   en: string
 }
 
-/** Les trois ailes suivent les trois tables rondes de la soirée, plus le hall d'accueil. */
-export type WingId = 'hall' | 'infrastructures' | 'industrialisation' | 'culture'
-export type ExhibitWingId = Exclude<WingId, 'hall'>
+/**
+ * Les trois ailes suivent les trois tables rondes de la soirée, plus le hall d'accueil
+ * et les Archives de 2040 (salle de la soirée, reliée au hall par la Porte de 2040).
+ */
+export type WingId = 'hall' | 'infrastructures' | 'industrialisation' | 'culture' | 'archives'
+/** Les trois ailes à portraits (les 100). Les Archives ne sont pas une aile d'exposition des 100. */
+export type ExhibitWingId = 'infrastructures' | 'industrialisation' | 'culture'
 export const EXHIBIT_WINGS: readonly ExhibitWingId[] = ['infrastructures', 'industrialisation', 'culture'] as const
-export const ALL_WINGS: readonly WingId[] = ['hall', 'infrastructures', 'industrialisation', 'culture'] as const
+export const ALL_WINGS: readonly WingId[] = ['hall', 'infrastructures', 'industrialisation', 'culture', 'archives'] as const
 
 export interface PersonLink {
   label: string
@@ -146,3 +150,87 @@ export interface Dialogue {
 }
 
 export type DataSource = 'supabase' | 'static' | 'placeholder'
+
+// ---------------------------------------------------------------------------
+// Les Archives de 2040 — la soirée, séquence par séquence
+// ---------------------------------------------------------------------------
+
+export type SessionKind =
+  | 'ouverture'
+  | 'film'
+  | 'presentation'
+  | 'keynote'
+  | 'les100'
+  | 'magneto'
+  | 'table-ronde'
+  | 'face-a-face'
+  | 'final'
+  | 'cloture'
+
+export interface SessionSpeaker {
+  name: string
+  organization?: string
+  role?: Localized
+  moderator?: boolean
+}
+
+/** Une séquence du programme de la soirée (connue à l'avance, peut évoluer). */
+export interface EveningSession {
+  /** Slug stable, kebab-case (ex. `table-ronde-1`). Clé de jointure avec `SessionArchive`. */
+  id: string
+  order: number
+  /** Heure de début, heure de Paris, `HH:MM`. */
+  startTime: string
+  durationMin: number
+  kind: SessionKind
+  title: Localized
+  /** Thème ou question annoncés. */
+  theme?: Localized
+  speakers: SessionSpeaker[]
+  /** `true` = information du programme provisoire, à confirmer. */
+  provisional: boolean
+}
+
+export interface ArchiveQuote {
+  text: Localized
+  /** Nom de l'intervenant·e, tel qu'annoncé au programme. */
+  author: string
+  /** Vérifiée sur l'enregistrement avant publication. */
+  verified: boolean
+}
+
+/** Ce que l'agent de fin de soirée dépose pour une séquence. Jamais inventé à l'avance. */
+export interface SessionArchive {
+  sessionId: string
+  summary: Localized
+  quotes: ArchiveQuote[]
+  /** Horodatage ISO du dépôt. */
+  archivedAt: string
+  /** Relu et validé par un humain : seules les archives publiées sont affichées. */
+  published: boolean
+}
+
+export type EveningSource = 'supabase' | 'static' | 'program'
+
+/** Emplacement d'une vitrine d'archive dans la salle. */
+export interface ArchiveSlot {
+  sessionId: string
+  position: [number, number, number]
+  rotationY: number
+  viewPoint: Vec2
+}
+
+/** Plan de la salle des Archives de 2040, fusionné dans `MuseumLayout` par le module archives. */
+export interface ArchivesLayout {
+  room: RoomLayout
+  colliders: AABB[]
+  slots: ArchiveSlot[]
+  /** Arrivée dans la salle après la Porte de 2040. */
+  arrival: Placement
+  /** Porte de 2040 dans le hall (aller). */
+  hallPortal: Placement
+  /** Porte de retour vers le hall, dans la salle. */
+  returnPortal: Placement
+  /** Hologramme de l'Archiviste. */
+  archivist: Placement
+}

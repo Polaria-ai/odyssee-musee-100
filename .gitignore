@@ -13,3 +13,4 @@ data/private/
 screens/
 .env*
 !.env.example
+assets-src/

@@ -9,6 +9,7 @@ export interface PersistedState {
   avatar?: unknown
   visited?: Record<string, number>
   stamps?: Record<string, number>
+  visitedSessions?: Record<string, number>
   visitorId?: string
 }
 
