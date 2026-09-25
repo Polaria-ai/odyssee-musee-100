@@ -65,7 +65,7 @@ export function ArchivesRoom({ archives }: { archives: ArchivesLayout }) {
 
   return (
     <group>
-      <RoomShell archives={archives} sessions={sessions} lang={lang} />
+      <RoomShell archives={archives} lang={lang} />
       <ArchivesPortals archives={archives} />
       <Archivist placement={archives.archivist} />
       {archives.slots.map((slot) => {

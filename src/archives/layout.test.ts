@@ -5,6 +5,7 @@ import { circleIntersectsAabb, pointInAabb } from '../world/collision'
 import { dims, hallReservedSpots } from '../styles/tokens'
 import { buildMuseumLayout } from '../world/layout'
 import { generatePlaceholderPeople } from '../data/placeholder'
+import { ROW_DEPTH, ROW_X_OFFSETS } from './room/constants'
 
 const GRID_STEP = 0.25
 const KINDS: EveningSession['kind'][] = ['ouverture', 'film', 'presentation', 'keynote', 'les100', 'magneto', 'table-ronde', 'face-a-face', 'final', 'cloture']
@@ -164,6 +165,23 @@ describe.each(counts)('buildArchivesLayout — %i séquence(s)', (count) => {
       expect(isReachable(grid, layout.arrival.position, s.viewPoint), `pas de chemin vers ${s.sessionId}`).toBe(true)
     }
     expect(isReachable(grid, layout.arrival.position, layout.returnPortal.position)).toBe(true)
+  })
+
+  // Régression : une première version enchaînait les rangées toujours dans le même sens, si bien que
+  // le tracé au sol reliant les vitrines dans l'ordre du programme revenait d'un bord à l'autre de la
+  // salle à chaque changement de rangée (ligne en diagonale qui barrait l'image, constat de la
+  // vérification visuelle). Le serpentin (`layout.ts::buildCandidates`) garantit que deux séquences
+  // consécutives restent toujours des vitrines voisines : jamais plus loin qu'un pas de colonne ou de
+  // rangée l'une de l'autre.
+  it('la frise ne fait jamais de grand saut entre deux vitrines consécutives (serpentin, pas de diagonale)', () => {
+    const columnSteps = ROW_X_OFFSETS.slice(1).map((x, i) => Math.abs(x - ROW_X_OFFSETS[i]))
+    const maxStep = Math.max(...columnSteps, ROW_DEPTH) + 0.01
+    for (let i = 1; i < layout.slots.length; i++) {
+      const a = layout.slots[i - 1].position
+      const b = layout.slots[i].position
+      const d = Math.hypot(a[0] - b[0], a[2] - b[2])
+      expect(d, `saut de ${layout.slots[i - 1].sessionId} à ${layout.slots[i].sessionId} : ${d.toFixed(2)} m`).toBeLessThanOrEqual(maxStep)
+    }
   })
 
   it('la Porte de 2040 (hall) est dans la zone réservée du hall', () => {

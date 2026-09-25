@@ -20,8 +20,12 @@ const CAPSULE_GEO = new IcosahedronGeometry(CAPSULE_RADIUS, 1)
 const SCREEN_GEO = new PlaneGeometry(SCREEN_WIDTH, SCREEN_HEIGHT)
 const BUBBLE_GEO = new PlaneGeometry(0.32, 0.32)
 
-const SOCLE_MATERIAL = new MeshLambertMaterial({ color: '#232b46' })
-const SOCLE_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ color: '#2f3a63', emissive: '#7fd6e8', emissiveIntensity: 0.4 })
+// Socle clair (crème → bleu pâle en surbrillance), pas un cylindre sombre : à la vérification
+// visuelle, les socles très sombres (`#232b46`) fondaient les vitrines en une masse noire compacte,
+// surtout groupées par rangées. Un socle clair les rend lisibles individuellement et laisse la
+// capsule cyan/or (état en attente/archivée) rester le vrai signal de couleur de chaque vitrine.
+const SOCLE_MATERIAL = new MeshLambertMaterial({ color: '#f4ecd8', emissive: '#e8c872', emissiveIntensity: 0.04 })
+const SOCLE_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ color: '#e3f3fa', emissive: '#7fd6e8', emissiveIntensity: 0.35 })
 // Capsule « en attente » : cyan translucide, pulse lente (mutée UNE fois par image ci-dessous — effet
 // PARTAGÉ et synchronisé entre toutes les capsules en attente, jamais un effet local par instance).
 const CAPSULE_IDLE_MATERIAL = new MeshLambertMaterial({ color: '#4fc9e0', emissive: '#4fc9e0', emissiveIntensity: 0.5, transparent: true, opacity: 0.55 })

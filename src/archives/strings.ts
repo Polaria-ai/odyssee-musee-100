@@ -8,6 +8,9 @@ import { defineStrings } from '../i18n'
 
 export const archivesRoomStrings = defineStrings({
   roomLabel: { fr: 'Les Archives de 2040', en: 'The 2040 Archives' },
+  // Sous-titre du grand panneau d'entrée (room/textures.ts::drawEntranceSign) : date de la soirée,
+  // pas une donnée personnelle — voir docs/DESIGN.md pour le nom de l'événement.
+  eveningDate: { fr: 'Soirée du 6 octobre 2026', en: 'Evening of October 6, 2026' },
 
   // Porte de 2040 : panneau dans le hall (aller) et panneau de la porte de retour (dans la salle).
   gateTitle: { fr: 'Porte de 2040', en: 'Gate to 2040' },

@@ -6,7 +6,7 @@
  */
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
-import { BufferGeometry, Float32BufferAttribute, Points, PointsMaterial } from 'three'
+import { BufferGeometry, CanvasTexture, Float32BufferAttribute, Points, PointsMaterial, MeshBasicMaterial, RingGeometry, SRGBColorSpace } from 'three'
 import type { ArchivesLayout, Lang, Placement } from '../../types'
 import { isOverlayOpen, useGame } from '../../state/gameStore'
 import { player } from '../../state/runtime'
@@ -35,6 +35,32 @@ const particleGeometry = new BufferGeometry()
 }
 const particleMaterial = new PointsMaterial({ color: RING_TINT, size: 0.05, transparent: true, opacity: 0.85, sizeAttenuation: true })
 
+// Flaque de lumière au sol, sous chaque anneau : « bien posée », pas juste un anneau flottant sans
+// ancrage — un seul dégradé radial partagé par les deux portes (aller et retour).
+let groundGlowTexture: CanvasTexture | null = null
+function sharedGroundGlow(): CanvasTexture {
+  if (groundGlowTexture) return groundGlowTexture
+  const size = 128
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')
+  if (ctx) {
+    const g = ctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2)
+    g.addColorStop(0, 'rgba(127, 214, 232, 0.55)')
+    g.addColorStop(0.7, 'rgba(127, 214, 232, 0.18)')
+    g.addColorStop(1, 'rgba(127, 214, 232, 0)')
+    ctx.fillStyle = g
+    ctx.fillRect(0, 0, size, size)
+  }
+  groundGlowTexture = new CanvasTexture(canvas)
+  groundGlowTexture.colorSpace = SRGBColorSpace
+  groundGlowTexture.needsUpdate = true
+  return groundGlowTexture
+}
+const groundGlowGeometry = new RingGeometry(0, PORTAL_RING_RADIUS * 1.6, 24)
+const groundGlowMaterial = new MeshBasicMaterial({ map: sharedGroundGlow(), transparent: true, toneMapped: false, depthWrite: false })
+
 function PortalRing({ placement, subtitleKey, lang }: { placement: Placement; subtitleKey: 'toArchives' | 'toHall'; lang: Lang }) {
   const signTex = useMemo(() => drawGateSign(subtitleKey, lang), [subtitleKey, lang])
   const particlesRef = useRef<Points>(null)
@@ -43,6 +69,7 @@ function PortalRing({ placement, subtitleKey, lang }: { placement: Placement; su
   })
   return (
     <group position={[placement.position.x, 0, placement.position.z]} rotation-y={placement.rotationY}>
+      <mesh geometry={groundGlowGeometry} material={groundGlowMaterial} rotation-x={-Math.PI / 2} position={[0, 0.02, 0]} />
       <DecorModel path={ARCHIVES_MODELS.portalRing} tint={RING_TINT} position={[0, 0, 0]} scale={RING_SCALE} />
       <points ref={particlesRef} geometry={particleGeometry} material={particleMaterial} />
       <mesh position={[0, 2.5, 0.55]}>

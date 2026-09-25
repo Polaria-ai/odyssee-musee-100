@@ -40,16 +40,26 @@ function sortSessions(sessions: EveningSession[]): EveningSession[] {
  * Candidats de la frise, rangée par rangée en descendant depuis l'entrée (sud) vers l'Archiviste
  * (nord) : chaque rangée aligne `ROW_X_OFFSETS.length` vitrines, toutes face à +Z. Fonction pure,
  * indépendante du nombre de séquences réelles : testée pour une capacité ≥ 24 (voir layout.test.ts).
+ *
+ * Rangées en serpentin (une sur deux part de l'autre côté) : deux séquences consécutives du
+ * programme restent donc toujours des vitrines VOISINES. Avec des rangées systématiquement dans le
+ * même sens (ouest → est à chaque fois), le tracé au sol qui relie les vitrines dans l'ordre du
+ * programme (`room/textures.ts::paintArchivesFloor`) devait sinon revenir d'un bord à l'autre de la
+ * salle à chaque changement de rangée — une ligne en diagonale qui barrait l'image, régression
+ * constatée à la vérification visuelle.
  */
 function buildCandidates(bounds: AABB, originX: number): Candidate[] {
   const candidates: Candidate[] = []
   const firstRowZ = bounds.maxZ - ENTRANCE_CLEARANCE
   const lastRowZ = bounds.minZ + NORTH_CLEARANCE
+  let rowIndex = 0
   for (let z = firstRowZ; z >= lastRowZ; z -= ROW_DEPTH) {
-    for (const dx of ROW_X_OFFSETS) {
+    const offsets = rowIndex % 2 === 0 ? ROW_X_OFFSETS : [...ROW_X_OFFSETS].reverse()
+    for (const dx of offsets) {
       const x = originX + dx
       candidates.push({ position: [x, SOCLE_HEIGHT, z], rotationY: 0, viewPoint: { x, z: z + VITRINE_VIEW_DISTANCE } })
     }
+    rowIndex += 1
   }
   return candidates
 }

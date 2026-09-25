@@ -9,13 +9,13 @@
  * second rendu ici doublonnerait la silhouette et la détection de proximité.
  */
 import { useMemo } from 'react'
-import { BoxGeometry, CylinderGeometry, MeshLambertMaterial } from 'three'
-import type { ArchivesLayout, EveningSession, Lang } from '../../types'
-import { wingThemes } from '../../styles/tokens'
-import { drawArchivesFloor, drawProvisionalBanner } from './textures'
+import { BoxGeometry, CylinderGeometry, MeshBasicMaterial, MeshLambertMaterial } from 'three'
+import type { ArchivesLayout, Lang } from '../../types'
+import { wingThemes, palette } from '../../styles/tokens'
+import { archivesCeilingTexture, drawArchivesFloor, drawArchivistBackdrop, drawEntranceSign } from './textures'
 import { ARCHIVES_MODELS } from './models'
 import { DecorModel } from './DecorModel'
-import { SOUTH_WALL_CUT_HEIGHT, WALL_HEIGHT, WALL_THICKNESS } from './constants'
+import { CEILING_HEIGHT, NORTH_WALL_HEIGHT, SIDE_WALL_HEIGHT, SOUTH_WALL_CUT_HEIGHT, WALL_HEIGHT, WALL_THICKNESS } from './constants'
 
 const theme = wingThemes.archives
 
@@ -24,16 +24,25 @@ const PILLAR_MATERIAL = new MeshLambertMaterial({ color: theme.trim })
 const RIB_MATERIAL = new MeshLambertMaterial({ color: theme.accent, emissive: theme.accent, emissiveIntensity: 0.12 })
 const WALL_MATERIAL = new MeshLambertMaterial({ color: theme.wall })
 const TRIM_MATERIAL = new MeshLambertMaterial({ color: theme.accent })
-
-function hourOf(sessions: EveningSession[], sessionId: string): string {
-  return sessions.find((s) => s.id === sessionId)?.startTime ?? ''
-}
+const CEILING_MATERIAL = new MeshBasicMaterial({ map: archivesCeilingTexture(), toneMapped: false })
+// Colonne lumineuse (flanque l'Archiviste) : une seule géométrie/matériau partagés pour les deux
+// instances, comme le reste du module.
+const LIGHT_COLUMN_GEO = new CylinderGeometry(0.1, 0.13, NORTH_WALL_HEIGHT - 0.6, 10)
+const LIGHT_COLUMN_MATERIAL = new MeshLambertMaterial({ color: theme.accent, emissive: theme.accent, emissiveIntensity: 0.5 })
+const LIGHT_COLUMN_CAP_GEO = new CylinderGeometry(0.16, 0.16, 0.08, 10)
+const LIGHT_COLUMN_CAP_MATERIAL = new MeshLambertMaterial({ color: palette.gold, emissive: palette.gold, emissiveIntensity: 0.6 })
+// Banc bas (une seule boîte, mobile-first) : bois clair, à la couleur du hall pour ancrer le lien
+// avec le reste du musée (« 2040 mais cosy »).
+const BENCH_GEO = new BoxGeometry(1.3, 0.32, 0.44)
+const BENCH_MATERIAL = new MeshLambertMaterial({ color: palette.wood })
+// Plaque murale (panneau) : une seule géométrie/matériau réutilisés le long des murs latéraux.
+const WALL_PANEL_GEO = new BoxGeometry(0.06, 2.2, 1.5)
+const WALL_PANEL_MATERIAL = new MeshLambertMaterial({ color: palette.paper, emissive: theme.accent, emissiveIntensity: 0.05 })
 
 /** Sol de la galerie : une seule texture (frise + repères), un seul mesh. */
-function Floor({ archives, sessions, lang }: { archives: ArchivesLayout; sessions: EveningSession[]; lang: Lang }) {
+function Floor({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
   const b = archives.room.bounds
-  const hours = useMemo(() => archives.slots.map((s) => hourOf(sessions, s.sessionId)), [archives.slots, sessions])
-  const tex = useMemo(() => drawArchivesFloor(b, archives.slots, hours, lang), [b, archives.slots, hours, lang])
+  const tex = useMemo(() => drawArchivesFloor(b, archives.slots, lang), [b, archives.slots, lang])
   return (
     <mesh rotation-x={-Math.PI / 2} position={[(b.minX + b.maxX) / 2, 0, (b.minZ + b.maxZ) / 2]}>
       <planeGeometry args={[b.maxX - b.minX, b.maxZ - b.minZ]} />
@@ -42,24 +51,56 @@ function Floor({ archives, sessions, lang }: { archives: ArchivesLayout; session
   )
 }
 
-/** Les 4 murs (sud coupé bas, comme le hall : jamais rien de haut entre la caméra et le joueur). */
+/** Plafond : voûte sombre et douce qui ferme la vue vers le haut (voir constants.ts::CEILING_HEIGHT :
+ * la caméra fixe, assez reculée et surélevée, cadrerait sinon une bonne partie du ciel de fond). */
+function Ceiling({ archives }: { archives: ArchivesLayout }) {
+  const b = archives.room.bounds
+  return (
+    <mesh rotation-x={Math.PI / 2} position={[(b.minX + b.maxX) / 2, CEILING_HEIGHT, (b.minZ + b.maxZ) / 2]} material={CEILING_MATERIAL}>
+      <planeGeometry args={[b.maxX - b.minX + 1, b.maxZ - b.minZ + 1]} />
+    </mesh>
+  )
+}
+
+/** Les 4 murs (sud coupé bas, comme le hall : jamais rien de haut entre la caméra et le joueur). Les
+ * murs latéraux et le mur nord (derrière l'Archiviste) montent nettement plus haut que
+ * `WALL_HEIGHT` (piliers décoratifs) : voir `constants.ts::SIDE_WALL_HEIGHT` / `NORTH_WALL_HEIGHT`
+ * pour le calcul (fermer le champ de vision de la caméra fixe au plus près des vitrines/de
+ * l'Archiviste). Le plafond (`Ceiling`) monte au moins aussi haut que les deux. */
 function Walls({ archives }: { archives: ArchivesLayout }) {
   const b = archives.room.bounds
   const width = b.maxX - b.minX
   const depth = b.maxZ - b.minZ
   const southGeo = useMemo(() => new BoxGeometry(width, SOUTH_WALL_CUT_HEIGHT, WALL_THICKNESS), [width])
-  const northGeo = useMemo(() => new BoxGeometry(width, WALL_HEIGHT, WALL_THICKNESS), [width])
-  const sideGeo = useMemo(() => new BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, depth), [depth])
+  const northGeo = useMemo(() => new BoxGeometry(width, NORTH_WALL_HEIGHT, WALL_THICKNESS), [width])
+  const sideGeo = useMemo(() => new BoxGeometry(WALL_THICKNESS, SIDE_WALL_HEIGHT, depth), [depth])
   return (
     <>
       <mesh geometry={southGeo} material={WALL_MATERIAL} position={[(b.minX + b.maxX) / 2, SOUTH_WALL_CUT_HEIGHT / 2, b.maxZ]} />
-      <mesh geometry={northGeo} material={WALL_MATERIAL} position={[(b.minX + b.maxX) / 2, WALL_HEIGHT / 2, b.minZ]} />
-      <mesh geometry={sideGeo} material={WALL_MATERIAL} position={[b.minX, WALL_HEIGHT / 2, (b.minZ + b.maxZ) / 2]} />
-      <mesh geometry={sideGeo} material={WALL_MATERIAL} position={[b.maxX, WALL_HEIGHT / 2, (b.minZ + b.maxZ) / 2]} />
+      <mesh geometry={northGeo} material={WALL_MATERIAL} position={[(b.minX + b.maxX) / 2, NORTH_WALL_HEIGHT / 2, b.minZ]} />
+      <mesh geometry={sideGeo} material={WALL_MATERIAL} position={[b.minX, SIDE_WALL_HEIGHT / 2, (b.minZ + b.maxZ) / 2]} />
+      <mesh geometry={sideGeo} material={WALL_MATERIAL} position={[b.maxX, SIDE_WALL_HEIGHT / 2, (b.minZ + b.maxZ) / 2]} />
       {/* Bandeau lumineux au pied du mur nord, à la couleur de la salle (panneaux, voir docs/DESIGN.md). */}
       <mesh position={[(b.minX + b.maxX) / 2, 0.06, b.minZ + WALL_THICKNESS / 2 + 0.01]} material={TRIM_MATERIAL}>
         <boxGeometry args={[width - 0.6, 0.1, 0.05]} />
       </mesh>
+    </>
+  )
+}
+
+/** Panneaux clairs le long des murs latéraux (« murs clairs à panneaux », voir docs/DESIGN.md) : une
+ * plaque crème encastrée, quelques exemplaires fixes de chaque côté — jamais un mur totalement nu. */
+function WallPanels({ archives }: { archives: ArchivesLayout }) {
+  const b = archives.room.bounds
+  const zs = [b.minZ + (b.maxZ - b.minZ) * 0.28, b.minZ + (b.maxZ - b.minZ) * 0.62]
+  return (
+    <>
+      {zs.map((z) => (
+        <mesh key={`w-${z}`} geometry={WALL_PANEL_GEO} material={WALL_PANEL_MATERIAL} position={[b.minX + WALL_THICKNESS / 2 + 0.02, 1.5, z]} />
+      ))}
+      {zs.map((z) => (
+        <mesh key={`e-${z}`} geometry={WALL_PANEL_GEO} material={WALL_PANEL_MATERIAL} position={[b.maxX - WALL_THICKNESS / 2 - 0.02, 1.5, z]} />
+      ))}
     </>
   )
 }
@@ -86,7 +127,9 @@ function CornerPillars({ archives }: { archives: ArchivesLayout }) {
   )
 }
 
-/** Deux arches de plafond, comme des côtes de vaisseau, purement décoratives. */
+/** Deux arches de plafond, comme des côtes de vaisseau, purement décoratives : accrochées juste sous
+ * le plafond (`CEILING_HEIGHT`, pas `WALL_HEIGHT` qui n'est que la hauteur des piliers d'angle) pour
+ * rester visuellement des arches DE PLAFOND quelle que soit la hauteur de ce dernier. */
 function CeilingRibs({ archives }: { archives: ArchivesLayout }) {
   const b = archives.room.bounds
   const width = b.maxX - b.minX
@@ -95,7 +138,7 @@ function CeilingRibs({ archives }: { archives: ArchivesLayout }) {
   return (
     <>
       {zs.map((z) => (
-        <mesh key={z} geometry={ribGeo} material={RIB_MATERIAL} position={[(b.minX + b.maxX) / 2, WALL_HEIGHT - 0.2, z]} />
+        <mesh key={z} geometry={ribGeo} material={RIB_MATERIAL} position={[(b.minX + b.maxX) / 2, CEILING_HEIGHT - 0.2, z]} />
       ))}
     </>
   )
@@ -114,27 +157,73 @@ function Accents({ archives }: { archives: ArchivesLayout }) {
   )
 }
 
-/** Bandeau « Programme provisoire », posé debout près de l'arrivée. */
-function ProvisionalSign({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
-  const tex = useMemo(() => drawProvisionalBanner(lang), [lang])
+/** Grand panneau d'entrée (titre + date + mention provisoire), bien en vue depuis l'arrivée — comme
+ * la grande bannière du hall (docs/DESIGN.md). Remplace l'ancien petit bandeau isolé. */
+function EntranceSign({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
+  const tex = useMemo(() => drawEntranceSign(lang), [lang])
   const a = archives.arrival.position
+  // Pas de rotation : le plan par défaut fait face à +Z, exactement le côté d'où le joueur
+  // regarde (caméra fixe vers −Z, voir docs/DESIGN.md) — un `rotation-y={Math.PI}` ici tournerait
+  // le panneau dos à la caméra (constat de vérification visuelle : c'était le bug de l'ancien
+  // `ProvisionalSign`, invisible depuis l'arrivée ; comparer aux panneaux de la Porte de 2040 dans
+  // `Portal.tsx`, qui n'appliquent eux-mêmes aucune rotation sur le plan du panneau).
   return (
-    <mesh position={[a.x, 1.7, a.z - 1.4]} rotation-y={Math.PI}>
-      <planeGeometry args={[1.4, 0.35]} />
+    <mesh position={[a.x, 2.05, a.z - 2.2]}>
+      <planeGeometry args={[2.6, 0.9]} />
       <meshBasicMaterial map={tex} toneMapped={false} transparent />
     </mesh>
   )
 }
 
-export function RoomShell({ archives, sessions, lang }: { archives: ArchivesLayout; sessions: EveningSession[]; lang: Lang }) {
+/** Deux bancs bas contre les murs latéraux, près de l'arrivée : un peu de mobilier « musée cosy »,
+ * hors du chemin de marche (les colonnes de vitrines s'arrêtent à `ROW_X_OFFSETS`, voir constants.ts). */
+function Benches({ archives }: { archives: ArchivesLayout }) {
+  const b = archives.room.bounds
+  const z = b.maxZ - 3.6
   return (
     <>
-      <Floor archives={archives} sessions={sessions} lang={lang} />
+      <mesh geometry={BENCH_GEO} material={BENCH_MATERIAL} position={[b.minX + 1.0, 0.16, z]} rotation-y={Math.PI / 2} />
+      <mesh geometry={BENCH_GEO} material={BENCH_MATERIAL} position={[b.maxX - 1.0, 0.16, z]} rotation-y={Math.PI / 2} />
+    </>
+  )
+}
+
+/** Halo derrière l'Archiviste et deux colonnes lumineuses qui l'encadrent : la vue « fond de salle »
+ * (vérification visuelle) montrait un mur nu très en retrait de l'hologramme, avec beaucoup de vide. */
+function ArchivistSurround({ archives }: { archives: ArchivesLayout }) {
+  const b = archives.room.bounds
+  const p = archives.archivist.position
+  const backdropTex = useMemo(() => drawArchivistBackdrop(), [])
+  const columnZ = b.minZ + 0.5
+  return (
+    <>
+      {/* Pas de rotation non plus ici (même remarque que `EntranceSign`) : le plan par défaut fait déjà
+          face à +Z, vers la caméra. */}
+      <mesh position={[p.x, 2.2, b.minZ + WALL_THICKNESS / 2 + 0.03]}>
+        <planeGeometry args={[3.6, 3.6]} />
+        <meshBasicMaterial map={backdropTex} toneMapped={false} transparent depthWrite={false} />
+      </mesh>
+      <mesh geometry={LIGHT_COLUMN_GEO} material={LIGHT_COLUMN_MATERIAL} position={[p.x - 1.9, (NORTH_WALL_HEIGHT - 0.6) / 2, columnZ]} />
+      <mesh geometry={LIGHT_COLUMN_GEO} material={LIGHT_COLUMN_MATERIAL} position={[p.x + 1.9, (NORTH_WALL_HEIGHT - 0.6) / 2, columnZ]} />
+      <mesh geometry={LIGHT_COLUMN_CAP_GEO} material={LIGHT_COLUMN_CAP_MATERIAL} position={[p.x - 1.9, NORTH_WALL_HEIGHT - 0.64, columnZ]} />
+      <mesh geometry={LIGHT_COLUMN_CAP_GEO} material={LIGHT_COLUMN_CAP_MATERIAL} position={[p.x + 1.9, NORTH_WALL_HEIGHT - 0.64, columnZ]} />
+    </>
+  )
+}
+
+export function RoomShell({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
+  return (
+    <>
+      <Floor archives={archives} lang={lang} />
+      <Ceiling archives={archives} />
       <Walls archives={archives} />
+      <WallPanels archives={archives} />
       <CornerPillars archives={archives} />
       <CeilingRibs archives={archives} />
       <Accents archives={archives} />
-      <ProvisionalSign archives={archives} lang={lang} />
+      <ArchivistSurround archives={archives} />
+      <Benches archives={archives} />
+      <EntranceSign archives={archives} lang={lang} />
     </>
   )
 }

@@ -12,17 +12,49 @@
  * pas accrochées aux murs.
  */
 
-/** Emprise intérieure (sol marchable) : ≈ 24 × 20 m, centrée sur `ARCHIVES_ORIGIN`. */
-export const ROOM_HALF_WIDTH = 12
+/** Emprise intérieure (sol marchable) : ≈ 20 × 20 m, centrée sur `ARCHIVES_ORIGIN`. Resserrée par
+ * rapport à la première version (24 × 20 m, colonnes tous les 5 m) : à la vérification visuelle, la
+ * salle laissait un grand aplat de sol vide sur les côtés sans se sentir plus spacieuse pour autant —
+ * voir aussi `ROW_X_OFFSETS`. */
+export const ROOM_HALF_WIDTH = 10
 export const ROOM_HALF_DEPTH = 10
 
 export const WALL_THICKNESS = 0.4
+/** Hauteur des piliers d'angle décoratifs (`CornerPillars`) uniquement — PAS celle des murs (voir
+ * `SIDE_WALL_HEIGHT` / `NORTH_WALL_HEIGHT`, nettement plus hauts). Des piliers d'accent modestes
+ * devant un mur-fond plus haut, comme un lampadaire devant un immeuble : volontairement pas mis à
+ * l'échelle du mur, sous peine de piliers filiformes (rayon 0,24–0,28 m) sur plus de 10 m. */
 export const WALL_HEIGHT = 4.4
 /** Hauteur du mur sud (côté caméra), coupé bas comme le hall : jamais rien de haut entre la caméra et le joueur. */
 export const SOUTH_WALL_CUT_HEIGHT = 1.1
+/**
+ * Hauteur des murs latéraux (est/ouest) réellement rendus (`RoomShell::Walls`, mesh `sideGeo`) — PAS
+ * la même chose que `WALL_HEIGHT` (piliers décoratifs uniquement, voir plus haut). Calculée pour
+ * fermer le champ de vision au pire cas : une vitrine à seulement 2 m du mur (`ROW_X_OFFSETS` = ±8,
+ * `ROOM_HALF_WIDTH` = 10), avec la caméra fixe — à la même position X que le joueur, donc elle aussi à
+ * 2 m du mur — qui recule à `cameraRig.maxDistance` en portrait pour garder `targetVisibleWidth`
+ * malgré un champ de vision étroit, et grimpe d'autant en hauteur (~13,6 m). Un rayon tiré vers le bord
+ * HAUT de l'écran (le moins incliné vers le bas du frustum, ~17° sous l'horizontale) traverse encore
+ * le plan du mur à ~10,8 m de haut (iPhone 13 portrait ; ~10,2 m sur Pixel 7 portrait) : un mur à
+ * `WALL_HEIGHT` (4,4 m) laisse donc passer un grand triangle de ciel au-dessus, quel que soit l'appareil
+ * (constaté aussi en paysage, ~6,9 m requis). Fixé à 12 m (marge ≈ 1,2 m sur le pire cas mesuré).
+ */
+export const SIDE_WALL_HEIGHT = 12
+/**
+ * Hauteur du mur nord (derrière l'Archiviste) : même calcul que `SIDE_WALL_HEIGHT` mais pour le rayon
+ * qui traverse le plan du mur NORD (pas latéral), au point exact où le joueur s'arrête pour parler à
+ * l'Archiviste (1,8 m au sud de `archivist.position`, donc ~3,4 m du mur nord). Un premier correctif
+ * avait relevé cette hauteur à 6,6 m (voir historique), mais le calcul montre qu'il fallait ~9,0 m en
+ * portrait (le cas le plus fréquent, caméra reculée à `cameraRig.maxDistance`) — d'où la bande de ciel
+ * réapparue à la vérification visuelle malgré ce premier correctif. Fixé à 10,5 m (marge ≈ 1,5 m).
+ */
+export const NORTH_WALL_HEIGHT = 10.5
+/** Plafond (`RoomShell::Ceiling`) : au moins aussi haut que le plus haut des deux murs ci-dessus, sinon
+ * ce mur le dépasserait visuellement (silhouette qui perce le plafond depuis certains points de vue). */
+export const CEILING_HEIGHT = Math.max(SIDE_WALL_HEIGHT, NORTH_WALL_HEIGHT)
 
 /** Décalages en X (depuis `ARCHIVES_ORIGIN.x`) des vitrines d'une même rangée, du nord au sud repris à chaque rangée. */
-export const ROW_X_OFFSETS = [-10, -5, 0, 5, 10] as const
+export const ROW_X_OFFSETS = [-8, -4, 0, 4, 8] as const
 /** Pas entre deux rangées consécutives (mesuré entre leurs centres, le long de Z). */
 export const ROW_DEPTH = 3.0
 /** Distance entre une vitrine et le point de vue où le joueur doit se tenir pour la consulter (au sud, puisqu'elle fait face à +Z). */
