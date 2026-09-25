@@ -1,12 +1,26 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { useGame } from '../state/gameStore'
+import { isOverlayOpen, useGame } from '../state/gameStore'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import { buildMuseumLayout } from '../world/layout'
 import { Hud } from './Hud'
 
+// Module audio : stub d'un autre agent, no-op tant que le son est coupé. On vérifie ici seulement
+// que Hud l'appelle avec le bon identifiant, pas un comportement sonore réel.
+const playSfxMock = vi.fn()
+vi.mock('../audio', () => ({
+  playSfx: (...args: unknown[]) => playSfxMock(...args),
+}))
+vi.mock('../audio/SoundToggle', () => ({ SoundToggle: () => null }))
+
 describe('Hud', () => {
   beforeEach(() => {
+    playSfxMock.mockClear()
+    try {
+      localStorage.clear()
+    } catch {
+      // jsdom fournit toujours localStorage en test ; ignoré par cohérence avec le code applicatif.
+    }
     const people = generatePlaceholderPeople(6)
     useGame.setState({
       screen: 'play',
@@ -20,6 +34,9 @@ describe('Hud', () => {
       peersCount: 0,
       dialogue: null,
       openPersonId: null,
+      stampCardOpen: false,
+      visited: {},
+      mapOpen: false,
     })
   })
 
@@ -60,5 +77,54 @@ describe('Hud', () => {
     useGame.setState({ peersCount: 4 })
     render(<Hud />)
     expect(screen.getAllByTestId('peers-count')[0].textContent).toBe('4')
+  })
+
+  it('joue un clic sur les boutons du HUD', () => {
+    useGame.setState({ nearCurator: true })
+    render(<Hud />)
+
+    fireEvent.click(screen.getByTestId('hud-lang'))
+    fireEvent.click(screen.getByTestId('stamps-button'))
+    fireEvent.click(screen.getByTestId('action-button'))
+    expect(playSfxMock).toHaveBeenCalledWith('click')
+    expect(playSfxMock.mock.calls.filter((c) => c[0] === 'click')).toHaveLength(3)
+  })
+
+  it('ouvre le plan du musée (état partagé isOverlayOpen), et le ferme via ✕ puis Échap', () => {
+    render(<Hud />)
+
+    expect(screen.queryByTestId('museum-map')).not.toBeInTheDocument()
+    expect(isOverlayOpen(useGame.getState())).toBe(false)
+    fireEvent.click(screen.getByTestId('map-button'))
+
+    const map = screen.getByTestId('museum-map')
+    expect(map).toBeInTheDocument()
+    expect(map).toHaveAttribute('role', 'dialog')
+    // `mapOpen` vit dans `src/state/gameStore.ts` et compte dans `isOverlayOpen` : `App` s'appuie
+    // là-dessus pour couper `useKeyboardControls` et démonter `TouchJoystick` pendant l'ouverture.
+    expect(useGame.getState().mapOpen).toBe(true)
+    expect(isOverlayOpen(useGame.getState())).toBe(true)
+
+    fireEvent.click(screen.getByTestId('map-close'))
+    expect(screen.queryByTestId('museum-map')).not.toBeInTheDocument()
+    expect(useGame.getState().mapOpen).toBe(false)
+    expect(isOverlayOpen(useGame.getState())).toBe(false)
+
+    fireEvent.click(screen.getByTestId('map-button'))
+    expect(screen.getByTestId('museum-map')).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(screen.queryByTestId('museum-map')).not.toBeInTheDocument()
+    expect(useGame.getState().mapOpen).toBe(false)
+  })
+
+  it('le plan affiche les ailes et les portraits vus par aile', () => {
+    const people = useGame.getState().people
+    useGame.setState({ visited: { [people[0].id]: Date.now() } })
+    render(<Hud />)
+
+    fireEvent.click(screen.getByTestId('map-button'))
+    const map = screen.getByTestId('museum-map')
+    // 6 fiches d'attente réparties ~2/2/2 sur les trois ailes (voir generatePlaceholderPeople).
+    expect(map.textContent).toMatch(/1\/2/)
   })
 })

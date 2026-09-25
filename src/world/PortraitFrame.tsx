@@ -40,7 +40,16 @@ function sharedBubbleMaterial(): MeshBasicMaterial {
   return bubbleMaterial
 }
 
-export function PortraitFrame({ frame, person }: { frame: FrameSlot; person: Person }) {
+/**
+ * État de fondu d'une cimaise (voir `Occluder`, `occlusion.ts`, `Museum.tsx`) : objet mutable simple
+ * (pas de `useState`/ref three.js), mis à jour par `Museum` dans son propre `useFrame` et relu ici
+ * dans le nôtre. Un cadre dont la cimaise n'occulte personne reste à `opacity: 1` en permanence.
+ */
+export interface FrameFade {
+  opacity: number
+}
+
+export function PortraitFrame({ frame, person, fade }: { frame: FrameSlot; person: Person; fade?: FrameFade }) {
   const lang = useGame((s) => s.lang)
   const highlighted = useGame((s) => s.nearbyPersonId === person.id)
 
@@ -77,14 +86,34 @@ export function PortraitFrame({ frame, person }: { frame: FrameSlot; person: Per
     bubbleRef.current.position.y = tokenDims.frameHeight / 2 + 0.45 + Math.sin(clock.elapsedTime * BOB_SPEED) * BOB_RANGE
   })
 
+  // Cadre accroché à une cimaise occultante (voir `Occluder`) : matériaux PROPRES à cette instance
+  // (jamais `FRAME_MATERIAL`/`FRAME_MATERIAL_HIGHLIGHT`, partagés par tous les autres cadres), pour
+  // pouvoir suivre son fondu sans jamais l'imposer aux cadres non concernés. `useMemo([fade])` : la
+  // présence de `fade` ne change jamais après montage (mission occultation figée par le plan), donc
+  // ces instances sont créées une seule fois.
+  const borderMaterial = useMemo(() => (fade ? new MeshLambertMaterial({ color: palette.gold, transparent: true, depthWrite: false }) : null), [fade])
+  const paintingMatRef = useRef<MeshBasicMaterial>(null)
+  const cartelMatRef = useRef<MeshBasicMaterial>(null)
+
+  useFrame(() => {
+    if (!fade) return
+    const o = fade.opacity
+    if (borderMaterial) {
+      borderMaterial.opacity = o
+      borderMaterial.emissiveIntensity = highlighted ? 0.35 : 0
+    }
+    if (paintingMatRef.current) paintingMatRef.current.opacity = o
+    if (cartelMatRef.current) cartelMatRef.current.opacity = o
+  })
+
   return (
     <group position={frame.position} rotation-y={frame.rotationY}>
-      <mesh position={[0, 0, -0.03]} geometry={FRAME_BORDER_GEO} material={highlighted ? FRAME_MATERIAL_HIGHLIGHT : FRAME_MATERIAL} />
+      <mesh position={[0, 0, -0.03]} geometry={FRAME_BORDER_GEO} material={borderMaterial ?? (highlighted ? FRAME_MATERIAL_HIGHLIGHT : FRAME_MATERIAL)} />
       <mesh geometry={PAINTING_GEO}>
-        <meshBasicMaterial map={paintingTex} toneMapped={false} />
+        <meshBasicMaterial ref={paintingMatRef} map={paintingTex} toneMapped={false} transparent={!!fade} depthWrite={!fade} />
       </mesh>
       <mesh position={[0, -tokenDims.frameHeight / 2 - CARTEL_GAP - CARTEL_HEIGHT / 2, 0.001]} geometry={CARTEL_GEO}>
-        <meshBasicMaterial map={cartelTex} toneMapped={false} />
+        <meshBasicMaterial ref={cartelMatRef} map={cartelTex} toneMapped={false} transparent={!!fade} depthWrite={!fade} />
       </mesh>
       {highlighted && (
         <mesh ref={bubbleRef} position={[0, tokenDims.frameHeight / 2 + 0.45, 0.02]} geometry={BUBBLE_GEO} material={sharedBubbleMaterial()} />

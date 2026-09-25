@@ -15,8 +15,16 @@ vi.mock('../../npc/minerveScript', () => ({
   }),
 }))
 
+// Le module audio (stub d'un autre agent) est no-op tant que le son est coupé ; on vérifie ici
+// seulement que useStampWatcher l'appelle avec le bon identifiant, pas un comportement sonore.
+const playSfxMock = vi.fn()
+vi.mock('../../audio', () => ({
+  playSfx: (...args: unknown[]) => playSfxMock(...args),
+}))
+
 describe('useStampWatcher', () => {
   beforeEach(() => {
+    playSfxMock.mockClear()
     const people = generatePlaceholderPeople(9) // 3 personnes par aile
     useGame.setState({
       visited: {},
@@ -39,22 +47,24 @@ describe('useStampWatcher', () => {
     })
   }
 
-  it('attribue un tampon, affiche un toast et ouvre le dialogue de Minerve quand le seuil est atteint', () => {
+  it('attribue un tampon, affiche un toast, joue le son et ouvre le dialogue de Minerve quand le seuil est atteint', () => {
     renderHook(() => useStampWatcher())
     visitWing('infrastructures')
 
     expect(useGame.getState().stamps.infrastructures).toBeTypeOf('number')
     expect(useGame.getState().toast).not.toBeNull()
     expect(useGame.getState().dialogue?.id).toBe('stamp')
+    expect(playSfxMock).toHaveBeenCalledWith('stamp')
   })
 
-  it('ne ré-attribue pas un tampon déjà obtenu (persisté au rechargement)', () => {
+  it('ne ré-attribue pas un tampon déjà obtenu (persisté au rechargement) et ne rejoue pas le son', () => {
     useGame.setState({ stamps: { infrastructures: 123 } })
     renderHook(() => useStampWatcher())
     visitWing('infrastructures')
 
     expect(useGame.getState().stamps.infrastructures).toBe(123)
     expect(useGame.getState().dialogue).toBeNull()
+    expect(playSfxMock).not.toHaveBeenCalledWith('stamp')
   })
 
   it('met en file le dialogue de tampon si un dialogue est déjà ouvert, et le rejoue à sa fermeture', () => {
@@ -75,7 +85,7 @@ describe('useStampWatcher', () => {
     expect(useGame.getState().dialogue?.id).toBe('stamp')
   })
 
-  it('à la complétion des trois ailes, enchaîne le dialogue « complete » puis ouvre le carnet', () => {
+  it('à la complétion des trois ailes, joue le son « complete », enchaîne le dialogue puis ouvre le carnet', () => {
     renderHook(() => useStampWatcher())
     useGame.setState({ stamps: { infrastructures: 1, industrialisation: 2 } })
 
@@ -83,6 +93,8 @@ describe('useStampWatcher', () => {
 
     expect(useGame.getState().dialogue?.id).toBe('stamp')
     expect(useGame.getState().stampCardOpen).toBe(false)
+    expect(playSfxMock).toHaveBeenCalledWith('stamp')
+    expect(playSfxMock).toHaveBeenCalledWith('complete')
 
     act(() => {
       useGame.getState().closeDialogue()

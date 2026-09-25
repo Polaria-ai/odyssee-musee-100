@@ -6,7 +6,12 @@ import type { AABB, ExhibitWingId, FrameSlot, MuseumLayout, Person, Placement, R
 import { EXHIBIT_WINGS } from '../types'
 import { wingThemes } from '../styles/tokens'
 import {
+  BENCH_HEIGHT,
+  CAMERA_CUT_HEIGHT,
+  CIMAISE_HEIGHT,
   CIMAISE_THICKNESS,
+  COLUMN_HEIGHT,
+  COLUMN_RADIUS,
   COUNTER_HALF_DEPTH,
   COUNTER_HALF_WIDTH,
   CURATOR_COUNTER_OFFSET_Z,
@@ -14,8 +19,11 @@ import {
   dims,
   END_MARGIN,
   FRAME_WALL_OFFSET,
+  FURNITURE_HEIGHT,
   HALL_HALF_DEPTH,
   HALL_HALF_WIDTH,
+  JARDINIERE_HEIGHT,
+  JARDINIERE_RADIUS,
   NEAR_MARGIN,
   NORTH_ROW_DEPTH,
   NORTH_ROW_HALF_SPAN,
@@ -45,23 +53,63 @@ export interface ArchBox {
   box: AABB
   kind: 'wall' | 'furniture'
   cut: boolean
+  /** Hauteur explicite (sinon : `CAMERA_CUT_HEIGHT`/`dims.wallHeight` pour un mur, `FURNITURE_HEIGHT` pour un meuble, voir `archBoxHeight`). */
+  height?: number
+  /** Vrai : collider seulement, pas de rendu générique (une géométrie dédiée le dessine ailleurs — ex. colonnes, comptoir). */
+  hidden?: boolean
+}
+
+/** Hauteur (depuis le sol) d'un `ArchBox`, pour le rendu (`roomGeometry.ts`) et les tests d'occultation. */
+export function archBoxHeight(w: ArchBox): number {
+  if (w.height !== undefined) return w.height
+  if (w.kind === 'wall') return w.cut ? CAMERA_CUT_HEIGHT : dims.wallHeight
+  return FURNITURE_HEIGHT
+}
+
+/**
+ * Cimaise ou cloison intérieure susceptible de se placer entre la caméra (toujours au sud du joueur,
+ * voir `occlusion.ts`) et le joueur : rendue en mesh séparé (pas fusionnée dans la salle) pour pouvoir
+ * s'estomper indépendamment (voir `Museum.tsx`). `personIds` liste les cadres accrochés à CETTE
+ * cimaise : leurs cadre/toile/cartel suivent le même fondu qu'elle (mission occultation, V2).
+ */
+export interface Occluder {
+  id: string
+  wing: ExhibitWingId
+  box: AABB
+  height: number
+  personIds: string[]
+}
+
+interface OccluderBuild {
+  box: AABB
+  height: number
+  slotIndices: number[]
 }
 
 interface WingBuild {
   room: RoomLayout
   walls: ArchBox[]
+  occluders: OccluderBuild[]
   slots: FrameCandidate[]
   stampStation: Vec2
 }
 
-/** Décor fixe du hall (piliers, bancs, jardinières) : partagé avec le rendu (`Museum.tsx`). */
+/** Comptoir de Minerve, toujours au sud d'elle (voir `CURATOR_COUNTER_OFFSET_Z`). */
+const CURATOR_POSITION: Vec2 = { x: 0, z: -4.5 }
+
+/** Décor fixe du hall (piliers, bancs, jardinières, comptoir, arbre) : partagé avec le rendu (`Museum.tsx`). */
 export interface HallDecor {
   pillars: Vec2[]
   benches: Placement[]
   planters: Vec2[]
+  /** Comptoir arrondi de Minerve (plateau + façade) : rendu dédié, pas la géométrie « meuble » générique. */
+  counter: { center: Vec2; halfWidth: number; halfDepth: number }
+  /** Sculpture originale « l'Arbre des 100 » entourée d'un banc circulaire (collider). */
+  tree: { center: Vec2; benchRadius: number }
 }
 
 export function hallDecor(): HallDecor {
+  const counterCenter: Vec2 = { x: CURATOR_POSITION.x, z: CURATOR_POSITION.z + CURATOR_COUNTER_OFFSET_Z }
   return {
     pillars: [
       { x: -6.5, z: -5.5 },
@@ -79,6 +127,11 @@ export function hallDecor(): HallDecor {
       { x: -9.8, z: -7.2 },
       { x: 9.8, z: -7.2 },
     ],
+    counter: { center: counterCenter, halfWidth: COUNTER_HALF_WIDTH, halfDepth: COUNTER_HALF_DEPTH },
+    // Centré sur l'axe du comptoir mais bien au sud (z ≥ 0.5) : jamais atteint par le segment
+    // caméra→joueur « pire cas » de l'aile industrialisation (voir occlusion.test.ts et le
+    // commentaire de `MIN_TREE_Z` plus bas), quelle que soit la rangée regardée.
+    tree: { center: { x: 0, z: 2.5 }, benchRadius: 2.0 },
   }
 }
 
@@ -93,6 +146,10 @@ export interface MuseumArchitecture {
   rooms: Array<{ room: RoomLayout; walls: ArchBox[] }>
   decor: HallDecor
   doorArches: DoorArch[]
+  /** Cimaises/cloisons occultantes de toutes les ailes peuplées : voir `Occluder`. */
+  occluders: Occluder[]
+  /** Ailes sans aucune personne : porte fermée, panneau « Bientôt » (voir `worldStrings.wingComingSoon`). */
+  comingSoonWings: ExhibitWingId[]
 }
 
 function sortPeople(people: Person[]): Person[] {
@@ -102,8 +159,8 @@ function sortPeople(people: Person[]): Person[] {
 function wall(box: AABB, cut = false): ArchBox {
   return { box, kind: 'wall', cut }
 }
-function furniture(box: AABB): ArchBox {
-  return { box, kind: 'furniture', cut: false }
+function furniture(box: AABB, height?: number, hidden?: boolean): ArchBox {
+  return { box, kind: 'furniture', cut: false, height, hidden }
 }
 
 /**
@@ -115,6 +172,12 @@ function furniture(box: AABB): ArchBox {
  * plutôt que des cloisons perpendiculaires (« épis », face ±X, invisibles de face dans tous les cas).
  * Les cimaises intérieures démarrent après `NEAR_MARGIN` : le joueur peut se répartir librement entre
  * les couloirs juste après la porte, avant la première rangée.
+ *
+ * Seul le mur principal (lane 0) est un mur « dur » fusionné dans la salle : il est la limite nord de
+ * l'aile, donc jamais entre la caméra (toujours au sud du joueur) et le joueur. Les cimaises
+ * intérieures (lanes 1..N-1) sont en revanche systématiquement traversées par ce segment dès que le
+ * joueur regarde une rangée plus au nord qu'elles (c'est le bug V1 corrigé ici) : elles sont donc
+ * des `Occluder` séparés, jamais fusionnés dans la géométrie statique de la salle (voir `Museum.tsx`).
  */
 function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: number): WingBuild | null {
   if (count <= 0) return null
@@ -136,9 +199,13 @@ function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: 
   // Face « avant » (côté joueur, +Z) de chaque cimaise : le mur principal lui-même pour la 1ère,
   // puis la face sud de chaque cimaise intérieure suivante.
   const laneFrontZ: number[] = [wallZFar]
+  const laneOccluderIndex: Array<number | null> = [null] // lane 0 = mur principal, jamais occultant
+  const occluders: OccluderBuild[] = []
   for (let lane = 1; lane < XWING_LANE_COUNT; lane++) {
     const laneCenterZ = wallZFar + lane * XWING_LANE_STEP
-    walls.push(wall(xWall(laneCenterZ, laneStartX, farX, CIMAISE_THICKNESS)))
+    const box = xWall(laneCenterZ, laneStartX, farX, CIMAISE_THICKNESS)
+    occluders.push({ box, height: CIMAISE_HEIGHT, slotIndices: [] })
+    laneOccluderIndex.push(occluders.length - 1)
     laneFrontZ.push(laneCenterZ + CIMAISE_THICKNESS / 2)
   }
 
@@ -148,14 +215,17 @@ function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: 
     for (let lane = 0; lane < XWING_LANE_COUNT; lane++) {
       if (i * XWING_LANE_COUNT + lane >= count) break
       const z = laneFrontZ[lane] + FRAME_WALL_OFFSET
+      const slotIndex = slots.length
       slots.push({ position: [x, dims.frameCenterY, z], rotationY: 0, viewPoint: { x, z: z + VIEW_DISTANCE } })
+      const oi = laneOccluderIndex[lane]
+      if (oi !== null) occluders[oi].slotIndices.push(slotIndex)
     }
   }
 
   const bounds = aabb(hallWallX, farX, wallZFar, wallZNear)
   const stampStation: Vec2 = { x: hallWallX + dir * 1.2, z: wallZFar + 2 }
   const room: RoomLayout = { id: wing, bounds, label: roomLabels[wing], floorColor: wingThemes[wing].floor, wallColor: wingThemes[wing].wall, accentColor: wingThemes[wing].accent }
-  return { room, walls, slots: slots.slice(0, count), stampStation }
+  return { room, walls, occluders, slots: slots.slice(0, count), stampStation }
 }
 
 /**
@@ -164,6 +234,10 @@ function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: 
  * de cadres face à +Z empilée en profondeur pour chaque tranche de `NORTH_ROW_X.length` personnes.
  * Chaque rangée est une cimaise transversale courte (`NORTH_ROW_HALF_SPAN`), pas un mur plein : elle
  * laisse un passage de chaque côté pour que le joueur atteigne les rangées suivantes, plus au nord.
+ *
+ * Contrairement à `buildXWing`, cette aile n'a pas de mur principal séparé porteur de cadres : CHAQUE
+ * rangée est sa propre cimaise, et est donc occultante dès qu'une rangée plus au nord est regardée
+ * (voir le commentaire de `buildXWing` et `Occluder`) — toutes deviennent des `Occluder`.
  */
 function buildNorthWing(count: number): WingBuild | null {
   if (count <= 0) return null
@@ -178,6 +252,7 @@ function buildNorthWing(count: number): WingBuild | null {
 
   const slots: FrameCandidate[] = []
   const walls: ArchBox[] = [wall(zWall(xWest, farZ, hallWallZ, dims.wallThickness)), wall(zWall(xEast, farZ, hallWallZ, dims.wallThickness)), wall(xWall(farZ, xWest, xEast, dims.wallThickness))]
+  const occluders: OccluderBuild[] = []
 
   for (let i = 0; i < rows; i++) {
     // Point de vue à NEAR_MARGIN + i*NORTH_ROW_DEPTH du mur du hall (même logique que les autres
@@ -186,11 +261,15 @@ function buildNorthWing(count: number): WingBuild | null {
     const viewZ = hallWallZ + dir * (NEAR_MARGIN + i * NORTH_ROW_DEPTH)
     const frameZ = viewZ + dir * VIEW_DISTANCE
     const rowWallZ = frameZ + dir * (FRAME_WALL_OFFSET + CIMAISE_THICKNESS / 2)
-    walls.push(wall(xWall(rowWallZ, -NORTH_ROW_HALF_SPAN, NORTH_ROW_HALF_SPAN, CIMAISE_THICKNESS)))
+    const box = xWall(rowWallZ, -NORTH_ROW_HALF_SPAN, NORTH_ROW_HALF_SPAN, CIMAISE_THICKNESS)
+    const occluderIndex = occluders.length
+    occluders.push({ box, height: CIMAISE_HEIGHT, slotIndices: [] })
     for (let j = 0; j < NORTH_ROW_X.length; j++) {
       if (i * NORTH_ROW_X.length + j >= count) break
       const x = NORTH_ROW_X[j]
+      const slotIndex = slots.length
       slots.push({ position: [x, dims.frameCenterY, frameZ], rotationY: 0, viewPoint: { x, z: viewZ } })
+      occluders[occluderIndex].slotIndices.push(slotIndex)
     }
   }
 
@@ -204,7 +283,7 @@ function buildNorthWing(count: number): WingBuild | null {
     wallColor: wingThemes.industrialisation.wall,
     accentColor: wingThemes.industrialisation.accent,
   }
-  return { room, walls, slots: slots.slice(0, count), stampStation }
+  return { room, walls, occluders, slots: slots.slice(0, count), stampStation }
 }
 
 /** Segments d'un mur du hall percé d'une porte de `DOOR_WIDTH`, ou plein si l'aile est vide. */
@@ -255,21 +334,36 @@ function build(people: Person[]): MuseumBuild {
   if (wingBuilds.infrastructures) doorArches.push({ box: zWall(-HALL_HALF_WIDTH, -DOOR_HALF, DOOR_HALF, dims.wallThickness), color: wingThemes.infrastructures.accent })
   if (wingBuilds.culture) doorArches.push({ box: zWall(HALL_HALF_WIDTH, -DOOR_HALF, DOOR_HALF, dims.wallThickness), color: wingThemes.culture.accent })
 
-  // Comptoir de Minerve, juste au sud d'elle.
-  const curator: Placement = { position: { x: 0, z: -4.5 }, rotationY: 0 }
-  const counterZ = curator.position.z + CURATOR_COUNTER_OFFSET_Z
-  hallWalls.push(furniture(aabb(-COUNTER_HALF_WIDTH, COUNTER_HALF_WIDTH, counterZ - COUNTER_HALF_DEPTH, counterZ + COUNTER_HALF_DEPTH)))
+  const comingSoonWings: ExhibitWingId[] = EXHIBIT_WINGS.filter((w) => !wingBuilds[w])
 
+  // Comptoir de Minerve, juste au sud d'elle. Collider seulement ici (boîte simple) : le rendu
+  // (plateau + façade arrondis) est une géométrie dédiée dans `roomGeometry.ts`/`Museum.tsx`, pas la
+  // géométrie « meuble » générique fusionnée avec les autres boîtes ci-dessous.
+  const curator: Placement = { position: CURATOR_POSITION, rotationY: 0 }
   const decor = hallDecor()
-  for (const p of decor.pillars) hallWalls.push(furniture(aabb(p.x - 0.4, p.x + 0.4, p.z - 0.4, p.z + 0.4)))
-  for (const b of decor.benches) hallWalls.push(furniture(aabb(b.position.x - 0.8, b.position.x + 0.8, b.position.z - 0.25, b.position.z + 0.25)))
-  for (const j of decor.planters) hallWalls.push(furniture(aabb(j.x - 0.35, j.x + 0.35, j.z - 0.35, j.z + 0.35)))
+  const counterBox = aabb(
+    decor.counter.center.x - decor.counter.halfWidth,
+    decor.counter.center.x + decor.counter.halfWidth,
+    decor.counter.center.z - decor.counter.halfDepth,
+    decor.counter.center.z + decor.counter.halfDepth,
+  )
+
+  // `hidden: true` : collider seulement — une géométrie dédiée les dessine (colonnes rondes, bancs en
+  // bois, jardinières à motte + feuillage), pas le pavé « meuble » générique.
+  for (const p of decor.pillars) hallWalls.push(furniture(aabb(p.x - COLUMN_RADIUS, p.x + COLUMN_RADIUS, p.z - COLUMN_RADIUS, p.z + COLUMN_RADIUS), COLUMN_HEIGHT, true))
+  for (const b of decor.benches) hallWalls.push(furniture(aabb(b.position.x - 0.8, b.position.x + 0.8, b.position.z - 0.25, b.position.z + 0.25), BENCH_HEIGHT, true))
+  for (const j of decor.planters) hallWalls.push(furniture(aabb(j.x - JARDINIERE_RADIUS, j.x + JARDINIERE_RADIUS, j.z - JARDINIERE_RADIUS, j.z + JARDINIERE_RADIUS), JARDINIERE_HEIGHT, true))
 
   const rooms: RoomLayout[] = [hallRoom]
   const archRooms: MuseumArchitecture['rooms'] = [{ room: hallRoom, walls: hallWalls }]
-  const colliders: AABB[] = hallWalls.map((w) => w.box)
+  const colliders: AABB[] = [...hallWalls.map((w) => w.box), counterBox]
   const frames: FrameSlot[] = []
   const stampStations: StampStationSlot[] = []
+  const occluders: Occluder[] = []
+
+  // Banc circulaire autour de l'Arbre des 100 : lui aussi un collider (le joueur en fait le tour).
+  const treeRing = decor.tree
+  colliders.push(aabb(treeRing.center.x - treeRing.benchRadius, treeRing.center.x + treeRing.benchRadius, treeRing.center.z - treeRing.benchRadius, treeRing.center.z + treeRing.benchRadius))
 
   for (const wingId of EXHIBIT_WINGS) {
     const wb = wingBuilds[wingId]
@@ -279,11 +373,14 @@ function build(people: Person[]): MuseumBuild {
     const half = STAMP_STATION_SIZE / 2
     const stationBox = aabb(wb.stampStation.x - half, wb.stampStation.x + half, wb.stampStation.z - half, wb.stampStation.z + half)
     archRooms.push({ room: wb.room, walls: wb.walls })
-    colliders.push(...wb.walls.map((w) => w.box), stationBox)
+    colliders.push(...wb.walls.map((w) => w.box), ...wb.occluders.map((o) => o.box), stationBox)
     stampStations.push({ wing: wingId, position: wb.stampStation })
     const people = byWing[wingId]
     wb.slots.forEach((slot, i) => {
       frames.push({ personId: people[i].id, wing: wingId, position: slot.position, rotationY: slot.rotationY, viewPoint: slot.viewPoint })
+    })
+    wb.occluders.forEach((o, idx) => {
+      occluders.push({ id: `${wingId}-cimaise-${idx}`, wing: wingId, box: o.box, height: o.height, personIds: o.slotIndices.map((si) => people[si].id) })
     })
   }
 
@@ -298,7 +395,7 @@ function build(people: Person[]): MuseumBuild {
     stampStations,
     bounds,
   }
-  return { layout, architecture: { rooms: archRooms, decor, doorArches } }
+  return { layout, architecture: { rooms: archRooms, decor, doorArches, occluders, comingSoonWings } }
 }
 
 /** Calcule le plan du musée (salles, murs, cadres) pour la liste donnée. */

@@ -3,11 +3,15 @@
  * Le conteneur ne capte aucun geste (pointer-events: none) : seuls ses boutons le font,
  * pour laisser le joystick tactile libre ailleurs à l'écran.
  */
-import type { CSSProperties } from 'react'
+import { type CSSProperties } from 'react'
 import { useGame } from '../state/gameStore'
 import { useT, usePick } from '../i18n'
 import { strings } from './strings'
 import { EXHIBIT_WINGS } from '../types'
+import { playSfx } from '../audio'
+import { SoundToggle } from '../audio/SoundToggle'
+import { MuseumMap } from './MuseumMap'
+import { CoachMark } from './CoachMark'
 import './ui.css'
 
 function shortName(name: string): string {
@@ -27,8 +31,14 @@ export function Hud() {
   const nearbyPersonId = useGame((s) => s.nearbyPersonId)
   const nearCurator = useGame((s) => s.nearCurator)
   const people = useGame((s) => s.people)
+  const mapOpen = useGame((s) => s.mapOpen)
+  const setMapOpen = useGame((s) => s.setMapOpen)
   const t = useT(strings)
   const p = usePick()
+
+  // Le plan est une surimpression comme les autres (fiche, dialogue, carnet) : `mapOpen` vit dans
+  // `src/state/gameStore.ts` et compte dans `isOverlayOpen`, donc `App` coupe `useKeyboardControls`
+  // et démonte `TouchJoystick` tant qu'il reste ouvert — plus besoin de remettre l'entrée à zéro ici.
 
   const room = layout?.rooms.find((r) => r.id === currentRoom) ?? null
   const stampsCount = Object.keys(stamps).length
@@ -51,12 +61,28 @@ export function Hud() {
       )}
 
       <div className="ui-hud__top-right">
+        <SoundToggle />
+        <button
+          type="button"
+          className="ui-hud__map"
+          data-testid="map-button"
+          aria-label={t('mapButton')}
+          onClick={() => {
+            playSfx('click')
+            setMapOpen(true)
+          }}
+        >
+          {t('mapButton')}
+        </button>
         <button
           type="button"
           className="ui-hud__lang"
           data-testid="hud-lang"
           aria-label={t('langSwitch')}
-          onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
+          onClick={() => {
+            playSfx('click')
+            setLang(lang === 'fr' ? 'en' : 'fr')
+          }}
         >
           {lang.toUpperCase()}
         </button>
@@ -65,7 +91,10 @@ export function Hud() {
           className="ui-hud__stamps"
           data-testid="stamps-button"
           aria-label={t('hudStamps')}
-          onClick={() => setStampCardOpen(true)}
+          onClick={() => {
+            playSfx('click')
+            setStampCardOpen(true)
+          }}
         >
           {t('hudStampsCount', { n: stampsCount, total: EXHIBIT_WINGS.length })}
         </button>
@@ -81,11 +110,17 @@ export function Hud() {
           type="button"
           className="ui-hud__action"
           data-testid="action-button"
-          onClick={() => useGame.getState().interact()}
+          onClick={() => {
+            playSfx('click')
+            useGame.getState().interact()
+          }}
         >
           {actionLabel}
         </button>
       )}
+
+      <CoachMark />
+      <MuseumMap open={mapOpen} onClose={() => setMapOpen(false)} />
     </div>
   )
 }

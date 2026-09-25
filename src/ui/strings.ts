@@ -33,7 +33,20 @@ export const strings = defineStrings({
   portraitNext: { fr: 'Suivant ›', en: 'Next ›' },
   portraitWaiting: { fr: "Fiche d'attente", en: 'Placeholder card' },
   portraitCredit: { fr: 'Photo : {credit}', en: 'Photo: {credit}' },
+  /** Organisation d'une fiche d'attente (`person.placeholder && !person.organization`) : voir `organizationLabel` (format.ts). */
+  portraitOrgPending: { fr: 'À dévoiler le 6 octobre', en: 'Revealed on October 6' },
 
   // Dialogue
   dialogueSkip: { fr: 'Passer', en: 'Skip' },
+
+  // Plan du musée
+  mapButton: { fr: 'Plan', en: 'Map' },
+  mapTitle: { fr: 'Plan du musée', en: 'Museum map' },
+  mapClose: { fr: 'Fermer le plan', en: 'Close the map' },
+  mapWingCount: { fr: '{seen}/{total} vus', en: '{seen}/{total} seen' },
+  mapYou: { fr: 'Toi', en: 'You' },
+
+  // Aide au premier pas
+  coachTouch: { fr: 'Glisse ton pouce pour marcher', en: 'Slide your thumb to walk' },
+  coachKeys: { fr: 'Flèches ou ZQSD pour marcher', en: 'Arrows or WASD to walk' },
 })

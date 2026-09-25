@@ -1,9 +1,16 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { useGame } from '../state/gameStore'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import type { Person } from '../types'
 import { PortraitCard } from './PortraitCard'
+
+// Module audio : stub d'un autre agent, no-op tant que le son est coupé. On vérifie ici seulement
+// que PortraitCard l'appelle avec le bon identifiant, pas un comportement sonore réel.
+const playSfxMock = vi.fn()
+vi.mock('../audio', () => ({
+  playSfx: (...args: unknown[]) => playSfxMock(...args),
+}))
 
 // Personnes manifestement fictives, fabriquées uniquement pour ce test.
 const fictionalPeople: Person[] = [
@@ -46,6 +53,7 @@ const fictionalPeople: Person[] = [
 
 describe('PortraitCard', () => {
   beforeEach(() => {
+    playSfxMock.mockClear()
     useGame.setState({ lang: 'fr', layout: null, openPersonId: null })
   })
 
@@ -62,6 +70,38 @@ describe('PortraitCard', () => {
 
     expect(screen.getByTestId('portrait-card')).toBeInTheDocument()
     expect(screen.getByText("Fiche d'attente")).toBeInTheDocument()
+  })
+
+  it('affiche « À dévoiler le 6 octobre » pour une fiche d’attente sans organisation', () => {
+    const people = generatePlaceholderPeople(1).map((person) => ({ ...person, organization: '' }))
+    useGame.setState({ people, openPersonId: people[0].id })
+    render(<PortraitCard />)
+
+    expect(screen.getByText(/À dévoiler le 6 octobre/)).toBeInTheDocument()
+  })
+
+  it('affiche l’organisation telle quelle quand elle est renseignée, même pour une fiche d’attente', () => {
+    const people = generatePlaceholderPeople(1).map((person) => ({ ...person, organization: 'Exemple' }))
+    useGame.setState({ people, openPersonId: people[0].id })
+    render(<PortraitCard />)
+
+    expect(screen.getByText(/Exemple/)).toBeInTheDocument()
+    expect(screen.queryByText(/À dévoiler/)).not.toBeInTheDocument()
+  })
+
+  it('joue un son à l’ouverture et à la fermeture, pas à la navigation', () => {
+    useGame.setState({ people: fictionalPeople, openPersonId: fictionalPeople[0].id })
+    render(<PortraitCard />)
+    expect(playSfxMock).toHaveBeenCalledWith('open')
+    playSfxMock.mockClear()
+
+    fireEvent.click(screen.getByTestId('portrait-next'))
+    expect(playSfxMock).not.toHaveBeenCalledWith('open')
+    expect(playSfxMock).not.toHaveBeenCalledWith('close')
+    playSfxMock.mockClear()
+
+    fireEvent.click(screen.getByTestId('portrait-close'))
+    expect(playSfxMock).toHaveBeenCalledWith('close')
   })
 
   it('rend une fiche complète fabriquée pour le test', () => {

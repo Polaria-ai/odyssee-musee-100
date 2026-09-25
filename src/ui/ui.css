@@ -22,10 +22,17 @@
   background: transparent;
 }
 
-.ui-title__lang {
+.ui-title__top-right {
   position: absolute;
   top: calc(14px + var(--safe-top));
   right: calc(14px + var(--safe-right));
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ui-title__lang {
   min-width: 48px;
   min-height: 48px;
   padding: 0 16px;
@@ -212,14 +219,18 @@
   position: absolute;
   top: calc(12px + var(--safe-top));
   right: calc(12px + var(--safe-right));
+  max-width: min(80vw, 340px);
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 8px;
   pointer-events: auto;
 }
 
 .ui-hud__lang,
-.ui-hud__stamps {
+.ui-hud__stamps,
+.ui-hud__map {
   min-width: 48px;
   min-height: 48px;
   padding: 0 14px;
@@ -234,7 +245,8 @@
 }
 
 .ui-hud__lang:active,
-.ui-hud__stamps:active {
+.ui-hud__stamps:active,
+.ui-hud__map:active {
   transform: translateY(2px);
   box-shadow: 0 2px 0 rgba(59, 42, 30, 0.18);
 }
@@ -633,4 +645,187 @@
     opacity: 1;
     transform: translate(-50%, 0);
   }
+}
+
+/* ---------- Aide au premier pas ---------- */
+
+.ui-coach {
+  position: absolute;
+  left: calc(16px + var(--safe-left));
+  bottom: calc(96px + var(--safe-bottom));
+  z-index: 16;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(78vw, 280px);
+  padding: 10px 16px 10px 12px;
+  border-radius: var(--radius-lg);
+  background: var(--cream);
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+  /* Purement informatif : ne doit jamais intercepter le joystick tactile en dessous. */
+  pointer-events: none;
+  animation: ui-coach-in 220ms ease-out both;
+}
+
+.ui-coach__hand {
+  font-size: 22px;
+  animation: ui-coach-wave 1.1s ease-in-out infinite;
+}
+
+.ui-coach__text {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+@keyframes ui-coach-in {
+  from {
+    transform: translateY(10px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-coach-wave {
+  0%,
+  100% {
+    transform: translateX(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(4px) rotate(-12deg);
+  }
+}
+
+/* ---------- Plan du musée ---------- */
+
+.ui-map {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+}
+
+.ui-map__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 42, 30, 0.45);
+  border: none;
+  padding: 0;
+  cursor: default;
+}
+
+.ui-map__sheet {
+  position: relative;
+  width: min(92vw, 420px);
+  max-height: 88dvh;
+  overflow-y: auto;
+  background: var(--cream);
+  border-radius: var(--radius-lg);
+  padding: 20px calc(20px + var(--safe-right)) calc(20px + var(--safe-bottom)) calc(20px + var(--safe-left));
+  box-shadow: var(--shadow-soft);
+  animation: ui-sheet-up 220ms ease-out both;
+}
+
+.ui-map__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(74, 55, 40, 0.08);
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.ui-map__title {
+  margin: 0 44px 14px 0;
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--ink);
+  outline: none;
+}
+
+.ui-map__plan {
+  position: relative;
+  width: 100%;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px rgba(74, 55, 40, 0.08);
+}
+
+.ui-map__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ui-map__labels {
+  position: absolute;
+  inset: 0;
+}
+
+.ui-map__label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: rgba(255, 248, 231, 0.88);
+  white-space: nowrap;
+}
+
+.ui-map__label-name {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 11px;
+  color: var(--ink);
+}
+
+.ui-map__label-count {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.ui-map__legend {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ui-map__legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.ui-map__legend-item strong {
+  margin-left: auto;
+  color: var(--ink-soft);
+  font-size: 12px;
+}
+
+.ui-map__legend-dot {
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--wing-color, var(--wood));
 }

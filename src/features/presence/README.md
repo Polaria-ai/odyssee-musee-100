@@ -34,11 +34,18 @@ Supabase non configuré, salle inaccessible, erreur de canal (`CHANNEL_ERROR`), 
 4 s puis abandon), sans jamais bloquer le jeu.
 
 Un pair est retiré du rendu 6 s après son dernier signal (`peers.ts` →
-`PEER_SILENCE_TIMEOUT_MS`), mais `usePresence` applique en pratique un délai plus large
-(≈ battement 10 s + marge) pour ne jamais faire clignoter un visiteur immobile mais toujours
-connecté — voir le commentaire sur `EFFECTIVE_PEER_TIMEOUT_MS` dans `usePresence.ts`. Le départ
-normal (fermeture d'onglet propre) passe par l'événement de présence `leave`, immédiat ; cette
-expiration par silence n'est qu'un filet de sécurité pour une connexion morte sans préavis.
+`PEER_SILENCE_TIMEOUT_MS`), mais `usePresence` applique en pratique un délai plus large,
+strictement supérieur à 1,6 × le battement au repos (≈ 16 s), pour ne jamais faire clignoter un
+visiteur immobile mais toujours connecté — voir `EFFECTIVE_PEER_TIMEOUT_MS` dans
+`usePresence.ts` (et son test de cohérence). Le départ normal (fermeture d'onglet propre) passe
+par l'événement de présence `leave`, immédiat ; cette expiration par silence n'est qu'un filet de
+sécurité pour une connexion morte sans préavis.
+
+**Onglet caché longtemps** : un onglet mis en arrière-plan plus de 30 s (`HIDDEN_LEAVE_MS`) quitte
+activement la présence (`untrack` puis désabonnement) plutôt que de rester un visiteur fantôme
+figé à sa dernière position pour tout le monde ; il rejoint une salle fraîche dès le retour au
+premier plan. En dessous de 30 s (bascule d'app rapide, notification…), rien ne change : la
+publication de position reprend simplement tout de suite.
 
 ## Le soir de l'événement
 

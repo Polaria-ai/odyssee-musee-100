@@ -6,9 +6,10 @@ import { useEffect, useRef, type CSSProperties, type TouchEvent as ReactTouchEve
 import { useGame } from '../state/gameStore'
 import { useT, usePick } from '../i18n'
 import { strings } from './strings'
-import { flagEmoji, safeUrl, splitParagraphs } from './format'
+import { flagEmoji, organizationLabel, safeUrl, splitParagraphs } from './format'
 import { wingThemes } from '../styles/tokens'
 import type { Person } from '../types'
+import { playSfx } from '../audio'
 import './ui.css'
 
 const SWIPE_CLOSE_THRESHOLD = 90
@@ -38,6 +39,7 @@ export function PortraitCard() {
   const titleRef = useRef<HTMLHeadingElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef({ startY: 0, active: false })
+  const wasOpenRef = useRef(false)
 
   const person: Person | null = openPersonId ? (people.find((per) => per.id === openPersonId) ?? null) : null
 
@@ -46,6 +48,15 @@ export function PortraitCard() {
     // Ne réagit qu'au changement de personne affichée, pas à chaque nouvelle référence de `person`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [person?.id])
+
+  // Son d'ouverture/fermeture de la fiche : sur la transition fermé↔ouvert, pas sur la navigation
+  // précédent/suivant (qui change `person` sans jamais repasser par `null`).
+  useEffect(() => {
+    const isOpen = person !== null
+    if (isOpen && !wasOpenRef.current) playSfx('open')
+    if (!isOpen && wasOpenRef.current) playSfx('close')
+    wasOpenRef.current = isOpen
+  }, [person])
 
   useEffect(() => {
     if (!person) return
@@ -66,6 +77,7 @@ export function PortraitCard() {
   const room = layout?.rooms.find((r) => r.id === person.wing) ?? null
   const wingColor = room?.accentColor ?? wingThemes[person.wing].accent
   const wingLabel = room ? p(room.label) : ''
+  const organization = organizationLabel(person, t('portraitOrgPending'))
   const photo = safeUrl(person.photoUrl)
   const paragraphs = splitParagraphs(p(person.story))
   const safeLinks = (person.links ?? [])
@@ -110,7 +122,10 @@ export function PortraitCard() {
           className="ui-portrait__close"
           data-testid="portrait-close"
           aria-label={t('portraitClose')}
-          onClick={closePerson}
+          onClick={() => {
+            playSfx('click')
+            closePerson()
+          }}
         >
           ✕
         </button>
@@ -129,7 +144,7 @@ export function PortraitCard() {
           {person.name}
         </h2>
         <p className="ui-portrait__role">
-          {p(person.role)} · {person.organization}
+          {p(person.role)} · {organization}
         </p>
         <p className="ui-portrait__meta">
           <span aria-hidden="true">{flagEmoji(person.country)}</span>
@@ -170,7 +185,11 @@ export function PortraitCard() {
             type="button"
             data-testid="portrait-prev"
             disabled={!prevPerson}
-            onClick={() => prevPerson && openPerson(prevPerson.id)}
+            onClick={() => {
+              if (!prevPerson) return
+              playSfx('click')
+              openPerson(prevPerson.id)
+            }}
           >
             {t('portraitPrev')}
           </button>
@@ -178,7 +197,11 @@ export function PortraitCard() {
             type="button"
             data-testid="portrait-next"
             disabled={!nextPerson}
-            onClick={() => nextPerson && openPerson(nextPerson.id)}
+            onClick={() => {
+              if (!nextPerson) return
+              playSfx('click')
+              openPerson(nextPerson.id)
+            }}
           >
             {t('portraitNext')}
           </button>

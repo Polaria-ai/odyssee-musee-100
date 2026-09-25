@@ -18,12 +18,18 @@ function warnOnce(message: string): void {
   console.warn(`[data] ${message}`)
 }
 
-/** Résout `value`, ou `'timeout'` si `ms` s'écoulent avant (Supabase peut rester silencieux hors ligne). */
+/**
+ * Résout `value`, ou `'timeout'` si `ms` s'écoulent avant (Supabase peut rester silencieux hors ligne).
+ * Le minuteur du timeout est toujours annulé (`clearTimeout`) une fois la course tranchée, y compris
+ * quand `value` répond avant `ms` : sinon il reste actif jusqu'à son échéance (poignée de minuteur
+ * qui traîne, `resolve` inutile appelé sur une promesse déjà tranchée).
+ */
 function withTimeout<T>(value: PromiseLike<T>, ms: number): Promise<T | 'timeout'> {
-  return Promise.race([
-    Promise.resolve(value),
-    new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), ms)),
-  ])
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<'timeout'>((resolve) => {
+    timer = setTimeout(() => resolve('timeout'), ms)
+  })
+  return Promise.race([Promise.resolve(value), timeout]).finally(() => clearTimeout(timer))
 }
 
 async function loadFromSupabase(): Promise<Person[] | null> {

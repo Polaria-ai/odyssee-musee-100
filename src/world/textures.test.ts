@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { exhibitWingOrder, wingThemes } from '../styles/tokens'
-import { mixWithWhite, PLACEHOLDER_BG_MIX, PLACEHOLDER_SILHOUETTE_MIX } from './textures'
+import { cartelOrganizationText, mixWithWhite, PLACEHOLDER_BG_MIX, PLACEHOLDER_SILHOUETTE_MIX } from './textures'
 
 function luminance(rgb: string): number {
   const m = /rgb\((\d+), (\d+), (\d+)\)/.exec(rgb)
@@ -36,5 +36,26 @@ describe('portrait d’attente — contraste fond/silhouette', () => {
     for (const accent of accentColors) {
       expect(luminance(mixWithWhite(accent, PLACEHOLDER_BG_MIX))).toBeGreaterThan(180)
     }
+  })
+})
+
+describe('cartelOrganizationText — texte de la ligne « organisation » d’un cartel', () => {
+  it('affiche l’organisation quand elle est renseignée', () => {
+    expect(cartelOrganizationText({ organization: 'Acme Corp', placeholder: false }, 'fr')).toBe('Acme Corp')
+    expect(cartelOrganizationText({ organization: 'Acme Corp', placeholder: true }, 'fr')).toBe('Acme Corp')
+  })
+
+  it('fiche d’attente (placeholder) sans organisation : date de révélation, localisée', () => {
+    expect(cartelOrganizationText({ organization: '', placeholder: true }, 'fr')).toBe('À dévoiler le 6 octobre')
+    expect(cartelOrganizationText({ organization: '', placeholder: true }, 'en')).toBe('Revealed on October 6')
+  })
+
+  it('fiche réelle (non placeholder) sans organisation : texte générique « à confirmer »', () => {
+    expect(cartelOrganizationText({ organization: '', placeholder: false }, 'fr')).toBe('Organisation à confirmer')
+    expect(cartelOrganizationText({ organization: '', placeholder: false }, 'en')).toBe('Organization to be confirmed')
+  })
+
+  it('un tiret cadratin seul compte comme vide (compat V1)', () => {
+    expect(cartelOrganizationText({ organization: '—', placeholder: true }, 'fr')).toBe('À dévoiler le 6 octobre')
   })
 })

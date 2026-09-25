@@ -9,6 +9,17 @@ import { bridges, input, player } from '../state/runtime'
 import { dims } from '../styles/tokens'
 import { AvatarMesh } from './AvatarMesh'
 import { escapeCollider, inputToWorldDirection, resolveMovement, smoothAngle } from './physics'
+import {
+  boundedCameraPosition,
+  distanceForAspect,
+  fixedOrientationReference,
+  LOOK_DISTANCE_FACTOR,
+  LOOK_STILLNESS_SECONDS,
+  LOOK_TRANSITION_SECONDS,
+  lookRaiseFor,
+  prefersReducedMotion,
+  stepBlend,
+} from './camera'
 
 const WALK_SPEED = 3.2
 const RUN_SPEED = 5.6
@@ -24,10 +35,10 @@ const NEARBY_CHECK_INTERVAL = 0.12 // ~120 ms
 const CURATOR_RADIUS = 2.6
 const FACING_DOT_MIN = 0.15 // le joueur doit à peu près se tourner vers le cadre pour qu'il s'illumine
 
-// Caméra 3e personne, orientation fixe (diorama) : décalage derrière/au-dessus du joueur, visée
-// joueur + décalage. Seule la position est amortie ; l'orientation est calculée une fois pour toutes.
-const CAMERA_OFFSET = { x: 0, y: 6.5, z: 8.5 }
-const CAMERA_LOOK_OFFSET = { x: 0, y: 1, z: -1 }
+// Caméra 3e personne, orientation fixe (diorama) : décalage derrière/au-dessus du joueur calculé
+// depuis le contrat partagé `cameraRig` (src/styles/tokens.ts), distance adaptée au format d'écran.
+// Seule la position (et, en mode « regard », la distance/hauteur visée) est amortie ; l'orientation
+// est calculée une fois pour toutes (voir `fixedOrientationReference`, jamais recalculée par joueur).
 const CAMERA_DAMP_RATE = 6
 
 const FIXED_CAMERA_QUATERNION = new Quaternion()
@@ -37,10 +48,11 @@ const FIXED_CAMERA_QUATERNION = new Quaternion()
   // `isCamera`/`isLight`). Avec un `Object3D` nu, le quaternion obtenu regarde donc exactement à
   // l'opposé de la cible une fois copié sur une vraie caméra (-Z) : la scène entière tombe hors
   // champ (caméra plein ciel). Un helper qui s'identifie comme caméra (`isCamera`) prend le bon
-  // embranchement et vise réellement `CAMERA_LOOK_OFFSET`.
+  // embranchement et vise réellement la cible.
+  const { position, target } = fixedOrientationReference()
   const helper = new PerspectiveCamera()
-  helper.position.set(CAMERA_OFFSET.x, CAMERA_OFFSET.y, CAMERA_OFFSET.z)
-  helper.lookAt(CAMERA_LOOK_OFFSET.x, CAMERA_LOOK_OFFSET.y, CAMERA_LOOK_OFFSET.z)
+  helper.position.set(position.x, position.y, position.z)
+  helper.lookAt(target.x, target.y, target.z)
   FIXED_CAMERA_QUATERNION.copy(helper.quaternion)
 }
 
@@ -56,10 +68,6 @@ function lerp(from: number, to: number, t: number): number {
 /** `t` pour une interpolation exponentielle indépendante du framerate (`rate` en 1/s). */
 function dampT(rate: number, delta: number): number {
   return 1 - Math.exp(-rate * delta)
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value))
 }
 
 function roomAt(layout: MuseumLayout, x: number, z: number): WingId | null {
@@ -79,8 +87,29 @@ export function Player({ layout }: { layout: MuseumLayout }) {
   const dirRef = useRef<Vec2>({ x: 0, z: 0 })
   const tapStuckTimer = useRef(0)
   const nearbyTimer = useRef(0)
+  const stillTimer = useRef(0)
+  const lookBlend = useRef(0)
+  const reducedMotionRef = useRef(false)
   const [visualMoving, setVisualMoving] = useState(false)
   const [visualSpeed, setVisualSpeed] = useState(0)
+
+  // Préférence « mouvement réduit » : lue une fois puis suivie via l'évènement `change`, jamais
+  // interrogée à chaque image (le mode « regard » la lit 60 fois par seconde dans `useFrame`).
+  useEffect(() => {
+    reducedMotionRef.current = prefersReducedMotion()
+    if (typeof window === 'undefined' || !window.matchMedia) return
+    let mq: MediaQueryList
+    try {
+      mq = window.matchMedia('(prefers-reduced-motion: reduce)')
+    } catch {
+      return
+    }
+    const onChange = () => {
+      reducedMotionRef.current = mq.matches
+    }
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
 
   // Si le joueur est téléporté (spawn, changement de plan) à l'intérieur d'un obstacle, on le repousse.
   // On resynchronise aussi le groupe rendu ici : sans ça, la toute première image affiche l'avatar
@@ -222,20 +251,29 @@ export function Player({ layout }: { layout: MuseumLayout }) {
       g.setCurrentRoom(roomAt(layout, player.x, player.z))
     }
 
-    // Caméra : position amortie (exponentielle, indépendante du framerate), bornée par le plan ;
-    // orientation toujours fixe (recopiée, jamais recalculée à partir d'un point visé).
-    // Les bornes sont décalées du même offset que la caméra : sinon, près d'un bord (le point
-    // d'apparition est à 6,5 m du centre, à moins d'1 m de la limite une fois l'offset ajouté), le
-    // plan tronque le décalage sans toucher l'orientation fixe et la caméra ne cadre plus rien
-    // (scène qui semble vide). Le joueur restant de toute façon dans `layout.colliders`, ce
-    // décalage ne fait qu'empêcher un dépassement absurde, sans jamais rogner l'offset normal.
-    const bounds = layout.bounds
-    const targetCamX = clamp(player.x + CAMERA_OFFSET.x, bounds.minX + CAMERA_OFFSET.x, bounds.maxX + CAMERA_OFFSET.x)
-    const targetCamZ = clamp(player.z + CAMERA_OFFSET.z, bounds.minZ + CAMERA_OFFSET.z, bounds.maxZ + CAMERA_OFFSET.z)
+    // Mode « regard » : portrait proche + joueur immobile depuis LOOK_STILLNESS_SECONDS → cadrage
+    // resserré (voir camera.ts). `stillTimer` repart de zéro dès que le joueur bouge ; `lookBlend`
+    // suit à vitesse constante (LOOK_TRANSITION_SECONDS, instantané si mouvement réduit).
+    stillTimer.current = moving ? 0 : stillTimer.current + dt
+    const nearbyPersonId = useGame.getState().nearbyPersonId
+    const wantsLook = nearbyPersonId !== null && stillTimer.current >= LOOK_STILLNESS_SECONDS
+    lookBlend.current = stepBlend(lookBlend.current, wantsLook ? 1 : 0, dt, LOOK_TRANSITION_SECONDS, reducedMotionRef.current)
+
+    // Caméra : distance adaptée au format d'écran courant (contrat `cameraRig`, recalculée chaque
+    // image — aucune allocation three.js, juste de l'arithmétique), resserrée en mode « regard ».
+    // Position amortie (exponentielle, indépendante du framerate), bornée par le plan sans jamais
+    // rogner le décalage normal près des bords (bug V1 corrigé à l'intégration, voir `camera.ts` :
+    // les bornes sont décalées du décalage réellement appliqué pour la distance courante, qui varie
+    // maintenant avec le format d'écran). Orientation toujours fixe (recopiée, jamais recalculée).
+    const aspect = state.size.width / state.size.height
+    const baseDistance = distanceForAspect(aspect)
+    const distance = lerp(baseDistance, baseDistance * LOOK_DISTANCE_FACTOR, lookBlend.current)
+    const extraY = lookRaiseFor(dims.frameCenterY, distance) * lookBlend.current
+    const targetCam = boundedCameraPosition(player.x, player.z, distance, layout.bounds, extraY)
     const camT = dampT(CAMERA_DAMP_RATE, dt)
-    state.camera.position.x = lerp(state.camera.position.x, targetCamX, camT)
-    state.camera.position.y = lerp(state.camera.position.y, CAMERA_OFFSET.y, camT)
-    state.camera.position.z = lerp(state.camera.position.z, targetCamZ, camT)
+    state.camera.position.x = lerp(state.camera.position.x, targetCam.x, camT)
+    state.camera.position.y = lerp(state.camera.position.y, targetCam.y, camT)
+    state.camera.position.z = lerp(state.camera.position.z, targetCam.z, camT)
     state.camera.quaternion.copy(FIXED_CAMERA_QUATERNION)
 
     // État visuel (anime AvatarMesh) : on ne pousse un re-render que sur un vrai changement,

@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../state/gameStore'
 import { useT, usePick } from '../i18n'
 import { strings } from './strings'
+import { pitchForSpeaker } from './format'
+import { playSfx } from '../audio'
 import './ui.css'
 
 const CHARS_PER_SECOND = 40
@@ -37,15 +39,23 @@ export function DialogueBox() {
   fullTextRef.current = fullText
 
   useEffect(() => {
-    if (!line) return
+    if (!line || !dialogue) return
     if (prefersReducedMotion()) {
       setShown(fullText.length)
       return
     }
     setShown(0)
     const stepMs = 1000 / CHARS_PER_SECOND
+    const pitch = pitchForSpeaker(dialogue.speaker)
     const id = window.setInterval(() => {
-      setShown((n) => (n >= fullText.length ? n : n + 1))
+      // Lit `shownRef` (pas un compteur local) : un tap qui saute directement à la fin
+      // (`advance`, ci-dessous) doit rester définitif, jamais rattrapé/régressé par le tick
+      // suivant de ce minuteur. Bip toutes les 2 lettres écrites, jamais sur un espace.
+      const current = shownRef.current
+      if (current >= fullText.length) return
+      const next = current + 1
+      setShown(next)
+      if (next % 2 === 0 && !/\s/.test(fullText[current])) playSfx('blip', { pitch })
     }, stepMs)
     return () => window.clearInterval(id)
     // La ligne courante est identifiée par le dialogue + son index : c'est ce qui doit relancer la frappe.
@@ -102,6 +112,7 @@ export function DialogueBox() {
         className="ui-dialogue__skip"
         onClick={(e) => {
           e.stopPropagation()
+          playSfx('click')
           closeDialogue()
         }}
       >

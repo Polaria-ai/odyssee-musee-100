@@ -2,6 +2,8 @@
 import { useGame } from '../state/gameStore'
 import { useT } from '../i18n'
 import { strings } from './strings'
+import { playSfx, unlockAudio } from '../audio'
+import { SoundToggle } from '../audio/SoundToggle'
 import './ui.css'
 
 export function TitleScreen() {
@@ -11,23 +13,36 @@ export function TitleScreen() {
   const dataSource = useGame((s) => s.dataSource)
   const t = useT(strings)
 
+  function handleEnter() {
+    // Débloque l'audio dans ce geste utilisateur (iOS) avant de quitter l'écran titre.
+    unlockAudio()
+    playSfx('click')
+    setScreen('customize')
+  }
+
   return (
     <div className="screen ui-title" data-testid="title-screen">
-      <button
-        type="button"
-        className="ui-title__lang"
-        data-testid="lang-toggle"
-        aria-label={t('langSwitch')}
-        onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
-      >
-        {lang === 'fr' ? 'FR · EN' : 'EN · FR'}
-      </button>
+      <div className="ui-title__top-right">
+        <SoundToggle />
+        <button
+          type="button"
+          className="ui-title__lang"
+          data-testid="lang-toggle"
+          aria-label={t('langSwitch')}
+          onClick={() => {
+            playSfx('click')
+            setLang(lang === 'fr' ? 'en' : 'fr')
+          }}
+        >
+          {lang === 'fr' ? 'FR · EN' : 'EN · FR'}
+        </button>
+      </div>
 
       <div className="ui-title__panel">
         <p className="ui-title__eyebrow">{t('titleEyebrow')}</p>
         <h1 className="ui-title__heading">{t('titleHeading')}</h1>
         <p className="ui-title__subtitle">{t('titleSubtitle')}</p>
-        <button type="button" className="ui-title__enter" data-testid="enter-button" onClick={() => setScreen('customize')}>
+        <button type="button" className="ui-title__enter" data-testid="enter-button" onClick={handleEnter}>
           {t('titleEnter')}
         </button>
         {dataSource === 'placeholder' && <p className="ui-title__banner">{t('titlePlaceholderBanner')}</p>}

@@ -39,6 +39,10 @@ for (const p of people) {
     if (!p.bio.en.trim()) warnings.push(`${p.id} : traduction EN manquante (bio)`)
     if (!p.story.en.trim()) warnings.push(`${p.id} : traduction EN manquante (histoire)`)
     if (p.quote && !p.quote.en.trim()) warnings.push(`${p.id} : traduction EN manquante (citation)`)
+    // Une organisation vide n'est censée exister que sur une fiche d'attente (l'UI/le monde y
+    // affichent un texte localisé dédié) : sur une fiche réelle, c'est probablement un oubli
+    // d'import plutôt qu'un choix — signalé, non bloquant (le champ reste facultatif).
+    if (!p.organization.trim()) warnings.push(`${p.id} : organisation vide sur une fiche non-placeholder`)
   }
 }
 

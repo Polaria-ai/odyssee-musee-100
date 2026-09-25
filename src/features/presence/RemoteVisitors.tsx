@@ -4,7 +4,7 @@
  * roster) ; les positions, elles, sont appliquées à chaque image via des refs directement dans
  * `useFrame`, sans `setState` — donc sans re-rendu React à 60 i/s.
  */
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
+import { useCallback, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type * as THREE from 'three'
 import { AvatarMesh } from '../../player/AvatarMesh'
@@ -16,18 +16,41 @@ import { player } from '../../state/runtime'
 const LABEL_Y = dims.playerHeight + 0.35
 const LABEL_HEIGHT = 0.32
 const FADE_MS = 350
+export const POP_MS = 250
+const POP_START_SCALE = 0.6
+const POP_PEAK_SCALE = 1.05
+const POP_END_SCALE = 1
+/** Part de la durée consacrée à la montée (0 → pic) ; le reste redescend du pic à la taille finale. */
+const POP_OVERSHOOT_FRACTION = 0.7
 
 /**
- * Anime doucement l'opacité des matériaux du groupe à l'apparition (léger fondu).
+ * Échelle du groupe d'un pair à `elapsedMs` depuis son apparition : un petit « pop »
+ * (0,6 → 1,05 → 1) plutôt qu'un fondu. Fonction pure, testable sans Canvas ni THREE — utilisée par
+ * `usePopIn` ci-dessous.
+ */
+export function popScale(elapsedMs: number, durationMs: number = POP_MS): number {
+  if (durationMs <= 0) return POP_END_SCALE
+  const t = Math.min(1, Math.max(0, elapsedMs) / durationMs)
+  if (t >= 1) return POP_END_SCALE
+  if (t < POP_OVERSHOOT_FRACTION) {
+    const localT = t / POP_OVERSHOOT_FRACTION
+    return POP_START_SCALE + (POP_PEAK_SCALE - POP_START_SCALE) * localT
+  }
+  const localT = (t - POP_OVERSHOOT_FRACTION) / (1 - POP_OVERSHOOT_FRACTION)
+  return POP_PEAK_SCALE + (POP_END_SCALE - POP_PEAK_SCALE) * localT
+}
+
+/**
+ * Anime l'apparition d'un pair par une mise à l'échelle du groupe (jamais par ses matériaux).
  *
  * `AvatarMesh` réutilise des matériaux **mis en cache et partagés** par couleur (joueur local,
- * écran de personnalisation, et tous les pairs de même teinte) : on ne doit jamais toucher
- * `opacity`/`transparent` sur l'instance partagée trouvée par `traverse`, sous peine de faire
- * clignoter tous les avatars de la même couleur — y compris le sien — à chaque nouvelle arrivée. On
- * clone donc chaque matériau une fois, avant de l'animer, et on le libère (`dispose`) au démontage.
+ * écran de personnalisation, et tous les pairs de même teinte), y compris la texture d'ombre : y
+ * toucher (`opacity`/`transparent`, même sur un clone posé sur l'instance rendue) a déjà fait
+ * clignoter/casser le rendu partagé d'un pair à l'autre. `group.scale` en revanche est une
+ * propriété propre à CE groupe (un `THREE.Group` par pair) : la muter n'affecte jamais un autre
+ * avatar. Aucune allocation ici — seul `scale.setScalar` est appelé à chaque image.
  */
-function useFadeIn(groupRef: RefObject<THREE.Group | null>) {
-  const materialsRef = useRef<THREE.Material[] | null>(null)
+function usePopIn(groupRef: RefObject<THREE.Group | null>) {
   const startRef = useRef<number | null>(null)
   const doneRef = useRef(false)
 
@@ -35,46 +58,34 @@ function useFadeIn(groupRef: RefObject<THREE.Group | null>) {
     if (doneRef.current) return
     const group = groupRef.current
     if (!group) return
-    if (materialsRef.current === null) {
-      const found: THREE.Material[] = []
-      const cloneForFade = (mat: THREE.Material): THREE.Material => {
-        const clone = mat.clone()
-        clone.transparent = true
-        clone.opacity = 0
-        found.push(clone)
-        return clone
-      }
-      group.traverse((obj) => {
-        const candidate = obj as unknown as { isMesh?: boolean; material?: THREE.Material | THREE.Material[] }
-        if (!candidate.isMesh || !candidate.material) return
-        candidate.material = Array.isArray(candidate.material) ? candidate.material.map(cloneForFade) : cloneForFade(candidate.material)
-      })
-      materialsRef.current = found
-      startRef.current = performance.now()
-      if (found.length === 0) doneRef.current = true
-      return
-    }
-    const elapsed = performance.now() - (startRef.current ?? 0)
-    const t = Math.min(1, elapsed / FADE_MS)
-    for (const mat of materialsRef.current) mat.opacity = t
-    if (t >= 1) {
-      doneRef.current = true
-      for (const mat of materialsRef.current) mat.transparent = false
-    }
+    if (startRef.current === null) startRef.current = performance.now()
+    const elapsed = performance.now() - startRef.current
+    group.scale.setScalar(popScale(elapsed))
+    if (elapsed >= POP_MS) doneRef.current = true
   })
-
-  useEffect(() => {
-    return () => {
-      if (materialsRef.current) for (const mat of materialsRef.current) mat.dispose()
-    }
-  }, [])
 }
 
+/**
+ * Étiquette de pseudo : son matériau (`spriteMaterial`) est créé une fois par instance de
+ * `<sprite>`, jamais partagé (seule la texture, mise en cache par pseudo dans `nameLabel.ts`,
+ * l'est) — le fondu peut donc muter `opacity` directement dessus sans risque pour un autre pair.
+ */
 function NameSprite({ texture }: { texture: THREE.CanvasTexture }) {
+  const materialRef = useRef<THREE.SpriteMaterial>(null)
+  const startRef = useRef<number | null>(null)
   const aspect = getNameLabelAspect(texture)
+
+  useFrame(() => {
+    const material = materialRef.current
+    if (!material || material.opacity >= 1) return
+    if (startRef.current === null) startRef.current = performance.now()
+    const elapsed = performance.now() - startRef.current
+    material.opacity = Math.min(1, elapsed / FADE_MS)
+  })
+
   return (
     <sprite position={[0, LABEL_Y, 0]} scale={[LABEL_HEIGHT * aspect, LABEL_HEIGHT, 1]}>
-      <spriteMaterial map={texture} transparent depthWrite={false} />
+      <spriteMaterial ref={materialRef} map={texture} transparent depthWrite={false} opacity={0} />
     </sprite>
   )
 }
@@ -83,7 +94,7 @@ function RemotePeerAvatar({ id }: { id: string }) {
   const groupRef = useRef<THREE.Group>(null)
   const initial = getRenderTransform(getPeer(peerStore, id), Date.now())
   const [moving, setMoving] = useState(initial?.moving ?? false)
-  useFadeIn(groupRef)
+  usePopIn(groupRef)
 
   useFrame(() => {
     const transform = getRenderTransform(getPeer(peerStore, id), Date.now())

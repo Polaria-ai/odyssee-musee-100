@@ -3,7 +3,7 @@
  * `system-ui` uniquement (pas de CDN, conforme à la CSP). Textures ≤ 512 px.
  */
 import { CanvasTexture, SRGBColorSpace, Texture } from 'three'
-import type { Lang, Localized, Person } from '../types'
+import type { ExhibitWingId, Lang, Localized, Person } from '../types'
 import { pick } from '../i18n'
 import { palette } from '../styles/tokens'
 import { worldStrings } from './strings'
@@ -104,6 +104,12 @@ function paintPlaceholderPortrait(accentColor: string, order: number, lang: Lang
   ctx.textAlign = 'center'
   ctx.textBaseline = 'middle'
   ctx.fillText(pick(worldStrings.waitingPortraitNumber, lang).replace('{order}', String(order)), size / 2, size - bandHeight / 2)
+
+  // Légende (« Portrait à venir ») : juste au-dessus du bandeau, sur le pastel — texte encre, plus
+  // discret que le numéro (`waitingPortraitCaption`, code mort V1 réutilisé ici).
+  ctx.fillStyle = mixWithWhite(accentColor, PLACEHOLDER_SILHOUETTE_MIX * 0.5)
+  ctx.font = '600 16px system-ui, sans-serif'
+  ctx.fillText(pick(worldStrings.waitingPortraitCaption, lang), size / 2, size - bandHeight - 14)
   return toTexture(canvas)
 }
 
@@ -129,6 +135,18 @@ export function loadPersonPhoto(url: string): Promise<Texture> {
   return cached
 }
 
+/**
+ * Texte de la ligne « organisation » d'un cartel. Fonction pure (testable sans canvas, voir
+ * `textures.test.ts`) : une fiche d'attente (`placeholder: true`) dont l'organisation a été
+ * volontairement vidée (le module données la vide pendant cette passe, la vraie liste n'étant pas
+ * reçue) montre la date de révélation plutôt que « organisation à confirmer », qui suggérerait un
+ * oubli plutôt qu'une attente délibérée.
+ */
+export function cartelOrganizationText(person: Pick<Person, 'organization' | 'placeholder'>, lang: Lang): string {
+  if (person.organization && person.organization !== '—') return person.organization
+  return pick(person.placeholder ? worldStrings.revealOctober6 : worldStrings.cartelUnknownOrg, lang)
+}
+
 /** Cartel en laiton : nom + organisation. */
 const cartelCache = new Map<string, CanvasTexture>()
 export function drawCartel(person: Person, lang: Lang): CanvasTexture {
@@ -149,8 +167,7 @@ function paintCartel(person: Person, lang: Lang): CanvasTexture {
   ctx.font = '700 26px system-ui, sans-serif'
   ctx.fillText(truncate(ctx, person.name, w - 24), w / 2, h * 0.48)
   ctx.font = '400 18px system-ui, sans-serif'
-  const org = person.organization && person.organization !== '—' ? person.organization : pick(worldStrings.cartelUnknownOrg, lang)
-  ctx.fillText(truncate(ctx, org, w - 24), w / 2, h * 0.8)
+  ctx.fillText(truncate(ctx, cartelOrganizationText(person, lang), w - 24), w / 2, h * 0.8)
   return toTexture(canvas)
 }
 
@@ -197,21 +214,115 @@ function paintBanner(title: Localized, subtitle: Localized, lang: Lang): CanvasT
   return toTexture(canvas)
 }
 
-/** Panneau du nom d'une aile, à la couleur de l'aile. */
-const wingPanelCache = new Map<string, CanvasTexture>()
-export function drawWingPanel(label: Localized, accentColor: string, lang: Lang): CanvasTexture {
-  return cachedTexture(wingPanelCache, `${pick(label, lang)}|${accentColor}`, () => paintWingPanel(label, accentColor, lang))
+/** Petit pictogramme abstrait (jamais un logo réel) dessiné à `(cx, cy)`, rayon `r`, dans `color`. */
+function drawWingPictogram(ctx: CanvasRenderingContext2D, wing: ExhibitWingId, cx: number, cy: number, r: number, color: string) {
+  ctx.save()
+  ctx.fillStyle = color
+  ctx.strokeStyle = color
+  ctx.lineWidth = Math.max(2, r * 0.16)
+  if (wing === 'infrastructures') {
+    // Baie de serveurs : trois barres empilées, chacune avec un petit point (LED).
+    const barH = r * 0.5
+    for (let i = -1; i <= 1; i++) {
+      roundRect(ctx, cx - r, cy + i * barH - barH * 0.4, r * 2, barH * 0.7, barH * 0.15)
+      ctx.fill()
+    }
+  } else if (wing === 'industrialisation') {
+    // Roue dentée simplifiée : cercle + petites dents radiales.
+    ctx.beginPath()
+    ctx.arc(cx, cy, r * 0.55, 0, Math.PI * 2)
+    ctx.fill()
+    for (let t = 0; t < 8; t++) {
+      const a = (t / 8) * Math.PI * 2
+      const x1 = cx + Math.cos(a) * r * 0.55
+      const y1 = cy + Math.sin(a) * r * 0.55
+      const x2 = cx + Math.cos(a) * r
+      const y2 = cy + Math.sin(a) * r
+      ctx.beginPath()
+      ctx.moveTo(x1, y1)
+      ctx.lineTo(x2, y2)
+      ctx.stroke()
+    }
+  } else {
+    // Palette de conservateur : blob arrondi + trois pastilles de couleur.
+    ctx.beginPath()
+    ctx.ellipse(cx, cy, r, r * 0.75, 0, 0, Math.PI * 2)
+    ctx.fill()
+    const dotColors = ['#ffffff', 'rgba(255,255,255,0.55)', 'rgba(255,255,255,0.8)']
+    dotColors.forEach((c, i) => {
+      ctx.fillStyle = c
+      ctx.beginPath()
+      ctx.arc(cx - r * 0.4 + i * r * 0.4, cy + (i % 2 ? -1 : 1) * r * 0.15, r * 0.16, 0, Math.PI * 2)
+      ctx.fill()
+    })
+  }
+  ctx.restore()
 }
-function paintWingPanel(label: Localized, accentColor: string, lang: Lang): CanvasTexture {
+
+/** Panneau fléché du nom d'une aile, avec pictogramme, à la couleur de l'aile. */
+const wingPanelCache = new Map<string, CanvasTexture>()
+export function drawWingPanel(wing: ExhibitWingId, label: Localized, accentColor: string, lang: Lang): CanvasTexture {
+  return cachedTexture(wingPanelCache, `${wing}|${pick(label, lang)}|${accentColor}`, () => paintWingPanel(wing, label, accentColor, lang))
+}
+function paintWingPanel(wing: ExhibitWingId, label: Localized, accentColor: string, lang: Lang): CanvasTexture {
   const w = 256
   const h = 96
   const { canvas, ctx } = context2d(w, h)
   ctx.fillStyle = accentColor
   roundRect(ctx, 0, 0, w, h, 16)
   ctx.fill()
+  drawWingPictogram(ctx, wing, 34, h / 2, 20, 'rgba(255,255,255,0.92)')
+  ctx.fillStyle = '#ffffff'
+  ctx.textAlign = 'left'
+  ctx.font = '700 26px system-ui, sans-serif'
+  ctx.fillText(truncate(ctx, pick(label, lang), w - 74), 64, h * 0.44)
+  // Petite flèche vers le bas (« par ici ») sous le nom.
+  ctx.font = '700 20px system-ui, sans-serif'
+  ctx.fillText('↓', 64, h * 0.75)
+  return toTexture(canvas)
+}
+
+/** Plaque « Bientôt » d'une aile sans aucune personne (mur fermé, cordon décoratif devant). */
+const comingSoonCache = new Map<string, CanvasTexture>()
+export function drawComingSoonPanel(lang: Lang): CanvasTexture {
+  return cachedTexture(comingSoonCache, lang, () => paintComingSoonPanel(lang))
+}
+function paintComingSoonPanel(lang: Lang): CanvasTexture {
+  const w = 256
+  const h = 96
+  const { canvas, ctx } = context2d(w, h)
+  ctx.fillStyle = palette.woodDark
+  roundRect(ctx, 0, 0, w, h, 16)
+  ctx.fill()
+  ctx.fillStyle = palette.gold
+  roundRect(ctx, 5, 5, w - 10, h - 10, 12)
+  ctx.lineWidth = 3
+  ctx.strokeStyle = palette.gold
+  ctx.stroke()
   ctx.fillStyle = '#ffffff'
   ctx.textAlign = 'center'
   ctx.font = '700 30px system-ui, sans-serif'
-  ctx.fillText(pick(label, lang), w / 2, h * 0.62)
+  ctx.fillText(pick(worldStrings.wingComingSoon, lang), w / 2, h * 0.6)
+  return toTexture(canvas)
+}
+
+/** Plaque du comptoir de Minerve : nom + fonction. */
+const minervePlateCache = new Map<string, CanvasTexture>()
+export function drawMinervePlate(lang: Lang): CanvasTexture {
+  return cachedTexture(minervePlateCache, lang, () => paintMinervePlate(lang))
+}
+function paintMinervePlate(lang: Lang): CanvasTexture {
+  const w = 256
+  const h = 80
+  const { canvas, ctx } = context2d(w, h)
+  ctx.fillStyle = '#c9a24a'
+  roundRect(ctx, 0, 0, w, h, 10)
+  ctx.fill()
+  ctx.fillStyle = '#3b2a10'
+  ctx.textAlign = 'center'
+  ctx.font = '700 26px system-ui, sans-serif'
+  ctx.fillText(pick(worldStrings.minerveName, lang), w / 2, h * 0.42)
+  ctx.font = '400 17px system-ui, sans-serif'
+  ctx.fillText(pick(worldStrings.minerveTitle, lang), w / 2, h * 0.76)
   return toTexture(canvas)
 }

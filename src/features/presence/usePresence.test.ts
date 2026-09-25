@@ -3,8 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGame } from '../../state/gameStore'
 import { player } from '../../state/runtime'
 import type { AvatarConfig } from '../../types'
-import { clearPeers, peerStore } from './peers'
-import { usePresence } from './usePresence'
+import { IDLE_HEARTBEAT_MS, clearPeers, peerStore } from './peers'
+import { EFFECTIVE_PEER_TIMEOUT_MS, usePresence } from './usePresence'
+import { MAX_ROOMS, ROOM_CAPACITY } from './roomSelection'
 import type { ChannelStatus, RealtimeChannelLike, RealtimeClientLike } from './realtimeClient'
 
 function avatar(overrides: Partial<AvatarConfig> = {}): AvatarConfig {
@@ -30,6 +31,7 @@ class FakeChannel implements RealtimeChannelLike {
   broadcastCbs = new Map<string, (payload: unknown) => void>()
   sendCalls: Array<{ event: string; payload: unknown }> = []
   trackCalls: unknown[] = []
+  untrackCalls = 0
   unsubscribed = false
 
   constructor(public name: string) {}
@@ -51,6 +53,9 @@ class FakeChannel implements RealtimeChannelLike {
   }
   track(payload: unknown) {
     this.trackCalls.push(payload)
+  }
+  untrack() {
+    this.untrackCalls += 1
   }
   unsubscribe() {
     this.unsubscribed = true
@@ -260,6 +265,129 @@ describe('usePresence — pause onglet caché', () => {
     act(() => document.dispatchEvent(new Event('visibilitychange')))
     act(() => vi.advanceTimersByTime(200))
     expect(room1.sendCalls.length).toBeGreaterThan(0)
+  })
+})
+
+describe('usePresence — visiteurs fantômes (onglet caché longtemps)', () => {
+  it('quitte le canal après 30 s caché (untrack + unsubscribe), et le rejoint au retour au premier plan', () => {
+    const client = new FakeClient()
+    renderHook(() => usePresence(true, { getClient: () => client, now: () => Date.now() }))
+    const room1 = client.channels[0]
+    act(() => room1.emitStatus('SUBSCRIBED'))
+    act(() => room1.emitSync({ a: [presenceEntry('p1', 1)] }))
+    expect(useGame.getState().peersCount).toBe(1)
+
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+    act(() => vi.advanceTimersByTime(30000))
+
+    // Onglet caché depuis plus de 30 s : on ne doit plus rester un visiteur fantôme figé sur place.
+    expect(room1.untrackCalls).toBeGreaterThan(0)
+    expect(room1.unsubscribed).toBe(true)
+    expect(useGame.getState().peersCount).toBe(0)
+    expect(peerStore.peers.size).toBe(0)
+
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+
+    expect(client.channels).toHaveLength(2) // rejoint une salle fraîche au retour au premier plan
+    const room2 = client.channels[1]
+    act(() => room2.emitStatus('SUBSCRIBED'))
+    expect(room2.trackCalls).toHaveLength(1)
+  })
+
+  it('monté directement sur un onglet déjà caché : quitte quand même après 30 s (pas d’attente d’un premier `visibilitychange`)', () => {
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+    const client = new FakeClient()
+    renderHook(() => usePresence(true, { getClient: () => client, now: () => Date.now() }))
+    const room1 = client.channels[0]
+    act(() => room1.emitStatus('SUBSCRIBED'))
+
+    act(() => vi.advanceTimersByTime(30000))
+
+    expect(room1.untrackCalls).toBeGreaterThan(0)
+    expect(room1.unsubscribed).toBe(true)
+    expect(useGame.getState().peersCount).toBe(0)
+
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+    expect(client.channels).toHaveLength(2) // rejoint bien une salle fraîche au premier passage au premier plan
+  })
+
+  it('ne quitte pas le canal si l’onglet redevient visible avant les 30 s', () => {
+    const client = new FakeClient()
+    renderHook(() => usePresence(true, { getClient: () => client, now: () => Date.now() }))
+    const room1 = client.channels[0]
+    act(() => room1.emitStatus('SUBSCRIBED'))
+
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+    act(() => vi.advanceTimersByTime(29000))
+
+    Object.defineProperty(document, 'visibilityState', { value: 'visible', configurable: true })
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+    act(() => vi.advanceTimersByTime(5000))
+
+    expect(room1.untrackCalls).toBe(0)
+    expect(room1.unsubscribed).toBe(false)
+    expect(client.channels).toHaveLength(1)
+  })
+})
+
+describe('usePresence — dépassement au-delà de la dernière salle', () => {
+  it('repasse en solo silencieux quand la dernière salle déborde aussi (réutilise nextRoomIndex)', () => {
+    const client = new FakeClient()
+    renderHook(() => usePresence(true, { getClient: () => client, now: () => Date.now() }))
+
+    // Fait déborder chaque salle jusqu'à MAX_ROOMS : `others` arrivés à joinTs 0..7 (bien avant
+    // notre propre `Date.now()`), donc nous sommes toujours le dernier arrivé et partons.
+    for (let i = 1; i <= MAX_ROOMS; i++) {
+      const room = client.channels[client.channels.length - 1]
+      act(() => room.emitStatus('SUBSCRIBED'))
+      const others = Object.fromEntries(
+        Array.from({ length: ROOM_CAPACITY }, (_, k) => [`p${i}-${k}`, [presenceEntry(`p${i}-${k}`, k)]]),
+      )
+      act(() => room.emitSync(others))
+    }
+
+    expect(client.channels).toHaveLength(MAX_ROOMS) // jamais de salle au-delà de MAX_ROOMS
+    expect(useGame.getState().peersCount).toBe(0) // mode solo silencieux, pas d'erreur visible
+  })
+})
+
+describe('EFFECTIVE_PEER_TIMEOUT_MS — cohérence des délais', () => {
+  it('reste strictement supérieur à 1.5x le battement au repos, pour ne jamais clignoter un pair immobile', () => {
+    expect(EFFECTIVE_PEER_TIMEOUT_MS).toBeGreaterThan(IDLE_HEARTBEAT_MS * 1.5)
+  })
+})
+
+describe('usePresence — reconnexion en vol pendant un onglet caché longtemps', () => {
+  it('une tentative de reconnexion encore en vol au moment du départ pour onglet caché ne doit jamais republier la présence', () => {
+    // Reproduit une coupure réseau (fréquente quand l'OS met l'onglet en veille) juste avant le
+    // seuil des 30 s : une reconnexion est lancée (nouveau canal créé) mais pas encore confirmée
+    // `SUBSCRIBED` quand `leaveForHidden` décide de quitter. Le canal en vol ne doit plus jamais
+    // pouvoir republier notre présence (track) une fois sa confirmation tardive arrivée : sinon on
+    // redevient exactement le visiteur fantôme que ce correctif devait supprimer.
+    const client = new FakeClient()
+    renderHook(() => usePresence(true, { getClient: () => client, now: () => Date.now() }))
+    const room1 = client.channels[0]
+
+    // room1 ne se subscribe jamais : une coupure réseau arrive avant toute confirmation.
+    act(() => room1.emitStatus('CHANNEL_ERROR'))
+    act(() => vi.advanceTimersByTime(1000)) // premier backoff : relance immédiate d'un nouveau canal
+    expect(client.channels).toHaveLength(2)
+    const room2 = client.channels[1]
+
+    // L'onglet passe en arrière-plan avant que room2 ne confirme sa connexion.
+    Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true })
+    act(() => document.dispatchEvent(new Event('visibilitychange')))
+    act(() => vi.advanceTimersByTime(30000)) // seuil des 30 s : on quitte pour onglet caché
+
+    // La confirmation réseau de room2, tardive, arrive après coup.
+    act(() => room2.emitStatus('SUBSCRIBED'))
+
+    expect(room2.trackCalls).toHaveLength(0) // jamais republié : le départ pour onglet caché a gagné
+    expect(useGame.getState().peersCount).toBe(0)
   })
 })
 

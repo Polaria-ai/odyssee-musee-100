@@ -13,7 +13,7 @@ import { RemoteVisitors } from '../features/presence/RemoteVisitors'
 import { StampStations } from '../features/stamps/StampStations'
 import { AttractCamera } from './AttractCamera'
 import { DebugProbe } from './DebugProbe'
-import { palette } from '../styles/tokens'
+import { cameraRig, palette } from '../styles/tokens'
 
 // Le rendu logiciel (SwiftShader, utilisé en CI et sur certains appareils sans GPU) peut parfois
 // perdre le contexte WebGL (`THREE.WebGLRenderer: Context Lost.`), avec ou sans restauration native
@@ -52,7 +52,7 @@ export function Experience() {
       data-testid="game-canvas"
       dpr={quality === 'high' ? [1, 1.75] : [1, 1.25]}
       gl={{ antialias: quality === 'high', powerPreference: 'high-performance', preserveDrawingBuffer: false }}
-      camera={{ fov: 42, near: 0.1, far: 120, position: [0, 9, 14] }}
+      camera={{ fov: cameraRig.fovDeg, near: 0.1, far: 120, position: [0, 9, 14] }}
       frameloop={screen === 'customize' ? 'never' : 'always'}
       onCreated={onCreated}
     >

@@ -42,6 +42,12 @@ describe('generatePlaceholderPeople', () => {
     }
   })
 
+  it('n’affecte aucune organisation (chaîne vide) : l’UI et le monde affichent leur propre texte localisé', () => {
+    for (const p of generatePlaceholderPeople(15)) {
+      expect(p.organization).toBe('')
+    }
+  })
+
   it('varie les rôles génériques tout en restant bilingue', () => {
     const people = generatePlaceholderPeople(10)
     const roles = new Set(people.map((p) => p.role.fr))

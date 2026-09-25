@@ -12,10 +12,13 @@ export const HALL_HALF_DEPTH = 9
 /** Largeur des trois portes vers les ailes. */
 export const DOOR_WIDTH = 3.6
 
-/** Largeur (perpendiculaire à son axe) d'une aile d'exposition. */
-export const WING_WIDTH = 10
-/** Longueur minimale d'une aile (y compris une aile vide « bientôt »). */
-export const WING_MIN_LENGTH = 4.2
+/**
+ * Largeur (perpendiculaire à son axe) d'une aile d'exposition. Doit laisser un couloir marchable
+ * ≥ `MIN_WALKABLE_CORRIDOR` entre deux cimaises tout en gardant un recul confortable jusqu'au mur
+ * côté caméra (voir `XWING_LANE_STEP` ci-dessous) : 14 m loge 3 cimaises espacées de 5 m avec ~2 m
+ * de recul jusqu'au mur sud coupé.
+ */
+export const WING_WIDTH = 14
 
 /** Hauteur des murs côté caméra (« coupés », effet maquette). */
 export const CAMERA_CUT_HEIGHT = 1.0
@@ -34,11 +37,29 @@ export const FRAME_WALL_OFFSET = 0.06
  * jamais visible, quelle que soit la position du joueur. Une cloison perpendiculaire au mur principal
  * (« épi », face ±X) n'est donc structurellement jamais lisible : on ne construit plus que des
  * cloisons parallèles au mur principal, chacune porteuse d'une rangée de cadres face à +Z.
+ *
+ * Ces cimaises se placent nécessairement entre la caméra (toujours au sud du joueur) et le joueur dès
+ * qu'il s'avance vers une rangée plus au nord : chacune est donc un obstacle « estompable », rendue en
+ * mesh séparé (voir `Occluder` dans `layout.ts`, `occlusion.ts`, `Museum.tsx`) plutôt que fusionnée
+ * dans la géométrie statique de la salle.
  */
 export const CIMAISE_THICKNESS = 0.3
 
-/** Aile est/ouest (`buildXWing`) : distance entre deux cimaises intérieures successives (repère Z). */
-export const XWING_LANE_STEP = 3.2
+/** Hauteur des cimaises (cloisons porteuses de cadres) : même hauteur que les murs pleins de la salle. */
+export const CIMAISE_HEIGHT = dims.wallHeight
+
+/**
+ * Couloir marchable minimal exigé entre deux rangées de cimaises (mission occultation, V2) : assez
+ * large pour que le joueur ne se sente jamais coincé entre deux cloisons, même lorsque l'une d'elles
+ * est estompée. Vérifié par `layout.test.ts` sur l'écart entre deux `Occluder` consécutifs d'une aile.
+ */
+export const MIN_WALKABLE_CORRIDOR = 4.5
+
+/**
+ * Aile est/ouest (`buildXWing`) : distance entre deux cimaises intérieures successives (repère Z).
+ * `STEP - CIMAISE_THICKNESS` doit rester ≥ `MIN_WALKABLE_CORRIDOR` (voir `layout.test.ts`).
+ */
+export const XWING_LANE_STEP = 5.0
 /** Aile est/ouest (`buildXWing`) : nombre de cimaises porteuses de cadres (mur principal inclus). */
 export const XWING_LANE_COUNT = 3
 /**
@@ -57,9 +78,10 @@ export const NORTH_ROW_HALF_SPAN = 3.75
  * Aile nord : pas entre deux rangées en profondeur (Z). Plus grand que `ROW_STEP` : chaque rangée a
  * sa propre cimaise transversale (contrairement à `buildXWing`, où les cimaises courent tout le long
  * du couloir) — il faut assez de recul entre la cimaise d'une rangée et le point de vue de la
- * suivante pour que les deux ne se chevauchent jamais.
+ * suivante pour que les deux ne se chevauchent jamais, et `STEP - CIMAISE_THICKNESS` doit rester
+ * ≥ `MIN_WALKABLE_CORRIDOR` (chaque rangée nord est elle-même une cimaise estompable, voir `layout.ts`).
  */
-export const NORTH_ROW_DEPTH = 3.0
+export const NORTH_ROW_DEPTH = 5.0
 
 /** Pas entre deux rangées successives dans une aile (mur principal / épi / cimaise). */
 export const ROW_STEP = 2.4
@@ -78,5 +100,31 @@ export const STAMP_STATION_SIZE = 0.9
 export const PORTRAIT_LOAD_DISTANCE = 14
 /** Nombre de vérifications de proximité par seconde (chargement paresseux des photos). */
 export const PORTRAIT_CHECK_RATE_HZ = 3
+
+/** Hauteur par défaut du socle des meubles fusionnés dans la géométrie d'une salle (piliers, bancs…). */
+export const FURNITURE_HEIGHT = 0.85
+
+/** Colonnes rondes du hall (base + fût + chapiteau) : hautes, presque jusqu'au plafond (`dims.wallHeight`). */
+export const COLUMN_HEIGHT = 4.0
+export const COLUMN_RADIUS = 0.42
+
+/** Bancs en bois (hall et ailes) : hauteur d'assise réaliste, jamais un pavé plein. */
+export const BENCH_HEIGHT = 0.5
+
+/** Jardinières rondes (pot + plantes) : assez hautes pour compter comme un obstacle « ≥ 1,2 m ». */
+export const JARDINIERE_HEIGHT = 1.3
+export const JARDINIERE_RADIUS = 0.42
+
+/** Arbre des 100 (hall) : tronc + feuillage, banc circulaire autour (voir `HallDecor.tree`). */
+export const TREE_TRUNK_HEIGHT = 2.3
+export const TREE_TOTAL_HEIGHT = 4.0
+export const TREE_BENCH_HEIGHT = 0.48
+
+/**
+ * Fondu d'un obstacle occultant (cimaise) quand il se place entre la caméra et le joueur : opacité
+ * cible et durée approximative de la transition (voir `occlusion.ts`, `Museum.tsx`).
+ */
+export const CIMAISE_FADE_OPACITY = 0.18
+export const CIMAISE_FADE_SECONDS = 0.15
 
 export { dims }

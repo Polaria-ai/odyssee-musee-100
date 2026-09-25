@@ -35,6 +35,7 @@ type CanonicalField =
   | 'quoteEn'
   | 'photo'
   | 'photoCredit'
+  | 'photoSource'
   | 'links'
 
 const HEADER_ALIASES: Record<string, CanonicalField> = {
@@ -80,6 +81,18 @@ const HEADER_ALIASES: Record<string, CanonicalField> = {
   image: 'photo',
   'credit photo': 'photoCredit',
   'photo credit': 'photoCredit',
+  licence: 'photoCredit',
+  license: 'photoCredit',
+  'licence photo': 'photoCredit',
+  'photo licence': 'photoCredit',
+  'photo license': 'photoCredit',
+  'licence credit': 'photoCredit',
+  'credit licence': 'photoCredit',
+  'source photo': 'photoSource',
+  'photo source': 'photoSource',
+  'source de la photo': 'photoSource',
+  'page photo': 'photoSource',
+  'photo officielle': 'photoSource',
   liens: 'links',
   links: 'links',
 }
@@ -90,7 +103,7 @@ function normalizeKey(value: string): string {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[()]/g, ' ')
+    .replace(/[()/]/g, ' ')
     .replace(/[_-]+/g, ' ')
     .trim()
     .replace(/\s+/g, ' ')
@@ -260,6 +273,14 @@ export interface NormalizeRowResult {
   row: RawPersonInput
   /** Cellule photo brute (chemin local ou URL), traitée séparément (I/O). */
   photoCell: string
+  /**
+   * Cellule « source photo » brute (URL de page ou d'image officielle) : simple indication pour
+   * qui doit retrouver la vraie photo plus tard (WEL-866), jamais téléchargée ni traitée comme une
+   * photo elle-même — une page web n'est pas une image, `resolvePhoto` planterait ou produirait
+   * n'importe quoi si on la lui donnait telle quelle. Reprise seulement dans le rapport de fin
+   * (`findMissingMedia`) tant que `photo` est vide.
+   */
+  photoSourceCell: string
   warnings: string[]
 }
 
@@ -319,7 +340,7 @@ export function normalizeRow(
     placeholder: false,
   }
 
-  return { row, photoCell: get('photo'), warnings }
+  return { row, photoCell: get('photo'), photoSourceCell: get('photoSource'), warnings }
 }
 
 // ---------------------------------------------------------------------------
@@ -405,7 +426,7 @@ async function readRecords(path: string): Promise<Record<string, string>[]> {
 }
 
 // ---------------------------------------------------------------------------
-// Sortie : supabase/seed/people.sql (upsert idempotent, published = true).
+// Sortie : supabase/seed/people.sql (upsert idempotent).
 // ---------------------------------------------------------------------------
 
 function sqlString(value: string | null | undefined): string {
@@ -417,8 +438,48 @@ function sqlJson(value: unknown): string {
   return `${sqlString(JSON.stringify(value ?? []))}::jsonb`
 }
 
-/** SQL d'upsert idempotent (une transaction, `on conflict (id) do update`) — à relire puis exécuter. */
-export function buildSeedSql(people: Person[]): string {
+export interface SeedSqlOptions {
+  /**
+   * `true` seulement une fois les fiches relues par un humain (voir `docs/IMPORT.md`) : sinon les
+   * nouvelles fiches sont insérées `published = false` (brouillon, invisibles des visiteurs — RLS
+   * ne sert que `published = true`) et une fiche déjà en base garde son statut de publication
+   * actuel, quoi qu'il arrive. Avec `publish: true`, c'est un geste explicite de l'opérateur (« ces
+   * fiches sont relues, publie-les ») : les nouvelles fiches sont insérées publiées, et les fiches
+   * déjà en base sont aussi (re)publiées. Défaut : `false`, pour qu'un import de contenu (correction
+   * d'une coquille, par ex.) ne publie ni ne dépublie jamais une fiche tout seul.
+   */
+  publish?: boolean
+}
+
+/**
+ * SQL d'upsert idempotent (une transaction, `on conflict (id) do update`) — à relire puis exécuter
+ * dans le SQL editor Supabase. `published` n'est dans la clause `do update` que si `options.publish`
+ * est vrai : une relance sans `--publish` (ex. pour corriger une coquille) laisse donc le statut de
+ * publication des fiches déjà en base tel quel, qu'elles soient déjà publiées ou encore en brouillon.
+ */
+export function buildSeedSql(people: Person[], options: SeedSqlOptions = {}): string {
+  const published = options.publish ?? false
+  const updateAssignments = [
+    'ord = excluded.ord',
+    'name = excluded.name',
+    'role_fr = excluded.role_fr',
+    'role_en = excluded.role_en',
+    'organization = excluded.organization',
+    'country = excluded.country',
+    'wing = excluded.wing',
+    'bio_fr = excluded.bio_fr',
+    'bio_en = excluded.bio_en',
+    'story_fr = excluded.story_fr',
+    'story_en = excluded.story_en',
+    'quote_fr = excluded.quote_fr',
+    'quote_en = excluded.quote_en',
+    'photo_url = excluded.photo_url',
+    'photo_credit = excluded.photo_credit',
+    'links = excluded.links',
+    'placeholder = excluded.placeholder',
+    ...(published ? ['published = true'] : []),
+    'updated_at = now()',
+  ]
   const statements = people.map(
     (p) => `insert into public.people (
   id, ord, name, role_fr, role_en, organization, country, wing,
@@ -429,24 +490,20 @@ export function buildSeedSql(people: Person[]): string {
   ${sqlString(p.organization)}, ${sqlString(p.country)}, ${sqlString(p.wing)},
   ${sqlString(p.bio.fr)}, ${sqlString(p.bio.en)}, ${sqlString(p.story.fr)}, ${sqlString(p.story.en)},
   ${sqlString(p.quote?.fr ?? null)}, ${sqlString(p.quote?.en ?? null)},
-  ${sqlString(p.photoUrl)}, ${sqlString(p.photoCredit ?? null)}, ${sqlJson(p.links ?? [])}, ${p.placeholder}, true
+  ${sqlString(p.photoUrl)}, ${sqlString(p.photoCredit ?? null)}, ${sqlJson(p.links ?? [])}, ${p.placeholder}, ${published}
 )
 on conflict (id) do update set
-  ord = excluded.ord, name = excluded.name,
-  role_fr = excluded.role_fr, role_en = excluded.role_en,
-  organization = excluded.organization, country = excluded.country, wing = excluded.wing,
-  bio_fr = excluded.bio_fr, bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr, story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr, quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url, photo_credit = excluded.photo_credit,
-  links = excluded.links, placeholder = excluded.placeholder,
-  published = true, updated_at = now();`,
+  ${updateAssignments.join(',\n  ')};`,
   )
-  return `-- Généré par scripts/import-people.ts — à relire, puis exécuter dans le SQL editor Supabase.\nbegin;\n\n${statements.join('\n\n')}\n\ncommit;\n`
+  const note = published
+    ? '-- published = true : fiches relues, publiées (nouvelles fiches et fiches déjà en base).\n'
+    : "-- published = false (brouillon) : relire les fiches, puis relancer avec --publish avant la mise en ligne.\n" +
+      "-- (sans --publish, le statut de publication des fiches déjà en base n'est jamais modifié.)\n"
+  return `-- Généré par scripts/import-people.ts — à relire, puis exécuter dans le SQL editor Supabase.\n${note}begin;\n\n${statements.join('\n\n')}\n\ncommit;\n`
 }
 
 /** Person (camelCase) → ligne Supabase (snake_case), pour `--push`. Inverse de `mapSupabaseRow`. */
-export function toSupabaseRow(p: Person): Record<string, unknown> {
+export function toSupabaseRow(p: Person, options: SeedSqlOptions = {}): Record<string, unknown> {
   return {
     id: p.id,
     ord: p.order,
@@ -466,8 +523,49 @@ export function toSupabaseRow(p: Person): Record<string, unknown> {
     photo_credit: p.photoCredit ?? null,
     links: p.links ?? [],
     placeholder: p.placeholder,
-    published: true,
+    published: options.publish ?? false,
   }
+}
+
+/**
+ * Lignes prêtes pour `--push` (upsert Supabase direct, clé de service) : comme `toSupabaseRow`,
+ * mais **sans la clé `published` du tout** quand `publish` est faux — jamais juste `false`.
+ *
+ * Contrairement au SQL généré par `buildSeedSql` (où `published` n'apparaît dans la clause
+ * `do update` que si `--publish` est passé), l'upsert `supabase-js` applique telle quelle CHAQUE
+ * colonne présente dans l'objet envoyé : lui donner `published: false` sur une fiche déjà en base
+ * et déjà publiée la repasserait en brouillon, même pour une simple correction de contenu. Omettre
+ * entièrement la clé laisse Postgres ne pas toucher la colonne sur un conflit, et utiliser sa valeur
+ * par défaut (`false`) sur une insertion — le même contrat de non-régression que le chemin SQL.
+ */
+export function toSupabasePushRows(people: Person[], publish: boolean): Record<string, unknown>[] {
+  return people.map((p) => {
+    const row = toSupabaseRow(p, { publish })
+    if (!publish) delete row.published
+    return row
+  })
+}
+
+/** Une fiche sans photo ET sans crédit à l'issue de l'import — à traiter avant la mise en ligne. */
+export interface MissingMediaEntry {
+  id: string
+  name: string
+  /** Cellule « source photo » de la ligne d'origine, si fournie (voir `NormalizeRowResult`). */
+  photoSource?: string
+}
+
+/**
+ * Fiches réellement importées (non-placeholder) sans photo ni crédit photo : à compléter avant
+ * publication (retrouver la photo — éventuellement via `photoSource` — puis son crédit/licence).
+ * Une fiche d'attente n'a ni photo ni crédit par nature : elle n'a rien à faire dans ce rapport.
+ */
+export function findMissingMedia(people: Person[], photoSourceById: Map<string, string>): MissingMediaEntry[] {
+  return people
+    .filter((p) => !p.placeholder && !p.photoUrl && !p.photoCredit)
+    .map((p) => {
+      const photoSource = photoSourceById.get(p.id)
+      return photoSource ? { id: p.id, name: p.name, photoSource } : { id: p.id, name: p.name }
+    })
 }
 
 // ---------------------------------------------------------------------------
@@ -479,15 +577,17 @@ interface CliArgs {
   dryRun: boolean
   noPhotos: boolean
   push: boolean
+  publish: boolean
   wingDefault?: ExhibitWingId
 }
 
 function parseArgs(argv: string[]): CliArgs {
-  const args: CliArgs = { dryRun: false, noPhotos: false, push: false }
+  const args: CliArgs = { dryRun: false, noPhotos: false, push: false, publish: false }
   for (const arg of argv) {
     if (arg === '--dry-run') args.dryRun = true
     else if (arg === '--no-photos') args.noPhotos = true
     else if (arg === '--push') args.push = true
+    else if (arg === '--publish') args.publish = true
     else if (arg.startsWith('--wing-default=')) {
       const value = mapWingId(arg.slice('--wing-default='.length))
       if (value) args.wingDefault = value
@@ -503,6 +603,7 @@ function printReport(opts: {
   validationErrors: string[]
   warnings: string[]
   photoWarnings: string[]
+  missingMedia: MissingMediaEntry[]
 }): void {
   console.log(`\nImport : ${opts.imported} / ${opts.total} fiche(s) valide(s).`)
   if (opts.warnings.length) {
@@ -512,6 +613,13 @@ function printReport(opts: {
   if (opts.photoWarnings.length) {
     console.log(`\nPhotos manquantes ou ignorées (${opts.photoWarnings.length}) :`)
     for (const w of opts.photoWarnings) console.log(`  - ${w}`)
+  }
+  if (opts.missingMedia.length) {
+    console.log(`\nFiches sans photo ni crédit, à compléter avant publication (${opts.missingMedia.length}) :`)
+    for (const m of opts.missingMedia) {
+      const source = m.photoSource ? ` — source indiquée : ${m.photoSource}` : ''
+      console.log(`  - ${m.id} (${m.name})${source}`)
+    }
   }
   if (opts.validationErrors.length) {
     console.log(`\nLignes invalides, ignorées (${opts.validationErrors.length}) :`)
@@ -523,7 +631,7 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
   if (!args.input) {
     console.error(
-      'Usage : tsx scripts/import-people.ts <fichier.csv|.tsv|.json> [--dry-run] [--wing-default=infrastructures|industrialisation|culture] [--no-photos] [--push]',
+      'Usage : tsx scripts/import-people.ts <fichier.csv|.tsv|.json> [--dry-run] [--wing-default=infrastructures|industrialisation|culture] [--no-photos] [--publish] [--push]',
     )
     process.exitCode = 1
     return
@@ -539,10 +647,11 @@ async function main(): Promise<void> {
   const headerMap = buildHeaderMap(Object.keys(records[0]))
   const warnings: string[] = []
   const photoCells: { id: string; cell: string }[] = []
+  const photoSourceById = new Map<string, string>()
   const rawRows: RawPersonInput[] = []
 
   records.forEach((record, index) => {
-    const { row, photoCell, warnings: rowWarnings } = normalizeRow(record, headerMap, {
+    const { row, photoCell, photoSourceCell, warnings: rowWarnings } = normalizeRow(record, headerMap, {
       index,
       autoOrder: index + 1,
       wingDefault: args.wingDefault,
@@ -550,6 +659,7 @@ async function main(): Promise<void> {
     rawRows.push(row)
     warnings.push(...rowWarnings)
     if (photoCell) photoCells.push({ id: String(row.id), cell: photoCell })
+    if (photoSourceCell) photoSourceById.set(String(row.id), photoSourceCell)
   })
 
   const photoWarnings: string[] = []
@@ -567,8 +677,9 @@ async function main(): Promise<void> {
   }
 
   const { people, errors } = parsePeople(rawRows)
+  const missingMedia = findMissingMedia(people, photoSourceById)
 
-  printReport({ total: records.length, imported: people.length, validationErrors: errors, warnings, photoWarnings })
+  printReport({ total: records.length, imported: people.length, validationErrors: errors, warnings, photoWarnings, missingMedia })
 
   if (args.dryRun) {
     console.log('\n(--dry-run : aucun fichier écrit, aucune photo traitée.)')
@@ -578,8 +689,12 @@ async function main(): Promise<void> {
   await mkdir('public/data', { recursive: true })
   await writeFile('public/data/people.json', `${JSON.stringify(people, null, 2)}\n`, 'utf8')
   await mkdir('supabase/seed', { recursive: true })
-  await writeFile('supabase/seed/people.sql', buildSeedSql(people), 'utf8')
-  console.log('\nÉcrit : public/data/people.json, supabase/seed/people.sql')
+  await writeFile('supabase/seed/people.sql', buildSeedSql(people, { publish: args.publish }), 'utf8')
+  console.log(
+    `\nÉcrit : public/data/people.json, supabase/seed/people.sql (published = ${args.publish} — ${
+      args.publish ? 'relu, prêt à publier' : 'brouillon, relire avant --publish'
+    }).`,
+  )
 
   if (args.push) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -587,9 +702,17 @@ async function main(): Promise<void> {
     if (!serviceKey || !url) {
       console.warn('\n--push demandé mais SUPABASE_SERVICE_ROLE_KEY ou VITE_SUPABASE_URL absent : ignoré.')
     } else {
+      console.log(
+        args.publish
+          ? '\n--push : envoi direct à Supabase, published = true (nouvelles fiches et fiches déjà en base).'
+          : '\n--push : envoi direct à Supabase, en brouillon (le statut de publication des fiches déjà en' +
+              ' base, publiées ou non, est laissé tel quel — relance avec --publish une fois relu).',
+      )
       const { createClient } = await import('@supabase/supabase-js')
       const admin = createClient(url, serviceKey, { auth: { persistSession: false } })
-      const { error } = await admin.from('people').upsert(people.map(toSupabaseRow), { onConflict: 'id' })
+      const { error } = await admin
+        .from('people')
+        .upsert(toSupabasePushRows(people, args.publish), { onConflict: 'id' })
       if (error) console.error(`\nPush Supabase échoué : ${error.message}`)
       else console.log(`\nPush Supabase : ${people.length} fiche(s) upsertée(s).`)
     }

@@ -9,6 +9,10 @@
 
 .avatar-customizer {
   width: min(560px, 100%);
+  /* Hauteur exacte de l'écran (zone sûre déjà retirée par le padding de `.screen`) : le panneau
+     options+actions ci-dessous peut alors donner toute la place restante à son bouton d'action,
+     qui reste visible sans défiler même quand les pastilles ne tiennent pas toutes à l'écran. */
+  height: 100%;
   max-height: 100%;
   display: flex;
   flex-direction: column;
@@ -23,12 +27,25 @@
   flex-shrink: 0;
 }
 
+/* Panneau options + actions : colonne flex à hauteur contrainte (`min-height: 0` nécessaire pour
+   que la liste de pastilles, elle, puisse rétrécir et défiler au lieu de pousser le bouton hors
+   champ — piège classique de flexbox imbriqué). */
+.avatar-customizer__panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
 .avatar-customizer__options-col {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
+  min-height: 0;
+  flex: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
+  padding-bottom: 4px;
 }
 
 .avatar-customizer__title {
@@ -40,13 +57,18 @@
 }
 
 .avatar-customizer__preview {
-  width: 240px;
-  height: 240px;
+  /* Plus grand qu'avant (~300 px) en portrait : la tête doit rester lisible. `clamp` évite tout
+     débordement sur un très petit écran (ex. iPhone SE, 320 px de large). */
+  width: clamp(220px, 78vw, 300px);
+  height: clamp(220px, 78vw, 300px);
   border-radius: var(--radius-lg);
   overflow: hidden;
   background: var(--paper);
   box-shadow: var(--shadow-soft);
   flex-shrink: 0;
+  /* Les gestionnaires de glisser (rotation au doigt) sont posés sur ce cadre : on empêche le
+     navigateur de faire défiler/zoomer la page pendant le geste. */
+  touch-action: none;
 }
 
 .avatar-customizer__preview-canvas {
@@ -71,12 +93,6 @@
 
 .avatar-customizer__name::placeholder {
   color: var(--ink-soft);
-}
-
-.avatar-customizer__options {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
 }
 
 .pastille-group {
@@ -130,12 +146,16 @@
   box-shadow: none;
 }
 
+/* Barre d'action ancrée en bas du panneau (hors de la zone qui défile) : « C'est parti ! » reste
+   toujours visible, y compris sur un petit écran en portrait (iPhone 13, 390×844). */
 .avatar-customizer__actions {
   display: flex;
   justify-content: center;
   gap: 12px;
   flex-wrap: wrap;
-  padding-top: 4px;
+  flex-shrink: 0;
+  padding-top: 12px;
+  border-top: 2px solid rgba(140, 106, 74, 0.22);
 }
 
 .btn-pill {
@@ -173,18 +193,23 @@
 @media (orientation: landscape) and (min-width: 680px) {
   .avatar-customizer {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: stretch;
     width: min(860px, 100%);
     max-height: 92dvh;
   }
 
   .avatar-customizer__preview-col {
-    flex: 0 0 260px;
+    flex: 0 0 200px;
+  }
+
+  /* En paysage, la hauteur disponible est rare (encoche sur les côtés) : aperçu plus compact que
+     le portrait, la tête doit quand même rester entière et le personnage centré. */
+  .avatar-customizer__preview {
+    width: 200px;
+    height: 200px;
   }
 
   .avatar-customizer__options-col {
-    flex: 1;
-    max-height: 88dvh;
     padding-right: 4px;
   }
 }

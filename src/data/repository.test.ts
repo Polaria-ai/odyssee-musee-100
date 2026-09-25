@@ -74,6 +74,30 @@ describe('loadPeople', () => {
     expect(people.map((p) => p.id)).toEqual(['ada-lovelace'])
   })
 
+  it('ne laisse aucun minuteur actif quand Supabase répond avant le délai (withTimeout annule son setTimeout)', async () => {
+    vi.useFakeTimers()
+    try {
+      getSupabaseMock.mockReturnValue(supabaseClientReturning(Promise.resolve({ data: [supabaseRow], error: null })))
+      const { source } = await loadPeople()
+      expect(source).toBe('supabase')
+      expect(vi.getTimerCount()).toBe(0)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('retombe silencieusement sur /data/people.json puis les fiches d’attente si la table Supabase est vide (200 + [])', async () => {
+    const warnSpy = vi.spyOn(console, 'warn')
+    getSupabaseMock.mockReturnValue(supabaseClientReturning(Promise.resolve({ data: [], error: null })))
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [] }) as unknown as typeof fetch
+    const { people, source } = await loadPeople()
+    expect(source).toBe('placeholder')
+    expect(people).toHaveLength(100)
+    // Une table vide n'est pas une erreur : aucun avertissement bruyant, pas plus au premier
+    // repli (Supabase → JSON) qu'au second (JSON → fiches d'attente).
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
   it('retombe sur /data/people.json si Supabase n’est pas configuré', async () => {
     getSupabaseMock.mockReturnValue(null)
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => [validStaticPerson] }) as unknown as typeof fetch

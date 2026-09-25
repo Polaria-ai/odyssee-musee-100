@@ -4,6 +4,7 @@ import { useGame } from '../../state/gameStore'
 import { minerveDialogue } from '../../npc/minerveScript'
 import type { ExhibitWingId, Localized } from '../../types'
 import { format, pick } from '../../i18n'
+import { playSfx } from '../../audio'
 import { isCardComplete, stampsToAward } from './stamps'
 import { strings, wingNames } from './strings'
 
@@ -47,9 +48,11 @@ export function useStampWatcher(): void {
     for (const wing of toAward) {
       g.awardStamp(wing)
       g.showToast(stampToastText(wing))
+      playSfx('stamp')
       queueRef.current.push({ kind: 'stamp', wing })
     }
     if (isCardComplete(useGame.getState().stamps, people)) {
+      playSfx('complete')
       queueRef.current.push({ kind: 'complete' })
     }
     playNext()

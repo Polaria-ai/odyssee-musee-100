@@ -23,10 +23,12 @@ const PLACEHOLDER_ROLES: Localized[] = [
 ]
 
 /**
- * `organization` n'est pas bilingue dans `Person` (voir `src/types/index.ts`) : ce texte doit donc
- * rester lisible tel quel en FR comme en EN. D'où la formulation mixte plutôt qu'une traduction.
+ * `organization` est vide sur une fiche d'attente : il n'y a pas d'organisation à afficher tant
+ * que la vraie liste n'est pas reçue. L'UI (`src/ui/format.ts`) et le monde (`src/world/textures.ts`)
+ * savent déjà afficher un texte localisé (FR/EN) à la place d'une organisation vide sur une fiche
+ * `placeholder` — ne pas réintroduire de texte ici, ce serait dupliqué et non traduit correctement.
  */
-const PLACEHOLDER_ORGANIZATION = 'À dévoiler / Revealed — 6 octobre 2026'
+const PLACEHOLDER_ORGANIZATION = ''
 
 const BIO: Localized = {
   fr: "Cette fiche est un espace réservé. La liste officielle des 100 qui font l'IA en Europe (étude Oliver Wyman) sera dévoilée le 6 octobre 2026, à L'Odyssée de l'IA.",

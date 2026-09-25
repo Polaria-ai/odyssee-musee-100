@@ -15,6 +15,8 @@ export interface RealtimeChannelLike {
   subscribe(cb: (status: ChannelStatus) => void): void
   send(event: string, payload: unknown): void
   track(payload: unknown): void
+  /** Annonce explicitement notre départ de la présence (avant `unsubscribe`), ex. onglet caché longtemps. */
+  untrack(): void
   unsubscribe(): void
 }
 
@@ -47,6 +49,9 @@ function adaptChannel(sb: SupabaseClient, ch: RealtimeChannel): RealtimeChannelL
     },
     track(payload) {
       void ch.track(payload as Record<string, unknown>).catch(() => {})
+    },
+    untrack() {
+      void ch.untrack().catch(() => {})
     },
     unsubscribe() {
       void sb.removeChannel(ch).catch(() => {})

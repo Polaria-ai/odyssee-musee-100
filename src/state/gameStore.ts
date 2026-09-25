@@ -52,6 +52,8 @@ export interface GameState {
   /** Tampons obtenus : aile → horodatage ms. */
   stamps: Partial<Record<ExhibitWingId, number>>
   stampCardOpen: boolean
+  /** Plan du musée (bouton « Plan » du HUD) : surimpression comme les autres, coupe le déplacement. */
+  mapOpen: boolean
 
   dialogue: Dialogue | null
   dialogueIndex: number
@@ -75,6 +77,7 @@ export interface GameState {
   markVisited: (personId: string) => void
   awardStamp: (wing: ExhibitWingId) => void
   setStampCardOpen: (open: boolean) => void
+  setMapOpen: (open: boolean) => void
   startDialogue: (dialogue: Dialogue) => void
   advanceDialogue: () => void
   closeDialogue: () => void
@@ -123,6 +126,7 @@ export const useGame = create<GameState>()((set, get) => ({
   visited: (persisted.visited as Record<string, number>) ?? {},
   stamps: (persisted.stamps as Partial<Record<ExhibitWingId, number>>) ?? {},
   stampCardOpen: false,
+  mapOpen: false,
 
   dialogue: null,
   dialogueIndex: 0,
@@ -188,6 +192,7 @@ export const useGame = create<GameState>()((set, get) => ({
     set({ stamps: next })
   },
   setStampCardOpen: (stampCardOpen) => set({ stampCardOpen }),
+  setMapOpen: (mapOpen) => set({ mapOpen }),
   startDialogue: (dialogue) => set({ dialogue, dialogueIndex: 0 }),
   advanceDialogue: () => {
     const { dialogue, dialogueIndex } = get()
@@ -209,6 +214,8 @@ export const useGame = create<GameState>()((set, get) => ({
 }))
 
 /** Vrai quand une interface recouvre le jeu : le joueur ne doit pas bouger. */
-export function isOverlayOpen(s: Pick<GameState, 'openPersonId' | 'dialogue' | 'stampCardOpen'>): boolean {
-  return s.openPersonId !== null || s.dialogue !== null || s.stampCardOpen
+export function isOverlayOpen(
+  s: Pick<GameState, 'openPersonId' | 'dialogue' | 'stampCardOpen' | 'mapOpen'>,
+): boolean {
+  return s.openPersonId !== null || s.dialogue !== null || s.stampCardOpen || s.mapOpen
 }

@@ -22,7 +22,7 @@ import {
   IDLE_HEARTBEAT_MS,
   type SendState,
 } from './peers'
-import { roomName, shouldStayInRoom, MAX_ROOMS, ROOM_CAPACITY, type RoomMember } from './roomSelection'
+import { roomName, shouldStayInRoom, nextRoomIndex, MAX_ROOMS, ROOM_CAPACITY, type RoomMember } from './roomSelection'
 import { POSITION_EVENT, encodePosition, encodePresence, decodePosition, decodePresence, type PresenceWireMessage } from './protocol'
 import { defaultRealtimeClient, type RealtimeClientLike, type RealtimeChannelLike } from './realtimeClient'
 
@@ -43,6 +43,18 @@ const MAX_RECONNECT_ATTEMPTS = 3
 const BASE_BACKOFF_MS = 1000
 const MAX_BACKOFF_MS = 8000
 
+/** Onglet caché depuis plus longtemps que ça : on quitte le canal (voir `onVisibility` plus bas). */
+const HIDDEN_LEAVE_MS = 30000
+
+/**
+ * Marge de sécurité au-dessus du battement au repos : le délai effectif doit rester strictement
+ * supérieur à `1.5 × IDLE_HEARTBEAT_MS`, sans quoi un battement qui glisse un peu (`setInterval`
+ * n'est pas exact, et `pruneStale` n'est lui-même vérifié que toutes les `PRUNE_TICK_MS`) ferait
+ * clignoter un pair pourtant toujours connecté juste avant l'arrivée du battement suivant. `1.6`
+ * (et non `1.5` pile) laisse une vraie marge, pas une égalité fragile. Voir `usePresence.test.ts`.
+ */
+const PEER_TIMEOUT_SAFETY_FACTOR = 1.6
+
 /**
  * Délai d'expiration réellement utilisé pour un pair silencieux. Volontairement plus large que
  * `PEER_SILENCE_TIMEOUT_MS` (la valeur par défaut, testée isolément dans `peers.test.ts`) : le
@@ -50,7 +62,7 @@ const MAX_BACKOFF_MS = 8000
  * toujours connecté ne doit jamais dépasser ce délai entre deux battements, sous peine de
  * clignoter côté receveur avant de réapparaître.
  */
-const EFFECTIVE_PEER_TIMEOUT_MS = Math.max(PEER_SILENCE_TIMEOUT_MS, IDLE_HEARTBEAT_MS + 4000)
+export const EFFECTIVE_PEER_TIMEOUT_MS = Math.max(PEER_SILENCE_TIMEOUT_MS, Math.round(IDLE_HEARTBEAT_MS * PEER_TIMEOUT_SAFETY_FACTOR))
 
 function parsePresenceState(state: Record<string, unknown[]>): PresenceWireMessage[] {
   const out: PresenceWireMessage[] = []
@@ -97,6 +109,19 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
     let sendTimer: ReturnType<typeof setInterval> | undefined
     let sendState: SendState | null = null
     let hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden'
+    let hiddenTimer: ReturnType<typeof setTimeout> | undefined
+    // Vrai entre le moment où l'onglet caché depuis trop longtemps nous a fait quitter le canal et
+    // le retour au premier plan qui nous fait rejoindre : distingue ce cas d'une simple pause
+    // courte (où `sendState` est juste remis à zéro, sans quitter/rejoindre).
+    let leftForHidden = false
+    // Incrémenté à chaque départ de canal (nouvelle salle, ou départ volontaire pour onglet caché).
+    // Une reconnexion réseau (`CHANNEL_ERROR`/`TIMED_OUT`) crée un nouveau canal qui ne confirme sa
+    // connexion (`SUBSCRIBED`) que de façon asynchrone ; si `leaveForHidden` décide de quitter entre
+    // temps, cette confirmation tardive ne doit plus jamais republier notre présence (`track`) —
+    // sans quoi on redevient exactement le visiteur fantôme que ce module doit éviter. Chaque
+    // callback asynchrone du canal capture la génération courante à sa création et se désactive dès
+    // qu'elle ne correspond plus à `generation` (voir `usePresence.test.ts`).
+    let generation = 0
 
     const stopSendLoop = () => {
       if (sendTimer !== undefined) {
@@ -106,6 +131,7 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
     }
 
     const leaveChannel = () => {
+      generation += 1
       stopSendLoop()
       sendState = null
       const ch = channelRef.current
@@ -145,20 +171,26 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
       }, delay)
     }
 
-    const joinRoom = (index: number) => {
-      if (cancelled) return
-      if (index > MAX_ROOMS) {
+    /** Rejoint `index`, ou repasse en solo si on a dépassé la dernière salle (`nextRoomIndex` → `null`). */
+    const enterRoom = (index: number | null) => {
+      if (index === null) {
         goSolo()
         return
       }
+      joinRoom(index)
+    }
+
+    const joinRoom = (index: number) => {
+      if (cancelled) return
       leaveChannel()
       clearPeers(peerStore) // nouvelle salle : l'ancien roster ne concerne plus personne ici.
       joinTsRef.current = depsRef.current.now()
+      const myGeneration = generation // capturée après leaveChannel() : cette tentative-ci.
 
       const ch = client.channel(roomName(index))
 
       ch.onPresenceSync(() => {
-        if (cancelled) return
+        if (cancelled || myGeneration !== generation) return
         const entries = parsePresenceState(ch.presenceState())
         const others = entries.filter((e) => e.id !== visitorId)
         const now = depsRef.current.now()
@@ -176,17 +208,17 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
           ...others.map((e) => ({ id: e.id, joinTs: e.joinTs })),
           { id: visitorId, joinTs: joinTsRef.current },
         ]
-        if (!shouldStayInRoom(visitorId, members, ROOM_CAPACITY)) joinRoom(index + 1)
+        if (!shouldStayInRoom(visitorId, members, ROOM_CAPACITY)) enterRoom(nextRoomIndex(index, MAX_ROOMS))
       })
 
       ch.onBroadcast(POSITION_EVENT, (payload) => {
-        if (cancelled) return
+        if (cancelled || myGeneration !== generation) return
         const decoded = decodePosition(payload)
         if (decoded && decoded.id !== visitorId) recordPosition(peerStore, decoded.id, decoded.sample, depsRef.current.now())
       })
 
       ch.subscribe((status) => {
-        if (cancelled) return
+        if (cancelled || myGeneration !== generation) return
         if (status === 'SUBSCRIBED') {
           attempt = 0
           channelRef.current = ch
@@ -200,11 +232,61 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
       })
     }
 
+    const clearHiddenTimer = () => {
+      if (hiddenTimer !== undefined) {
+        clearTimeout(hiddenTimer)
+        hiddenTimer = undefined
+      }
+    }
+
+    /**
+     * Onglet caché depuis plus de `HIDDEN_LEAVE_MS` : quitte proprement la présence (untrack puis
+     * unsubscribe) plutôt que de rester un visiteur fantôme figé à sa dernière position pour tout
+     * le monde. `leftForHidden` fait rejoindre au retour au premier plan (voir `onVisibility`).
+     */
+    const leaveForHidden = () => {
+      if (leftForHidden) return
+      leftForHidden = true
+      // Une reconnexion pouvait déjà être programmée (erreur réseau juste avant le seuil) : on
+      // annule cette relance en attente pour ne pas rejoindre une salle juste après avoir décidé de
+      // partir (`leaveChannel()` ci-dessous invalide de toute façon toute tentative déjà en vol).
+      if (reconnectTimer !== undefined) {
+        clearTimeout(reconnectTimer)
+        reconnectTimer = undefined
+      }
+      const ch = channelRef.current
+      if (ch) ch.untrack()
+      leaveChannel()
+      clearPeers(peerStore)
+      setPeersCount(0)
+    }
+
+    const scheduleHiddenLeave = () => {
+      clearHiddenTimer()
+      hiddenTimer = setTimeout(() => {
+        if (!cancelled) leaveForHidden()
+      }, HIDDEN_LEAVE_MS)
+    }
+
     const onVisibility = () => {
       hidden = typeof document !== 'undefined' && document.visibilityState === 'hidden'
-      if (!hidden) sendState = null // au retour au premier plan : republier tout de suite.
+      if (hidden) {
+        scheduleHiddenLeave()
+        return
+      }
+      clearHiddenTimer()
+      sendState = null // au retour au premier plan : republier tout de suite.
+      if (leftForHidden) {
+        leftForHidden = false
+        enterRoom(1)
+      }
     }
     document.addEventListener('visibilitychange', onVisibility)
+    // Montage direct sur un onglet déjà caché (préchargement, ouverture en arrière-plan) : aucun
+    // `visibilitychange` ne se déclenchera avant un premier passage au premier plan, donc sans ce
+    // cas explicite le délai de 30 s ne démarrerait jamais et on resterait un visiteur fantôme
+    // indéfiniment tant que l'onglet n'est jamais regardé.
+    if (hidden) scheduleHiddenLeave()
 
     const pruneTimer = setInterval(() => {
       pruneStale(peerStore, depsRef.current.now(), EFFECTIVE_PEER_TIMEOUT_MS)
@@ -216,6 +298,7 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
       cancelled = true
       document.removeEventListener('visibilitychange', onVisibility)
       if (reconnectTimer !== undefined) clearTimeout(reconnectTimer)
+      clearHiddenTimer()
       clearInterval(pruneTimer)
       leaveChannel()
       clearPeers(peerStore)

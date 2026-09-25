@@ -1,5 +1,6 @@
 // Propriétaire : agent avatar+tampons.
-import { Suspense, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import type { MutableRefObject, PointerEvent as ReactPointerEvent } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Box3 } from 'three'
 import type { Group } from 'three'
@@ -7,6 +8,7 @@ import { useGame } from '../../state/gameStore'
 import { useT } from '../../i18n'
 import type { AccessoryId, AvatarConfig, OutfitId } from '../../types'
 import { AvatarMesh } from '../../player/AvatarMesh'
+import { playSfx } from '../../audio'
 import {
   ACCESSORIES,
   HAIR_COLORS,
@@ -16,7 +18,16 @@ import {
   randomAppearance,
   resolveDisplayName,
 } from './options'
-import { fitVerticalBounds } from './preview'
+import {
+  clampDragOffset,
+  decayVelocity,
+  degToRad,
+  dragToAngularStep,
+  fitVerticalBounds,
+  previewSwayAngle,
+  wrapAngle,
+  PREVIEW_BASE_YAW_DEG,
+} from './preview'
 import { strings, outfitLabels, accessoryLabels } from './strings'
 import './AvatarCustomizer.css'
 
@@ -24,18 +35,48 @@ import './AvatarCustomizer.css'
 const PREVIEW_FOV = 32
 /** Marge autour du personnage dans le cadre carré : de l'air au-dessus de la tête (casquette, béret…). */
 const PREVIEW_MARGIN = 1.35
+const PREVIEW_BASE_YAW = degToRad(PREVIEW_BASE_YAW_DEG)
+
+/** État de glisser de l'aperçu, muté directement par les gestionnaires pointer (aucun re-render React). */
+interface PreviewDrag {
+  /** Rotation additionnelle accumulée par le doigt (radians), conservée après un lâcher. */
+  offset: number
+  /** Vitesse angulaire courante (rad/s), pour l'inertie après un lâcher. */
+  velocity: number
+  dragging: boolean
+  lastX: number
+  lastT: number
+}
+
+function createPreviewDrag(): PreviewDrag {
+  return { offset: 0, velocity: 0, dragging: false, lastX: 0, lastT: 0 }
+}
+
+function prefersReducedMotion(): boolean {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  } catch {
+    return false
+  }
+}
 
 /**
- * Fait tourner lentement l'aperçu (aucune allocation par image : on mute `rotation.y`) et cadre la
- * caméra sur le personnage réellement rendu — mesuré via `Box3`, jamais deviné à partir de
+ * Cadre la caméra sur le personnage réellement rendu — mesuré via `Box3`, jamais deviné à partir de
  * proportions fixes (celles-ci vivent dans `src/player/AvatarMesh.tsx`, hors contrat de ce module,
  * et varient déjà selon l'accessoire, ex. casquette). Corrige le bug où la tête sortait du cadre :
  * sans caméra explicite, react-three-fiber vise (0,0,0) par défaut, c'est-à-dire les pieds du
  * personnage, pas son centre.
+ *
+ * Orientation : pose de repos « trois quarts face » (le visage reste lisible, à la différence de
+ * l'ancienne rotation continue qui montrait surtout le profil et le dos), balancement doux ± 30°
+ * autour de cette pose, et rotation au glisser du doigt avec une légère inertie après un lâcher.
+ * Aucune allocation three.js par image : on mute seulement `rotation.y` et les nombres de `drag`.
  */
-function RotatingPreview({ config }: { config: AvatarConfig }) {
+function RotatingPreview({ config, drag }: { config: AvatarConfig; drag: MutableRefObject<PreviewDrag> }) {
   const groupRef = useRef<Group>(null)
   const { camera } = useThree()
+  const elapsed = useRef(0)
+  const reducedMotion = useMemo(prefersReducedMotion, [])
 
   useLayoutEffect(() => {
     const group = groupRef.current
@@ -46,12 +87,26 @@ function RotatingPreview({ config }: { config: AvatarConfig }) {
     const { distance, targetY } = fitVerticalBounds({ minY: box.min.y, maxY: box.max.y }, PREVIEW_FOV, PREVIEW_MARGIN)
     camera.position.set(0, targetY, distance)
     camera.lookAt(0, targetY, 0)
-    // La rotation du groupe (tourne en continu) ne change pas son étendue verticale : seuls la
+    // La rotation du groupe (balancement + glisser) ne change pas son étendue verticale : seuls la
     // tenue et l'accessoire, qui changent la géométrie affichée, doivent redéclencher le cadrage.
   }, [config.outfit, config.accessory, camera])
 
   useFrame((_, delta) => {
-    if (groupRef.current) groupRef.current.rotation.y += delta * 0.6
+    const group = groupRef.current
+    if (!group) return
+    const d = drag.current
+    if (!d.dragging && d.velocity !== 0) {
+      // Même borne qu'au glisser (`clampDragOffset`) : l'inertie ne doit pas pouvoir faire ce que
+      // le doigt seul ne pourrait pas non plus, à savoir montrer le dos du personnage. Une fois la
+      // borne atteinte, on coupe la vitesse plutôt que de la laisser pousser indéfiniment sans effet.
+      const proposed = wrapAngle(d.offset + d.velocity * delta)
+      const clamped = clampDragOffset(proposed)
+      d.velocity = clamped === proposed ? decayVelocity(d.velocity, delta) : 0
+      d.offset = clamped
+    }
+    elapsed.current += delta
+    const sway = reducedMotion ? 0 : previewSwayAngle(elapsed.current)
+    group.rotation.y = PREVIEW_BASE_YAW + sway + d.offset
   })
   return (
     <group ref={groupRef}>
@@ -61,7 +116,7 @@ function RotatingPreview({ config }: { config: AvatarConfig }) {
 }
 
 /** Petit Canvas dédié à l'aperçu, séparé du Canvas principal (qui reste figé pendant cet écran). */
-function PreviewCanvas({ config }: { config: AvatarConfig }) {
+function PreviewCanvas({ config, drag }: { config: AvatarConfig; drag: MutableRefObject<PreviewDrag> }) {
   return (
     <Canvas
       className="avatar-customizer__preview-canvas"
@@ -74,7 +129,7 @@ function PreviewCanvas({ config }: { config: AvatarConfig }) {
       <hemisphereLight args={['#fff6e0', '#c8a27a', 1.2]} />
       <directionalLight position={[2, 3, 2]} intensity={1} />
       <Suspense fallback={null}>
-        <RotatingPreview config={config} />
+        <RotatingPreview config={config} drag={drag} />
       </Suspense>
     </Canvas>
   )
@@ -117,7 +172,10 @@ function PastilleGroup<T extends string>({
             aria-label={opt.label ?? opt.value}
             className={`pastille${opt.swatch ? ' pastille--swatch' : ''}`}
             style={opt.swatch ? { background: opt.swatch } : undefined}
-            onClick={() => onChange(opt.value)}
+            onClick={() => {
+              playSfx('click')
+              onChange(opt.value)
+            }}
           >
             {!opt.swatch && opt.label}
           </button>
@@ -125,6 +183,40 @@ function PastilleGroup<T extends string>({
       </div>
     </div>
   )
+}
+
+/** Démarre un glisser : capture le pointeur pour continuer à recevoir les déplacements hors du cadre. */
+function handlePreviewPointerDown(drag: MutableRefObject<PreviewDrag>, e: ReactPointerEvent<HTMLDivElement>) {
+  const d = drag.current
+  d.dragging = true
+  d.velocity = 0
+  d.lastX = e.clientX
+  d.lastT = e.timeStamp
+  e.currentTarget.setPointerCapture(e.pointerId)
+}
+
+/**
+ * Accumule la rotation pendant le glisser ; ne fait aucun `setState` (pas de re-render par pixel).
+ * `clampDragOffset` borne le résultat : un glisser franc (la largeur de l'aperçu suffit) ne doit
+ * jamais faire tourner le personnage jusqu'à son dos (voir `PREVIEW_MAX_DRAG_OFFSET_DEG`).
+ */
+function handlePreviewPointerMove(drag: MutableRefObject<PreviewDrag>, e: ReactPointerEvent<HTMLDivElement>) {
+  const d = drag.current
+  if (!d.dragging) return
+  const deltaX = e.clientX - d.lastX
+  const deltaT = e.timeStamp - d.lastT
+  const { offsetDelta, velocity } = dragToAngularStep(deltaX, deltaT)
+  d.offset = clampDragOffset(wrapAngle(d.offset + offsetDelta))
+  d.velocity = velocity
+  d.lastX = e.clientX
+  d.lastT = e.timeStamp
+}
+
+/** Fin de glisser (relâché ou annulé) : la vitesse retenue alimente l'inertie dans `useFrame`. */
+function handlePreviewPointerEnd(drag: MutableRefObject<PreviewDrag>, e: ReactPointerEvent<HTMLDivElement>) {
+  const d = drag.current
+  d.dragging = false
+  if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId)
 }
 
 /** Écran « Qui es-tu ? » avant d'entrer dans le musée. */
@@ -140,14 +232,17 @@ export function AvatarCustomizer() {
 
   const [draft, setDraft] = useState<AvatarConfig>(() => ({ ...storedAvatar }))
   const [nameDraft, setNameDraft] = useState(storedAvatar.name)
+  const dragRef = useRef<PreviewDrag>(createPreviewDrag())
 
   function handleDone() {
+    playSfx('click')
     const finalAvatar: AvatarConfig = { ...draft, name: resolveDisplayName(nameDraft, visitorId, lang) }
     setAvatar(finalAvatar)
     setScreen('play')
   }
 
   function handleRandom() {
+    playSfx('click')
     setDraft((prev) => ({ ...prev, ...randomAppearance() }))
   }
 
@@ -156,8 +251,14 @@ export function AvatarCustomizer() {
       <div className="avatar-customizer">
         <div className="avatar-customizer__preview-col">
           <h1 className="avatar-customizer__title">{t('title')}</h1>
-          <div className="avatar-customizer__preview">
-            <PreviewCanvas config={draft} />
+          <div
+            className="avatar-customizer__preview"
+            onPointerDown={(e) => handlePreviewPointerDown(dragRef, e)}
+            onPointerMove={(e) => handlePreviewPointerMove(dragRef, e)}
+            onPointerUp={(e) => handlePreviewPointerEnd(dragRef, e)}
+            onPointerCancel={(e) => handlePreviewPointerEnd(dragRef, e)}
+          >
+            <PreviewCanvas config={draft} drag={dragRef} />
           </div>
           <input
             type="text"
@@ -171,8 +272,13 @@ export function AvatarCustomizer() {
           />
         </div>
 
-        <div className="avatar-customizer__options-col">
-          <div className="avatar-customizer__options">
+        {/*
+          Panneau options + actions : colonne flex propre, avec l'action « C'est parti ! » ancrée en
+          bas (pas dans le flux défilant) pour rester visible sans défiler, même sur un petit écran
+          (iPhone 13 portrait) — seules les pastilles d'options défilent, au-dessus.
+        */}
+        <div className="avatar-customizer__panel">
+          <div className="avatar-customizer__options-col">
             <PastilleGroup
               id="skin-tone"
               legend={t('skinToneLabel')}
