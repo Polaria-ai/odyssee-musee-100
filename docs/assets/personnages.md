@@ -80,8 +80,10 @@ après coup — voir `src/features/presence/RemoteVisitors.test.ts`).
   `vertexColors`), **sibling statique** du groupe animé (`bodyRef`) — ne se balance jamais avec
   elle. Positionné bas et en retrait (au nord de son propre point, à l'opposé du comptoir/joueur)
   pour limiter le risque de chevauchement avec le comptoir dessiné par le module monde
-  (`src/world/roomGeometry.ts`, `counterGeometry`) : **à vérifier visuellement une fois le
-  comptoir final du module monde stabilisé** (chantier concurrent sur ce worktree partagé).
+  (`src/world/roomGeometry.ts`, `counterGeometry`) — **vérifié** en relecture WEL-874/876 (voir
+  ci-dessous) : comptoir centré en `z = -3,2` (bord nord à `z = -3,7`), tabouret centré en
+  `z = -4,5` (bord sud du siège à `z = -4,2`) → 0,5 m d'écart, aucun chevauchement sur les
+  captures.
 
 Comportements et animations existants inchangés : clignement (PRNG déterministe), tête qui suit le
 joueur (bornée ±60°), balancier/dandinement selon l'humeur, bulle « … », toutes les humeurs
@@ -93,3 +95,14 @@ Captures Playwright headless (Chrome for Testing, SwiftShader), iPhone 13 portra
 `?e2e=1` : écran de personnalisation (plusieurs combinaisons tenue/accessoire, dont le pire cas
 salopette+fleur) et scène de jeu près du spawn et près de Minerve — voir `screens/player/`,
 `screens/npc/` et le rapport de session (issue Multica WEL-876).
+
+**Relecture contradictoire WEL-874/876 (25/09/2026)** : comparaison avec `6a94aa7` (`git diff`),
+nouvelles captures portrait + paysage (`screens/personnages-relecture/`) — écran « Qui es-tu ? »
+(visage, frange, joues, tenues, accessoires bien visibles), spawn, près de Minerve (comptoir/
+tabouret sans chevauchement, confirmé). `eslint`/`tsc -b --noEmit`/`vitest` verts sur
+`src/player/AvatarMesh.tsx` et `src/npc/Minerve.tsx` (+ tests). Budget mesh avatar vérifié par
+lecture de code (10 par défaut, 12 en pire cas salopette+fleur, conforme). 10 avatars distants :
+estimé par lecture de `RemoteVisitors.tsx`/`peers.ts` (hors périmètre de ce chantier) — géométries
+et matériaux d'`AvatarMesh` partagés au niveau module (jamais recréés par pair), donc coût linéaire
+(~13 appels de dessin par pair : 12 mesh + 1 sprite de pseudo), pas de risque d'explosion ; non
+mesuré en direct (présence temps réel hors périmètre WEL-876).

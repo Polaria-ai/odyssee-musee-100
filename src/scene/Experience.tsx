@@ -2,11 +2,12 @@
  * Canvas unique du jeu. Propriétaire : intégration.
  * Les modules y branchent leurs composants 3D ; ne pas créer d'autre Canvas plein écran.
  */
-import { Suspense, useCallback, useRef, useState } from 'react'
+import { Suspense, useCallback, useMemo, useRef, useState } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 import { useGame } from '../state/gameStore'
 import { Museum } from '../world/Museum'
+import { buildMuseumArchitecture } from '../world/layout'
 import { Player } from '../player/Player'
 import { Minerve } from '../npc/Minerve'
 import { ArchivesRoom } from '../archives/ArchivesRoom'
@@ -14,6 +15,7 @@ import { RemoteVisitors } from '../features/presence/RemoteVisitors'
 import { StampStations } from '../features/stamps/StampStations'
 import { AttractCamera } from './AttractCamera'
 import { DebugProbe } from './DebugProbe'
+import { playerColliders } from './playerColliders'
 import { cameraRig, palette } from '../styles/tokens'
 
 // Le rendu logiciel (SwiftShader, utilisé en CI et sur certains appareils sans GPU) peut parfois
@@ -44,6 +46,12 @@ export function Experience() {
   const quality = useGame((s) => s.quality)
   const setQuality = useGame((s) => s.setQuality)
   const { canvasKey, onCreated } = useCanvasRecovery()
+  // Colliders du joueur = ceux de l'architecture (murs, meubles cachés, cimaises…) + ceux du mobilier
+  // supplémentaire posé par le module props (WEL-872/873, jamais branchés dans `layout.colliders`
+  // lui-même — voir le commentaire de `playerColliders.ts` : ce dernier reste intact pour que
+  // `<Museum>`/`<RoomProps>` continuent d'y calculer ce même mobilier sans s'auto-bloquer).
+  const architecture = useMemo(() => buildMuseumArchitecture(people), [people])
+  const playerLayout = useMemo(() => (layout ? { ...layout, colliders: playerColliders(layout, architecture) } : null), [layout, architecture])
   if (!layout) return null
 
   const playing = screen === 'play'
@@ -69,7 +77,7 @@ export function Experience() {
         <StampStations layout={layout} />
         <Minerve placement={layout.curator} />
         {archivesLayout && <ArchivesRoom archives={archivesLayout} />}
-        {playing ? <Player layout={layout} /> : <AttractCamera layout={layout} />}
+        {playing ? <Player layout={playerLayout ?? layout} /> : <AttractCamera layout={layout} />}
         {playing && <RemoteVisitors />}
       </Suspense>
     </Canvas>

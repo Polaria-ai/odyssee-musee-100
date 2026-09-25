@@ -135,18 +135,33 @@ export function PortraitFrame({ frame, person, fade }: { frame: FrameSlot; perso
 
   return (
     <group position={frame.position} rotation-y={frame.rotationY}>
+      {/*
+        `renderOrder` explicite sur les 5 mailles (0 → 3) : RÉGRESSION WEL-875 (bis) corrigée en même
+        temps que l'ouverture du passe-partout. Un cadre en fondu (`fade`) rend TOUS ses matériaux
+        `transparent: true` (même à opacité 1, voir plus haut) pour pouvoir s'estomper — three.js trie
+        alors ces mailles par distance caméra plutôt que par le buffer de profondeur, et comme la
+        toile/le cartel sont quasiment coplanaires avec la moulure (quelques millimètres d'écart en Z,
+        voir `frameGeometry.ts`), ce tri est instable : la moulure (opaque à l'œil, `opacity` à 1 hors
+        fondu) pouvait se dessiner APRÈS la toile et donc la recouvrir entièrement (aplat doré uni,
+        observé aile Industrialisation — cimaises occultantes, contrairement à Infrastructures/Culture
+        sans cimaise sur les cadres testés). `renderOrder` prime sur la distance dans le tri des objets
+        transparents (three.js) : moulure (0) → toile/cartel (1) → halo (2) → bulle « ! » (3), pour
+        TOUS les cadres (fondu ou non — sans effet sur les cadres opaques, dont l'ordre reste géré par
+        le depth buffer comme avant). Testé visuellement aile Industrialisation (seule aile de ce
+        chantier avec cimaise sur les cadres capturés) : voir `docs/assets/frames.md`.
+      */}
       {/* Moulure dorée biseautée + passe-partout + spot mural : une seule géométrie fusionnée (voir frameGeometry.ts). */}
-      <mesh geometry={FRAME_GEOMETRY} material={frameMaterial ?? (highlighted ? FRAME_MATERIAL_HIGHLIGHT : FRAME_MATERIAL)} />
-      {/* Halo additif discret sous le spot : plan partagé + matériau partagé (sauf cadre en fondu). */}
-      <mesh position={[0, HALO_LOCAL_Y, HALO_LOCAL_Z]} geometry={HALO_GEOMETRY} material={haloMaterial ?? sharedHaloMaterial()} />
-      <mesh position={[0, 0, PAINTING_RECESS_Z]} geometry={PAINTING_GEO}>
+      <mesh renderOrder={0} geometry={FRAME_GEOMETRY} material={frameMaterial ?? (highlighted ? FRAME_MATERIAL_HIGHLIGHT : FRAME_MATERIAL)} />
+      <mesh renderOrder={1} position={[0, 0, PAINTING_RECESS_Z]} geometry={PAINTING_GEO}>
         <meshBasicMaterial ref={paintingMatRef} map={paintingTex} toneMapped={false} transparent={!!fade} depthWrite={!fade} />
       </mesh>
-      <mesh position={[0, -tokenDims.frameHeight / 2 - CARTEL_GAP - CARTEL_HEIGHT / 2, 0.001]} geometry={CARTEL_GEO}>
+      <mesh renderOrder={1} position={[0, -tokenDims.frameHeight / 2 - CARTEL_GAP - CARTEL_HEIGHT / 2, 0.001]} geometry={CARTEL_GEO}>
         <meshBasicMaterial ref={cartelMatRef} map={cartelTex} toneMapped={false} transparent={!!fade} depthWrite={!fade} />
       </mesh>
+      {/* Halo additif discret sous le spot : plan partagé + matériau partagé (sauf cadre en fondu). */}
+      <mesh renderOrder={2} position={[0, HALO_LOCAL_Y, HALO_LOCAL_Z]} geometry={HALO_GEOMETRY} material={haloMaterial ?? sharedHaloMaterial()} />
       {highlighted && (
-        <mesh ref={bubbleRef} position={[0, tokenDims.frameHeight / 2 + 0.45, 0.02]} geometry={BUBBLE_GEO} material={sharedBubbleMaterial()} />
+        <mesh renderOrder={3} ref={bubbleRef} position={[0, tokenDims.frameHeight / 2 + 0.45, 0.02]} geometry={BUBBLE_GEO} material={sharedBubbleMaterial()} />
       )}
     </group>
   )

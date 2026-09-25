@@ -5,7 +5,7 @@
  * seule fois (jamais par image, jamais en modifiant un matériau partagé avec un autre objet — voir
  * `docs/assets/props.md`).
  */
-import { Box3, BufferGeometry, Material, Mesh, Object3D, Vector3 } from 'three'
+import { Box3, BufferAttribute, BufferGeometry, Material, Mesh, Object3D, Vector3 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 export interface PropPart {
@@ -43,6 +43,32 @@ function fitFactor(size: Vector3, fit: PropFit): number {
 const NEVER_TINT = /glass/i
 
 /**
+ * Les modèles optimisés (`scripts/optimize-assets.mjs`, meshopt + `KHR_mesh_quantization`) stockent
+ * position/normale en entiers NORMALISÉS (ex. Int16 signé, décodés ÷32767 à la lecture) : le noeud GLTF
+ * porte alors une transform de « déquantification » (translation/échelle du noeud, pour ramener [-1,1]
+ * à la vraie bbox du modèle — ex. colonne : translation 1,2 m, échelle ×1,2) qui n'est PAS censée être
+ * réappliquée au buffer normalisé lui-même. `BufferGeometry.applyMatrix4` réécrit pourtant le résultat
+ * DANS ce même buffer (`BufferAttribute.setXYZ`, qui réencode en supposant une entrée déjà dans [-1,1]) :
+ * une position hors de cette plage (n'importe quel monde de coordonnées, ex. y = 2,4 m) boucle sur
+ * l'espace Int16 (wrap, jamais d'erreur) — bug constaté : colonne rendue à ≈0,67 m de haut au lieu des
+ * 4 m visés, silencieusement repliée. Convertir position/normale en Float32 NON normalisé avant toute
+ * transformation matricielle élimine le risque, quel que soit le modèle (no-op sur un attribut déjà en
+ * virgule flottante).
+ */
+function dequantizeGeometry(geo: BufferGeometry): void {
+  for (const name of ['position', 'normal'] as const) {
+    const attr = geo.getAttribute(name) as BufferAttribute | undefined
+    if (!attr?.normalized) continue
+    const itemSize = attr.itemSize
+    const arr = new Float32Array(attr.count * itemSize)
+    for (let i = 0; i < attr.count; i++) {
+      for (let c = 0; c < itemSize; c++) arr[i * itemSize + c] = attr.getComponent(i, c)
+    }
+    geo.setAttribute(name, new BufferAttribute(arr, itemSize, false))
+  }
+}
+
+/**
  * `cacheKey` : identifiant stable du modèle (son URL suffit, la scène ne change jamais pour une URL
  * donnée — cache de `useGLTF`). `tintVariant` : nom court de la teinte (juste pour la clé de cache —
  * `tintFor` n'est pas sérialisable). `tintFor(materialName)` : couleur cible pour CE matériau du
@@ -74,6 +100,7 @@ export function propParts(scene: Object3D, cacheKey: string, tintVariant: string
     if (!mesh.isMesh) return
     const material = (Array.isArray(mesh.material) ? mesh.material[0] : mesh.material) as Material
     const geo = mesh.geometry.clone()
+    dequantizeGeometry(geo) // voir le commentaire de `dequantizeGeometry` : avant `applyMatrix4`, jamais après
     geo.applyMatrix4(mesh.matrixWorld)
     geo.translate(offsetX, offsetY, offsetZ)
     geo.scale(scale, scale, scale)

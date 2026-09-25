@@ -16,7 +16,7 @@ import type { MuseumLayout } from '../../types'
 import { useModel, preloadModel } from '../../assets/useModel'
 import { PROP_MODELS } from './models'
 import { propParts } from './geometry'
-import { propPlansFromArchitecture, usedModelKeys, type PropKindPlan } from './placements'
+import { allPropPlans, usedModelKeys, type PropKindPlan } from './placements'
 import { tintFor } from './tints'
 
 // Précharge les modèles RÉELLEMENT posés (pas tout `PROP_MODELS`, voir `usedModelKeys`) au niveau
@@ -44,8 +44,8 @@ function PropKind({ plan }: { plan: PropKindPlan }) {
   )
 }
 
-function RoomPropsContent({ architecture }: { architecture: MuseumArchitecture }) {
-  const plans = useMemo(() => propPlansFromArchitecture(architecture), [architecture])
+function RoomPropsContent({ architecture, layout }: { architecture: MuseumArchitecture; layout: MuseumLayout }) {
+  const plans = useMemo(() => allPropPlans(architecture, layout), [architecture, layout])
   return (
     <group>
       {plans.map((plan) => (
@@ -56,15 +56,15 @@ function RoomPropsContent({ architecture }: { architecture: MuseumArchitecture }
 }
 
 /**
- * Mobilier & décor du hall et des ailes peuplées, aux emplacements donnés par le module architecture.
- * `layout` fait partie du contrat de la mission (`RoomProps({ architecture, layout })`) mais n'est pas
- * utilisé directement ici : `architecture.decorPlacements` suffit aux positions. Gardé dans la
- * signature pour un futur besoin (ex. éviter les `viewPoint` des cadres) sans casser le contrat.
+ * Mobilier & décor du hall et des ailes peuplées : positions `architecture.decorPlacements` (contrat
+ * WEL-874) COMPLÉTÉES par le mobilier supplémentaire calculé par ce module (`placements.ts::allPropPlans`,
+ * reprise de mission WEL-872/873 — hall/ailes trop clairsemés) à partir des bounds de salle et de
+ * `layout.frames`/`layout.colliders` (jamais un `DecorPlacement` recalculé, voir le contrat).
  */
-export function RoomProps({ architecture, layout: _layout }: { architecture: MuseumArchitecture; layout: MuseumLayout }) {
+export function RoomProps({ architecture, layout }: { architecture: MuseumArchitecture; layout: MuseumLayout }) {
   return (
     <Suspense fallback={null}>
-      <RoomPropsContent architecture={architecture} />
+      <RoomPropsContent architecture={architecture} layout={layout} />
     </Suspense>
   )
 }

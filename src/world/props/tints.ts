@@ -13,8 +13,17 @@ const indus = wingThemes.industrialisation.accent
 const culture = wingThemes.culture.accent
 
 export const TINTS: Record<string, TintFn> = {
-  // Colonnes (Building Kit, matériau `colormap`) : pierre chaude, cohérente avec le bois du hall.
-  stone: (name) => (name === 'colormap' ? palette.wood : null),
+  // Colonnes (Building Kit, matériau `colormap`) : pierre claire et chaude, cohérente avec le bois du
+  // hall — PAS `palette.wood` (#c8a27a, canal bleu à 48 %) : ce `colormap` n'est pas une couleur unie,
+  // c'est une texture-palette qui encode LE RELIEF du modèle par des nuances gris-bleu allant du blanc
+  // (~97 % de luminance, base/chapiteau) à un gris-bleu sombre (~33 %, pans d'ombre du fût) — voir
+  // `docs/assets/props.md` (bug corrigé cette session). La teinte multiplie CE texel : un ton à canal
+  // bleu faible écrase les nuances déjà sombres near-black (33 % × 48 % ≈ 16 % de luminance) et fait
+  // disparaître tout le relief (constaté au pixel : fût/chapiteau rendus comme un pavé uni, cadre du
+  // pilier de reprise). `palette.cream` (#fff8e7, tous canaux > 90 %) garde le relief du texel d'origine
+  // quasi intact (33 % reste ~33 %) tout en le réchauffant légèrement — cohérent avec le bois du hall
+  // sans écraser les ombres.
+  stone: (name) => (name === 'colormap' ? palette.cream : null),
 
   // Mobilier bois (bancs, table d'appoint, bibliothèques, établi…) : matériaux `wood`/`woodDark`
   // d'origine déjà cohérents, `metal` (quincaillerie) rabattu vers le bois foncé.

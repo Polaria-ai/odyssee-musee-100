@@ -6,8 +6,9 @@
  * de `buildFrameGeometry`) et jamais enfoncées dans le mur (voir le commentaire de `LAYER_Z`).
  */
 import { describe, expect, it } from 'vitest'
+import { Mesh, MeshBasicMaterial, Raycaster, Vector3 } from 'three'
 import { dims } from './constants'
-import { FRAME_GEOMETRY, HALO_LOCAL_Y, HALO_LOCAL_Z, PAINTING_RECESS_Z, buildFrameGeometry } from './frameGeometry'
+import { APERTURE_HEIGHT, APERTURE_WIDTH, FRAME_GEOMETRY, HALO_LOCAL_Y, HALO_LOCAL_Z, PAINTING_RECESS_Z, buildFrameGeometry } from './frameGeometry'
 
 describe('buildFrameGeometry — fusion sans exception', () => {
   it('produit une géométrie non dégénérée', () => {
@@ -45,6 +46,57 @@ describe('Empilement des couches — recul croissant vers le fond, jamais un che
     // Passe-partout centré en z = 0, demi-épaisseur 0.009 (épaisseur 0.018) : face avant à z = 0.009.
     const passepartoutFrontZ = 0.009
     expect(PAINTING_RECESS_Z).toBeLessThan(passepartoutFrontZ)
+  })
+})
+
+describe('Ouverture du passe-partout — RÉGRESSION WEL-875 : la toile ne doit plus jamais être masquée', () => {
+  // Raycast pur (three.js `Raycaster` sur un `Mesh` non ajouté à une scène) : aucune fenêtre ni WebGL
+  // requis, s'exécute normalement sous vitest/jsdom (calcul CPU sur `geometry.attributes.position`).
+  // Avant le correctif, la couche « passe-partout » était un `BoxGeometry` plein, plus grand que la
+  // toile et posé devant elle : ce test aurait échoué (rayon central touchant le passe-partout avant
+  // d'atteindre le plan de la toile) — c'est exactement le bug rapporté (« toiles vides, fond beige
+  // uni »), reproduit puis corrigé.
+  function castThrough(x: number, y: number) {
+    const mesh = new Mesh(FRAME_GEOMETRY, new MeshBasicMaterial())
+    const raycaster = new Raycaster(new Vector3(x, y, 1), new Vector3(0, 0, -1))
+    return raycaster.intersectObject(mesh)
+  }
+
+  it('le centre du cadre (où se trouve la toile) est libre : aucun triangle du cadre devant le plan de la toile', () => {
+    const hits = castThrough(0, 0)
+    // La toile elle-même est à `PAINTING_RECESS_Z` (~-0.004) : seul un triangle plus reculé que ça
+    // serait sans conséquence (derrière la toile, invisible) — on exige qu'aucun triangle ne soit
+    // touché AVANT ce plan, càd à un z >= PAINTING_RECESS_Z.
+    const blocking = hits.filter((hit) => hit.point.z >= PAINTING_RECESS_Z)
+    expect(blocking).toHaveLength(0)
+  })
+
+  it("un point à l'intérieur de l'ouverture (bord de la toile visible) reste libre, sur toute sa largeur/hauteur", () => {
+    // Coins de l'ouverture (juste en retrait pour rester strictement dedans) : si l'un d'eux touchait
+    // le cadre, l'ouverture serait plus petite que prévu (toile partiellement mangée par le mat).
+    const margin = 0.005
+    const points: [number, number][] = [
+      [APERTURE_WIDTH / 2 - margin, APERTURE_HEIGHT / 2 - margin],
+      [-(APERTURE_WIDTH / 2 - margin), APERTURE_HEIGHT / 2 - margin],
+      [APERTURE_WIDTH / 2 - margin, -(APERTURE_HEIGHT / 2 - margin)],
+      [-(APERTURE_WIDTH / 2 - margin), -(APERTURE_HEIGHT / 2 - margin)],
+    ]
+    for (const [x, y] of points) {
+      const blocking = castThrough(x, y).filter((hit) => hit.point.z >= PAINTING_RECESS_Z)
+      expect(blocking).toHaveLength(0)
+    }
+  })
+
+  it("le passe-partout couvre bien encore le bord de la toile juste au-delà de l'ouverture (pas un simple trou béant : la latte existe toujours)", () => {
+    // Juste à l'extérieur de l'ouverture, encore dans la toile (`dims.frameWidth`/`frameHeight`) :
+    // le passe-partout doit recouvrir ce point (comportement voulu, voir `APERTURE_OVERLAP`).
+    const hits = castThrough(APERTURE_WIDTH / 2 + 0.01, 0)
+    expect(hits.length).toBeGreaterThan(0)
+  })
+
+  it("l'ouverture reste strictement plus petite que la toile (recouvrement réel, pas juste égal)", () => {
+    expect(APERTURE_WIDTH).toBeLessThan(dims.frameWidth)
+    expect(APERTURE_HEIGHT).toBeLessThan(dims.frameHeight)
   })
 })
 

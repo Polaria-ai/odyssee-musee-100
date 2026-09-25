@@ -64,6 +64,46 @@ optimiser via `scripts/optimize-assets.mjs` pour ce module.
    `PortraitFrame.tsx`) et `CARTEL_GAP` élargi (0,14 → 0,18 m) pour garder un dégagement net sous la
    moulure, désormais bien plus large qu'avant.
 
+## Régression corrigée à la reprise (toiles vides — fond beige uni)
+
+Constat de l'orchestrateur sur captures iPhone, avant reprise : les toiles des cadres étaient vides
+(fond beige uni), silhouette et numéro disparus, alors que `docs/assets/frames.md` (version précédente,
+écrite par l'équipe interrompue) affirmait les avoir vérifiées visibles. Deux causes distinctes trouvées
+et corrigées, toutes deux dans `frameGeometry.ts`/`PortraitFrame.tsx` :
+
+1. **Passe-partout et liseré : pavés pleins sans ouverture, posés devant la toile reculée.** La toile
+   (`PAINTING_RECESS_Z` = -0,004) a été reculée par l'équipe précédente pour un « vrai effet de retrait »
+   derrière le passe-partout — mais les couches `lip` (liseré clair, face avant z = 0,001) et
+   `passepartout` (face avant z = 0,009) sont toutes deux DEVANT ce plan, et étaient chacune un
+   `BoxGeometry` plein, plus grand que la toile dans les deux dimensions, sans aucune fenêtre. Elles la
+   masquaient donc entièrement (aplat crème uni = couleur du passe-partout, exactement le symptôme
+   rapporté). Seule la couche `mid` (face avant z = -0,0095) reste légitimement un pavé plein : elle est
+   derrière la toile, occultée naturellement par elle, comme l'ancien cadre à une seule couche.
+   **Correctif** : `lip` et `passepartout` sont maintenant construites en ANNEAU (`ringLayer`, 4 lattes
+   fusionnées, même geometrie partagée fusionnée qu'avant — aucun appel de dessin supplémentaire) avec
+   une ouverture centrale commune (`APERTURE_WIDTH`/`APERTURE_HEIGHT`, `dims.frameWidth`/`frameHeight`
+   moins 2×3 cm de recouvrement sur chaque bord, comme un vrai passe-partout qui cache l'arête vive de la
+   toile plutôt que de la laisser à nu).
+2. **Cadres en fondu (cimaises occultantes, aile Industrialisation) : ordre de rendu transparent instable.**
+   Une fois (1) corrigé, l'aile Infrastructures et Culture affichaient déjà la toile correctement, mais
+   l'aile Industrialisation (seule aile testée avec cimaise sur les cadres capturés) montrait encore un
+   aplat doré uni (couleur de la couche `mid`, pas `passepartout` cette fois). Cause : un cadre accroché
+   à une cimaise passe TOUS ses matériaux en `transparent: true` (même à opacité 1, pour pouvoir
+   s'estomper, voir `FrameFade`) — three.js trie alors ses mailles par distance caméra plutôt que par le
+   depth buffer, et comme la toile/le cartel sont à quelques millimètres de la moulure (même repère
+   local), ce tri est instable : la moulure (pavé `mid` inclus) pouvait se dessiner APRÈS la toile et la
+   recouvrir. **Correctif** : `renderOrder` explicite sur les 5 mailles du cadre (moulure 0 → toile/cartel
+   1 → halo 2 → bulle « ! » 3), qui prime sur la distance dans le tri three.js des objets transparents —
+   sans effet sur les cadres opaques (leur ordre reste géré par le depth buffer comme avant).
+
+**Non-régression** : `frameGeometry.test.ts`, section « Ouverture du passe-partout — RÉGRESSION WEL-875 »
+— raycast pur (three.js `Raycaster` sur un `Mesh` non ajouté à une scène, sans WebGL) qui échouerait si
+la toile redevenait masquée (centre et coins de l'ouverture libres jusqu'au plan de la toile ; le
+passe-partout couvre toujours le bord externe de la toile, ouverture strictement plus petite que la
+toile). Ce test n'a pas de prise directe sur la cause 2 (ordre de rendu transparent, propre au runtime
+WebGL, non reproductible en raycast pur) : sa non-régression repose sur la vérification visuelle
+ci-dessous (aile Industrialisation).
+
 ## Écarts assumés vs. la mission
 
 - **« Police de l'interface » sur le cartel** : non fait. `textures.ts` (dont je réutilise la logique
@@ -113,6 +153,11 @@ optimiser via `scripts/optimize-assets.mjs` pour ce module.
 
 ## Vérification visuelle
 
+> **Note (reprise)** : la conclusion « toile visible » ci-dessous, écrite par l'équipe précédente,
+> contredit le constat de l'orchestrateur à la reprise (toiles vides). Conservée telle quelle pour
+> l'historique ; voir « Régression corrigée à la reprise » et « Reprise après interruption » plus bas
+> pour la cause exacte et la vérification qui la corrige.
+
 Serveur de dev sur le port 5303 (`pnpm exec vite --port 5303 --strictPort`), captures Playwright
 headless (Chrome for Testing local, SwiftShader), iPhone 13 portrait + paysage, `?e2e=1`,
 `window.__musee.goToPerson(id)` pour se placer devant un portrait de chaque aile (une personne de
@@ -140,3 +185,32 @@ worktree — jamais touchés ici) : très probablement une salle momentanément 
 moment précis de la mesure, pas un effet de ce module (les captures de la salle Culture, elles,
 montrent la salle et ses cadres intégralement rendus). À revérifier par l'agent intégration une fois
 les deux chantiers de ce worktree stabilisés.
+
+### Reprise après interruption — correctif de régression (avant/après, port 5322)
+
+Constat initial (avant correctif), capture déjà présente dans `screens/frames/iphone-portrait-01-
+infrastructures.png`/`-02-industrialisation.png` (toutes deux regardées, `Read`) : toile entièrement vide
+(fond beige uni), aucune silhouette ni numéro — la régression décrite ci-dessus (« Régression corrigée à
+la reprise »). Après correctif, nouvelles captures sur le port de dev de ce module (5322,
+`pnpm exec vite --port 5322 --strictPort`), même protocole (Chrome for Testing local,
+SwiftShader, iPhone 13 portrait + paysage, `?e2e=1&presenceRoom=e2e-frames`, `goToPerson` sur le premier
+portrait de chacune des trois ailes), dans `screens/frames/apres-iphone-{portrait,landscape}-00-spawn.png`
+puis `-01-infrastructures.png`/`-02-industrialisation.png`/`-03-culture.png` — toutes regardées (`Read`)
+avant ce rapport : toile visible avec silhouette + numéro (« N° 1 », « N° 2 », « N° 3 », etc.) et fond
+pastel de l'aile dans les **trois** ailes, y compris Industrialisation (cimaise occultante, seconde cause
+ci-dessus) ; cadre mouluré + passe-partout crème + spot doré et halo discret + cartel en laiton lisible +
+bulle « ! » sur le cadre proche, conformes à la conception d'origine de ce chantier.
+
+**`renderInfo().calls` mesuré** (après correctif, portrait puis paysage) :
+
+| Vue | Portrait | Paysage |
+|---|---|---|
+| Infrastructures (`goToPerson`) | 40 | 55 |
+| Industrialisation (`goToPerson`) | 92 | 74 |
+| Culture (`goToPerson`) | 38 | 53 |
+
+Max observé : **92** (budget ≤ 150) — l'écart avec les mesures précédentes (max 88) est cohérent avec les
+4 lattes du passe-partout/liseré (au lieu d'un pavé plein chacun), toujours fusionnées dans la même
+géométrie partagée `FRAME_GEOMETRY` : **aucun appel de dessin supplémentaire par cadre** (le budget par
+cadre annoncé plus haut, 4/5, reste inchangé — seul le nombre de triangles de cette géométrie partagée
+augmente légèrement, sans coût en appels de dessin).

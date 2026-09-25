@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import type { ExhibitWingId, Person } from '../../types'
 import { EXHIBIT_WINGS } from '../../types'
-import { buildMuseumArchitecture } from '../layout'
+import { buildMuseumArchitecture, buildMuseumLayout } from '../layout'
 import { generatePlaceholderPeople } from '../../data/placeholder'
-import { propPlansFromArchitecture, usedModelKeys } from './placements'
+import { EXTRA_FOOTPRINT, allExtraItems, allPropPlans, extraPropPlans, isClearSpot, propColliders, propPlansFromArchitecture, usedModelKeys } from './placements'
 import { PROP_MODELS } from './models'
 
 function makePeople(counts: Record<ExhibitWingId, number>): Person[] {
@@ -34,6 +34,10 @@ const distributions: Record<string, Person[]> = {
   '100/0/0': makePeople({ infrastructures: 100, industrialisation: 0, culture: 0 }),
   'aucune aile peuplée': makePeople({ infrastructures: 0, industrialisation: 0, culture: 0 }),
   '1 personne par aile': makePeople({ infrastructures: 1, industrialisation: 1, culture: 1 }),
+  '2 personnes par aile': makePeople({ infrastructures: 2, industrialisation: 2, culture: 2 }),
+  '60 en culture uniquement': makePeople({ infrastructures: 0, industrialisation: 0, culture: 60 }),
+  '60 en infrastructures uniquement': makePeople({ infrastructures: 60, industrialisation: 0, culture: 0 }),
+  '60 en industrialisation uniquement': makePeople({ infrastructures: 0, industrialisation: 60, culture: 0 }),
 }
 
 describe('usedModelKeys', () => {
@@ -102,5 +106,77 @@ describe('propPlansFromArchitecture', () => {
     const floorLamp = plans.find((p) => p.key === 'hallLampFloor')
     expect(wallLamp?.placements.every((p) => p.mountY > 1)).toBe(true)
     expect(floorLamp?.placements.every((p) => p.mountY === 0)).toBe(true)
+  })
+})
+
+// --- Mobilier supplémentaire (reprise de mission WEL-872/873) --------------------------------------
+
+describe('extraPropPlans / propColliders', () => {
+  for (const [label, people] of Object.entries(distributions)) {
+    it(`aucun candidat n'est silencieusement filtré par isClearSpot (${label})`, () => {
+      const architecture = buildMuseumArchitecture(people)
+      const layout = buildMuseumLayout(people)
+      const candidates = allExtraItems(architecture)
+      const plans = extraPropPlans(architecture, layout)
+      const totalPlaced = plans.reduce((sum, p) => sum + p.placements.length, 0)
+      if (totalPlaced !== candidates.length) {
+        const rejected = candidates.filter((c) => !isClearSpot(c.position, EXTRA_FOOTPRINT[c.key] ?? 0.05, layout, c.wing))
+        expect(rejected, `candidats rejetés par isClearSpot (${label}): ${JSON.stringify(rejected)}`).toEqual([])
+      }
+      expect(totalPlaced).toBe(candidates.length)
+      expect(totalPlaced).toBeGreaterThan(0) // au moins le décor du hall, toujours peuplé
+    })
+
+    it(`ne pose que des modèles connus de PROP_MODELS (extras — ${label})`, () => {
+      const architecture = buildMuseumArchitecture(people)
+      const layout = buildMuseumLayout(people)
+      const plans = extraPropPlans(architecture, layout)
+      for (const plan of plans) expect(PROP_MODELS[plan.key]).toBeDefined()
+    })
+  }
+
+  it("le nombre de candidats ajoutés ne dépend PAS du nombre de rangées d'une aile (ancrage farWallX/zone d'entrée constant)", () => {
+    const few = extraPropPlans(buildMuseumArchitecture(distributions['1 personne par aile']), buildMuseumLayout(distributions['1 personne par aile']))
+    const many = extraPropPlans(buildMuseumArchitecture(distributions['100 fiches par défaut']), buildMuseumLayout(distributions['100 fiches par défaut']))
+    const countFor = (plans: ReturnType<typeof extraPropPlans>, key: string) => plans.find((p) => p.key === key)?.placements.length ?? 0
+    for (const key of ['infraMachineBed', 'infraScreenPanel', 'indusDesk', 'indusShelf', 'cultureSofa', 'cultureBench']) {
+      expect(countFor(few, key)).toBe(countFor(many, key))
+      expect(countFor(few, key)).toBeGreaterThan(0)
+    }
+  })
+
+  it('aucun extra dans une aile sans personne (comingSoonWings)', () => {
+    const architecture = buildMuseumArchitecture(distributions['aucune aile peuplée'])
+    const layout = buildMuseumLayout(distributions['aucune aile peuplée'])
+    const plans = extraPropPlans(architecture, layout)
+    const keys = plans.map((p) => p.key)
+    for (const wingKey of ['infraMachineBed', 'infraScreenPanel', 'indusDesk', 'cultureSofa']) expect(keys).not.toContain(wingKey)
+    // Le hall, lui, reste toujours meublé.
+    expect(keys).toContain('hallBench')
+  })
+
+  it("propColliders ne couvre que les objets solides (jamais tapis/fleurs/éléments montés en hauteur)", () => {
+    const people = distributions['100 fiches par défaut']
+    const boxes = propColliders(buildMuseumArchitecture(people), buildMuseumLayout(people))
+    expect(boxes.length).toBeGreaterThan(0)
+    // Une boîte par objet solide, jamais une boîte dégénérée (largeur/profondeur nulles).
+    for (const box of boxes) {
+      expect(box.maxX).toBeGreaterThan(box.minX)
+      expect(box.maxZ).toBeGreaterThan(box.minZ)
+    }
+  })
+
+  it('allPropPlans ne perd ni le décor `architecture.decorPlacements` ni les extras', () => {
+    const people = distributions['100 fiches par défaut']
+    const architecture = buildMuseumArchitecture(people)
+    const layout = buildMuseumLayout(people)
+    const base = propPlansFromArchitecture(architecture)
+    const extra = extraPropPlans(architecture, layout)
+    const combined = allPropPlans(architecture, layout)
+    const totalBase = base.reduce((sum, p) => sum + p.placements.length, 0)
+    const totalExtra = extra.reduce((sum, p) => sum + p.placements.length, 0)
+    const totalCombined = combined.reduce((sum, p) => sum + p.placements.length, 0)
+    expect(totalCombined).toBe(totalBase + totalExtra) // pas de clé partagée entre base et extra ici
+    expect(new Set(combined.map((p) => p.key)).size).toBe(combined.length) // une seule plan par clé (React key)
   })
 })

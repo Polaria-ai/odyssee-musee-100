@@ -60,6 +60,32 @@ const LAYER_Z = {
  */
 export const PAINTING_RECESS_Z = -0.004
 
+/**
+ * RÉGRESSION CORRIGÉE (WEL-875) : deux couches — « lip » (liseré clair, face avant z = 0,001) et
+ * « passe-partout » (face avant z = 0,009) — sont toutes deux posées DEVANT la toile reculée
+ * (`PAINTING_RECESS_Z` = -0,004 ; seule la couche « mid », face avant z = -0,0095, reste derrière la
+ * toile et n'a donc jamais eu besoin d'ouverture — la toile opaque l'occulte naturellement, comme
+ * l'ancien cadre à une seule couche). `lip` et `passepartout` étaient toutes deux des `BoxGeometry`
+ * PLEINS (aucune ouverture), plus grands que la toile dans les deux dimensions
+ * (`LAYER_MARGIN.lip`/`LAYER_MARGIN.passepartout`) : elles masquaient donc ENTIÈREMENT la toile
+ * derrière un aplat uni (crème en pratique, le passe-partout étant la couche la plus proche de la
+ * caméra), quelle que soit la texture chargée (portrait d'attente ou photo) — le cadre n'a jamais eu
+ * de « fenêtre ». `buildFrameGeometry` construit maintenant ces deux couches comme de véritables
+ * anneaux (4 lattes chacun, voir `ringLayer`) avec la même ouverture centrale
+ * (`APERTURE_WIDTH`/`APERTURE_HEIGHT`, légèrement plus petite que la toile : `APERTURE_OVERLAP` de
+ * recouvrement de chaque côté, pour cacher l'arête vive de la toile comme un vrai passe-partout) au
+ * lieu d'un pavé plein — la toile redevient visible à travers les deux, tout en gardant le retrait
+ * voulu et le fin liseré visible en périphérie du passe-partout (couche `lip`, marge 0,07 > marge
+ * `passepartout`, 0,05 : sa bande reste visible au-delà du bord du passe-partout).
+ * Non-régression : `frameGeometry.test.ts` (« Ouverture du passe-partout — RÉGRESSION WEL-875 »)
+ * fait un raycast pur (three.js `Raycaster`, sans WebGL) au centre du cadre et exige qu'aucun
+ * triangle de `FRAME_GEOMETRY` ne soit touché avant la toile.
+ */
+const APERTURE_OVERLAP = 0.03
+/** Largeur/hauteur de l'ouverture (lip + passe-partout) (m) : légèrement < `dims.frameWidth`/`frameHeight`. */
+export const APERTURE_WIDTH = dims.frameWidth - APERTURE_OVERLAP * 2
+export const APERTURE_HEIGHT = dims.frameHeight - APERTURE_OVERLAP * 2
+
 const _m = new Matrix4()
 const _color = new Color()
 
@@ -99,6 +125,31 @@ function mergeAll(parts: BufferGeometry[]): BufferGeometry {
   return merged
 }
 
+/**
+ * Construit une couche en ANNEAU (4 lattes fusionnées : haut, bas, gauche, droite) plutôt qu'un pavé
+ * plein — voir le commentaire de `APERTURE_WIDTH`/`APERTURE_HEIGHT` ci-dessus (régression WEL-875 :
+ * un pavé plein posé devant la toile la masquait entièrement). L'ouverture centrale
+ * (`APERTURE_WIDTH` × `APERTURE_HEIGHT`, commune à toutes les couches qui utilisent cet anneau) laisse
+ * voir la toile, recouvrant légèrement son bord (`APERTURE_OVERLAP`) comme un vrai passe-partout ;
+ * utilisée pour toute couche dont la face avant est devant la toile reculée (`lip`, `passepartout`).
+ */
+function ringLayer(outerMargin: number, z: number, depth: number, hex: string): BufferGeometry[] {
+  const w = dims.frameWidth
+  const h = dims.frameHeight
+  const outerW = w + outerMargin
+  const outerH = h + outerMargin
+  const stripH = (outerH - APERTURE_HEIGHT) / 2
+  const stripW = (outerW - APERTURE_WIDTH) / 2
+  const vCenterY = (APERTURE_HEIGHT + outerH) / 4 // milieu entre le bord de l'ouverture et le bord extérieur
+  const hCenterX = (APERTURE_WIDTH + outerW) / 4
+  return [
+    box(0, vCenterY, z, outerW, stripH, depth, hex), // latte haute
+    box(0, -vCenterY, z, outerW, stripH, depth, hex), // latte basse
+    box(-hCenterX, 0, z, stripW, APERTURE_HEIGHT, depth, hex), // latte gauche
+    box(hCenterX, 0, z, stripW, APERTURE_HEIGHT, depth, hex), // latte droite
+  ]
+}
+
 /** Hauteur du centre du spot mural au-dessus du centre du cadre (repère local du cadre, y local = 0 au centre). */
 const LAMP_Y_ABOVE_FRAME_TOP = 0.22
 
@@ -111,10 +162,15 @@ export function buildFrameGeometry(): BufferGeometry {
   const w = dims.frameWidth
   const h = dims.frameHeight
   const parts: BufferGeometry[] = [
+    // `outer`/`mid` : faces avant derrière la toile reculée (`PAINTING_RECESS_Z`) — la toile opaque les
+    // occulte naturellement dans la zone de recouvrement, comme l'ancien cadre à une seule couche.
+    // Restent des pavés pleins : jamais devant la toile, jamais besoin d'ouverture.
     box(0, 0, LAYER_Z.outer, w + LAYER_MARGIN.outer, h + LAYER_MARGIN.outer, 0.05, GOLD_DEEP),
     box(0, 0, LAYER_Z.mid, w + LAYER_MARGIN.mid, h + LAYER_MARGIN.mid, 0.045, GOLD_MID),
-    box(0, 0, LAYER_Z.lip, w + LAYER_MARGIN.lip, h + LAYER_MARGIN.lip, 0.03, GOLD_BRIGHT),
-    box(0, 0, LAYER_Z.passepartout, w + LAYER_MARGIN.passepartout, h + LAYER_MARGIN.passepartout, 0.018, MAT_CREAM),
+    // `lip`/`passepartout` : faces avant DEVANT la toile reculée — anneaux avec ouverture (voir
+    // `ringLayer`), sans quoi elles masqueraient la toile (régression WEL-875).
+    ...ringLayer(LAYER_MARGIN.lip, LAYER_Z.lip, 0.03, GOLD_BRIGHT),
+    ...ringLayer(LAYER_MARGIN.passepartout, LAYER_Z.passepartout, 0.018, MAT_CREAM),
   ]
 
   // Petit spot de galerie : plaque murale (contre la moulure, tout au fond) + bras + vasque inclinée
