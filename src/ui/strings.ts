@@ -26,6 +26,7 @@ export const strings = defineStrings({
   hudStamps: { fr: 'Carnet de tampons', en: 'Stamp card' },
   hudStampsCount: { fr: '{n}/{total}', en: '{n}/{total}' },
   hudPeers: { fr: '{n} visiteurs en ligne', en: '{n} visitors online' },
+  hudPeersOne: { fr: '1 autre visiteur en ligne', en: '1 other visitor online' },
 
   // Fiche portrait
   portraitClose: { fr: 'Fermer la fiche', en: 'Close the card' },

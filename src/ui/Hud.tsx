@@ -99,7 +99,7 @@ export function Hud() {
           {t('hudStampsCount', { n: stampsCount, total: EXHIBIT_WINGS.length })}
         </button>
         {peersCount > 0 && (
-          <span className="ui-hud__peers" data-testid="peers-count" aria-label={t('hudPeers', { n: peersCount })}>
+          <span className="ui-hud__peers" data-testid="peers-count" aria-label={peersCount === 1 ? t('hudPeersOne') : t('hudPeers', { n: peersCount })}>
             {peersCount}
           </span>
         )}

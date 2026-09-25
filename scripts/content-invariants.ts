@@ -11,9 +11,12 @@ import type { ExhibitWingId } from '../src/types'
 const failures: string[] = []
 const warnings: string[] = []
 
-const rawSource: unknown = existsSync('public/data/people.json')
+// `public/data/people.json` vaut `[]` tant que la liste officielle n'est pas importée : le site
+// sert alors les fiches d'attente, c'est donc elles qu'on vérifie.
+const fromFile: unknown = existsSync('public/data/people.json')
   ? (JSON.parse(readFileSync('public/data/people.json', 'utf8')) as unknown)
-  : generatePlaceholderPeople()
+  : null
+const rawSource: unknown = Array.isArray(fromFile) && fromFile.length > 0 ? fromFile : generatePlaceholderPeople()
 
 const { people, errors } = parsePeople(rawSource)
 for (const e of errors) failures.push(`validation : ${e}`)

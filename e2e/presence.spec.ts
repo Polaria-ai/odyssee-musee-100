@@ -55,6 +55,8 @@ test('un seul contexte : aucun visiteur fantôme (peersCount reste à 0)', async
 })
 
 test('@live deux contextes simultanés se voient l’un l’autre en moins de 15 s', async ({ browser }) => {
+  // Deux chargements complets (parfois depuis le site en ligne, via E2E_BASE_URL) + attente de présence.
+  test.setTimeout(120_000)
   const reachable = await isSupabaseReachable()
   test.skip(
     !reachable,
