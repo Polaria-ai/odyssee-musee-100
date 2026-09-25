@@ -3,13 +3,36 @@
  * couleurs par sommet, matériau `MeshLambertMaterial` partagé (pas de texture). Les cimaises (cloisons
  * occultantes) sont volontairement EXCLUES d'ici : `buildOccluderGeometry` les construit à part, en
  * mesh séparé, pour pouvoir les estomper indépendamment (voir `occlusion.ts`, `Museum.tsx`).
+ *
+ * WEL-874 (chantier assets 3D) : les objets remplacés par de vrais modèles CC0 (bancs, jardinières,
+ * colonnes, racks, bustes, tapis roulant, bras robotisé, bibliothèque…) ont été retirés d'ici — leurs
+ * positions vivent maintenant dans `layout.ts` (`MuseumArchitecture.decorPlacements`, contrat documenté
+ * en tête de ce fichier), pour que `src/world/props/RoomProps.tsx` y pose ses modèles. Reste procédural
+ * ici, faute de remplacement CC0 net (voir `docs/assets/catalogue.md`) : la roue dentée et les câbles
+ * (Infrastructures), le chevalet (Culture), le cordon du comptoir, l'Arbre des 100 et son banc circulaire,
+ * le comptoir de Minerve.
  */
 import { BoxGeometry, BufferGeometry, CapsuleGeometry, Color, CylinderGeometry, Float32BufferAttribute, IcosahedronGeometry, Matrix4, PlaneGeometry, TorusGeometry } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { palette, wingThemes } from '../styles/tokens'
-import { archBoxHeight, type ArchBox, type DoorArch, type HallDecor } from './layout'
-import { dims, JARDINIERE_RADIUS, TREE_TOTAL_HEIGHT, TREE_TRUNK_HEIGHT } from './constants'
-import type { Placement, RoomLayout, Vec2 } from '../types'
+import { archBoxHeight, farWallX, type ArchBox, type DoorArch, type HallDecor } from './layout'
+// Ré-exportée pour compatibilité : `farWallX` vit maintenant dans `layout.ts` (source de vérité des
+// positions de décor, WEL-874) mais restait importée d'ici par d'autres modules en cours d'écriture
+// dans ce worktree (ex. `src/world/props/placements.ts`, agent concurrent — voir le rapport final).
+export { farWallX } from './layout'
+import {
+  CORNICE_HEIGHT,
+  CORNICE_TOP_GAP,
+  DOOR_ARCH_RADIUS,
+  DOOR_ARCH_TUBE,
+  HERRINGBONE_LEN,
+  SOFTEN_CHECKER,
+  TRIM_PROTRUSION,
+  TREE_TOTAL_HEIGHT,
+  TREE_TRUNK_HEIGHT,
+  WAINSCOT_HEIGHT,
+} from './constants'
+import type { RoomLayout, Vec2 } from '../types'
 
 const PLINTH_HEIGHT = 0.16
 // Bande du linteau, juste sous le sommet du mur (dims.wallHeight) et au-dessus des panneaux de porte
@@ -32,9 +55,42 @@ function paint(geo: BufferGeometry, hex: string): BufferGeometry {
   return geo
 }
 
+/**
+ * Comme `paint`, mais avec une légère variation déterministe par sommet (bruit pseudo-aléatoire, fonction
+ * pure de la position LOCALE de chaque sommet — jamais `Math.random()` : la géométrie reste testable et
+ * stable d'un appel à l'autre). Casse l'aplat des grands murs unis (item 4, embellissement architecture)
+ * sans coût supplémentaire (mêmes sommets, même appel de dessin).
+ */
+function paintNoisy(geo: BufferGeometry, hex: string, amount = 0.045): BufferGeometry {
+  _color.set(hex)
+  const pos = geo.attributes.position
+  const colors = new Float32Array(pos.count * 3)
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i)
+    const y = pos.getY(i)
+    const z = pos.getZ(i)
+    const raw = Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453
+    const jitter = (raw - Math.floor(raw)) * 2 - 1 // pseudo-aléatoire déterministe, [-1, 1]
+    const f = 1 + jitter * amount
+    colors[i * 3] = Math.min(1, Math.max(0, _color.r * f))
+    colors[i * 3 + 1] = Math.min(1, Math.max(0, _color.g * f))
+    colors[i * 3 + 2] = Math.min(1, Math.max(0, _color.b * f))
+  }
+  geo.setAttribute('color', new Float32BufferAttribute(colors, 3))
+  return geo
+}
+
 function box(cx: number, cy: number, cz: number, sx: number, sy: number, sz: number, hex: string): BufferGeometry {
   const geo = new BoxGeometry(sx, sy, sz)
   paint(geo, hex)
+  geo.applyMatrix4(_m.makeTranslation(cx, cy, cz))
+  return geo
+}
+
+/** Comme `box`, avec un léger bruit de couleur par sommet (voir `paintNoisy`) — grands murs/sols unis. */
+function boxNoisy(cx: number, cy: number, cz: number, sx: number, sy: number, sz: number, hex: string, amount?: number): BufferGeometry {
+  const geo = new BoxGeometry(sx, sy, sz)
+  paintNoisy(geo, hex, amount)
   geo.applyMatrix4(_m.makeTranslation(cx, cy, cz))
   return geo
 }
@@ -141,16 +197,16 @@ function paintFloor(geo: PlaneGeometry, cx: number, cz: number, colorAt: (lx: nu
 
 const RUG_RADIUS = 3.2
 const PATH_HALF_WIDTH = 1.15
-const PLANK_WIDTH = 0.9
 
 /**
- * Sol du hall : lames de parquet (bandes de deux tons), grand tapis rond au centre, chemins de tapis
- * à la couleur de chaque aile menant à chaque porte (ouverte ou non — un chemin vers une aile
- * « Bientôt » reste visible, comme une promesse). Les trois portes sont toujours cardinales (voir
- * `layout.ts`) : un simple test par axe suffit, pas de projection générale.
+ * Sol du hall : parquet à chevrons fins (bandes de deux tons, alternées en diagonale pour l'effet
+ * « point de Hongrie », voir `chevronBand`), grand tapis rond au centre, chemins de tapis à la couleur de
+ * chaque aile menant à chaque porte (ouverte ou non — un chemin vers une aile « Bientôt » reste visible,
+ * comme une promesse). Les trois portes sont toujours cardinales (voir `layout.ts`) : un simple test par
+ * axe suffit, pas de projection générale.
  */
 function hallFloor(room: RoomLayout): BufferGeometry {
-  const { geo, cx, cz } = floorBase(room, 48)
+  const { geo, cx, cz } = floorBase(room, 64)
   const plankA = new Color(room.floorColor)
   // Deuxième ton proche du premier : des lames lisibles sans effet de rayures « zèbre ».
   const plankB = new Color(room.floorColor).lerp(new Color(palette.woodDark), 0.3)
@@ -170,16 +226,34 @@ function hallFloor(room: RoomLayout): BufferGeometry {
       const across = d.axis === 'x' ? lz : lx
       if (along > RUG_RADIUS * 0.85 && Math.abs(across) < PATH_HALF_WIDTH) return d.c
     }
-    const band = Math.floor(lx / PLANK_WIDTH)
-    return band % 2 === 0 ? plankA : plankB
+    return chevronBand(lx, lz) % 2 === 0 ? plankA : plankB
   })
 }
 
-/** Damier de pierre (aile Infrastructures : salle des machines). */
+/**
+ * « Point de Hongrie » (chevrons) low-cost : la salle est découpée en cellules carrées de
+ * `HERRINGBONE_LEN`, chaque cellule alternant l'orientation de ses lames (parité de `cellU + cellV`, en
+ * coordonnées tournées à 45°) — deux lames voisines ne sont donc jamais parallèles, contrairement aux
+ * lames droites de `PLANK_WIDTH` (aile) : c'est ce changement d'orientation, pas une vraie géométrie de
+ * planches, qui lit comme des chevrons à la distance de jeu (caméra plongeante, voir DESIGN.md).
+ */
+function chevronBand(lx: number, lz: number): number {
+  const diag = Math.SQRT1_2
+  const u = (lx + lz) * diag
+  const v = (lx - lz) * diag
+  const cellU = Math.floor(u / HERRINGBONE_LEN)
+  const cellV = Math.floor(v / HERRINGBONE_LEN)
+  const cellParity = (((cellU + cellV) % 2) + 2) % 2
+  const along = cellParity === 0 ? u : v
+  return Math.floor(along / (HERRINGBONE_LEN / 2))
+}
+
+/** Damier de pierre adouci (aile Infrastructures : salle des machines) : tons rapprochés, jamais d'« effet zèbre ». */
 function checkerFloor(room: RoomLayout, colorA: string, colorB: string, cell: number): BufferGeometry {
   const { geo, cx, cz } = floorBase(room, 24)
-  const a = new Color(colorA)
-  const b = new Color(colorB)
+  const mid = new Color(colorA).lerp(new Color(colorB), 0.5)
+  const a = new Color(colorA).lerp(mid, SOFTEN_CHECKER)
+  const b = new Color(colorB).lerp(mid, SOFTEN_CHECKER)
   return paintFloor(geo, cx, cz, (lx, lz) => {
     const ix = Math.floor(lx / cell)
     const iz = Math.floor(lz / cell)
@@ -224,20 +298,12 @@ function wingFloor(room: RoomLayout): BufferGeometry {
 }
 
 // --- Décor propre à chaque aile (reliefs muraux, jamais dans le couloir de vue) ----------------
-
-/**
- * Coordonnée X « juste devant le mur du fond » d'une aile est/ouest (`buildXWing`), en retrait de
- * `inset` vers l'intérieur de la salle. Le mur du fond n'est PAS toujours du côté `maxX` : l'aile
- * infrastructures s'étend vers les X négatifs (`dir = -1`, voir `buildXWing`), donc son mur du fond
- * est en `minX`, alors que l'aile culture (`dir = 1`) a le sien en `maxX`. Le hall étant centré sur
- * l'origine et les deux ailes s'en éloignant, le mur du fond est toujours celui des deux bords dont la
- * valeur absolue est la plus grande — jamais `maxX` par construction (régression corrigée : le décor
- * signature de l'aile infrastructures se retrouvait plaqué contre la porte du hall, pas le mur du fond).
- */
-export function farWallX(room: RoomLayout, inset: number): number {
-  const { minX, maxX } = room.bounds
-  return Math.abs(minX) > Math.abs(maxX) ? minX + inset : maxX - inset
-}
+//
+// WEL-874 : les racks, la roue dentée ~~non~~ (gardée, voir ci-dessous), le tapis roulant, le bras
+// robotisé, les bustes et la bibliothèque ont été remplacés par des `decorPlacements` (`layout.ts`,
+// module props). Reste ici, faute de modèle CC0 net (voir `docs/assets/catalogue.md`) : la roue dentée
+// et les câbles (Infrastructures — le modèle du catalogue ne fait que les compléter, pas les remplacer)
+// et le chevalet (Culture — « aucun remplacement CC0 identifié »).
 
 /**
  * Reliefs décoratifs d'une aile, fusionnés dans SA géométrie de salle (même matériau, aucun appel de
@@ -252,15 +318,7 @@ function wingSignatureDecor(room: RoomLayout): BufferGeometry[] {
   const cz = (room.bounds.minZ + room.bounds.maxZ) / 2
 
   if (room.id === 'infrastructures') {
-    // Baies de serveurs : trois armoires hautes plaquées contre le mur du fond, avec de petites LED.
     const wallX = farWallX(room, 0.32)
-    for (let i = -1; i <= 1; i++) {
-      const z = cz + i * 0.6
-      parts.push(box(wallX, 0.9, z, 0.32, 1.8, 0.5, room.accentColor))
-      parts.push(box(wallX, 1.35, z, 0.15, 0.08, 0.52, palette.gold))
-      parts.push(box(wallX, 0.9, z, 0.15, 0.08, 0.52, palette.leaf))
-      parts.push(box(wallX, 0.45, z, 0.15, 0.08, 0.52, palette.gold))
-    }
     // Grande roue dentée : disque plaqué au mur du fond (face dans le plan Y/Z) + dents radiales.
     const gearZ = cz - halfD + 1.2
     const gearY = 2.3
@@ -283,38 +341,13 @@ function wingSignatureDecor(room: RoomLayout): BufferGeometry[] {
     const cableY = 0.012
     parts.push(strut({ x: cx - halfW + 0.6, z: cz }, { x: cx + halfW - 0.6, z: cz }, cableY, 0.05, palette.inkSoft))
     parts.push(strut({ x: cx - halfW + 0.6, z: cz - 0.3 }, { x: cx + halfW - 0.6, z: cz - 0.3 }, cableY, 0.04, room.accentColor))
-  } else if (room.id === 'industrialisation') {
-    // Tapis roulant d'exposition, contre le mur ouest, avec quelques caisses. Près du mur du fond
-    // (nord, `minZ`), comme les reliefs des deux autres ailes — jamais près de la porte du hall.
-    const decorZ = cz - halfD + 1.6
-    const beltX = -halfW * 0.55
-    const beltZLen = Math.min(4, halfD)
-    parts.push(box(beltX, 0.32, decorZ, 0.7, 0.14, beltZLen, palette.inkSoft))
-    for (let i = -1; i <= 1; i++) {
-      parts.push(box(beltX + 0.05, 0.62, decorZ + i * 1.1, 0.42, 0.4, 0.42, room.accentColor))
-    }
-    // Bras robotisé low-poly : socle + deux segments articulés.
-    const armX = halfW * 0.55
-    parts.push(cylinder(armX, 0, decorZ, 0.32, 0.38, 0.4, palette.woodDark, 8))
-    parts.push(box(armX, 0.7, decorZ, 0.22, 0.9, 0.22, room.accentColor))
-    parts.push(box(armX + 0.5, 1.1, decorZ, 0.85, 0.2, 0.2, room.accentColor))
-    parts.push(box(armX + 0.95, 1.35, decorZ, 0.2, 0.35, 0.2, palette.woodDark))
   } else if (room.id === 'culture') {
-    // Bustes sur socles, chevalet et bibliothèque, plaqués contre le mur du fond.
+    // Chevalet, plaqué contre le mur du fond (aucun modèle CC0 trouvé pour ce rôle, voir catalogue).
     const wallX = farWallX(room, 0.4)
-    for (let i = -1; i <= 1; i++) {
-      const z = cz + i * 1.3
-      parts.push(box(wallX, 0.4, z, 0.32, 0.8, 0.32, palette.wood))
-      parts.push(facetedSphere(wallX, 0.95, z, 0.22, palette.paper))
-    }
     const easelX = wallX - 1.1
     parts.push(box(easelX - 0.2, 0.55, 1.0, 0.06, 1.1, 0.06, palette.woodDark))
     parts.push(box(easelX + 0.2, 0.55, 1.0, 0.06, 1.1, 0.06, palette.woodDark))
     parts.push(box(easelX, 0.9, 1.0, 0.7, 0.5, 0.04, palette.cream))
-    const shelfX = easelX
-    const shelfZ = -1.0
-    parts.push(box(shelfX, 0.9, shelfZ, 1.0, 1.8, 0.3, palette.woodDark))
-    for (let s = 0; s < 3; s++) parts.push(box(shelfX, 0.35 + s * 0.55, shelfZ, 0.94, 0.04, 0.28, palette.wood))
   }
   return parts
 }
@@ -322,6 +355,7 @@ function wingSignatureDecor(room: RoomLayout): BufferGeometry[] {
 /** Fusionne le sol, les murs (coupés côté caméra) et le décor d'une salle en une seule géométrie. */
 export function buildRoomGeometry(room: RoomLayout, walls: ArchBox[], decor?: HallDecor): BufferGeometry {
   const parts: BufferGeometry[] = [decor ? hallFloor(room) : wingFloor(room)]
+  const trimColor = wingThemes[room.id].trim
 
   for (const w of walls) {
     if (w.hidden) continue // collider seulement : une géométrie dédiée le dessine (voir buildHallDecorGeometry)
@@ -334,9 +368,12 @@ export function buildRoomGeometry(room: RoomLayout, walls: ArchBox[], decor?: Ha
       // Aile Industrialisation (atelier sous verrière) : murs à motif de briques, jamais côté caméra
       // (le mur coupé à 1 m resterait illisible à cette hauteur, autant garder l'aplat).
       const brick = room.id === 'industrialisation' && !w.cut
-      parts.push(brick ? brickBox(cx, height / 2, cz, sx, height, sz, room.wallColor, palette.woodDark) : box(cx, height / 2, cz, sx, height, sz, room.wallColor))
+      parts.push(brick ? brickBox(cx, height / 2, cz, sx, height, sz, room.wallColor, palette.woodDark) : boxNoisy(cx, height / 2, cz, sx, height, sz, room.wallColor))
       // Plinthe : léger surplomb sombre en pied de mur, même coupé.
       parts.push(box(cx, PLINTH_HEIGHT / 2, cz, sx + 0.05, PLINTH_HEIGHT, sz + 0.05, palette.woodDark))
+      // Lambris bas + corniche en haut : seulement sur les murs pleins (un mur « coupé », côté caméra,
+      // n'a que ~1 m de haut — pas la place pour les deux bandes sans se chevaucher, voir CAMERA_CUT_HEIGHT).
+      if (!w.cut) parts.push(...wainscotAndCornice(cx, cz, sx, sz, height, trimColor))
     } else {
       // Pavé générique de secours : un meuble sans géométrie dédiée reste visible et à la bonne
       // hauteur (`archBoxHeight`), plutôt que silencieusement invisible.
@@ -350,48 +387,24 @@ export function buildRoomGeometry(room: RoomLayout, walls: ArchBox[], decor?: Ha
   return mergeAll(parts)
 }
 
-// --- Décor du hall (colonnes, bancs, jardinières, comptoir, arbre) -----------------------------
-
-const COLUMN_SEGMENTS = 8
-
-function columnGeometry(p: Vec2, radius: number, height: number): BufferGeometry[] {
-  const baseH = 0.22
-  const capH = 0.28
-  const shaftH = Math.max(0.2, height - baseH - capH)
-  return [
-    cylinder(p.x, 0, p.z, radius * 1.35, radius * 1.35, baseH, palette.gold, COLUMN_SEGMENTS),
-    cylinder(p.x, baseH, p.z, radius * 0.85, radius * 0.85, shaftH, palette.paper, COLUMN_SEGMENTS),
-    cylinder(p.x, baseH + shaftH, p.z, radius * 1.1, radius * 1.35, capH, palette.gold, COLUMN_SEGMENTS),
-  ]
+/**
+ * Lambris bas (bande sombre, hauteur `WAINSCOT_HEIGHT`) et corniche (bande claire, juste sous le
+ * plafond) : léger surplomb (`TRIM_PROTRUSION`) sur la face intérieure du mur pour rester visibles
+ * malgré `flatShading` (item 4, embellissement architecture — voir docs/DESIGN.md). Le surplomb ne
+ * s'ajoute qu'à l'axe « épaisseur » du mur (le plus petit de `sx`/`sz`), jamais à sa longueur.
+ */
+function wainscotAndCornice(cx: number, cz: number, sx: number, sz: number, wallHeight: number, trimColor: string): BufferGeometry[] {
+  const growX = sx <= sz ? TRIM_PROTRUSION * 2 : 0
+  const growZ = sz < sx ? TRIM_PROTRUSION * 2 : 0
+  const wSx = sx + growX
+  const wSz = sz + growZ
+  const wainscot = box(cx, WAINSCOT_HEIGHT / 2, cz, wSx, WAINSCOT_HEIGHT, wSz, palette.woodDark)
+  const corniceY = wallHeight - CORNICE_TOP_GAP - CORNICE_HEIGHT / 2
+  const cornice = box(cx, corniceY, cz, wSx, CORNICE_HEIGHT, wSz, trimColor)
+  return [wainscot, cornice]
 }
 
-const BENCH_SEAT_LEN = 1.6
-const BENCH_SEAT_DEPTH = 0.42
-function benchGeometry(placement: Placement, height: number): BufferGeometry[] {
-  const { x, z } = placement.position
-  const rotY = placement.rotationY
-  const parts = [
-    box(0, height, 0, BENCH_SEAT_LEN, 0.08, BENCH_SEAT_DEPTH, palette.wood),
-    box(-BENCH_SEAT_LEN / 2 + 0.14, height / 2, -BENCH_SEAT_DEPTH / 2 + 0.08, 0.08, height, 0.08, palette.woodDark),
-    box(-BENCH_SEAT_LEN / 2 + 0.14, height / 2, BENCH_SEAT_DEPTH / 2 - 0.08, 0.08, height, 0.08, palette.woodDark),
-    box(BENCH_SEAT_LEN / 2 - 0.14, height / 2, -BENCH_SEAT_DEPTH / 2 + 0.08, 0.08, height, 0.08, palette.woodDark),
-    box(BENCH_SEAT_LEN / 2 - 0.14, height / 2, BENCH_SEAT_DEPTH / 2 - 0.08, 0.08, height, 0.08, palette.woodDark),
-  ]
-  if (rotY) for (const g of parts) g.rotateY(rotY)
-  for (const g of parts) g.translate(x, 0, z)
-  return parts
-}
-
-/** Jardinière ronde : pot + motte + feuillage en deux verts (plusieurs sphères/cônes facettés). */
-function jardiniereGeometry(p: Vec2, radius: number, height: number): BufferGeometry[] {
-  const potH = height * 0.4
-  return [
-    cylinder(p.x, 0, p.z, radius, radius * 1.1, potH, palette.woodDark, 8),
-    facetedSphere(p.x, potH + 0.28, p.z, 0.34, palette.leaf),
-    facetedSphere(p.x + 0.12, potH + 0.46, p.z - 0.08, 0.24, palette.leafDark),
-    facetedSphere(p.x - 0.14, potH + 0.4, p.z + 0.1, 0.22, palette.leafDark),
-  ]
-}
+// --- Décor du hall (comptoir, arbre) --------------------------------------------------------
 
 function counterGeometry(center: Vec2, halfWidth: number, halfDepth: number): BufferGeometry[] {
   const height = 0.95
@@ -461,10 +474,9 @@ function velvetRopeGeometry(postPositions: Vec2[], y = 0.55): BufferGeometry[] {
 }
 
 function buildHallDecorGeometry(decor: HallDecor): BufferGeometry[] {
+  // Colonnes, bancs et jardinières : voir `docs/assets/catalogue.md` et `layout.ts` (`decorPlacements`,
+  // module props) — remplacés par de vrais modèles CC0, retirés d'ici (WEL-874).
   const parts: BufferGeometry[] = []
-  for (const p of decor.pillars) parts.push(...columnGeometry(p, 0.42, dims.wallHeight - 0.2))
-  for (const b of decor.benches) parts.push(...benchGeometry(b, 0.46))
-  for (const j of decor.planters) parts.push(...jardiniereGeometry(j, JARDINIERE_RADIUS, 1.0))
   parts.push(...counterGeometry(decor.counter.center, decor.counter.halfWidth, decor.counter.halfDepth))
   parts.push(...treeGeometry(decor.tree.center))
   parts.push(treeBenchGeometry(decor.tree.center, decor.tree.benchRadius, 0.46))
@@ -493,15 +505,33 @@ export function buildOccluderGeometry(footprint: { minX: number; maxX: number; m
   return mergeAll(parts)
 }
 
+/**
+ * Demi-cercle décoratif au-dessus d'un linteau de porte (« arche arrondie », item 4). `TorusGeometry`
+ * sans rotation trace son anneau dans le plan XY local (confirmé par `treeBenchGeometry` : un
+ * `rotateX(π/2)` le couche à plat au sol — donc, SANS rotation, il est déjà vertical) ; avec
+ * `arc = π`, il balaie de +X (θ = 0) à +Y (θ = π/2, le sommet) puis −X (θ = π) : exactement le demi-
+ * cercle du haut, centré sur `(cx, y, cz)`. `axis = 'z'` (portes ouest/est, largeur le long de Z) tourne
+ * cet anneau de 90° autour de Y pour aligner son axe « largeur » (local X) sur Z — la hauteur (Y) n'est
+ * pas affectée par une rotation autour de Y.
+ */
+function doorArchCurve(cx: number, cz: number, axis: 'x' | 'z', y: number, hex: string): BufferGeometry {
+  const geo = new TorusGeometry(DOOR_ARCH_RADIUS, DOOR_ARCH_TUBE, 6, 16, Math.PI)
+  if (axis === 'z') geo.rotateY(Math.PI / 2)
+  paint(geo, hex)
+  geo.translate(cx, y, cz)
+  return geo
+}
+
 /** Linteaux des portes ouvertes, à la couleur de chaque aile (« arches des portes ») — une seule géométrie fusionnée, `null` si aucune porte n'est ouverte. */
 export function buildDoorArchesGeometry(arches: DoorArch[]): BufferGeometry | null {
   if (arches.length === 0) return null
-  const parts = arches.map(({ box: b, color }) => {
+  const parts = arches.flatMap(({ box: b, color }) => {
     const cx = (b.minX + b.maxX) / 2
     const cz = (b.minZ + b.maxZ) / 2
     const sx = b.maxX - b.minX
     const sz = b.maxZ - b.minZ
-    return box(cx, ARCH_BOTTOM_Y + ARCH_HEIGHT / 2, cz, sx, ARCH_HEIGHT, sz, color)
+    const axis: 'x' | 'z' = sx >= sz ? 'x' : 'z' // porte nord (large en X) vs ouest/est (large en Z)
+    return [box(cx, ARCH_BOTTOM_Y + ARCH_HEIGHT / 2, cz, sx, ARCH_HEIGHT, sz, color), doorArchCurve(cx, cz, axis, ARCH_BOTTOM_Y, color)]
   })
   return mergeAll(parts)
 }

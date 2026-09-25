@@ -1,23 +1,32 @@
 /**
- * Un portrait accroché : cadre doré, toile (photo ou portrait d'attente), cartel en laiton.
+ * Un portrait accroché : cadre doré mouluré (plusieurs couches biseautées) + passe-partout crème,
+ * toile (photo ou portrait d'attente) légèrement en retrait, petit spot mural doré avec halo additif
+ * discret, cartel en laiton haute résolution (WEL-875 — voir `docs/assets/frames.md`).
  * Chargement paresseux de la photo (< 14 m, quelques vérifications par seconde, jamais déchargée).
  * Pas de <Text>/<Html> drei : tout le texte est une texture canvas 2D.
  */
 import { useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
-import { BoxGeometry, MeshBasicMaterial, MeshLambertMaterial, PlaneGeometry } from 'three'
+import { MeshBasicMaterial, MeshLambertMaterial, PlaneGeometry } from 'three'
 import type { Mesh, Texture } from 'three'
 import type { FrameSlot, Person } from '../types'
 import { useGame } from '../state/gameStore'
 import { player } from '../state/runtime'
-import { palette, wingThemes, dims as tokenDims } from '../styles/tokens'
-import { drawCartel, drawPlaceholderPortrait, loadPersonPhoto } from './textures'
+import { wingThemes, dims as tokenDims } from '../styles/tokens'
+import { drawPlaceholderPortrait, loadPersonPhoto } from './textures'
+import { drawFrameCartel } from './frameCartel'
+import { FRAME_GEOMETRY, GOLD_BRIGHT, HALO_LOCAL_Y, HALO_LOCAL_Z, PAINTING_RECESS_Z } from './frameGeometry'
+import { HALO_GEOMETRY, fadeableHaloMaterial, sharedHaloMaterial } from './frameHalo'
 import { PORTRAIT_CHECK_RATE_HZ, PORTRAIT_LOAD_DISTANCE } from './constants'
 import { bubbleTexture } from './bubbleTexture'
 
-const CARTEL_WIDTH = 0.9
-const CARTEL_HEIGHT = 0.34
-const CARTEL_GAP = 0.14
+// Plaque 512×128 (voir frameCartel.ts) : aspect 4/1, plus large et plus basse que l'ancien cartel
+// (256×96, 2.65/1) — plus de pixels par caractère, donc plus lisible à distance de jeu. `CARTEL_GAP`
+// un peu plus généreux que l'ancien (0.14) pour garder un dégagement net sous la moulure extérieure du
+// nouveau cadre (bien plus large que l'ancien bord simple, voir `frameGeometry.ts::LAYER_MARGIN.outer`).
+const CARTEL_WIDTH = 0.98
+const CARTEL_HEIGHT = 0.245
+const CARTEL_GAP = 0.18
 const BOB_SPEED = 2.4
 const BOB_RANGE = 0.08
 
@@ -26,12 +35,17 @@ const BOB_RANGE = 0.08
 // dispose que ce qu'il possède (JSX imbriqué), jamais un objet reçu en prop, donc rien n'est libéré
 // par erreur quand un cadre se démonte. Seuls les matériaux liés à une texture par personne (toile,
 // cartel) restent propres à chaque instance.
-const FRAME_BORDER_GEO = new BoxGeometry(tokenDims.frameWidth + 0.14, tokenDims.frameHeight + 0.14, 0.05)
 const PAINTING_GEO = new PlaneGeometry(tokenDims.frameWidth, tokenDims.frameHeight)
 const CARTEL_GEO = new PlaneGeometry(CARTEL_WIDTH, CARTEL_HEIGHT)
 const BUBBLE_GEO = new PlaneGeometry(0.32, 0.32)
-const FRAME_MATERIAL = new MeshLambertMaterial({ color: palette.gold })
-const FRAME_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ color: palette.gold, emissive: palette.gold, emissiveIntensity: 0.35 })
+// `vertexColors: true` : la géométrie fusionnée (`FRAME_GEOMETRY`) porte déjà la couleur de chaque
+// couche (moulures + passe-partout + spot) par sommet — voir `frameGeometry.ts`. Un seul matériau
+// (couleur de base blanche par défaut) suffit donc pour tout le relief, au lieu d'un matériau par
+// teinte. `flatShading: true` : la vasque du spot est un cylindre low-poly (8 segments, comme les
+// colonnes du hall, `roomGeometry.ts`) — sans cet indicateur, three.js lisserait ses normales et la
+// vasque paraîtrait ronde/floue au lieu du style « facetté » du reste du musée.
+const FRAME_MATERIAL = new MeshLambertMaterial({ vertexColors: true, flatShading: true })
+const FRAME_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ vertexColors: true, flatShading: true, emissive: GOLD_BRIGHT, emissiveIntensity: 0.32 })
 
 let bubbleMaterial: MeshBasicMaterial | null = null
 /** Matériau de la bulle « ! », créé une seule fois (paresseux : la texture a besoin d'un canvas DOM). */
@@ -71,13 +85,13 @@ export function PortraitFrame({ frame, person, fade }: { frame: FrameSlot; perso
   })
 
   const accentColor = wingThemes[frame.wing].accent
-  // `drawPlaceholderPortrait`/`drawCartel` mettent leurs textures en cache par personne + langue
-  // (voir textures.ts) : la bascule FR/EN ne recrée jamais de texture GPU orpheline pour les ~100
-  // cadres, et on n'a pas besoin de dispose() nous-mêmes (dangereux ici sous React.StrictMode : le
-  // double rendu des effets en dev disposerait une texture encore affichée par `useMemo`, qui lui
-  // n'est pas rejoué en même temps).
+  // `drawPlaceholderPortrait`/`drawFrameCartel` mettent leurs textures en cache par personne + langue
+  // (voir textures.ts / frameCartel.ts) : la bascule FR/EN ne recrée jamais de texture GPU orpheline
+  // pour les ~100 cadres, et on n'a pas besoin de dispose() nous-mêmes (dangereux ici sous
+  // React.StrictMode : le double rendu des effets en dev disposerait une texture encore affichée par
+  // `useMemo`, qui lui n'est pas rejoué en même temps).
   const placeholderTex = useMemo(() => drawPlaceholderPortrait(accentColor, person.order, lang), [accentColor, person.order, lang])
-  const cartelTex = useMemo(() => drawCartel(person, lang), [person, lang])
+  const cartelTex = useMemo(() => drawFrameCartel(person, lang), [person, lang])
   const paintingTex = photoTex ?? placeholderTex
 
   const bubbleRef = useRef<Mesh>(null)
@@ -87,36 +101,67 @@ export function PortraitFrame({ frame, person, fade }: { frame: FrameSlot; perso
   })
 
   // Cadre accroché à une cimaise occultante (voir `Occluder`) : matériaux PROPRES à cette instance
-  // (jamais `FRAME_MATERIAL`/`FRAME_MATERIAL_HIGHLIGHT`, partagés par tous les autres cadres), pour
-  // pouvoir suivre son fondu sans jamais l'imposer aux cadres non concernés. `useMemo([fade])` : la
-  // présence de `fade` ne change jamais après montage (mission occultation figée par le plan), donc
-  // ces instances sont créées une seule fois.
-  const borderMaterial = useMemo(() => (fade ? new MeshLambertMaterial({ color: palette.gold, transparent: true, depthWrite: false }) : null), [fade])
+  // (jamais `FRAME_MATERIAL`/`FRAME_MATERIAL_HIGHLIGHT`/le halo partagé, tous partagés par les autres
+  // cadres), pour pouvoir suivre son fondu sans jamais l'imposer aux cadres non concernés. `useMemo`
+  // sur `[fade]` seul : la présence de `fade` ne change jamais après montage (mission occultation
+  // figée par le plan), donc ces instances sont créées une seule fois.
+  const frameMaterial = useMemo(() => (fade ? new MeshLambertMaterial({ vertexColors: true, flatShading: true, transparent: true, depthWrite: false }) : null), [fade])
+  const haloMaterial = useMemo(() => (fade ? fadeableHaloMaterial() : null), [fade])
   const paintingMatRef = useRef<MeshBasicMaterial>(null)
   const cartelMatRef = useRef<MeshBasicMaterial>(null)
 
   useFrame(() => {
     if (!fade) return
     const o = fade.opacity
-    if (borderMaterial) {
-      borderMaterial.opacity = o
-      borderMaterial.emissiveIntensity = highlighted ? 0.35 : 0
+    if (frameMaterial) {
+      frameMaterial.opacity = o
+      frameMaterial.emissiveIntensity = highlighted ? 0.35 : 0
     }
+    if (haloMaterial) haloMaterial.opacity = 0.5 * o
     if (paintingMatRef.current) paintingMatRef.current.opacity = o
     if (cartelMatRef.current) cartelMatRef.current.opacity = o
   })
 
+  // Liseré lumineux du cadre proche : pulsation douce de l'émissif du matériau de surbrillance PARTAGÉ
+  // (`FRAME_MATERIAL_HIGHLIGHT`). Sûr malgré le partage : `nearbyPersonId` (donc `highlighted`) ne
+  // désigne jamais plus d'un cadre à la fois, donc au plus UNE des ~100 instances entre jamais dans ce
+  // `if` à une image donnée — jamais deux cadres qui se disputent la même valeur. Cadres en fondu
+  // exclus (matériau propre déjà géré ci-dessus, intensité statique comme avant WEL-875).
+  useFrame(({ clock }) => {
+    if (highlighted && !fade) {
+      FRAME_MATERIAL_HIGHLIGHT.emissiveIntensity = 0.3 + Math.sin(clock.elapsedTime * 3.2) * 0.12
+    }
+  })
+
   return (
     <group position={frame.position} rotation-y={frame.rotationY}>
-      <mesh position={[0, 0, -0.03]} geometry={FRAME_BORDER_GEO} material={borderMaterial ?? (highlighted ? FRAME_MATERIAL_HIGHLIGHT : FRAME_MATERIAL)} />
-      <mesh geometry={PAINTING_GEO}>
+      {/*
+        `renderOrder` explicite sur les 5 mailles (0 → 3) : RÉGRESSION WEL-875 (bis) corrigée en même
+        temps que l'ouverture du passe-partout. Un cadre en fondu (`fade`) rend TOUS ses matériaux
+        `transparent: true` (même à opacité 1, voir plus haut) pour pouvoir s'estomper — three.js trie
+        alors ces mailles par distance caméra plutôt que par le buffer de profondeur, et comme la
+        toile/le cartel sont quasiment coplanaires avec la moulure (quelques millimètres d'écart en Z,
+        voir `frameGeometry.ts`), ce tri est instable : la moulure (opaque à l'œil, `opacity` à 1 hors
+        fondu) pouvait se dessiner APRÈS la toile et donc la recouvrir entièrement (aplat doré uni,
+        observé aile Industrialisation — cimaises occultantes, contrairement à Infrastructures/Culture
+        sans cimaise sur les cadres testés). `renderOrder` prime sur la distance dans le tri des objets
+        transparents (three.js) : moulure (0) → toile/cartel (1) → halo (2) → bulle « ! » (3), pour
+        TOUS les cadres (fondu ou non — sans effet sur les cadres opaques, dont l'ordre reste géré par
+        le depth buffer comme avant). Testé visuellement aile Industrialisation (seule aile de ce
+        chantier avec cimaise sur les cadres capturés) : voir `docs/assets/frames.md`.
+      */}
+      {/* Moulure dorée biseautée + passe-partout + spot mural : une seule géométrie fusionnée (voir frameGeometry.ts). */}
+      <mesh renderOrder={0} geometry={FRAME_GEOMETRY} material={frameMaterial ?? (highlighted ? FRAME_MATERIAL_HIGHLIGHT : FRAME_MATERIAL)} />
+      <mesh renderOrder={1} position={[0, 0, PAINTING_RECESS_Z]} geometry={PAINTING_GEO}>
         <meshBasicMaterial ref={paintingMatRef} map={paintingTex} toneMapped={false} transparent={!!fade} depthWrite={!fade} />
       </mesh>
-      <mesh position={[0, -tokenDims.frameHeight / 2 - CARTEL_GAP - CARTEL_HEIGHT / 2, 0.001]} geometry={CARTEL_GEO}>
+      <mesh renderOrder={1} position={[0, -tokenDims.frameHeight / 2 - CARTEL_GAP - CARTEL_HEIGHT / 2, 0.001]} geometry={CARTEL_GEO}>
         <meshBasicMaterial ref={cartelMatRef} map={cartelTex} toneMapped={false} transparent={!!fade} depthWrite={!fade} />
       </mesh>
+      {/* Halo additif discret sous le spot : plan partagé + matériau partagé (sauf cadre en fondu). */}
+      <mesh renderOrder={2} position={[0, HALO_LOCAL_Y, HALO_LOCAL_Z]} geometry={HALO_GEOMETRY} material={haloMaterial ?? sharedHaloMaterial()} />
       {highlighted && (
-        <mesh ref={bubbleRef} position={[0, tokenDims.frameHeight / 2 + 0.45, 0.02]} geometry={BUBBLE_GEO} material={sharedBubbleMaterial()} />
+        <mesh renderOrder={3} ref={bubbleRef} position={[0, tokenDims.frameHeight / 2 + 0.45, 0.02]} geometry={BUBBLE_GEO} material={sharedBubbleMaterial()} />
       )}
     </group>
   )

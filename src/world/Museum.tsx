@@ -3,7 +3,7 @@
  * Géométrie statique fusionnée par salle (BufferGeometryUtils), matériaux partagés, pas d'ombres
  * temps réel : voir docs/DESIGN.md et docs/ARCHITECTURE.md.
  */
-import { useMemo } from 'react'
+import { Suspense, useMemo } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { AdditiveBlending, DoubleSide, MeshLambertMaterial } from 'three'
 import type { CanvasTexture } from 'three'
@@ -15,6 +15,7 @@ import { buildMuseumArchitecture } from './layout'
 import { buildComingSoonBarrierGeometry, buildDoorArchesGeometry, buildLightRaysGeometry, buildOccluderGeometry, buildRoomGeometry } from './roomGeometry'
 import { occludesPlayer, approach } from './occlusion'
 import { PortraitFrame, type FrameFade } from './PortraitFrame'
+import { RoomProps } from './props/RoomProps'
 import { drawBanner, drawComingSoonPanel, drawMinervePlate, drawWingPanel } from './textures'
 import { worldStrings } from './strings'
 import { CIMAISE_FADE_OPACITY, CIMAISE_FADE_SECONDS, HALL_HALF_DEPTH, HALL_HALF_WIDTH } from './constants'
@@ -169,6 +170,12 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
         const person = peopleById.get(frame.personId)
         return person ? <PortraitFrame key={frame.personId} frame={frame} person={person} fade={fadeByPersonId.get(frame.personId)} /> : null
       })}
+
+      {/* Modèles 3D CC0 (bancs, jardinières, colonnes, racks…) posés sur les emplacements exposés par
+          `architecture.decorPlacements` — module props, WEL-874 (voir le contrat en tête de layout.ts). */}
+      <Suspense fallback={null}>
+        <RoomProps architecture={architecture} layout={layout} />
+      </Suspense>
     </group>
   )
 }

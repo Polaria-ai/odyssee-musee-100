@@ -131,4 +131,30 @@ export const TREE_BENCH_HEIGHT = 0.48
 export const CIMAISE_FADE_OPACITY = 0.18
 export const CIMAISE_FADE_SECONDS = 0.15
 
+/**
+ * Embellissement de l'architecture (WEL-874, item 4 de la mission) : lambris bas + corniche haute sur
+ * les murs pleins (jamais les murs « coupés » côté caméra, voir `buildRoomGeometry`), légère
+ * protubérance pour rester lisibles malgré `flatShading`, sans jamais recouper la bande du linteau des
+ * portes (`ARCH_BOTTOM_Y`, `roomGeometry.ts`) ni dépasser `dims.wallHeight`.
+ */
+export const WAINSCOT_HEIGHT = 0.95
+export const CORNICE_HEIGHT = 0.16
+/** Espace entre le haut de la corniche et le plafond (`dims.wallHeight`). */
+export const CORNICE_TOP_GAP = 0.1
+export const TRIM_PROTRUSION = 0.05
+
+/**
+ * Demi-cercle décoratif au-dessus du linteau d'une porte ouverte (« arche arrondie »). Rayon assez petit
+ * pour que le sommet (`ARCH_BOTTOM_Y + DOOR_ARCH_RADIUS`, voir `roomGeometry.ts`) reste sous
+ * `dims.wallHeight` (4,2 m) avec de la marge.
+ */
+export const DOOR_ARCH_RADIUS = 0.4
+export const DOOR_ARCH_TUBE = 0.07
+
+/** Longueur d'une lame du parquet à chevrons du hall (« point de Hongrie », voir `roomGeometry.ts`). */
+export const HERRINGBONE_LEN = 0.55
+
+/** Adoucit le contraste du damier/carrelage des ailes vers un ton moyen (0 = inchangé, 1 = ton unique). */
+export const SOFTEN_CHECKER = 0.35
+
 export { dims }
