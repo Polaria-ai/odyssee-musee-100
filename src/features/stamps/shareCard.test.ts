@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { EXHIBIT_WINGS } from '../../types'
+import { ALL_STAMPS } from './stamps'
 import { buildShareFilename, computeShareLayout, drawShareCard, generateShareBlob, SHARE_HEIGHT, SHARE_WIDTH } from './shareCard'
 
 describe('computeShareLayout', () => {
@@ -9,9 +9,9 @@ describe('computeShareLayout', () => {
     expect(layout.height).toBe(SHARE_HEIGHT)
   })
 
-  it('place un badge par aile, dans les limites de la carte', () => {
+  it('place un badge par tampon (trois ailes + Archives), dans les limites de la carte', () => {
     const layout = computeShareLayout()
-    expect(layout.stamps).toHaveLength(EXHIBIT_WINGS.length)
+    expect(layout.stamps).toHaveLength(ALL_STAMPS.length)
     for (const badge of layout.stamps) {
       expect(badge.x - badge.radius).toBeGreaterThanOrEqual(0)
       expect(badge.x + badge.radius).toBeLessThanOrEqual(layout.width)
@@ -19,12 +19,12 @@ describe('computeShareLayout', () => {
     }
   })
 
-  it('espace les badges de gauche à droite dans l’ordre des ailes', () => {
+  it('espace les badges de gauche à droite, Archives en dernier', () => {
     const layout = computeShareLayout()
     for (let i = 1; i < layout.stamps.length; i++) {
       expect(layout.stamps[i].x).toBeGreaterThan(layout.stamps[i - 1].x)
     }
-    expect(layout.stamps.map((s) => s.wing)).toEqual([...EXHIBIT_WINGS])
+    expect(layout.stamps.map((s) => s.wing)).toEqual([...ALL_STAMPS])
   })
 
   it('s’adapte à une largeur/hauteur personnalisée', () => {
@@ -47,13 +47,13 @@ describe('buildShareFilename', () => {
 
 describe('drawShareCard', () => {
   it('ne lève pas si le contexte canvas est indisponible (jsdom)', () => {
-    expect(() => drawShareCard(null, { avatarName: 'Ada', stamps: {}, lang: 'fr' })).not.toThrow()
+    expect(() => drawShareCard(null, { avatarName: 'Ada', stamps: {}, archivesObtained: false, lang: 'fr' })).not.toThrow()
   })
 })
 
 describe('generateShareBlob', () => {
   it('renvoie null sans lever quand le canvas 2D est indisponible (jsdom n’implémente pas getContext(2d))', async () => {
-    const blob = await generateShareBlob({ avatarName: 'Ada', stamps: {}, lang: 'fr' })
+    const blob = await generateShareBlob({ avatarName: 'Ada', stamps: {}, archivesObtained: false, lang: 'fr' })
     expect(blob).toBeNull()
   })
 })

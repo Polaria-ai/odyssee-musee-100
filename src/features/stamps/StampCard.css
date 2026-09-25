@@ -53,11 +53,12 @@
 
 .stamp-card__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  /* Quatre tampons (trois ailes + Archives de 2040) : grille 2×2, symétrique. */
+  grid-template-columns: repeat(2, 1fr);
   gap: 10px;
 }
 
-@media (max-width: 360px) {
+@media (max-width: 340px) {
   .stamp-card__grid {
     grid-template-columns: 1fr;
   }

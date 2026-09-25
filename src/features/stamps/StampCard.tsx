@@ -4,7 +4,7 @@ import { useGame } from '../../state/gameStore'
 import { useT, usePick } from '../../i18n'
 import { EXHIBIT_WINGS } from '../../types'
 import { strings, wingNames } from './strings'
-import { isCardComplete, wingProgress } from './stamps'
+import { archivesProgress, hasArchivesStamp, isCardComplete, wingProgress } from './stamps'
 import { StampIcon } from './StampIcon'
 import { shareCard } from './shareCard'
 import './StampCard.css'
@@ -15,6 +15,8 @@ export function StampCard() {
   const stamps = useGame((s) => s.stamps)
   const people = useGame((s) => s.people)
   const visited = useGame((s) => s.visited)
+  const sessions = useGame((s) => s.sessions)
+  const visitedSessions = useGame((s) => s.visitedSessions)
   const avatarName = useGame((s) => s.avatar.name)
   const lang = useGame((s) => s.lang)
   const setStampCardOpen = useGame((s) => s.setStampCardOpen)
@@ -35,7 +37,10 @@ export function StampCard() {
   if (!open) return null
 
   const progress = wingProgress(people, visited)
-  const complete = isCardComplete(stamps, people)
+  const totalSessions = sessions.length
+  const archivesObtained = hasArchivesStamp(visitedSessions, totalSessions)
+  const archivesWp = archivesProgress(visitedSessions, totalSessions)
+  const complete = isCardComplete(stamps, people, { visitedSessions, totalSessions })
 
   return (
     <div className="stamp-card-backdrop" onClick={() => setStampCardOpen(false)}>
@@ -75,6 +80,17 @@ export function StampCard() {
               </div>
             )
           })}
+          <div className="stamp-card__slot" key="archives">
+            <StampIcon wing="archives" obtained={archivesObtained} />
+            <span className="stamp-card__wing-name">{p(wingNames.archives)}</span>
+            <span className="stamp-card__progress">
+              {archivesObtained
+                ? t('obtained')
+                : totalSessions > 0
+                  ? t('progressArchives', { seen: archivesWp.seen, total: archivesWp.total })
+                  : t('archivesPending')}
+            </span>
+          </div>
         </div>
         {complete && (
           <button
@@ -82,7 +98,7 @@ export function StampCard() {
             className="stamp-card__share"
             data-testid="stamp-share"
             onClick={() => {
-              void shareCard({ avatarName, stamps, lang })
+              void shareCard({ avatarName, stamps, archivesObtained, lang })
             }}
           >
             {t('share')}

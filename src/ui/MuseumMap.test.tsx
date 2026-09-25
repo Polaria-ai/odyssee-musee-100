@@ -3,7 +3,9 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import { useGame } from '../state/gameStore'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import { buildMuseumLayout } from '../world/layout'
+import { buildArchivesLayout, mergeArchivesIntoLayout } from '../archives/layout'
 import { player } from '../state/runtime'
+import type { EveningSession } from '../types'
 import { MuseumMap } from './MuseumMap'
 
 const playSfxMock = vi.fn()
@@ -112,6 +114,73 @@ describe('MuseumMap', () => {
       setSheetMetrics(sheet, { scrollHeight: 600, clientHeight: 300, scrollTop: 300 })
       fireEvent.scroll(sheet)
       expect(screen.queryByTestId('map-scroll-hint')).not.toBeInTheDocument()
+    })
+  })
+
+  describe('encart des Archives de 2040 (WEL-884)', () => {
+    // Programme manifestement fictif, fabriqué uniquement pour ce test.
+    const fictionalSessions: EveningSession[] = [
+      { id: 'fixture-a', order: 1, startTime: '10:00', durationMin: 5, kind: 'ouverture', title: { fr: 'A', en: 'A' }, speakers: [], provisional: true },
+      { id: 'fixture-b', order: 2, startTime: '10:10', durationMin: 5, kind: 'keynote', title: { fr: 'B', en: 'B' }, speakers: [], provisional: true },
+    ]
+
+    beforeEach(() => {
+      const people = generatePlaceholderPeople(9)
+      const museumLayout = buildMuseumLayout(people)
+      const archivesLayout = buildArchivesLayout(fictionalSessions)
+      useGame.setState({
+        lang: 'fr',
+        people,
+        layout: mergeArchivesIntoLayout(museumLayout, archivesLayout),
+        visited: {},
+        sessions: fictionalSessions,
+        archivesLayout,
+        visitedSessions: {},
+        currentRoom: null,
+      })
+      player.x = 0
+      player.z = 0
+    })
+
+    it("n'ajoute pas la salle des Archives au plan principal : l'échelle du hall reste celle du musée", () => {
+      render(<MuseumMap open onClose={() => {}} />)
+      const map = screen.getByTestId('museum-map')
+      // Hall + 3 ailes = 4 salles dans le plan principal, jamais 5 : la salle des Archives (loin
+      // dans le monde, voir `ARCHIVES_ORIGIN`) casserait l'échelle si elle y entrait — voir
+      // `MuseumMap.tsx`, `mainRooms`/`mainBounds`. Elle est affichée à part, plus bas.
+      expect(map.querySelectorAll('.ui-map__plan svg .ui-map__room').length).toBe(4)
+    })
+
+    it('relie le plan principal à l’encart par un pictogramme à la position de la Porte de 2040', () => {
+      render(<MuseumMap open onClose={() => {}} />)
+      expect(screen.getByTestId('map-portal-marker')).toBeInTheDocument()
+      expect(screen.getByText('Porte de 2040')).toBeInTheDocument()
+    })
+
+    it("affiche l'encart des Archives avec son titre et le compteur d'archives consultées", () => {
+      useGame.setState({ visitedSessions: { 'fixture-a': Date.now() } })
+      render(<MuseumMap open onClose={() => {}} />)
+
+      expect(screen.getByTestId('map-archives')).toBeInTheDocument()
+      expect(screen.getByText('Les Archives de 2040 · par la Porte de 2040')).toBeInTheDocument()
+      expect(screen.getByTestId('map-archives-count')).toHaveTextContent('1/2 archives consultées')
+    })
+
+    it("n'affiche pas l'encart quand le plan des Archives n'est pas encore chargé", () => {
+      useGame.setState({ archivesLayout: null })
+      render(<MuseumMap open onClose={() => {}} />)
+      expect(screen.queryByTestId('map-archives')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('map-portal-marker')).not.toBeInTheDocument()
+    })
+
+    it("affiche le point du joueur dans l'encart seulement quand il est dans les Archives", () => {
+      render(<MuseumMap open onClose={() => {}} />)
+      expect(screen.queryByTestId('map-archives-player-dot')).not.toBeInTheDocument()
+
+      act(() => {
+        useGame.setState({ currentRoom: 'archives' })
+      })
+      expect(screen.getByTestId('map-archives-player-dot')).toBeInTheDocument()
     })
   })
 })

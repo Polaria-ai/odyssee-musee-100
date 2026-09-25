@@ -8,7 +8,12 @@ import { EXHIBIT_WINGS } from '../types'
 
 export type MinerveEvent =
   | { kind: 'welcome' }
-  | { kind: 'talk'; visitedCount: number; stampsCount: number; total: number }
+  /**
+   * `archivesToVisit` (optionnel) : vrai si le programme de la soirée est chargé et qu'aucune
+   * archive n'a encore été consultée — ajoute un conseil sur la Porte de 2040. Absent ou faux :
+   * comportement inchangé (voir `docs/ARCHITECTURE.md`, contrat de `gameStore.interact()`).
+   */
+  | { kind: 'talk'; visitedCount: number; stampsCount: number; total: number; archivesToVisit?: boolean }
   | { kind: 'stamp'; wing: ExhibitWingId }
   | { kind: 'complete' }
 
@@ -67,6 +72,11 @@ function welcomeDialogue(): Dialogue {
       "Tu croiseras d'autres visiteurs par ici. Reviens me voir quand tu veux, je suis toujours là !",
       "You'll cross paths with other visitors along the way. Come back and see me anytime, I'm always here!",
       'happy',
+    ),
+    line(
+      "Autre chose : à droite de l'entrée, une porte scintillante mène aux Archives de 2040. Curieux·se ? Vas-y jeter un œil !",
+      "One more thing: to the right of the entrance, a shimmering door leads to the 2040 Archives. Curious? Go take a peek!",
+      'surprised',
     ),
   ])
 }
@@ -172,11 +182,26 @@ function talkStampsVariants(stampsCount: number): readonly Dialogue[] {
   ]
 }
 
-function talkDialogue(visitedCount: number, stampsCount: number): Dialogue {
-  if (stampsCount >= EXHIBIT_WINGS.length) return pickVariant(TALK_COMPLETE, visitedCount)
-  if (stampsCount >= 1) return pickVariant(talkStampsVariants(stampsCount), visitedCount)
-  if (visitedCount > 0) return pickVariant(TALK_SOME, visitedCount)
-  return pickVariant(TALK_NONE, visitedCount)
+/** Conseil ajouté en fin de dialogue quand le programme est chargé et qu'aucune archive n'est visitée. */
+function archivesHintLine(): DialogueLine {
+  return line(
+    "Au fait : une porte scintillante près de l'entrée mène aux Archives de 2040, à voir si ce n'est pas déjà fait !",
+    "By the way: a shimmering door near the entrance leads to the 2040 Archives — worth a look if you haven't yet!",
+    'thinking',
+  )
+}
+
+function talkDialogue(visitedCount: number, stampsCount: number, archivesToVisit?: boolean): Dialogue {
+  const base =
+    stampsCount >= EXHIBIT_WINGS.length
+      ? pickVariant(TALK_COMPLETE, visitedCount)
+      : stampsCount >= 1
+        ? pickVariant(talkStampsVariants(stampsCount), visitedCount)
+        : visitedCount > 0
+          ? pickVariant(TALK_SOME, visitedCount)
+          : pickVariant(TALK_NONE, visitedCount)
+  if (!archivesToVisit) return base
+  return { ...base, id: `${base.id}-archives-hint`, lines: [...base.lines, archivesHintLine()] }
 }
 
 // --- Tampon obtenu ---------------------------------------------------------
@@ -245,7 +270,7 @@ export function minerveDialogue(event: MinerveEvent): Dialogue {
     case 'welcome':
       return welcomeDialogue()
     case 'talk':
-      return talkDialogue(event.visitedCount, event.stampsCount)
+      return talkDialogue(event.visitedCount, event.stampsCount, event.archivesToVisit)
     case 'stamp':
       return STAMP_DIALOGUES[event.wing]
     case 'complete':

@@ -21,8 +21,14 @@ describe('minerveDialogue', () => {
     const d = minerveDialogue({ kind: 'welcome' })
     expect(d.id).toBe('welcome')
     expect(d.lines.length).toBeGreaterThanOrEqual(5)
-    expect(d.lines.length).toBeLessThanOrEqual(7)
+    expect(d.lines.length).toBeLessThanOrEqual(8)
     expectWellFormed(d)
+  })
+
+  it('welcome : mentionne la Porte de 2040 / les Archives', () => {
+    const d = minerveDialogue({ kind: 'welcome' })
+    expect(d.lines.some((l) => /2040/.test(l.text.fr))).toBe(true)
+    expect(d.lines.some((l) => /2040/.test(l.text.en))).toBe(true)
   })
 
   it('welcome : humeurs variées (au moins deux distinctes)', () => {
@@ -108,6 +114,24 @@ describe('minerveDialogue', () => {
     it('mentionne le nombre de tampons obtenus au palier 1-2 tampons', () => {
       const d = minerveDialogue({ kind: 'talk', visitedCount: 0, stampsCount: 1, total: 100 })
       expect(d.lines.some((l) => l.text.fr.includes('1'))).toBe(true)
+    })
+
+    describe('archivesToVisit', () => {
+      it('absent ou faux : dialogue inchangé, aucune mention de 2040', () => {
+        const withoutFlag = minerveDialogue({ kind: 'talk', visitedCount: 3, stampsCount: 0, total: 100 })
+        const withFalse = minerveDialogue({ kind: 'talk', visitedCount: 3, stampsCount: 0, total: 100, archivesToVisit: false })
+        expect(withoutFlag).toEqual(withFalse)
+        expect(withoutFlag.lines.some((l) => /2040/.test(l.text.fr))).toBe(false)
+      })
+
+      it('vrai : ajoute une ligne mentionnant les Archives de 2040, bien formée', () => {
+        const base = minerveDialogue({ kind: 'talk', visitedCount: 3, stampsCount: 0, total: 100 })
+        const withHint = minerveDialogue({ kind: 'talk', visitedCount: 3, stampsCount: 0, total: 100, archivesToVisit: true })
+        expectWellFormed(withHint)
+        expect(withHint.lines.length).toBe(base.lines.length + 1)
+        expect(withHint.id).not.toBe(base.id)
+        expect(withHint.lines.some((l) => /2040/.test(l.text.fr) && /2040/.test(l.text.en))).toBe(true)
+      })
     })
   })
 })
