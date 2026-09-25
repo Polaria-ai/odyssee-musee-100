@@ -1,8 +1,30 @@
 /**
  * Plan du musée — fonction pure et déterministe : mêmes entrées → même sortie.
  * Propriétaire : agent monde. Contrat (types, signature) : voir docs/ARCHITECTURE.md.
+ *
+ * ## Contrat `decorPlacements` (WEL-874, chantier assets 3D)
+ *
+ * `MuseumArchitecture.decorPlacements` est la liste — typée, calculée ici — des emplacements de décor
+ * remplacés par de vrais modèles 3D CC0 (bancs, jardinières, colonnes, racks, bustes…) : cette liste est
+ * le contrat entre CE module (architecture, propriétaire des POSITIONS) et le module `props`
+ * (propriétaire du CHARGEMENT/RENDU des modèles, `src/world/props/RoomProps.tsx`). Architecture reste la
+ * source de vérité des emplacements (comme les colliders) ; props se contente d'y poser un `useModel(...)`
+ * sous `<Suspense>`, sans jamais recalculer une position elle-même.
+ *
+ * Chaque `DecorPlacement` donne `type` (rôle, voir `docs/assets/catalogue.md`), `position` (sol, mètres),
+ * `rotationY` (même convention que `FrameSlot` : 0 = face à +Z) et `room` (salle où le poser). Décor
+ * volontairement gardé procédural ici (pas de `decorPlacement`, voir commentaires dans `roomGeometry.ts`) :
+ * la roue dentée et les câbles (aile Infrastructures, aucun modèle CC0 net trouvé / le modèle du catalogue
+ * ne fait que « compléter » les câbles peints, pas les remplacer), le chevalet (aile Culture, « aucun
+ * remplacement CC0 identifié » — `docs/assets/catalogue.md`), le cordon devant le comptoir de Minerve
+ * (idem, meilleure option restée procédurale), l'Arbre des 100 et son banc circulaire (sculpture originale,
+ * `docs/DESIGN.md`), le comptoir de Minerve (géométrie dédiée).
+ *
+ * Deux emplacements sont des AJOUTS de ce chantier (pas de décor procédural remplacé) : `wall-lamp` et
+ * `floor-lamp`, posés en embellissant l'architecture du hall (item 4 de la mission), aux murs actuellement
+ * nus (voir `docs/DESIGN.md`).
  */
-import type { AABB, ExhibitWingId, FrameSlot, MuseumLayout, Person, Placement, RoomLayout, StampStationSlot, Vec2 } from '../types'
+import type { AABB, ExhibitWingId, FrameSlot, MuseumLayout, Person, Placement, RoomLayout, StampStationSlot, Vec2, WingId } from '../types'
 import { EXHIBIT_WINGS } from '../types'
 import { wingThemes } from '../styles/tokens'
 import {
@@ -141,6 +163,33 @@ export interface DoorArch {
   color: string
 }
 
+/**
+ * Rôle d'un emplacement de décor (voir `docs/assets/catalogue.md` pour le modèle CC0 associé à chaque
+ * rôle). `-primary`/`-variant` : deux variantes d'un même rôle répété, pour casser la répétition visuelle
+ * (ex. 3 racks, 3 bustes) sans dupliquer le type au sens strict.
+ */
+export type DecorPlacementType =
+  | 'column'
+  | 'bench'
+  | 'planter'
+  | 'wall-lamp'
+  | 'floor-lamp'
+  | 'rack-server-primary'
+  | 'rack-server-variant'
+  | 'conveyor-segment'
+  | 'robot-arm'
+  | 'sculpture-primary'
+  | 'sculpture-variant'
+  | 'bookcase'
+
+/** Emplacement de décor confié au module props (voir le contrat en tête de fichier). */
+export interface DecorPlacement {
+  type: DecorPlacementType
+  position: Vec2
+  rotationY: number
+  room: WingId
+}
+
 /** Plan complet, pour le rendu (`Museum.tsx`) : mêmes salles que `MuseumLayout`, murs annotés. */
 export interface MuseumArchitecture {
   rooms: Array<{ room: RoomLayout; walls: ArchBox[] }>
@@ -150,6 +199,8 @@ export interface MuseumArchitecture {
   occluders: Occluder[]
   /** Ailes sans aucune personne : porte fermée, panneau « Bientôt » (voir `worldStrings.wingComingSoon`). */
   comingSoonWings: ExhibitWingId[]
+  /** Emplacements de décor pour le module props (voir le contrat en tête de fichier). */
+  decorPlacements: DecorPlacement[]
 }
 
 function sortPeople(people: Person[]): Person[] {
@@ -161,6 +212,104 @@ function wall(box: AABB, cut = false): ArchBox {
 }
 function furniture(box: AABB, height?: number, hidden?: boolean): ArchBox {
   return { box, kind: 'furniture', cut: false, height, hidden }
+}
+
+/**
+ * Coordonnée X « juste devant le mur du fond » d'une aile est/ouest (`buildXWing`), en retrait de
+ * `inset` vers l'intérieur de la salle. Le mur du fond n'est PAS toujours du côté `maxX` : l'aile
+ * infrastructures s'étend vers les X négatifs (`dir = -1`, voir `buildXWing`), donc son mur du fond
+ * est en `minX`, alors que l'aile culture (`dir = 1`) a le sien en `maxX`. Le hall étant centré sur
+ * l'origine et les deux ailes s'en éloignant, le mur du fond est toujours celui des deux bords dont la
+ * valeur absolue est la plus grande — jamais `maxX` par construction (régression corrigée : le décor
+ * signature de l'aile infrastructures se retrouvait plaqué contre la porte du hall, pas le mur du fond).
+ * Utilisé pour le décor signature restant procédural (`roomGeometry.ts`) ET pour les `decorPlacements`
+ * calculés ci-dessous (source unique, jamais deux fois la même formule).
+ */
+export function farWallX(room: RoomLayout, inset: number): number {
+  const { minX, maxX } = room.bounds
+  return Math.abs(minX) > Math.abs(maxX) ? minX + inset : maxX - inset
+}
+
+/** `+1` si le mur du fond de l'aile est du côté `maxX` (aile culture), `-1` sinon (infrastructures). */
+function farWallDir(room: RoomLayout): 1 | -1 {
+  const { minX, maxX } = room.bounds
+  return Math.abs(minX) > Math.abs(maxX) ? -1 : 1
+}
+
+/** Distance au mur (protubérance) pour une applique, cohérente avec `FRAME_WALL_OFFSET` (cadres). */
+const WALL_LAMP_OFFSET = 0.18
+
+/**
+ * Emplacements de décor du hall confiés au module props : colonnes, bancs, jardinières (remplacent la
+ * géométrie procédurale, voir `roomGeometry.ts`) + appliques et lampadaires (AJOUTS de ce chantier,
+ * embellissement de l'architecture — les murs du hall sont actuellement nus, `docs/DESIGN.md`).
+ */
+function hallDecorPlacements(decor: HallDecor): DecorPlacement[] {
+  const placements: DecorPlacement[] = []
+  for (const p of decor.pillars) placements.push({ type: 'column', position: p, rotationY: 0, room: 'hall' })
+  for (const b of decor.benches) placements.push({ type: 'bench', position: b.position, rotationY: b.rotationY, room: 'hall' })
+  for (const j of decor.planters) placements.push({ type: 'planter', position: j, rotationY: 0, room: 'hall' })
+
+  // Appliques : mur nord (loin de la porte industrialisation, |x| > DOOR_HALF + marge), murs est/ouest
+  // (loin des portes infra/culture et des piliers d'angle, voir hallDecor().pillars).
+  const northZ = -HALL_HALF_DEPTH + dims.wallThickness / 2 + WALL_LAMP_OFFSET
+  const sideX = HALL_HALF_WIDTH - dims.wallThickness / 2 - WALL_LAMP_OFFSET
+  placements.push({ type: 'wall-lamp', position: { x: -4.5, z: northZ }, rotationY: 0, room: 'hall' })
+  placements.push({ type: 'wall-lamp', position: { x: 4.5, z: northZ }, rotationY: 0, room: 'hall' })
+  placements.push({ type: 'wall-lamp', position: { x: -sideX, z: -6.5 }, rotationY: Math.PI / 2, room: 'hall' })
+  placements.push({ type: 'wall-lamp', position: { x: -sideX, z: 6.5 }, rotationY: Math.PI / 2, room: 'hall' })
+  placements.push({ type: 'wall-lamp', position: { x: sideX, z: -6.5 }, rotationY: -Math.PI / 2, room: 'hall' })
+  placements.push({ type: 'wall-lamp', position: { x: sideX, z: 6.5 }, rotationY: -Math.PI / 2, room: 'hall' })
+
+  // Lampadaires flanquant le comptoir de Minerve, en retrait des potelets du cordon (voir roomGeometry.ts).
+  const { center, halfWidth } = decor.counter
+  placements.push({ type: 'floor-lamp', position: { x: center.x - halfWidth - 0.9, z: center.z }, rotationY: 0, room: 'hall' })
+  placements.push({ type: 'floor-lamp', position: { x: center.x + halfWidth + 0.9, z: center.z }, rotationY: 0, room: 'hall' })
+
+  return placements
+}
+
+/**
+ * Emplacements de décor signature d'une aile est/ouest ou nord, confiés au module props (remplacent une
+ * partie de `wingSignatureDecor`, voir le commentaire de contrat en tête de fichier pour ce qui reste
+ * procédural). Mêmes formules que l'ancienne géométrie (fidélité visuelle), déplacées ici : layout.ts est
+ * la source de vérité des positions de décor.
+ */
+function wingDecorPlacements(room: RoomLayout): DecorPlacement[] {
+  const halfW = (room.bounds.maxX - room.bounds.minX) / 2
+  const halfD = (room.bounds.maxZ - room.bounds.minZ) / 2
+  const cz = (room.bounds.minZ + room.bounds.maxZ) / 2
+  const placements: DecorPlacement[] = []
+
+  if (room.id === 'infrastructures') {
+    // Racks : plaqués contre le mur du fond, face vers le hall (+X, aile qui s'étend vers les X négatifs).
+    const wallX = farWallX(room, 0.32)
+    const facing = farWallDir(room) === -1 ? Math.PI / 2 : -Math.PI / 2
+    for (let i = -1; i <= 1; i++) {
+      const type: DecorPlacementType = i === 0 ? 'rack-server-primary' : 'rack-server-variant'
+      placements.push({ type, position: { x: wallX, z: cz + i * 0.6 }, rotationY: facing, room: room.id })
+    }
+  } else if (room.id === 'industrialisation') {
+    // Tapis roulant (3 segments) + bras robotisé, contre le mur du fond (nord).
+    const decorZ = cz - halfD + 1.6
+    const beltX = -halfW * 0.55
+    for (let i = -1; i <= 1; i++) {
+      placements.push({ type: 'conveyor-segment', position: { x: beltX + 0.05, z: decorZ + i * 1.1 }, rotationY: 0, room: room.id })
+    }
+    const armX = halfW * 0.55
+    placements.push({ type: 'robot-arm', position: { x: armX, z: decorZ }, rotationY: 0, room: room.id })
+  } else if (room.id === 'culture') {
+    // Bustes/sculptures (3) + bibliothèque, contre le mur du fond, face vers le hall (-X).
+    const wallX = farWallX(room, 0.4)
+    const facing = farWallDir(room) === -1 ? Math.PI / 2 : -Math.PI / 2
+    for (let i = -1; i <= 1; i++) {
+      const type: DecorPlacementType = i === 0 ? 'sculpture-primary' : 'sculpture-variant'
+      placements.push({ type, position: { x: wallX, z: cz + i * 1.3 }, rotationY: facing, room: room.id })
+    }
+    const easelX = wallX - 1.1
+    placements.push({ type: 'bookcase', position: { x: easelX, z: -1.0 }, rotationY: facing, room: room.id })
+  }
+  return placements
 }
 
 /**
@@ -367,6 +516,7 @@ function build(people: Person[]): MuseumBuild {
   const frames: FrameSlot[] = []
   const stampStations: StampStationSlot[] = []
   const occluders: Occluder[] = []
+  const decorPlacements: DecorPlacement[] = hallDecorPlacements(decor)
 
   // Banc circulaire autour de l'Arbre des 100 : lui aussi un collider (le joueur en fait le tour).
   const treeRing = decor.tree
@@ -382,6 +532,7 @@ function build(people: Person[]): MuseumBuild {
     archRooms.push({ room: wb.room, walls: wb.walls })
     colliders.push(...wb.walls.map((w) => w.box), ...wb.occluders.map((o) => o.box), stationBox)
     stampStations.push({ wing: wingId, position: wb.stampStation })
+    decorPlacements.push(...wingDecorPlacements(wb.room))
     const people = byWing[wingId]
     wb.slots.forEach((slot, i) => {
       frames.push({ personId: people[i].id, wing: wingId, position: slot.position, rotationY: slot.rotationY, viewPoint: slot.viewPoint })
@@ -402,7 +553,7 @@ function build(people: Person[]): MuseumBuild {
     stampStations,
     bounds,
   }
-  return { layout, architecture: { rooms: archRooms, decor, doorArches, occluders, comingSoonWings } }
+  return { layout, architecture: { rooms: archRooms, decor, doorArches, occluders, comingSoonWings, decorPlacements } }
 }
 
 /** Calcule le plan du musée (salles, murs, cadres) pour la liste donnée. */

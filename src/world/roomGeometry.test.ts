@@ -1,15 +1,17 @@
 /**
  * `roomGeometry.ts` dessine sur des `BufferGeometry` three.js pures (pas de canvas 2D, contrairement à
- * `textures.ts`) : testable sans DOM. On vérifie ici surtout `farWallX`, dont dépend tout le décor
+ * `textures.ts`) : testable sans DOM. On vérifie ici surtout `farWallX` (déplacée dans `layout.ts` depuis
+ * WEL-874 — source de vérité des positions de décor — et ré-importée ici), dont dépend tout le décor
  * signature d'une aile est/ouest (`wingSignatureDecor`) — régression : le décor de l'aile
  * infrastructures se retrouvait plaqué contre la porte du hall plutôt que le mur du fond (voir
  * commentaire de `farWallX`).
  */
 import { describe, expect, it } from 'vitest'
 import type { RoomLayout } from '../types'
-import { buildComingSoonBarrierGeometry, buildRoomGeometry, farWallX } from './roomGeometry'
-import { buildMuseumArchitecture } from './layout'
+import { buildComingSoonBarrierGeometry, buildDoorArchesGeometry, buildRoomGeometry } from './roomGeometry'
+import { buildMuseumArchitecture, farWallX } from './layout'
 import { generatePlaceholderPeople } from '../data/placeholder'
+import { dims } from './constants'
 
 function roomWithBounds(minX: number, maxX: number): RoomLayout {
   return {
@@ -59,5 +61,23 @@ describe('buildRoomGeometry / buildComingSoonBarrierGeometry — fusion sans exc
     geo.computeBoundingBox()
     expect(geo.boundingBox!.max.x).toBeGreaterThan(geo.boundingBox!.min.x)
     expect(geo.boundingBox!.max.y).toBeGreaterThan(geo.boundingBox!.min.y)
+  })
+
+  // Item 4 (embellissement architecture) : l'arche arrondie ajoute un demi-cercle au-dessus du linteau
+  // plat — la géométrie doit donc culminer nettement plus haut que le simple linteau (ARCH_HEIGHT = 0,4 m).
+  it('les trois ailes peuplées : l’arche de porte dépasse le linteau plat (demi-cercle ajouté)', () => {
+    const people = generatePlaceholderPeople(100)
+    const architecture = buildMuseumArchitecture(people)
+    const geo = buildDoorArchesGeometry(architecture.doorArches)
+    expect(geo, 'les trois ailes sont peuplées : au moins une arche attendue').toBeTruthy()
+    geo!.computeBoundingBox()
+    const archTop = geo!.boundingBox!.max.y
+    const archBottom = geo!.boundingBox!.min.y
+    expect(archTop - archBottom).toBeGreaterThan(0.4) // > ARCH_HEIGHT (0,4, linteau plat seul) : le demi-cercle dépasse
+    expect(archTop).toBeLessThan(dims.wallHeight) // ne perce jamais le plafond
+  })
+
+  it('aucune arche (toutes les ailes vides) : géométrie nulle', () => {
+    expect(buildDoorArchesGeometry([])).toBeNull()
   })
 })

@@ -3,7 +3,8 @@ import type { ExhibitWingId, FrameSlot, MuseumLayout, Person, Vec2 } from '../ty
 import { EXHIBIT_WINGS } from '../types'
 import { archBoxHeight, buildMuseumArchitecture, buildMuseumLayout } from './layout'
 import { circleIntersectsAabb, pointInAabb } from './collision'
-import { dims, MIN_WALKABLE_CORRIDOR } from './constants'
+import { dims, DOOR_WIDTH, MIN_WALKABLE_CORRIDOR } from './constants'
+import { hallReservedSpots } from '../styles/tokens'
 import { occludesPlayer, worstCaseCameraFor } from './occlusion'
 import { generatePlaceholderPeople } from '../data/placeholder'
 
@@ -202,12 +203,20 @@ describe.each(Object.entries(distributions))('buildMuseumLayout — %s', (_label
     }
   })
 
-  it('un chemin libre existe du spawn à chaque viewPoint', () => {
-    const grid = buildWalkGrid(layout)
-    for (const f of layout.frames) {
-      expect(isReachable(grid, layout.spawn.position, f.viewPoint), `pas de chemin vers ${f.personId}`).toBe(true)
-    }
-  })
+  // Timeout relevé (défaut 5000 ms) : BFS sur une grille de ~0,25 m pour les grandes ailes (120
+  // personnes) peut dépasser 5 s sous charge machine (plusieurs agents en parallèle sur ce worktree,
+  // WEL-874) — flake préexistant, reproduit aussi hors de ce chantier (`git stash` + relance). Pas un
+  // ralentissement introduit ici : `colliders`/`buildWalkGrid` ne sont pas touchés par ce module.
+  it(
+    'un chemin libre existe du spawn à chaque viewPoint',
+    () => {
+      const grid = buildWalkGrid(layout)
+      for (const f of layout.frames) {
+        expect(isReachable(grid, layout.spawn.position, f.viewPoint), `pas de chemin vers ${f.personId}`).toBe(true)
+      }
+    },
+    15000,
+  )
 
   it('un socle à tampon existe pour chaque aile non vide, à l’intérieur de son aile', () => {
     const wingsWithPeople = new Set(people.map((p) => p.wing))
@@ -241,6 +250,62 @@ describe.each(Object.entries(distributions))('buildMuseumLayout — %s', (_label
       for (const w of wingWalls) {
         const occluded = occludesPlayer({ box: w.box, height: archBoxHeight(w) }, f.viewPoint.x, f.viewPoint.z, camera)
         expect(occluded, `${f.personId} (${f.wing}) occulté par un obstacle non estompable (${w.kind}, cut=${w.cut})`).toBe(false)
+      }
+    }
+  })
+
+  // WEL-874 (chantier assets 3D) : `decorPlacements` est le contrat entre ce module (positions) et le
+  // module props (modèles CC0). Voir le commentaire en tête de layout.ts.
+  it('chaque decorPlacement est dans les bounds de sa salle', () => {
+    const architecture = buildMuseumArchitecture(people)
+    for (const d of architecture.decorPlacements) {
+      const room = roomFor(layout, d.room)
+      expect(pointInAabb(d.position, room.bounds), `${d.type} (${d.room}) hors des bounds de sa salle`).toBe(true)
+    }
+  })
+
+  it('aucun decorPlacement dans la zone réservée à la Porte de 2040 (hallReservedSpots.timePortal)', () => {
+    const architecture = buildMuseumArchitecture(people)
+    const { x, z, radius } = hallReservedSpots.timePortal
+    for (const d of architecture.decorPlacements) {
+      const dist = Math.hypot(d.position.x - x, d.position.z - z)
+      expect(dist, `${d.type} (${d.room}) dans la zone réservée à la Porte de 2040`).toBeGreaterThanOrEqual(radius)
+    }
+  })
+
+  it('aucun decorPlacement dans l’ouverture d’une porte du hall (largeur DOOR_WIDTH)', () => {
+    const architecture = buildMuseumArchitecture(people)
+    const hall = roomFor(layout, 'hall')
+    const doorHalf = DOOR_WIDTH / 2
+    for (const d of architecture.decorPlacements) {
+      if (d.room !== 'hall') continue
+      const nearNorthWall = Math.abs(d.position.z - hall.bounds.minZ) < 1
+      const nearSideWall = Math.abs(Math.abs(d.position.x) - hall.bounds.maxX) < 1
+      if (nearNorthWall) expect(Math.abs(d.position.x), `${d.type} dans la porte nord`).toBeGreaterThanOrEqual(doorHalf)
+      if (nearSideWall) expect(Math.abs(d.position.z), `${d.type} dans une porte est/ouest`).toBeGreaterThanOrEqual(doorHalf)
+    }
+  })
+
+  it('aucun decorPlacement ne coïncide avec le viewPoint d’un cadre (le joueur doit pouvoir s’y tenir)', () => {
+    const architecture = buildMuseumArchitecture(people)
+    for (const d of architecture.decorPlacements) {
+      for (const f of layout.frames) {
+        const dist = Math.hypot(d.position.x - f.viewPoint.x, d.position.z - f.viewPoint.z)
+        expect(dist, `${d.type} (${d.room}) recouvre le viewPoint de ${f.personId}`).toBeGreaterThanOrEqual(dims.playerRadius)
+      }
+    }
+  })
+
+  it('pas de chevauchement entre deux decorPlacements (distance minimale raisonnable)', () => {
+    const architecture = buildMuseumArchitecture(people)
+    const MIN_SPACING = 0.4
+    const list = architecture.decorPlacements
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i]
+        const b = list[j]
+        const dist = Math.hypot(a.position.x - b.position.x, a.position.z - b.position.z)
+        expect(dist, `${a.type} et ${b.type} trop proches (${dist.toFixed(2)} m)`).toBeGreaterThanOrEqual(MIN_SPACING)
       }
     }
   })
