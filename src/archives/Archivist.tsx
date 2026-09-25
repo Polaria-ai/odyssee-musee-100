@@ -193,7 +193,8 @@ export function Archivist({ placement }: { placement: Placement }) {
 
   return (
     <>
-      <group position={[placement.position.x, 0, placement.position.z]} rotation={[0, placement.rotationY, 0]}>
+      {/* Échelle 1,35 : à la distance d'interaction, l'hologramme doit se voir d'emblée sur un téléphone. */}
+      <group position={[placement.position.x, 0, placement.position.z]} rotation={[0, placement.rotationY, 0]} scale={1.35}>
         {/* Socle projecteur */}
         <mesh geometry={geo.plinth} material={mat.plinth} position={[0, 0.08, 0]} />
         <mesh geometry={geo.plinthRim} material={mat.plinthRim} position={[0, 0.16, 0]} rotation={[Math.PI / 2, 0, 0]} />

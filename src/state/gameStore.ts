@@ -276,8 +276,9 @@ export const useGame = create<GameState>()((set, get) => ({
     savePersisted({ stamps: next })
     set({ stamps: next })
   },
-  setStampCardOpen: (stampCardOpen) => set({ stampCardOpen }),
-  setMapOpen: (mapOpen) => set({ mapOpen }),
+  // Ouvrir le carnet ou le plan referme le dialogue en cours : deux surimpressions ne s'empilent jamais.
+  setStampCardOpen: (stampCardOpen) => set(stampCardOpen ? { stampCardOpen, dialogue: null, dialogueIndex: 0 } : { stampCardOpen }),
+  setMapOpen: (mapOpen) => set(mapOpen ? { mapOpen, dialogue: null, dialogueIndex: 0 } : { mapOpen }),
   startDialogue: (dialogue) => set({ dialogue, dialogueIndex: 0 }),
   advanceDialogue: () => {
     const { dialogue, dialogueIndex } = get()

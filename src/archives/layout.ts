@@ -106,7 +106,7 @@ export function buildArchivesLayout(sessions: EveningSession[]): ArchivesLayout 
     room: {
       id: 'archives',
       bounds,
-      label: archivesRoomStrings.roomLabel,
+      label: archivesRoomStrings.roomShortLabel,
       floorColor: theme.floor,
       wallColor: theme.wall,
       accentColor: theme.accent,

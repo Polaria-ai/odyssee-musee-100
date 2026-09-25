@@ -73,3 +73,18 @@ describe('gameStore — Archives de 2040', () => {
     expect(isOverlayOpen(useGame.getState())).toBe(true)
   })
 })
+
+describe('gameStore — surimpressions', () => {
+  it('ouvrir le carnet ou le plan referme le dialogue en cours', () => {
+    const d = { id: 'x', speaker: { fr: 'M', en: 'M' }, lines: [{ text: { fr: 'a', en: 'a' } }] }
+    useGame.setState({ stampCardOpen: false, mapOpen: false })
+    useGame.getState().startDialogue(d)
+    useGame.getState().setStampCardOpen(true)
+    expect(useGame.getState().dialogue).toBeNull()
+    useGame.getState().setStampCardOpen(false)
+    useGame.getState().startDialogue(d)
+    useGame.getState().setMapOpen(true)
+    expect(useGame.getState().dialogue).toBeNull()
+    useGame.getState().setMapOpen(false)
+  })
+})
