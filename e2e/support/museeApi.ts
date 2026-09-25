@@ -114,6 +114,7 @@ export interface MuseeDebugApi {
   goToPerson: (personId: string) => boolean
   renderInfo?: () => MuseeRenderInfo
   cameraPosition?: () => MuseeCameraPosition
+  worldToScreen?: (x: number, y: number, z: number) => { clientX: number; clientY: number }
 }
 
 /** Navigue vers le musée avec la poignée de test activée (`?e2e=1`). */
@@ -220,6 +221,19 @@ export async function museeInput(page: Page): Promise<MuseeInput> {
     if (!musee) throw new Error('window.__musee indisponible : ?e2e=1 est-il actif ?')
     return musee.input
   })
+}
+
+/** Coordonnées écran d'un point du monde (caméra courante). */
+export async function worldToScreen(page: Page, x: number, y: number, z: number): Promise<{ clientX: number; clientY: number }> {
+  const pos = await page.evaluate(
+    ({ x, y, z }) => {
+      const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+      return musee?.worldToScreen ? musee.worldToScreen(x, y, z) : null
+    },
+    { x, y, z },
+  )
+  if (!pos) throw new Error('window.__musee.worldToScreen indisponible')
+  return pos
 }
 
 export async function teleport(page: Page, x: number, z: number, rotY = 0): Promise<void> {

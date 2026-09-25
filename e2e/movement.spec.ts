@@ -7,10 +7,19 @@ import {
   museePlayer,
   teleport,
   waitForCameraSettled,
+  worldToScreen,
 } from './support/museeApi'
 
-/** Centre du hall : loin de tout mur/collider (voir docs/DESIGN.md, hall ≈ 22×18 m centré sur l'origine). */
-const SAFE_SPOT = { x: 0, z: 0 }
+/**
+ * Point libre du hall, sur le chemin de l'aile ouest : loin du banc circulaire de l'Arbre des 100
+ * (centre du hall), des colonnes et des bancs. Le centre exact du hall n'est plus libre depuis
+ * l'ajout de l'arbre.
+ */
+const SAFE_SPOT = { x: -5, z: 0 }
+/** Cible du tap au sol : 2,5 m au nord du point libre, sur le même chemin dégagé. */
+const TAP_TARGET = { x: -5, z: -2.5 }
+/** SwiftShader sur les runners CI (2 cœurs) est lent : marges larges pour les attentes d'état. */
+const MOVE_TIMEOUT = 6_000
 
 test.beforeEach(async ({ page }) => {
   await gotoMusee(page)
@@ -40,7 +49,7 @@ test('glisser sur la zone du joystick déplace le joueur (window.__musee.player)
   await expect(page.getByTestId('joystick-knob')).toBeVisible()
 
   await expect
-    .poll(async () => (await museePlayer(page)).moving, { timeout: 2_000 })
+    .poll(async () => (await museePlayer(page)).moving, { timeout: MOVE_TIMEOUT })
     .toBe(true)
 
   const dragging = await museePlayer(page)
@@ -57,9 +66,9 @@ test('glisser sur la zone du joystick déplace le joueur (window.__musee.player)
 test('tap au sol déclenche un déplacement automatique vers la cible', async ({ page }) => {
   const before = await museePlayer(page)
 
-  const viewport = page.viewportSize()
-  const x = (viewport?.width ?? 400) * 0.5
-  const y = (viewport?.height ?? 800) * 0.55
+  // Vise un point de sol précis et libre plutôt qu'une position d'écran fixe : la caméra s'adapte
+  // au format d'écran, une position fixe pouvait tomber sur le joueur lui-même ou derrière un obstacle.
+  const { clientX: x, clientY: y } = await worldToScreen(page, TAP_TARGET.x, 0, TAP_TARGET.z)
 
   await page.mouse.move(x, y)
   await page.mouse.down()
@@ -69,18 +78,18 @@ test('tap au sol déclenche un déplacement automatique vers la cible', async ({
   await expect(page.locator('.joystick-tap-marker')).toBeVisible({ timeout: 2_000 })
 
   await expect
-    .poll(async () => (await museePlayer(page)).moving, { timeout: 2_000 })
-    .toBe(true)
-
-  await expect
     .poll(
       async () => {
         const p = await museePlayer(page)
         return Math.hypot(p.x - before.x, p.z - before.z)
       },
-      { timeout: 2_000 },
+      { timeout: MOVE_TIMEOUT, message: 'le joueur devrait marcher vers le point touché' },
     )
-    .toBeGreaterThan(0.1)
+    .toBeGreaterThan(0.3)
+
+  // Il avance bien vers la cible (au nord), pas dans une direction quelconque.
+  const after = await museePlayer(page)
+  expect(after.z, 'le tap au nord du joueur doit le faire avancer vers −Z').toBeLessThan(before.z - 0.2)
 })
 
 test('flèches du clavier déplacent le joueur (desktop)', async ({ page }, testInfo) => {
@@ -90,7 +99,7 @@ test('flèches du clavier déplacent le joueur (desktop)', async ({ page }, test
 
   await page.keyboard.down('ArrowUp')
   await expect
-    .poll(async () => (await museePlayer(page)).moving, { timeout: 2_000 })
+    .poll(async () => (await museePlayer(page)).moving, { timeout: MOVE_TIMEOUT })
     .toBe(true)
   const during = await museePlayer(page)
   await page.keyboard.up('ArrowUp')

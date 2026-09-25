@@ -22,6 +22,8 @@ export interface MuseeDebugApi {
    * côté E2E, `e2e/support/museeApi.ts`), sous peine de viser une caméra encore en transit.
    */
   cameraPosition?: () => { x: number; y: number; z: number }
+  /** Projette un point du monde en coordonnées écran (clientX/Y), pour viser un point de sol précis. */
+  worldToScreen?: (x: number, y: number, z: number) => { clientX: number; clientY: number }
 }
 
 declare global {
