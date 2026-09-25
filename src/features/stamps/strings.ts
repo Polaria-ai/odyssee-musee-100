@@ -6,6 +6,10 @@ export const strings = defineStrings({
   close: { fr: 'Fermer le carnet', en: 'Close the stamp book' },
   obtained: { fr: 'Obtenu', en: 'Earned' },
   progress: { fr: '{seen}/{total} portraits', en: '{seen}/{total} portraits' },
+  /** Progression du tampon Archives : unité différente (archives, pas portraits). */
+  progressArchives: { fr: '{seen}/{total} archives', en: '{seen}/{total} archives' },
+  /** Programme de la soirée pas encore chargé : le 4e tampon n'est pas encore jouable. */
+  archivesPending: { fr: 'Bientôt', en: 'Coming soon' },
   share: { fr: 'Partager ma carte', en: 'Share my card' },
   stampToast: { fr: 'Tampon {wing} obtenu !', en: '{wing} stamp earned!' },
   shareTitle: { fr: 'Le Musée des 100', en: 'The Museum of the 100' },
@@ -20,4 +24,6 @@ export const wingNames = defineStrings({
   infrastructures: { fr: 'Infrastructures', en: 'Infrastructure' },
   industrialisation: { fr: 'Industrialisation', en: 'Industrialization' },
   culture: { fr: 'Culture', en: 'Culture' },
+  /** 4e tampon : pas une aile d'exposition, mais partage le même carnet et la même carte partageable. */
+  archives: { fr: 'Archives de 2040', en: '2040 Archives' },
 })

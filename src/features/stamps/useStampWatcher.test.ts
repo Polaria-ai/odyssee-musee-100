@@ -5,12 +5,19 @@ import { generatePlaceholderPeople } from '../../data/placeholder'
 import { buildMuseumLayout } from '../../world/layout'
 import { useStampWatcher } from './useStampWatcher'
 
-// Découple ce test du contenu réel des dialogues de Minerve (module d'un autre agent, en chantier) :
-// on ne vérifie que le comportement de useStampWatcher (attribution, file d'attente, ouverture du carnet).
+// Découple ce test du contenu réel des dialogues (Minerve et l'Archiviste) : on ne vérifie que le
+// comportement de useStampWatcher (attribution, file d'attente, ouverture du carnet).
 vi.mock('../../npc/minerveScript', () => ({
   minerveDialogue: (event: { kind: string }) => ({
     id: event.kind,
     speaker: { fr: 'Minerve', en: 'Minerva' },
+    lines: [{ text: { fr: event.kind, en: event.kind } }],
+  }),
+}))
+vi.mock('../../archives/archivistScript', () => ({
+  archivistDialogue: (event: { kind: string }) => ({
+    id: `archivist-${event.kind}`,
+    speaker: { fr: "L'Archiviste", en: 'The Archivist' },
     lines: [{ text: { fr: event.kind, en: event.kind } }],
   }),
 }))
@@ -33,9 +40,24 @@ describe('useStampWatcher', () => {
       dialogueIndex: 0,
       toast: null,
       stampCardOpen: false,
+      sessions: [],
+      visitedSessions: {},
     })
     useGame.getState().setMuseum(people, buildMuseumLayout(people), 'placeholder')
   })
+
+  function makeSessions(n: number) {
+    return Array.from({ length: n }, (_, i) => ({
+      id: `s${i}`,
+      order: i,
+      startTime: '18:30',
+      durationMin: 5,
+      kind: 'keynote' as const,
+      title: { fr: `Séquence ${i}`, en: `Session ${i}` },
+      speakers: [],
+      provisional: true,
+    }))
+  }
 
   function visitWing(wing: 'infrastructures' | 'industrialisation' | 'culture') {
     const ids = useGame
@@ -106,5 +128,80 @@ describe('useStampWatcher', () => {
       useGame.getState().closeDialogue()
     })
     expect(useGame.getState().stampCardOpen).toBe(true)
+  })
+
+  describe('tampon Archives (4e tampon, déduit de visitedSessions)', () => {
+    it('attribue le tampon Archives, toast + dialogue de l’Archiviste, au seuil (3 archives)', () => {
+      useGame.setState({ sessions: makeSessions(17) })
+      renderHook(() => useStampWatcher())
+
+      act(() => {
+        useGame.getState().openSession('s0')
+        useGame.getState().openSession('s1')
+        useGame.getState().openSession('s2')
+      })
+
+      expect(useGame.getState().dialogue?.id).toBe('archivist-stampAwarded')
+      expect(useGame.getState().toast).not.toBeNull()
+      expect(playSfxMock).toHaveBeenCalledWith('stamp')
+    })
+
+    it('ne se déclenche pas en dessous du seuil', () => {
+      useGame.setState({ sessions: makeSessions(17) })
+      renderHook(() => useStampWatcher())
+
+      act(() => {
+        useGame.getState().openSession('s0')
+      })
+
+      expect(useGame.getState().dialogue).toBeNull()
+    })
+
+    it('déjà obtenu avant le montage (persisté) : ne rejoue pas toast ni dialogue', () => {
+      useGame.setState({ sessions: makeSessions(17), visitedSessions: { s0: 1, s1: 2, s2: 3 } })
+      renderHook(() => useStampWatcher())
+
+      expect(useGame.getState().dialogue).toBeNull()
+      expect(useGame.getState().toast).toBeNull()
+    })
+
+    it('avec moins de 3 séquences au programme, toutes les consulter suffit', () => {
+      useGame.setState({ sessions: makeSessions(2) })
+      renderHook(() => useStampWatcher())
+
+      act(() => {
+        useGame.getState().openSession('s0')
+        useGame.getState().openSession('s1')
+      })
+
+      expect(useGame.getState().dialogue?.id).toBe('archivist-stampAwarded')
+    })
+
+    it('avec les trois ailes déjà tamponnées, obtenir Archives déclenche « complete » et ouvre le carnet', () => {
+      useGame.setState({
+        sessions: makeSessions(17),
+        stamps: { infrastructures: 1, industrialisation: 2, culture: 3 },
+      })
+      renderHook(() => useStampWatcher())
+
+      act(() => {
+        useGame.getState().openSession('s0')
+        useGame.getState().openSession('s1')
+        useGame.getState().openSession('s2')
+      })
+
+      expect(useGame.getState().dialogue?.id).toBe('archivist-stampAwarded')
+      expect(playSfxMock).toHaveBeenCalledWith('complete')
+
+      act(() => {
+        useGame.getState().closeDialogue()
+      })
+      expect(useGame.getState().dialogue?.id).toBe('complete')
+
+      act(() => {
+        useGame.getState().closeDialogue()
+      })
+      expect(useGame.getState().stampCardOpen).toBe(true)
+    })
   })
 })

@@ -1,6 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import type { Person } from '../../types'
-import { isCardComplete, requiredFor, stampsToAward, wingProgress, STAMP_MIN, STAMP_RATIO } from './stamps'
+import {
+  archivesProgress,
+  hasArchivesStamp,
+  isCardComplete,
+  requiredArchivesFor,
+  requiredFor,
+  stampsToAward,
+  wingProgress,
+  ARCHIVES_STAMP_MIN,
+  STAMP_MIN,
+  STAMP_RATIO,
+} from './stamps'
 
 function person(id: string, wing: Person['wing']): Person {
   return {
@@ -88,5 +99,66 @@ describe('isCardComplete', () => {
 
   it('renvoie false si people est vide (rien à collectionner)', () => {
     expect(isCardComplete({}, [])).toBe(false)
+  })
+
+  const threeWings = { infrastructures: 1, industrialisation: 2, culture: 3 }
+
+  it('sans contexte archives : identique au comportement historique (3 ailes suffisent)', () => {
+    expect(isCardComplete(threeWings)).toBe(true)
+  })
+
+  it('programme non chargé (totalSessions 0) : ignore le tampon Archives, comme une aile vide', () => {
+    expect(isCardComplete(threeWings, undefined, { visitedSessions: {}, totalSessions: 0 })).toBe(true)
+  })
+
+  it('programme chargé : exige aussi le tampon Archives', () => {
+    expect(isCardComplete(threeWings, undefined, { visitedSessions: {}, totalSessions: 5 })).toBe(false)
+    expect(
+      isCardComplete(threeWings, undefined, { visitedSessions: { a: 1, b: 2, c: 3 }, totalSessions: 5 }),
+    ).toBe(true)
+  })
+
+  it('les ailes incomplètes bloquent la complétion même si les Archives sont faites', () => {
+    expect(
+      isCardComplete({ infrastructures: 1 }, undefined, { visitedSessions: { a: 1, b: 2, c: 3 }, totalSessions: 3 }),
+    ).toBe(false)
+  })
+})
+
+describe('requiredArchivesFor', () => {
+  it('au moins 3, ou toutes si le programme en a moins', () => {
+    expect(requiredArchivesFor(0)).toBe(0)
+    expect(requiredArchivesFor(1)).toBe(1)
+    expect(requiredArchivesFor(2)).toBe(2)
+    expect(requiredArchivesFor(3)).toBe(ARCHIVES_STAMP_MIN)
+    expect(requiredArchivesFor(17)).toBe(ARCHIVES_STAMP_MIN)
+  })
+  it('ne descend jamais sous 0', () => {
+    expect(requiredArchivesFor(-4)).toBe(0)
+  })
+})
+
+describe('archivesProgress', () => {
+  it('compte les séquences consultées, bornées au programme', () => {
+    expect(archivesProgress({}, 17)).toEqual({ seen: 0, total: 17, required: 3 })
+    expect(archivesProgress({ a: 1, b: 2 }, 17)).toEqual({ seen: 2, total: 17, required: 3 })
+  })
+  it('programme non chargé : total et required à 0', () => {
+    expect(archivesProgress({}, 0)).toEqual({ seen: 0, total: 0, required: 0 })
+  })
+})
+
+describe('hasArchivesStamp', () => {
+  it('jamais obtenu si le programme n’a pas encore chargé', () => {
+    expect(hasArchivesStamp({ a: 1, b: 2, c: 3 }, 0)).toBe(false)
+  })
+  it('obtenu à partir de 3 archives consultées', () => {
+    expect(hasArchivesStamp({}, 17)).toBe(false)
+    expect(hasArchivesStamp({ a: 1, b: 2 }, 17)).toBe(false)
+    expect(hasArchivesStamp({ a: 1, b: 2, c: 3 }, 17)).toBe(true)
+  })
+  it('avec moins de 3 séquences au programme, toutes les consulter suffit', () => {
+    expect(hasArchivesStamp({ a: 1 }, 2)).toBe(false)
+    expect(hasArchivesStamp({ a: 1, b: 2 }, 2)).toBe(true)
   })
 })

@@ -1,12 +1,19 @@
 // Propriétaire : agent avatar+tampons. SVG originaux (pas de police externe, pas de trace de logo réel).
-import type { ExhibitWingId } from '../../types'
 import { wingThemes } from '../../styles/tokens'
+import { ARCHIVES_INK, type StampId } from './stamps'
 
 const PENDING_COLOR = '#c9c2b6'
 
-/** Tampon encré (SVG original) : engrenage + antenne, usine + fusée, ou palette + livre selon l'aile. */
-export function StampIcon({ wing, obtained }: { wing: ExhibitWingId; obtained: boolean }) {
-  const color = obtained ? wingThemes[wing].trim : PENDING_COLOR
+function inkFor(wing: StampId): string {
+  return wing === 'archives' ? ARCHIVES_INK : wingThemes[wing].trim
+}
+
+/**
+ * Tampon encré (SVG original) : engrenage + antenne, usine + fusée, palette + livre selon l'aile,
+ * ou sablier + étoile (encre cyan dédiée) pour les Archives de 2040.
+ */
+export function StampIcon({ wing, obtained }: { wing: StampId; obtained: boolean }) {
+  const color = obtained ? inkFor(wing) : PENDING_COLOR
   return (
     <svg viewBox="0 0 64 64" width="56" height="56" className="stamp-icon" aria-hidden="true">
       <circle
@@ -21,6 +28,7 @@ export function StampIcon({ wing, obtained }: { wing: ExhibitWingId; obtained: b
       {wing === 'infrastructures' && <InfrastructuresGlyph color={color} />}
       {wing === 'industrialisation' && <IndustrialisationGlyph color={color} />}
       {wing === 'culture' && <CultureGlyph color={color} />}
+      {wing === 'archives' && <ArchivesGlyph color={color} />}
     </svg>
   )
 }
@@ -62,6 +70,19 @@ function CultureGlyph({ color }: { color: string }) {
       <path d="M13 49c4.2-2 8.4-2 12.6 0V37c-4.2-2-8.4-2-12.6 0z" />
       <path d="M38.4 49c4.2-2 8.4-2 12.6 0V37c-4.2-2-8.4-2-12.6 0z" />
       <path d="M25.6 37v11.5M38.4 37v11.5" />
+    </g>
+  )
+}
+
+/** Sablier (le temps qui passe, la soirée archivée) surmonté d'une étoile (original, encre cyan). */
+function ArchivesGlyph({ color }: { color: string }) {
+  return (
+    <g fill="none" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16h20M22 48h20" />
+      <path d="M23 16c0 7 4.5 10.5 9 12-4.5 1.5-9 5-9 12M41 16c0 7-4.5 10.5-9 12 4.5 1.5 9 5 9 12" />
+      <path d="M27 20h10l-5 6z" fill={color} stroke="none" />
+      <path d="M27 44h10l-5-6z" fill={color} stroke="none" />
+      <path d="M32 6.5l1.6 3.4 3.7.4-2.7 2.6.7 3.7-3.3-1.8-3.3 1.8.7-3.7-2.7-2.6 3.7-.4z" fill={color} stroke="none" strokeWidth="1.4" />
     </g>
   )
 }

@@ -2,22 +2,23 @@
 // Génère l'image partageable du carnet complet. Le calcul de mise en page est pur et testable ;
 // le dessin lui-même tolère l'absence de canvas 2D (jsdom renvoie `getContext('2d') === null`).
 import type { ExhibitWingId, Lang } from '../../types'
-import { EXHIBIT_WINGS } from '../../types'
 import { pick } from '../../i18n'
+import { ALL_STAMPS, ARCHIVES_INK, type StampId } from './stamps'
 import { strings } from './strings'
 
 export const SHARE_WIDTH = 1080
 export const SHARE_HEIGHT = 1350
 
-const WING_INK_COLORS: Record<ExhibitWingId, string> = {
+const WING_INK_COLORS: Record<StampId, string> = {
   infrastructures: '#3f7f78',
   industrialisation: '#b86a35',
   culture: '#7a5a9e',
+  archives: ARCHIVES_INK,
 }
 const PENDING_STAMP_COLOR = '#c9c2b6'
 
 export interface StampBadgeLayout {
-  wing: ExhibitWingId
+  wing: StampId
   x: number
   y: number
   radius: number
@@ -34,12 +35,12 @@ export interface ShareLayout {
 
 /** Calcul pur de la mise en page (position/taille de chaque élément), sans dessiner. */
 export function computeShareLayout(width = SHARE_WIDTH, height = SHARE_HEIGHT): ShareLayout {
-  const marginX = width * 0.12
-  const radius = width * 0.13
-  const count = EXHIBIT_WINGS.length
+  const marginX = width * 0.1
+  const radius = width * 0.1
+  const count = ALL_STAMPS.length
   const span = width - marginX * 2
   const step = count > 1 ? (span - radius * 2) / (count - 1) : 0
-  const stamps: StampBadgeLayout[] = EXHIBIT_WINGS.map((wing, i) => ({
+  const stamps: StampBadgeLayout[] = ALL_STAMPS.map((wing, i) => ({
     wing,
     x: marginX + radius + i * step,
     y: height * 0.46,
@@ -69,6 +70,8 @@ export function buildShareFilename(avatarName: string): string {
 export interface ShareCardData {
   avatarName: string
   stamps: Partial<Record<ExhibitWingId, number>>
+  /** 4e tampon (Archives de 2040) : pas stocké dans `stamps` (déduit de `visitedSessions`, voir `stamps.ts`). */
+  archivesObtained: boolean
   lang: Lang
 }
 
@@ -96,7 +99,8 @@ export function drawShareCard(ctx: CanvasRenderingContext2D | null, data: ShareC
   ctx.fillText(pick(strings.shareTitle, data.lang), layout.title.x, layout.title.y)
 
   for (const badge of layout.stamps) {
-    drawStampBadge(ctx, badge, Boolean(data.stamps[badge.wing]))
+    const obtained = badge.wing === 'archives' ? data.archivesObtained : Boolean(data.stamps[badge.wing])
+    drawStampBadge(ctx, badge, obtained)
   }
 
   ctx.fillStyle = '#4a3728'

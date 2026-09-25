@@ -70,6 +70,8 @@ export interface GameState {
   visitedSessions: Record<string, number>
   /** Passage par la Porte de 2040 en cours (fondu d'écran). */
   portalTransition: 'to-archives' | 'to-hall' | null
+  /** Le visiteur a déjà franchi la Porte de 2040 (accueil de l'Archiviste une seule fois). */
+  archivesDiscovered: boolean
   /** Personnes déjà consultées : id → horodatage ms. */
   visited: Record<string, number>
   /** Tampons obtenus : aile → horodatage ms. */
@@ -97,6 +99,8 @@ export interface GameState {
   openSession: (sessionId: string) => void
   closeSession: () => void
   setPortalTransition: (transition: 'to-archives' | 'to-hall' | null) => void
+  /** Marque la première arrivée dans les Archives ; renvoie true si c'était la première. */
+  markArchivesDiscovered: () => boolean
   setNearby: (personId: string | null) => void
   setNearCurator: (near: boolean) => void
   setCurrentRoom: (room: WingId | null) => void
@@ -160,6 +164,7 @@ export const useGame = create<GameState>()((set, get) => ({
   nearArchivist: false,
   visitedSessions: (persisted.visitedSessions as Record<string, number>) ?? {},
   portalTransition: null,
+  archivesDiscovered: persisted.archivesDiscovered === true,
   currentRoom: null,
   openPersonId: null,
   visited: (persisted.visited as Record<string, number>) ?? {},
@@ -203,6 +208,12 @@ export const useGame = create<GameState>()((set, get) => ({
   },
   closeSession: () => set({ openSessionId: null }),
   setPortalTransition: (portalTransition) => set({ portalTransition }),
+  markArchivesDiscovered: () => {
+    if (get().archivesDiscovered) return false
+    savePersisted({ archivesDiscovered: true })
+    set({ archivesDiscovered: true })
+    return true
+  },
   setNearby: (nearbyPersonId) => {
     if (get().nearbyPersonId !== nearbyPersonId) set({ nearbyPersonId })
   },
@@ -241,6 +252,7 @@ export const useGame = create<GameState>()((set, get) => ({
           visitedCount: Object.keys(s.visited).length,
           stampsCount: Object.keys(s.stamps).length,
           total: s.people.length,
+          archivesToVisit: s.sessions.length > 0 && Object.keys(s.visitedSessions).length === 0,
         }),
       )
     }

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { isOverlayOpen, useGame } from './gameStore'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import { buildMuseumLayout } from '../world/layout'
+import { ARCHIVIST_NAME } from '../archives/archivistScript'
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -64,7 +65,7 @@ describe('gameStore — Archives de 2040', () => {
     useGame.getState().closeSession()
     useGame.setState({ nearbySessionId: null })
     useGame.getState().interact()
-    expect(useGame.getState().dialogue?.id).toMatch(/^archivist/)
+    expect(useGame.getState().dialogue?.speaker).toEqual(ARCHIVIST_NAME)
   })
 
   it('une fiche d’archive ouverte compte comme surimpression', () => {

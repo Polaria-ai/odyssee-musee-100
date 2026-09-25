@@ -13,10 +13,12 @@ import { player } from '../state/runtime'
 import { useT, usePick } from '../i18n'
 import { strings } from './strings'
 import { EXHIBIT_WINGS } from '../types'
-import type { ExhibitWingId } from '../types'
+import type { AABB, ExhibitWingId, RoomLayout } from '../types'
 import { countVisitedByWing, doorMarkers } from './format'
 import { playSfx } from '../audio'
+import { cardStrings } from '../archives/cardStrings'
 import './ui.css'
+import '../archives/archives.css'
 
 const PLAYER_POLL_MS = 250
 /** Marge visuelle (m) autour de l'emprise du musée. */
@@ -24,8 +26,32 @@ const MAP_PADDING = 2
 const DOOR_SPAN = 2.8
 const DOOR_THICKNESS = 0.3
 const PLAYER_DOT_RADIUS = 0.7
+/** Rayon (m) du pictogramme de la Porte de 2040 dans le plan principal. */
+const PORTAL_MARKER_RADIUS = 0.9
 /** Tolérance (px) sous laquelle on considère la feuille défilée jusqu'en bas (arrondis sous-pixel). */
 const SCROLL_HINT_EPSILON_PX = 2
+
+/** Emprise réunie de plusieurs salles (fonction pure). */
+function unionBounds(rooms: readonly RoomLayout[]): AABB {
+  return rooms.reduce<AABB>(
+    (acc, room) => ({
+      minX: Math.min(acc.minX, room.bounds.minX),
+      maxX: Math.max(acc.maxX, room.bounds.maxX),
+      minZ: Math.min(acc.minZ, room.bounds.minZ),
+      maxZ: Math.max(acc.maxZ, room.bounds.maxZ),
+    }),
+    { minX: Infinity, maxX: -Infinity, minZ: Infinity, maxZ: -Infinity },
+  )
+}
+
+/** ViewBox SVG (avec marge) pour une emprise donnée (fonction pure). */
+function toViewBox(bounds: AABB, padding: number) {
+  const originX = bounds.minX - padding
+  const originZ = bounds.minZ - padding
+  const width = bounds.maxX - bounds.minX + padding * 2
+  const height = bounds.maxZ - bounds.minZ + padding * 2
+  return { originX, originZ, width, height, viewBox: `${originX} ${originZ} ${width} ${height}` }
+}
 
 export interface MuseumMapProps {
   open: boolean
@@ -36,7 +62,12 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
   const layout = useGame((s) => s.layout)
   const people = useGame((s) => s.people)
   const visited = useGame((s) => s.visited)
+  const archivesLayout = useGame((s) => s.archivesLayout)
+  const sessions = useGame((s) => s.sessions)
+  const visitedSessions = useGame((s) => s.visitedSessions)
+  const currentRoom = useGame((s) => s.currentRoom)
   const t = useT(strings)
+  const tArchives = useT(cardStrings)
   const p = usePick()
   const titleRef = useRef<HTMLHeadingElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
@@ -85,14 +116,21 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
 
   if (!open || !layout) return null
 
-  const { minX, maxX, minZ, maxZ } = layout.bounds
-  const originX = minX - MAP_PADDING
-  const originZ = minZ - MAP_PADDING
-  const width = maxX - minX + MAP_PADDING * 2
-  const height = maxZ - minZ + MAP_PADDING * 2
-  const viewBox = `${originX} ${originZ} ${width} ${height}`
+  // La salle des Archives (loin dans le monde, voir `src/archives/layout.ts`, `ARCHIVES_ORIGIN`)
+  // est exclue de l'emprise du plan principal : sinon son éloignement écraserait l'échelle du
+  // hall et des ailes. Elle est affichée à part, dans son propre encart à sa propre échelle,
+  // plus bas — reliée au plan principal par un pictogramme à la position de la Porte de 2040.
+  const mainRooms = layout.rooms.filter((room) => room.id !== 'archives')
+  const mainBounds = mainRooms.length > 0 ? unionBounds(mainRooms) : layout.bounds
+  const { originX, originZ, width, height, viewBox } = toViewBox(mainBounds, MAP_PADDING)
   const progress = countVisitedByWing(people, visited)
-  const doors = doorMarkers(layout.rooms)
+  const doors = doorMarkers(mainRooms)
+  const archivesBox = archivesLayout ? toViewBox(archivesLayout.room.bounds, MAP_PADDING) : null
+  const archivesSeen = Object.keys(visitedSessions).length
+  const archivesTotal = sessions.length
+  const playerInArchives = currentRoom === 'archives'
+  const portalLeft = archivesLayout ? ((archivesLayout.hallPortal.position.x - originX) / width) * 100 : 0
+  const portalTop = archivesLayout ? ((archivesLayout.hallPortal.position.z - originZ) / height) * 100 : 0
 
   function close() {
     playSfx('click')
@@ -122,9 +160,10 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
             role="presentation"
             aria-hidden="true"
           >
-            {layout.rooms.map((room) => (
+            {mainRooms.map((room) => (
               <rect
                 key={room.id}
+                className="ui-map__room"
                 x={room.bounds.minX}
                 y={room.bounds.minZ}
                 width={room.bounds.maxX - room.bounds.minX}
@@ -138,6 +177,7 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
             {doors.map((door, i) => (
               <rect
                 key={i}
+                className="ui-map__door"
                 x={door.axis === 'z' ? door.x - DOOR_THICKNESS / 2 : door.x - DOOR_SPAN / 2}
                 y={door.axis === 'x' ? door.z - DOOR_THICKNESS / 2 : door.z - DOOR_SPAN / 2}
                 width={door.axis === 'z' ? DOOR_THICKNESS : DOOR_SPAN}
@@ -145,6 +185,22 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
                 fill="var(--cream)"
               />
             ))}
+            {archivesLayout && (
+              <g data-testid="map-portal-marker">
+                <circle
+                  cx={archivesLayout.hallPortal.position.x}
+                  cy={archivesLayout.hallPortal.position.z}
+                  r={PORTAL_MARKER_RADIUS}
+                  className="ui-map__portal-ring"
+                />
+                <circle
+                  cx={archivesLayout.hallPortal.position.x}
+                  cy={archivesLayout.hallPortal.position.z}
+                  r={PORTAL_MARKER_RADIUS * 0.4}
+                  className="ui-map__portal-core"
+                />
+              </g>
+            )}
             <circle
               cx={playerPos.x}
               cy={playerPos.z}
@@ -156,7 +212,7 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
           </svg>
 
           <div className="ui-map__labels">
-            {layout.rooms.map((room) => {
+            {mainRooms.map((room) => {
               const cx = (room.bounds.minX + room.bounds.maxX) / 2
               const cz = (room.bounds.minZ + room.bounds.maxZ) / 2
               const left = ((cx - originX) / width) * 100
@@ -171,6 +227,14 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
                 </div>
               )
             })}
+            {archivesLayout && (
+              <div
+                className="ui-map__label ui-map__label--portal"
+                style={{ left: `${portalLeft}%`, top: `${portalTop}%` }}
+              >
+                <span className="ui-map__label-name">{tArchives('archivesMapPortalLabel')}</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -188,6 +252,46 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
             )
           })}
         </ul>
+
+        {archivesLayout && archivesBox && (
+          <div className="ui-map__archives" data-testid="map-archives">
+            <h3 className="ui-map__archives-title">{tArchives('archivesMapTitle')}</h3>
+            <div className="ui-map__archives-plan" style={{ aspectRatio: `${archivesBox.width} / ${archivesBox.height}` }}>
+              <svg
+                className="ui-map__svg"
+                viewBox={archivesBox.viewBox}
+                preserveAspectRatio="xMidYMid meet"
+                role="presentation"
+                aria-hidden="true"
+              >
+                <rect
+                  x={archivesLayout.room.bounds.minX}
+                  y={archivesLayout.room.bounds.minZ}
+                  width={archivesLayout.room.bounds.maxX - archivesLayout.room.bounds.minX}
+                  height={archivesLayout.room.bounds.maxZ - archivesLayout.room.bounds.minZ}
+                  rx={0.6}
+                  fill={archivesLayout.room.wallColor}
+                  stroke={archivesLayout.room.accentColor}
+                  strokeWidth={0.3}
+                />
+                {playerInArchives && (
+                  <circle
+                    cx={playerPos.x}
+                    cy={playerPos.z}
+                    r={PLAYER_DOT_RADIUS}
+                    fill="var(--leaf-dark)"
+                    stroke="#fff"
+                    strokeWidth={0.15}
+                    data-testid="map-archives-player-dot"
+                  />
+                )}
+              </svg>
+            </div>
+            <p className="ui-map__archives-count" data-testid="map-archives-count">
+              {tArchives('archivesMapCount', { seen: archivesSeen, total: archivesTotal })}
+            </p>
+          </div>
+        )}
 
         {showScrollHint && (
           <div className="ui-map__scroll-hint" data-testid="map-scroll-hint" aria-hidden="true">
