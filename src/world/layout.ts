@@ -196,9 +196,16 @@ function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: 
     wall(zWall(farX, wallZFar, wallZNear, dims.wallThickness)),
   ]
 
-  // Face « avant » (côté joueur, +Z) de chaque cimaise : le mur principal lui-même pour la 1ère,
-  // puis la face sud de chaque cimaise intérieure suivante.
-  const laneFrontZ: number[] = [wallZFar]
+  // Face « avant » (côté joueur, +Z) de chaque cimaise : la face sud (épaisseur `dims.wallThickness`)
+  // du mur principal lui-même pour la 1ère, puis la face sud de chaque cimaise intérieure suivante
+  // (épaisseur `CIMAISE_THICKNESS`, déjà utilisée pour les lanes ≥ 1 ci-dessous). `wallZFar` est le
+  // CENTRE du mur principal, pas sa face : un cadre positionné à `wallZFar + FRAME_WALL_OFFSET` (bug
+  // V2 — écrans envahis d'un aplat, voir layout.test.ts) reste enfoui à l'intérieur du mur (son
+  // demi-mur, `dims.wallThickness / 2`, dépasse largement le petit décalage `FRAME_WALL_OFFSET`),
+  // jamais devant sa face, contrairement aux cimaises intérieures dont `laneCenterZ + CIMAISE_THICKNESS
+  // / 2` désigne déjà la face. On ajoute donc ce même demi-mur ici pour que « lane 0 » suive la même
+  // convention (`laneFrontZ` = la face, pas le centre) que toutes les autres lanes.
+  const laneFrontZ: number[] = [wallZFar + dims.wallThickness / 2]
   const laneOccluderIndex: Array<number | null> = [null] // lane 0 = mur principal, jamais occultant
   const occluders: OccluderBuild[] = []
   for (let lane = 1; lane < XWING_LANE_COUNT; lane++) {

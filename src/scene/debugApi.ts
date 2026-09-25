@@ -14,6 +14,14 @@ export interface MuseeDebugApi {
   goToPerson: (personId: string) => boolean
   /** Compteurs du renderer (dernière image), fournis par DebugProbe. */
   renderInfo?: () => { calls: number; triangles: number; geometries: number; textures: number }
+  /**
+   * Position courante de la caméra (dernière image), fournie par DebugProbe. `teleport()` déplace
+   * le joueur instantanément, mais la caméra le suit avec un amortissement exponentiel (voir
+   * `Player.tsx`, `CAMERA_DAMP_RATE`) : un test qui convertit un point écran en point au sol juste
+   * après un `teleport()` doit attendre que cette position cesse de bouger (voir `waitForCameraSettled`
+   * côté E2E, `e2e/support/museeApi.ts`), sous peine de viser une caméra encore en transit.
+   */
+  cameraPosition?: () => { x: number; y: number; z: number }
 }
 
 declare global {

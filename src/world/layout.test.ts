@@ -244,6 +244,29 @@ describe.each(Object.entries(distributions))('buildMuseumLayout — %s', (_label
       }
     }
   })
+
+  // Régression (bug V2 — écran envahi d'un aplat) : `laneFrontZ[0]`, dans `buildXWing`, désignait le
+  // CENTRE du mur principal (`wallZFar`) plutôt que sa face côté joueur, contrairement aux cimaises
+  // intérieures (`laneCenterZ + CIMAISE_THICKNESS / 2`, déjà une face). `FRAME_WALL_OFFSET` (0,06 m)
+  // ajouté à un centre au lieu d'une face laissait le cadre — cadre, toile ET cartel — enfoui à
+  // l'intérieur du mur (demi-épaisseur `dims.wallThickness / 2` = 0,2 m, largement > 0,06 m) : invisible
+  // depuis n'importe quel angle, quelle que soit la caméra (occultation par le mur lui-même, opaque et
+  // jamais estompé). Ce test vérifie qu'aucun cadre, dans aucune aile, ne se trouve à l'intérieur de
+  // l'empoint d'un mur « dur » (non estompable) de sa propre aile.
+  it('aucun cadre n’est enfoui dans un mur dur de son aile (régression : cadre invisible, mur non estompé)', () => {
+    const architecture = buildMuseumArchitecture(people)
+    for (const { room, walls } of architecture.rooms) {
+      if (room.id === 'hall') continue
+      const framesInRoom = layout.frames.filter((f) => f.wing === room.id)
+      for (const f of framesInRoom) {
+        const point: Vec2 = { x: f.position[0], z: f.position[2] }
+        for (const w of walls) {
+          if (w.kind !== 'wall') continue
+          expect(pointInAabb(point, w.box), `${f.personId} (${f.wing}) enfoui dans un mur (${JSON.stringify(w.box)})`).toBe(false)
+        }
+      }
+    }
+  })
 })
 
 describe('mission occultation (V2) — cimaises estompables', () => {

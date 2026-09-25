@@ -1,5 +1,13 @@
 import { expect, test } from '@playwright/test'
-import { dismissWelcomeDialogue, enterMuseum, gotoMusee, museeInput, museePlayer, teleport } from './support/museeApi'
+import {
+  dismissWelcomeDialogue,
+  enterMuseum,
+  gotoMusee,
+  museeInput,
+  museePlayer,
+  teleport,
+  waitForCameraSettled,
+} from './support/museeApi'
 
 /** Centre du hall : loin de tout mur/collider (voir docs/DESIGN.md, hall ≈ 22×18 m centré sur l'origine). */
 const SAFE_SPOT = { x: 0, z: 0 }
@@ -9,6 +17,9 @@ test.beforeEach(async ({ page }) => {
   await enterMuseum(page)
   await dismissWelcomeDialogue(page)
   await teleport(page, SAFE_SPOT.x, SAFE_SPOT.z, 0)
+  // Le tap au sol (ci-dessous) vise un point écran → sol dépendant de la caméra courante : la
+  // laisser rattraper le joueur téléporté avant de taper (voir `waitForCameraSettled`).
+  await waitForCameraSettled(page)
 })
 
 test('glisser sur la zone du joystick déplace le joueur (window.__musee.player)', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { act, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import { useGame } from '../state/gameStore'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import { buildMuseumLayout } from '../world/layout'
@@ -75,5 +75,43 @@ describe('MuseumMap', () => {
     screen.getByTestId('map-close').click()
     expect(playSfxMock).toHaveBeenCalledWith('click')
     expect(onClose).toHaveBeenCalled()
+  })
+
+  describe('indice de défilement (légende coupée en paysage bas, sans indice — WEL-863)', () => {
+    // jsdom ne fait pas de mise en page réelle : scrollHeight/clientHeight valent 0 par défaut.
+    // On simule un débordement (ou son absence) en définissant ces propriétés sur l'élément.
+    function setSheetMetrics(sheet: Element, { scrollHeight, clientHeight, scrollTop = 0 }: { scrollHeight: number; clientHeight: number; scrollTop?: number }) {
+      Object.defineProperty(sheet, 'scrollHeight', { configurable: true, value: scrollHeight })
+      Object.defineProperty(sheet, 'clientHeight', { configurable: true, value: clientHeight })
+      Object.defineProperty(sheet, 'scrollTop', { configurable: true, value: scrollTop, writable: true })
+    }
+
+    it("n'affiche pas l'indice quand tout le contenu tient déjà (portrait)", () => {
+      render(<MuseumMap open onClose={() => {}} />)
+      const sheet = screen.getByTestId('museum-map').querySelector('.ui-map__sheet') as HTMLElement
+      setSheetMetrics(sheet, { scrollHeight: 400, clientHeight: 400 })
+      fireEvent.scroll(sheet)
+      expect(screen.queryByTestId('map-scroll-hint')).not.toBeInTheDocument()
+    })
+
+    it("affiche l'indice quand la légende est coupée sous le bas visible (paysage bas)", () => {
+      render(<MuseumMap open onClose={() => {}} />)
+      const sheet = screen.getByTestId('museum-map').querySelector('.ui-map__sheet') as HTMLElement
+      setSheetMetrics(sheet, { scrollHeight: 600, clientHeight: 300 })
+      fireEvent.scroll(sheet)
+      expect(screen.getByTestId('map-scroll-hint')).toBeInTheDocument()
+    })
+
+    it("masque l'indice une fois défilé jusqu'au vrai bas", () => {
+      render(<MuseumMap open onClose={() => {}} />)
+      const sheet = screen.getByTestId('museum-map').querySelector('.ui-map__sheet') as HTMLElement
+      setSheetMetrics(sheet, { scrollHeight: 600, clientHeight: 300, scrollTop: 0 })
+      fireEvent.scroll(sheet)
+      expect(screen.getByTestId('map-scroll-hint')).toBeInTheDocument()
+
+      setSheetMetrics(sheet, { scrollHeight: 600, clientHeight: 300, scrollTop: 300 })
+      fireEvent.scroll(sheet)
+      expect(screen.queryByTestId('map-scroll-hint')).not.toBeInTheDocument()
+    })
   })
 })

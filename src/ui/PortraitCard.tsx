@@ -44,7 +44,11 @@ export function PortraitCard() {
   const person: Person | null = openPersonId ? (people.find((per) => per.id === openPersonId) ?? null) : null
 
   useEffect(() => {
-    if (person) titleRef.current?.focus()
+    // `preventScroll` : sans lui, le focus natif fait défiler `.ui-portrait__sheet` (overflow-y:
+    // auto) pour amener le titre dans le viewport, ce qui pousse le cadre photo hors champ sur un
+    // écran paysage bas (peu de hauteur) — la fiche s'ouvrait alors au milieu au lieu du haut.
+    // Bug QA WEL-863, capture iphone-paysage-10-fiche-fr.png (comparer à iphone-portrait-10-fiche-fr.png).
+    if (person) titleRef.current?.focus({ preventScroll: true })
     // Ne réagit qu'au changement de personne affichée, pas à chaque nouvelle référence de `person`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [person?.id])

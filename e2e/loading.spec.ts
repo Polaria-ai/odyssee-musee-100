@@ -16,28 +16,15 @@ test('pas d’erreur console au chargement (hors avertissements WebGL SwiftShade
   // BUG `/favicon.ico` (module intégration) corrigé lors de la vérification finale (issue WEL-863) :
   // `public/favicon.ico` a été ajouté.
   //
-  // BUG restant, différent, découvert lors de cette même vérification (module supabase, WEL-854) :
-  // avec un `.env.local` renseigné (URL + clé publishable), le premier appel de `loadPeople()`
-  // (`src/data/repository.ts`) interroge Supabase (`GET /rest/v1/people?...`) avant de retomber sur
-  // les données statiques. Le projet Supabase du dépôt (`snqwuvqhxaysaygwqkdq`) n'a pas encore la
-  // table `people` créée : la migration `supabase/migrations/20260924120000_people.sql` existe dans
-  // le dépôt mais n'a jamais été appliquée à ce projet distant (confirmé par un appel REST direct :
-  // `PGRST205 — Could not find the table 'public.people'`, 404). Le code applicatif gère déjà ce cas
-  // proprement (`console.warn`, jamais `console.error`, repli sur `/data/people.json` puis les
-  // fiches d'attente — voir `loadFromSupabase()` dans `src/data/repository.ts`) : le message qui fait
-  // échouer ce test est le log de bas niveau du navigateur pour la requête réseau elle-même
-  // (« Failed to load resource: 404 »), indépendant du `try/catch` applicatif, donc pas supprimable
-  // depuis le code. Cette vérification finale n'applique pas de migration sur un projet Supabase
-  // distant (décision prise ici, cohérente avec les sessions précédentes de ce vault : les migrations
-  // de prod passent par Baptiste, pas en mode automatique). Repassera au vert une fois la migration
-  // appliquée (SQL editor Supabase) — ou n'apparaîtra pas du tout dans un environnement sans
-  // `.env.local` (CI actuelle : `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` n'y sont pas définies,
-  // `getSupabase()` retourne alors `null` avant toute requête réseau).
-  test.fixme(
-    true,
-    'BUG connu : migration Supabase `people` non appliquée au projet distant (404 REST, module supabase WEL-854) — repro seulement avec .env.local renseigné.',
-  )
-
+  // BUG Supabase (module supabase, WEL-854), corrigé depuis : la migration
+  // `supabase/migrations/20260924120000_people.sql` a été appliquée au projet distant
+  // (`snqwuvqhxaysaygwqkdq`) — vérifié ici par un appel REST anonyme direct à
+  // `/rest/v1/people?select=*&published=eq.true` : `200` et `[]` (table vide, en attendant l'import
+  // de la vraie liste), là où on avait `PGRST205 — Could not find the table 'public.people'` (404)
+  // avant la migration. `loadFromSupabase()` (`src/data/repository.ts`) reçoit donc désormais une
+  // réponse propre (liste vide → repli sur `/data/people.json` puis les fiches d'attente, sans
+  // jamais interroger un endpoint 404) : plus de log réseau d'erreur au chargement avec
+  // `.env.local` renseigné. `test.fixme` retiré ci-dessous.
   const issues = collectConsoleIssues(page)
   await gotoMusee(page)
   await expect(page.getByTestId('title-screen')).toBeVisible({ timeout: LOAD_BUDGET_MS })

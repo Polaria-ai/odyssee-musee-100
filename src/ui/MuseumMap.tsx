@@ -7,7 +7,7 @@
  * `src/state/gameStore.ts` et compte dans `isOverlayOpen` : le déplacement est donc coupé pendant
  * que ce plan est affiché, comme pour la fiche, le dialogue et le carnet de tampons.
  */
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useGame } from '../state/gameStore'
 import { player } from '../state/runtime'
 import { useT, usePick } from '../i18n'
@@ -24,6 +24,8 @@ const MAP_PADDING = 2
 const DOOR_SPAN = 2.8
 const DOOR_THICKNESS = 0.3
 const PLAYER_DOT_RADIUS = 0.7
+/** Tolérance (px) sous laquelle on considère la feuille défilée jusqu'en bas (arrondis sous-pixel). */
+const SCROLL_HINT_EPSILON_PX = 2
 
 export interface MuseumMapProps {
   open: boolean
@@ -37,7 +39,20 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
   const t = useT(strings)
   const p = usePick()
   const titleRef = useRef<HTMLHeadingElement>(null)
+  const sheetRef = useRef<HTMLDivElement>(null)
   const [playerPos, setPlayerPos] = useState({ x: player.x, z: player.z })
+  // Vrai quand il reste du contenu sous le bas visible de `.ui-map__sheet` (légende des ailes
+  // coupée sans indice en paysage bas — bug QA WEL-863). Recalculé au défilement et à la
+  // réorientation ; jamais vrai quand tout tient déjà (portrait), jamais vrai une fois défilé
+  // jusqu'au vrai bas.
+  const [showScrollHint, setShowScrollHint] = useState(false)
+
+  const updateScrollHint = useCallback(() => {
+    const el = sheetRef.current
+    if (!el) return
+    const remaining = el.scrollHeight - el.scrollTop - el.clientHeight
+    setShowScrollHint(remaining > SCROLL_HINT_EPSILON_PX)
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -46,6 +61,18 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
     const id = window.setInterval(() => setPlayerPos({ x: player.x, z: player.z }), PLAYER_POLL_MS)
     return () => window.clearInterval(id)
   }, [open])
+
+  useEffect(() => {
+    if (!open) {
+      setShowScrollHint(false)
+      return
+    }
+    updateScrollHint()
+    // Réorientation ou redimensionnement pendant que le plan reste ouvert : la hauteur visible
+    // change, l'indice doit se réévaluer (pas seulement au prochain défilement).
+    window.addEventListener('resize', updateScrollHint)
+    return () => window.removeEventListener('resize', updateScrollHint)
+  }, [open, updateScrollHint])
 
   useEffect(() => {
     if (!open) return
@@ -75,7 +102,11 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
   return (
     <div className="ui-map" data-testid="museum-map" role="dialog" aria-modal="true" aria-labelledby="museum-map-title">
       <button type="button" className="ui-map__backdrop" aria-label={t('mapClose')} onClick={close} />
-      <div className="ui-map__sheet">
+      <div
+        className="ui-map__sheet"
+        ref={sheetRef}
+        onScroll={updateScrollHint}
+      >
         <button type="button" className="ui-map__close" data-testid="map-close" aria-label={t('mapClose')} onClick={close}>
           ✕
         </button>
@@ -157,6 +188,12 @@ export function MuseumMap({ open, onClose }: MuseumMapProps) {
             )
           })}
         </ul>
+
+        {showScrollHint && (
+          <div className="ui-map__scroll-hint" data-testid="map-scroll-hint" aria-hidden="true">
+            <span className="ui-map__scroll-hint-chevron">⌄</span>
+          </div>
+        )}
       </div>
     </div>
   )

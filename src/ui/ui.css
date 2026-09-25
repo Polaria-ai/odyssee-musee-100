@@ -732,6 +732,48 @@
   animation: ui-sheet-up 220ms ease-out both;
 }
 
+/* Indice de défilement : en paysage (écran bas), la feuille remplit presque tout l'écran et
+   coupe la légende des ailes juste sous le bord, sans aucun indice qu'il faut faire défiler —
+   bug QA WEL-863, capture iphone-paysage-13-plan.png (comparer à iphone-portrait-13-plan.png,
+   où tout tient sans défiler). N'est monté (voir `MuseumMap.tsx`, `showScrollHint`) que quand
+   il reste effectivement du contenu sous le bas visible ; se recalcule au défilement et à la
+   réorientation, donc disparaît dès qu'on atteint le vrai bas.
+   `position: sticky` + marge négative (hauteur nette nulle dans le flux, donc n'ajoute pas au
+   défilement lui-même) : reste plaqué au bord bas visible quel que soit le défilement, plutôt
+   que de défiler avec le contenu comme le ferait `position: absolute` ici. Dernier enfant de
+   `.ui-map__sheet` : peint par-dessus `.ui-map__plan` (fond opaque), qui sinon le masquerait. */
+.ui-map__scroll-hint {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  margin-top: -30px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2px;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255, 248, 231, 0), var(--cream) 78%);
+}
+
+.ui-map__scroll-hint-chevron {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink-soft);
+  animation: ui-map-hint-bounce 1.1s ease-in-out infinite;
+}
+
+@keyframes ui-map-hint-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
 .ui-map__close {
   position: absolute;
   top: 12px;

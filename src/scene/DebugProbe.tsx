@@ -5,6 +5,7 @@ import { debugEnabled } from './debugApi'
 
 export function DebugProbe() {
   const gl = useThree((s) => s.gl)
+  const camera = useThree((s) => s.camera)
   useEffect(() => {
     if (!debugEnabled() || !window.__musee) return
     window.__musee.renderInfo = () => ({
@@ -13,6 +14,9 @@ export function DebugProbe() {
       geometries: gl.info.memory.geometries,
       textures: gl.info.memory.textures,
     })
-  }, [gl])
+    // Lit `camera.position` à la demande (pas de copie ici) : la référence de l'objet `Camera` est
+    // stable tant que le Canvas n'est pas remonté, seules ses coordonnées changent chaque image.
+    window.__musee.cameraPosition = () => ({ x: camera.position.x, y: camera.position.y, z: camera.position.z })
+  }, [gl, camera])
   return null
 }

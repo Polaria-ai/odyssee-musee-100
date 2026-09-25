@@ -178,6 +178,24 @@ function truncate(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
   return `${s}…`
 }
 
+/**
+ * Plus grande taille (px, jusqu'à `maxSize`, jamais sous `minSize`, par pas de 1 px) telle que
+ * `measureWidth(size) <= maxWidth`. Pure — `measureWidth` est injecté plutôt qu'un `ctx` + un texte,
+ * pour rester testable sans canvas 2D (indisponible en jsdom, voir `textures.test.ts`) : l'appelant
+ * y règle `ctx.font` sur la taille candidate puis renvoie `ctx.measureText(text).width`.
+ *
+ * Une taille fixe déborde selon la langue : mesuré (`measureText`, `700 46px`, la police de
+ * `paintBanner`), le titre FR ('Le Musée des 100') tient large (largeur ≈383 px sur un canvas de
+ * 512 px, marge ≈65 px de chaque côté) mais l'EN ('The Museum of the 100') mesure ≈500 px (marge
+ * ≈6 px, quasiment collé à la bordure dorée) — les deux langues doivent retomber sur une police qui
+ * laisse la même marge confortable, quel que soit le texte.
+ */
+export function fitFontSize(measureWidth: (size: number) => number, maxWidth: number, maxSize: number, minSize: number): number {
+  let size = maxSize
+  while (size > minSize && measureWidth(size) > maxWidth) size -= 1
+  return size
+}
+
 export function mixWithWhite(hex: string, amount: number): string {
   const c = hexToRgb(hex)
   const mix = (v: number) => Math.round(v + (255 - v) * amount)
@@ -206,11 +224,26 @@ function paintBanner(title: Localized, subtitle: Localized, lang: Lang): CanvasT
   ctx.stroke()
   ctx.fillStyle = palette.ink
   ctx.textAlign = 'center'
-  ctx.font = '700 46px system-ui, sans-serif'
-  ctx.fillText(pick(title, lang), w / 2, h * 0.48)
-  ctx.font = '500 24px system-ui, sans-serif'
+  // Marge confortable des deux côtés du cadre doré (assez large pour laisser le FR à sa taille
+  // pleine, ≈383 px sur 512 : voir le commentaire de `fitFontSize`) : `fitFontSize` réduit la police
+  // pour l'EN, plus long, plutôt que de la laisser toucher la bordure.
+  const titleText = pick(title, lang)
+  const titleMaxWidth = w - 120
+  const titleSize = fitFontSize((size) => {
+    ctx.font = `700 ${size}px system-ui, sans-serif`
+    return ctx.measureText(titleText).width
+  }, titleMaxWidth, 46, 26)
+  ctx.font = `700 ${titleSize}px system-ui, sans-serif`
+  ctx.fillText(titleText, w / 2, h * 0.48)
+  const subtitleText = pick(subtitle, lang)
+  const subtitleMaxWidth = w - 80
+  const subtitleSize = fitFontSize((size) => {
+    ctx.font = `500 ${size}px system-ui, sans-serif`
+    return ctx.measureText(subtitleText).width
+  }, subtitleMaxWidth, 24, 15)
+  ctx.font = `500 ${subtitleSize}px system-ui, sans-serif`
   ctx.fillStyle = palette.inkSoft
-  ctx.fillText(pick(subtitle, lang), w / 2, h * 0.78)
+  ctx.fillText(subtitleText, w / 2, h * 0.78)
   return toTexture(canvas)
 }
 

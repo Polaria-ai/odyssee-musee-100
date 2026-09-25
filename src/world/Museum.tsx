@@ -127,8 +127,14 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
         </mesh>
       )}
 
-      {/* Bannière d'accueil, au-dessus du comptoir de Minerve — à l'écart des panneaux de porte. */}
-      <mesh position={[0, 3.7, -6.2]}>
+      {/* Bannière d'accueil, au-dessus du comptoir de Minerve — nettement au sud du panneau de porte
+          de l'aile nord (Industrialisation, à x = 0 lui aussi, voir `doorPanelPosition`) : à l'ancienne
+          position (z = -6,2, à seulement 2,7 m de la porte à z = -8,94) les deux se chevauchaient à
+          l'écran depuis toutes les vues par défaut du hall (écran titre, spawn, arbre, Minerve — bug
+          V2). Rapprochée de Minerve (comptoir centré à z ≈ -3,2, elle-même à z = -4,5) plutôt que
+          collée au mur du fond : l'écart à l'écran (mesuré par projection, voir le rapport) reste
+          ≥ 5 pt d'écran même depuis le point de vue le plus défavorable (spawn, le plus éloigné). */}
+      <mesh position={[0, 3.2, -4]}>
         <planeGeometry args={[3.6, 1.1]} />
         <meshBasicMaterial map={bannerTexture} toneMapped={false} transparent />
       </mesh>

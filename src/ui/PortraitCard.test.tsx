@@ -141,4 +141,13 @@ describe('PortraitCard', () => {
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(useGame.getState().openPersonId).toBeNull()
   })
+
+  it('donne le focus au titre sans faire défiler la feuille (préserve le cadre photo en paysage bas)', () => {
+    const focusSpy = vi.spyOn(HTMLHeadingElement.prototype, 'focus')
+    useGame.setState({ people: fictionalPeople, openPersonId: fictionalPeople[0].id })
+    render(<PortraitCard />)
+
+    expect(focusSpy).toHaveBeenCalledWith({ preventScroll: true })
+    focusSpy.mockRestore()
+  })
 })

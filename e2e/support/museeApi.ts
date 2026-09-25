@@ -26,6 +26,27 @@ export interface MuseePersonSummary {
   wing: ExhibitWingId
   name: string
   order: number
+  /** `true` = fiche d'attente fictive (voir `src/data/placeholder.ts`) ; absent tant que la vraie liste n'est pas importée. */
+  placeholder?: boolean
+}
+
+export interface MuseeRoomBounds {
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+}
+
+/** Sous-ensemble de `RoomLayout` (src/types/index.ts) utile aux tests de performance et du plan. */
+export interface MuseeRoomLayout {
+  id: WingId
+  bounds: MuseeRoomBounds
+}
+
+export type WingId = 'hall' | ExhibitWingId
+
+export interface MuseeLayout {
+  rooms: MuseeRoomLayout[]
 }
 
 export interface MuseeDialogue {
@@ -48,7 +69,9 @@ export interface MuseeGameState {
   dialogue: MuseeDialogue | null
   dialogueIndex: number
   stampCardOpen: boolean
+  mapOpen: boolean
   peersCount: number
+  layout: MuseeLayout | null
   openPerson: (personId: string) => void
   closePerson: () => void
   closeDialogue: () => void
@@ -70,12 +93,27 @@ export interface MuseeInput {
   tapTarget: { x: number; z: number } | null
 }
 
+export interface MuseeRenderInfo {
+  calls: number
+  triangles: number
+  geometries: number
+  textures: number
+}
+
+export interface MuseeCameraPosition {
+  x: number
+  y: number
+  z: number
+}
+
 export interface MuseeDebugApi {
   state: () => MuseeGameState
   player: MuseePlayer
   input: MuseeInput
   teleport: (x: number, z: number, rotY?: number) => void
   goToPerson: (personId: string) => boolean
+  renderInfo?: () => MuseeRenderInfo
+  cameraPosition?: () => MuseeCameraPosition
 }
 
 /** Navigue vers le musée avec la poignée de test activée (`?e2e=1`). */
@@ -97,6 +135,77 @@ export async function museePlayer(page: Page): Promise<MuseePlayer> {
     if (!musee) throw new Error('window.__musee indisponible : ?e2e=1 est-il actif ?')
     return musee.player
   })
+}
+
+/**
+ * Compteurs du renderer (`gl.info.render`, three.js), exposés par `src/scene/DebugProbe.tsx` une
+ * fois le `<Canvas>` monté. `null` tant que `DebugProbe` n'a pas encore branché la poignée (juste
+ * après le montage) : les appelants qui en ont besoin doivent le lire avec `expect.poll`.
+ */
+export async function museeRenderInfo(page: Page): Promise<MuseeRenderInfo | null> {
+  return page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+    return musee?.renderInfo ? musee.renderInfo() : null
+  })
+}
+
+/** Attend que `renderInfo()` soit disponible puis renvoie sa dernière valeur. */
+export async function waitForRenderInfo(page: Page, timeout = 5_000): Promise<MuseeRenderInfo> {
+  let last: MuseeRenderInfo | null = null
+  await expect
+    .poll(
+      async () => {
+        last = await museeRenderInfo(page)
+        return last !== null
+      },
+      { timeout },
+    )
+    .toBe(true)
+  return last as unknown as MuseeRenderInfo
+}
+
+/**
+ * Attend que la caméra cesse de bouger de façon perceptible. `teleport()` déplace le joueur
+ * instantanément, mais la caméra le suit avec un amortissement exponentiel (voir `Player.tsx`,
+ * `CAMERA_DAMP_RATE`) : elle reste un moment « en transit » entre l'ancienne et la nouvelle
+ * position. Nécessaire avant tout test qui convertit un point écran en point au sol
+ * (`screenToFloor`, via un clic/tap) juste après un `teleport()` — sinon la cible visée dépend
+ * d'une caméra encore en mouvement et peut, selon la charge de la machine (plusieurs navigateurs
+ * Playwright en parallèle, images plus rares), atterrir trop près du joueur (sous
+ * `TAP_STOP_DISTANCE`, `src/player/Player.tsx`) : le joueur ne bouge alors jamais, de façon
+ * instable (régression trouvée en vérification, pas au premier passage de ce test).
+ */
+export async function waitForCameraSettled(page: Page, timeout = 5_000): Promise<void> {
+  let last: MuseeCameraPosition | null = null
+  await expect
+    .poll(
+      async () => {
+        const pos = await page.evaluate(() => {
+          const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+          return musee?.cameraPosition ? musee.cameraPosition() : null
+        })
+        if (!pos) return false
+        const stable =
+          last !== null &&
+          Math.abs(pos.x - last.x) < 0.005 &&
+          Math.abs(pos.y - last.y) < 0.005 &&
+          Math.abs(pos.z - last.z) < 0.005
+        last = pos
+        return stable
+      },
+      { timeout },
+    )
+    .toBe(true)
+}
+
+/** Centre (x, z) de l'emprise d'une salle (`RoomLayout.bounds`) : point de téléportation stable pour s'y tenir « au milieu ». */
+export function roomCenter(bounds: MuseeRoomBounds): Vec2 {
+  return { x: (bounds.minX + bounds.maxX) / 2, z: (bounds.minZ + bounds.maxZ) / 2 }
+}
+
+interface Vec2 {
+  x: number
+  z: number
 }
 
 export async function museeInput(page: Page): Promise<MuseeInput> {
