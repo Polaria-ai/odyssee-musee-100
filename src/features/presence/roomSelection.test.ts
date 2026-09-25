@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_ROOMS, ROOM_CAPACITY, nextRoomIndex, roomName, shouldStayInRoom, sortByJoinOrder } from './roomSelection'
+import { MAX_ROOMS, ROOM_CAPACITY, nextRoomIndex, roomName, sanitizeNamespace, shouldStayInRoom, sortByJoinOrder } from './roomSelection'
 
 function members(...pairs: Array<[string, number]>) {
   return pairs.map(([id, joinTs]) => ({ id, joinTs }))
@@ -76,5 +76,18 @@ describe('nextRoomIndex', () => {
 
   it('retourne null au-delà de la dernière salle (mode solo)', () => {
     expect(nextRoomIndex(MAX_ROOMS)).toBeNull()
+  })
+})
+
+describe('espaces de salles (tests E2E)', () => {
+  it('préfixe le canal quand un espace est donné', () => {
+    expect(roomName(2, 'e2e-ab12')).toBe('musee:v1:e2e-ab12:room-2')
+    expect(roomName(2, null)).toBe('musee:v1:room-2')
+  })
+  it('nettoie l’espace demandé', () => {
+    expect(sanitizeNamespace('E2E_ab/12!')).toBe('e2eab12')
+    expect(sanitizeNamespace('')).toBeNull()
+    expect(sanitizeNamespace('###')).toBeNull()
+    expect(sanitizeNamespace('a'.repeat(50))).toHaveLength(32)
   })
 })

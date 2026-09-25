@@ -11,9 +11,19 @@ export const ROOM_PREFIX = 'musee:v1:room-'
 export const ROOM_CAPACITY = 8
 export const MAX_ROOMS = 12
 
-/** Nom du canal Realtime pour la salle `index` (1..MAX_ROOMS). */
-export function roomName(index: number): string {
-  return `${ROOM_PREFIX}${index}`
+/**
+ * Nom du canal Realtime pour la salle `index` (1..MAX_ROOMS).
+ * `namespace` isole un groupe de salles (tests E2E) : `musee:v1:<namespace>:room-<index>`.
+ */
+export function roomName(index: number, namespace?: string | null): string {
+  return namespace ? `musee:v1:${namespace}:room-${index}` : `${ROOM_PREFIX}${index}`
+}
+
+/** Espace de salles demandé par `?presenceRoom=` (tests uniquement), nettoyé, ou null. */
+export function sanitizeNamespace(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  const clean = raw.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 32)
+  return clean.length > 0 ? clean : null
 }
 
 export interface RoomMember {

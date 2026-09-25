@@ -117,8 +117,14 @@ export interface MuseeDebugApi {
 }
 
 /** Navigue vers le musée avec la poignée de test activée (`?e2e=1`). */
+/**
+ * Ouvre le musée en mode test. Chaque appel rejoint par défaut son propre espace de salles de
+ * présence (`presenceRoom`) : les tests ne croisent jamais de vrais visiteurs ni d'autres tests.
+ * Passer `&presenceRoom=<id>` dans `extraQuery` pour réunir plusieurs contextes.
+ */
 export async function gotoMusee(page: Page, extraQuery = ''): Promise<void> {
-  await page.goto(`/?e2e=1${extraQuery}`)
+  const room = extraQuery.includes('presenceRoom=') ? '' : `&presenceRoom=e2e-${crypto.randomUUID().slice(0, 12)}`
+  await page.goto(`/?e2e=1${room}${extraQuery}`)
 }
 
 export async function museeState(page: Page): Promise<MuseeGameState> {

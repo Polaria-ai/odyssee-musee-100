@@ -152,7 +152,8 @@ const PLANK_WIDTH = 0.9
 function hallFloor(room: RoomLayout): BufferGeometry {
   const { geo, cx, cz } = floorBase(room, 48)
   const plankA = new Color(room.floorColor)
-  const plankB = new Color(palette.woodDark)
+  // Deuxième ton proche du premier : des lames lisibles sans effet de rayures « zèbre ».
+  const plankB = new Color(room.floorColor).lerp(new Color(palette.woodDark), 0.3)
   const rug = new Color(palette.gold)
   const doors: Array<{ axis: 'x' | 'z'; sign: 1 | -1; color: string }> = [
     { axis: 'z', sign: -1, color: wingThemes.industrialisation.accent }, // porte nord

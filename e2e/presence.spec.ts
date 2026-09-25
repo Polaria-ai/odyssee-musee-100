@@ -66,12 +66,14 @@ test('@live deux contextes simultanés se voient l’un l’autre en moins de 15
   try {
     const pageA = await contextA.newPage()
     const pageB = await contextB.newPage()
+    // Même espace de salles pour les deux visiteurs, isolé du reste de la suite.
+    const shared = `&presenceRoom=e2e-live-${crypto.randomUUID().slice(0, 12)}`
 
-    await gotoMusee(pageA)
+    await gotoMusee(pageA, shared)
     await enterMuseum(pageA)
     await dismissWelcomeDialogue(pageA)
 
-    await gotoMusee(pageB)
+    await gotoMusee(pageB, shared)
     await enterMuseum(pageB)
     await dismissWelcomeDialogue(pageB)
 

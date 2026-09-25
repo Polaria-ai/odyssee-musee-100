@@ -47,9 +47,21 @@ async function session(name, contextOptions) {
     await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [cx, deepZ])
     await shot(`06-aile-${r.id}-fond`, 2000)
   }
-  const firstId = await page.evaluate(() => window.__musee.state().layout.frames[5].personId)
+  const frameIds = await page.evaluate(() => {
+    const frames = window.__musee.state().layout.frames
+    const pick = (wing) => frames.filter((f) => f.wing === wing)
+    return ['infrastructures', 'industrialisation', 'culture'].flatMap((w) => {
+      const list = pick(w)
+      return [list[0], list[Math.floor(list.length / 2)], list[list.length - 1]].filter(Boolean).map((f) => f.personId)
+    })
+  })
+  for (const [i, id] of frameIds.entries()) {
+    await page.evaluate((pid) => window.__musee.goToPerson(pid), id)
+    await shot(`07-portrait-${i}-${id}`, 2600)
+  }
+  const firstId = frameIds[0]
   await page.evaluate((id) => window.__musee.goToPerson(id), firstId)
-  await shot('07-devant-portrait', 2000)
+  await page.waitForTimeout(2600)
   await page.evaluate(() => window.__musee.state().interact())
   await shot('08-fiche', 1500)
   await page.keyboard.press('Escape')

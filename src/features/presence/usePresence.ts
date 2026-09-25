@@ -22,7 +22,8 @@ import {
   IDLE_HEARTBEAT_MS,
   type SendState,
 } from './peers'
-import { roomName, shouldStayInRoom, nextRoomIndex, MAX_ROOMS, ROOM_CAPACITY, type RoomMember } from './roomSelection'
+import { roomName, sanitizeNamespace, shouldStayInRoom, nextRoomIndex, MAX_ROOMS, ROOM_CAPACITY, type RoomMember } from './roomSelection'
+import { debugEnabled } from '../../scene/debugApi'
 import { POSITION_EVENT, encodePosition, encodePresence, decodePosition, decodePresence, type PresenceWireMessage } from './protocol'
 import { defaultRealtimeClient, type RealtimeClientLike, type RealtimeChannelLike } from './realtimeClient'
 
@@ -102,6 +103,17 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
     if (import.meta.env.VITE_PRESENCE === 'off') return
     const client = depsRef.current.getClient()
     if (!client) return // Supabase non configuré : mode solo silencieux, rien à nettoyer.
+
+    // Les tests E2E s'isolent dans leurs propres salles (`?e2e=1&presenceRoom=…`) pour ne jamais
+    // croiser de vrais visiteurs ni se gêner entre eux.
+    let namespace: string | null = null
+    if (debugEnabled()) {
+      try {
+        namespace = sanitizeNamespace(new URLSearchParams(window.location.search).get('presenceRoom'))
+      } catch {
+        namespace = null
+      }
+    }
 
     let cancelled = false
     let attempt = 0
@@ -187,7 +199,7 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
       joinTsRef.current = depsRef.current.now()
       const myGeneration = generation // capturée après leaveChannel() : cette tentative-ci.
 
-      const ch = client.channel(roomName(index))
+      const ch = client.channel(roomName(index, namespace))
 
       ch.onPresenceSync(() => {
         if (cancelled || myGeneration !== generation) return

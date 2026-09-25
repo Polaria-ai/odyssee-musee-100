@@ -115,9 +115,13 @@ export const BENCH_HEIGHT = 0.5
 export const JARDINIERE_HEIGHT = 1.3
 export const JARDINIERE_RADIUS = 0.42
 
-/** Arbre des 100 (hall) : tronc + feuillage, banc circulaire autour (voir `HallDecor.tree`). */
-export const TREE_TRUNK_HEIGHT = 2.3
-export const TREE_TOTAL_HEIGHT = 4.0
+/**
+ * Arbre des 100 (hall) : tronc + feuillage, banc circulaire autour (voir `HallDecor.tree`).
+ * Assez bas (sommet ≈ 3,3 m) pour ne jamais masquer Minerve depuis le point d'apparition,
+ * même avec la caméra la plus proche (paysage, 9 m) : la ligne de visée y passe à ≈ 4 m.
+ */
+export const TREE_TRUNK_HEIGHT = 1.5
+export const TREE_TOTAL_HEIGHT = 2.7
 export const TREE_BENCH_HEIGHT = 0.48
 
 /**
