@@ -10,6 +10,7 @@ export interface PersistedState {
   visited?: Record<string, number>
   stamps?: Record<string, number>
   visitedSessions?: Record<string, number>
+  archivesDiscovered?: boolean
   visitorId?: string
 }
 

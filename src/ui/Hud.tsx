@@ -8,6 +8,8 @@ import { useGame } from '../state/gameStore'
 import { useT, usePick } from '../i18n'
 import { strings } from './strings'
 import { EXHIBIT_WINGS } from '../types'
+import { cardStrings } from '../archives/cardStrings'
+import { hasArchivesStamp } from '../features/stamps/stamps'
 import { playSfx } from '../audio'
 import { SoundToggle } from '../audio/SoundToggle'
 import { MuseumMap } from './MuseumMap'
@@ -30,10 +32,15 @@ export function Hud() {
   const peersCount = useGame((s) => s.peersCount)
   const nearbyPersonId = useGame((s) => s.nearbyPersonId)
   const nearCurator = useGame((s) => s.nearCurator)
+  const nearbySessionId = useGame((s) => s.nearbySessionId)
+  const nearArchivist = useGame((s) => s.nearArchivist)
+  const sessions = useGame((s) => s.sessions)
+  const visitedSessions = useGame((s) => s.visitedSessions)
   const people = useGame((s) => s.people)
   const mapOpen = useGame((s) => s.mapOpen)
   const setMapOpen = useGame((s) => s.setMapOpen)
   const t = useT(strings)
+  const tc = useT(cardStrings)
   const p = usePick()
 
   // Le plan est une surimpression comme les autres (fiche, dialogue, carnet) : `mapOpen` vit dans
@@ -41,14 +48,22 @@ export function Hud() {
   // et démonte `TouchJoystick` tant qu'il reste ouvert — plus besoin de remettre l'entrée à zéro ici.
 
   const room = layout?.rooms.find((r) => r.id === currentRoom) ?? null
-  const stampsCount = Object.keys(stamps).length
+  // Le 4e tampon (Archives de 2040) ne compte que si le programme de la soirée est chargé.
+  const hasArchives = sessions.length > 0
+  const stampsCount = Object.keys(stamps).length + (hasArchives && hasArchivesStamp(visitedSessions, sessions.length) ? 1 : 0)
+  const stampsTotal = EXHIBIT_WINGS.length + (hasArchives ? 1 : 0)
   const nearbyPerson = nearbyPersonId ? (people.find((person) => person.id === nearbyPersonId) ?? null) : null
 
+  // Même ordre de priorité que `interact()` (src/state/gameStore.ts).
   const actionLabel = nearbyPerson
     ? t('hudLook', { name: shortName(nearbyPerson.name) })
-    : nearCurator
-      ? t('hudTalkCurator')
-      : null
+    : nearbySessionId
+      ? tc('hudConsultArchive')
+      : nearArchivist
+        ? tc('hudTalkArchivist')
+        : nearCurator
+          ? t('hudTalkCurator')
+          : null
 
   return (
     <div className="ui-hud" data-testid="hud">
@@ -96,7 +111,7 @@ export function Hud() {
             setStampCardOpen(true)
           }}
         >
-          {t('hudStampsCount', { n: stampsCount, total: EXHIBIT_WINGS.length })}
+          {t('hudStampsCount', { n: stampsCount, total: stampsTotal })}
         </button>
         {peersCount > 0 && (
           <span className="ui-hud__peers" data-testid="peers-count" aria-label={peersCount === 1 ? t('hudPeersOne') : t('hudPeers', { n: peersCount })}>

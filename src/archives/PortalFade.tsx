@@ -10,6 +10,7 @@
  */
 import { useEffect, useRef, useState } from 'react'
 import { useGame } from '../state/gameStore'
+import { archivistDialogue } from './archivistScript'
 import { placePlayer, resetInput } from '../state/runtime'
 import { useT } from '../i18n'
 import { cardStrings } from './cardStrings'
@@ -79,9 +80,15 @@ export function PortalFade() {
     if (phase !== 'out') return
     const fadeMs = prefersReducedMotion() ? FADE_MS_REDUCED : FADE_MS
     const id = window.setTimeout(() => {
+      const arrivedInArchives = kindRef.current === 'to-archives'
       setPortalTransition(null)
       setPhase('idle')
       kindRef.current = null
+      // Première arrivée par la Porte : l'Archiviste accueille le visiteur, une seule fois.
+      if (arrivedInArchives) {
+        const g = useGame.getState()
+        if (g.markArchivesDiscovered() && !g.dialogue) g.startDialogue(archivistDialogue({ kind: 'firstVisit' }))
+      }
     }, fadeMs)
     return () => window.clearTimeout(id)
   }, [phase, setPortalTransition])
