@@ -55,14 +55,16 @@ test('le compteur du carnet dans le HUD reflète le nombre de tampons', async ({
   await enterMuseum(page)
   await dismissWelcomeDialogue(page)
 
-  await expect(page.getByTestId('stamps-button')).toContainText('0/3')
-
+  // 3 ailes, plus le 4e tampon « Archives de 2040 » quand le programme de la soirée est chargé.
   const state = await museeState(page)
+  const total = 3 + ((state as { sessions?: unknown[] }).sessions?.length ? 1 : 0)
+  await expect(page.getByTestId('stamps-button')).toContainText(`0/${total}`)
+
   const wingPeople = state.people.filter((p) => p.wing === 'industrialisation').sort((a, b) => a.order - b.order)
   const required = Math.min(wingPeople.length, Math.max(3, Math.ceil(wingPeople.length * 0.3)))
   for (const person of wingPeople.slice(0, required)) {
     await openPersonViaState(page, person.id)
   }
 
-  await expect(page.getByTestId('stamps-button')).toContainText('1/3')
+  await expect(page.getByTestId('stamps-button')).toContainText(`1/${total}`)
 })
