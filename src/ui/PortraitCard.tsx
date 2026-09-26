@@ -20,7 +20,9 @@ function PlaceholderPortrait({ order, wingColor }: { order: number; wingColor: s
       <rect width="120" height="150" fill={wingColor} opacity="0.22" />
       <circle cx="60" cy="56" r="26" fill={wingColor} opacity="0.55" />
       <path d="M16 146 Q60 88 104 146 Z" fill={wingColor} opacity="0.55" />
-      <text x="60" y="132" textAnchor="middle" fontFamily="var(--font-display)" fontSize="18" fill="#4a3728">
+      {/* Sur la fiche bleu nuit de la charte : numéro en mono blanc, sur un bandeau sombre qui le détache de la silhouette. */}
+      <rect x="28" y="116" width="64" height="24" rx="6" fill="#050b1e" opacity="0.85" />
+      <text x="60" y="133" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="14" fontWeight="500" fill="#ffffff">
         {`N°${String(order).padStart(3, '0')}`}
       </text>
     </svg>
