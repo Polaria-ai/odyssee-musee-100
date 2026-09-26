@@ -6,10 +6,12 @@
  */
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
-import type { Mesh } from 'three'
+import type { Group, Mesh } from 'three'
 import { CylinderGeometry, IcosahedronGeometry, MeshBasicMaterial, MeshLambertMaterial, PlaneGeometry } from 'three'
 import type { ArchiveSlot, EveningSession, SessionArchive } from '../../types'
 import { useGame } from '../../state/gameStore'
+import { player } from '../../state/runtime'
+import { approach, occludesPlayer, type OcclusionObstacle } from '../../world/occlusion'
 import { drawCapsuleScreen, archivesBubbleTexture } from './textures'
 import { CAPSULE_RADIUS, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_Y, SOCLE_HEIGHT, SOCLE_RADIUS } from './constants'
 
@@ -31,6 +33,12 @@ const SOCLE_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ color: '#e3f3fa', emi
 const CAPSULE_IDLE_MATERIAL = new MeshLambertMaterial({ color: '#4fc9e0', emissive: '#4fc9e0', emissiveIntensity: 0.5, transparent: true, opacity: 0.55 })
 const CAPSULE_ARCHIVED_MATERIAL = new MeshLambertMaterial({ color: '#e8c872', emissive: '#e8c872', emissiveIntensity: 0.45, transparent: true, opacity: 0.75 })
 
+/** Sommet de la vitrine posée au sol (capsule comprise), pour le test d'occultation. */
+const VITRINE_TOP = SOCLE_HEIGHT + CAPSULE_RADIUS * 1.7
+/** Échelle verticale d'une vitrine rétractée, et vitesse de rétraction (unités d'échelle par seconde). */
+const RETRACTED_SCALE = 0.35
+const RETRACT_SPEED = 4
+
 let bubbleMaterial: MeshBasicMaterial | null = null
 function sharedBubbleMaterial(): MeshBasicMaterial {
   if (!bubbleMaterial) bubbleMaterial = new MeshBasicMaterial({ map: archivesBubbleTexture(), transparent: true, toneMapped: false })
@@ -49,13 +57,28 @@ export function Vitrine({ slot, session, archive }: { slot: ArchiveSlot; session
 
   const screenTex = useMemo(() => drawCapsuleScreen(session, lang, archived), [session, lang, archived])
 
+  // Emprise de la vitrine pour l'occultation (calculée une fois, jamais par image).
+  const obstacle = useMemo<OcclusionObstacle>(() => {
+    const [x, , z] = slot.position
+    const r = CAPSULE_RADIUS
+    return { box: { minX: x - r, maxX: x + r, minZ: z - r, maxZ: z + r }, height: VITRINE_TOP }
+  }, [slot.position])
+
+  const groupRef = useRef<Group>(null)
+  const retractRef = useRef(1)
   const bubbleRef = useRef<Mesh>(null)
-  useFrame(({ clock }) => {
+  useFrame(({ clock, camera }, dt) => {
     if (bubbleRef.current) bubbleRef.current.position.y = SCREEN_Y + SCREEN_HEIGHT / 2 + 0.4 + Math.sin(clock.elapsedTime * 2.4) * 0.06
+    // Une vitrine qui cache le joueur se rétracte dans son socle (hologramme qui s'éteint), puis
+    // revient : même principe que les cloisons estompées du musée, sans dupliquer de matériau.
+    const target = occludesPlayer(obstacle, player.x, player.z, camera.position) ? RETRACTED_SCALE : 1
+    retractRef.current = approach(retractRef.current, target, dt * RETRACT_SPEED)
+    if (groupRef.current) groupRef.current.scale.y = retractRef.current
   })
 
+  // Posée au sol : `slot.position[1]` (hauteur du socle) sert au repère de l'écran, pas au placement.
   return (
-    <group position={slot.position} rotation-y={slot.rotationY}>
+    <group ref={groupRef} position={[slot.position[0], 0, slot.position[2]]} rotation-y={slot.rotationY}>
       <mesh geometry={SOCLE_GEO} material={highlighted ? SOCLE_MATERIAL_HIGHLIGHT : SOCLE_MATERIAL} position={[0, SOCLE_HEIGHT / 2, 0]} />
       <mesh geometry={CAPSULE_GEO} material={archived ? CAPSULE_ARCHIVED_MATERIAL : CAPSULE_IDLE_MATERIAL} position={[0, SOCLE_HEIGHT + CAPSULE_RADIUS * 0.7, 0]} />
       <mesh geometry={SCREEN_GEO} position={[0, SCREEN_Y, CAPSULE_RADIUS * 0.55]}>

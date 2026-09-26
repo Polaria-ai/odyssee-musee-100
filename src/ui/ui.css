@@ -272,9 +272,12 @@
   bottom: calc(16px + var(--safe-bottom));
   min-width: 76px;
   min-height: 76px;
-  padding: 6px 10px;
+  /* Libellés longs (« Consulter l'archive ») : deux lignes équilibrées, forme de galet. */
+  max-width: 132px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 50%;
+  border-radius: 40px;
+  text-wrap: balance;
   background: var(--leaf);
   /* Texte encre plutôt que blanc : blanc sur vert feuille échoue le contraste AA. */
   color: var(--ink);

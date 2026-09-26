@@ -33,6 +33,7 @@ export function Hud() {
   const nearbyPersonId = useGame((s) => s.nearbyPersonId)
   const nearCurator = useGame((s) => s.nearCurator)
   const nearbySessionId = useGame((s) => s.nearbySessionId)
+  const dialogue = useGame((s) => s.dialogue)
   const nearArchivist = useGame((s) => s.nearArchivist)
   const sessions = useGame((s) => s.sessions)
   const visitedSessions = useGame((s) => s.visitedSessions)
@@ -120,7 +121,8 @@ export function Hud() {
         )}
       </div>
 
-      {actionLabel && (
+      {/* Masqué pendant un dialogue : la bulle le recouvrirait et il ne ferait rien (interact() l'ignore). */}
+      {actionLabel && !dialogue && (
         <button
           type="button"
           className="ui-hud__action"
