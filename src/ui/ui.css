@@ -38,7 +38,7 @@
   padding: 0 16px;
   border: none;
   border-radius: var(--radius-pill);
-  background: rgba(255, 248, 231, 0.85);
+  background: rgba(7, 19, 54, 0.85);
   color: var(--ink);
   font-family: var(--font-display);
   font-weight: 600;
@@ -51,7 +51,7 @@
 }
 
 .ui-title__panel {
-  background: rgba(255, 248, 231, 0.74);
+  background: rgba(7, 19, 54, 0.74);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border-radius: var(--radius-lg);
@@ -94,7 +94,7 @@
   border-radius: var(--radius-pill);
   background: var(--leaf);
   /* Texte encre plutôt que blanc : blanc sur vert feuille tombe sous 3:1 (échoue AA). */
-  color: var(--ink);
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 18px;
@@ -111,7 +111,7 @@
   margin: 18px 0 0;
   padding: 8px 14px;
   border-radius: var(--radius-md);
-  background: rgba(232, 200, 114, 0.4);
+  background: rgba(232, 120, 92, 0.4);
   color: var(--ink);
   font-size: 12.5px;
 }
@@ -241,14 +241,14 @@
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 14px;
-  box-shadow: 0 4px 0 rgba(59, 42, 30, 0.18);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
 }
 
 .ui-hud__lang:active,
 .ui-hud__stamps:active,
 .ui-hud__map:active {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 rgba(59, 42, 30, 0.18);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
 }
 
 .ui-hud__peers {
@@ -258,7 +258,7 @@
   min-height: 32px;
   padding: 6px 12px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 248, 231, 0.9);
+  background: rgba(7, 19, 54, 0.9);
   color: var(--ink);
   font-family: var(--font-body);
   font-weight: 800;
@@ -280,7 +280,7 @@
   text-wrap: balance;
   background: var(--leaf);
   /* Texte encre plutôt que blanc : blanc sur vert feuille échoue le contraste AA. */
-  color: var(--ink);
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 13px;
@@ -309,7 +309,7 @@
 .ui-portrait__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(59, 42, 30, 0.38);
+  background: rgba(0, 0, 0, 0.38);
   border: none;
   padding: 0;
   cursor: default;
@@ -374,7 +374,7 @@
   height: 48px;
   border: none;
   border-radius: 50%;
-  background: rgba(74, 55, 40, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--ink);
   font-size: 18px;
 }
@@ -567,7 +567,7 @@
   padding: 4px 14px;
   border-radius: var(--radius-pill);
   background: var(--gold);
-  color: var(--ink);
+  color: var(--on-accent);
   font-family: var(--font-display);
   font-weight: 700;
   font-size: 13px;
@@ -717,7 +717,7 @@
 .ui-map__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(59, 42, 30, 0.45);
+  background: rgba(0, 0, 0, 0.45);
   border: none;
   padding: 0;
   cursor: default;
@@ -757,7 +757,7 @@
   justify-content: center;
   padding-bottom: 2px;
   pointer-events: none;
-  background: linear-gradient(to bottom, rgba(255, 248, 231, 0), var(--cream) 78%);
+  background: linear-gradient(to bottom, rgba(7, 19, 54, 0), var(--cream) 78%);
 }
 
 .ui-map__scroll-hint-chevron {
@@ -785,7 +785,7 @@
   height: 48px;
   border: none;
   border-radius: 50%;
-  background: rgba(74, 55, 40, 0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--ink);
   font-size: 18px;
 }
@@ -804,7 +804,7 @@
   border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--paper);
-  box-shadow: inset 0 0 0 1px rgba(74, 55, 40, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .ui-map__svg {
@@ -827,7 +827,7 @@
   gap: 2px;
   padding: 3px 8px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 248, 231, 0.88);
+  background: rgba(7, 19, 54, 0.88);
   white-space: nowrap;
 }
 
@@ -873,4 +873,151 @@
   flex-shrink: 0;
   border-radius: 50%;
   background: var(--wing-color, var(--wood));
+}
+
+
+/* ---------- Charte « 2026 : l'Odyssée de l'IA » (skill de Cyril) ---------- */
+
+/* Logo : disque en scanlines + logotype 3 lignes, « IA » en corail. */
+.od-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 auto 14px;
+}
+.od-disc {
+  flex: none;
+  filter: drop-shadow(0 0 10px rgba(232, 120, 92, 0.25));
+}
+.od-logo__word {
+  display: flex;
+  flex-direction: column;
+  gap: 0.04em;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 15px;
+  line-height: 1.05;
+  letter-spacing: 0.005em;
+  color: var(--blanc);
+}
+.od-logo__l1 {
+  font-weight: 300;
+}
+.od-logo__l2 {
+  font-weight: 500;
+}
+.od-logo__l3 {
+  font-weight: 600;
+  font-size: 1.18em;
+}
+.od-logo__ia {
+  color: var(--corail);
+}
+
+/* Titres : géométrique arrondi, jamais en gras 700, pas d'interlettrage négatif. */
+.ui-title__heading {
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+
+/* Kicker de la charte : capitales mono espacées + filet corail de 34 px (rappel des lignes du disque). */
+.ui-title__subtitle {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--track-eyebrow);
+  color: var(--ink-soft);
+}
+.ui-title__subtitle::after {
+  content: '';
+  display: block;
+  width: 34px;
+  height: 2px;
+  margin: 10px auto 0;
+  background: var(--corail);
+}
+
+/* Les chiffres sont en mono (charte § 4). */
+.ui-hud__stamps,
+.ui-hud__peers,
+[data-testid='stamps-button'],
+[data-testid='peers-count'] {
+  font-family: var(--font-mono);
+}
+
+/* Panneaux : liseré néon discret sur fond bleu nuit (motif 4, sans excès). */
+.ui-title__panel,
+.ui-dialogue,
+.ui-portrait__sheet,
+.ui-map__sheet {
+  border: 1px solid rgba(77, 140, 255, 0.28);
+}
+
+/* Poppins est plus large que l'ancienne police arrondie : titres et pastilles recalibrés pour
+   tenir sur une ligne à 390 px de large (iPhone 13), sans jamais passer sous 28 px pour le titre. */
+.ui-title__heading {
+  font-size: clamp(28px, 8.2vw, 46px);
+  white-space: nowrap;
+}
+.ui-title__subtitle {
+  font-size: 11px;
+  letter-spacing: 0.18em;
+}
+.ui-hud__room-pill {
+  max-width: 44vw;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 14px;
+}
+
+/* Paysage sur téléphone (hauteur ≤ 500 px) : le logo ajoute de la hauteur au panneau titre, qui
+   ne doit jamais recouvrir la mention L'Opinion × Polaria en bas d'écran. */
+@media (max-height: 500px) {
+  .ui-title__panel {
+    padding: 14px 22px;
+  }
+  .od-logo {
+    margin-bottom: 4px;
+  }
+  .od-disc {
+    width: 40px;
+    height: 36px;
+  }
+  .od-logo__word {
+    font-size: 12px;
+  }
+  .ui-title__heading {
+    font-size: 34px;
+    margin-bottom: 4px;
+  }
+  .ui-title__subtitle::after {
+    margin-top: 6px;
+  }
+}
+
+/* Écrans étroits (portrait) : la pastille de salle passe sous la rangée de boutons plutôt que de
+   s'écraser contre eux (« Industrialisation », « Archives de 2040 » en Poppins ne tiennent pas à
+   côté de quatre boutons à 390 px). */
+@media (max-width: 440px) {
+  .ui-hud__top-left {
+    top: calc(68px + var(--safe-top));
+  }
+  /* Le toast descend d'autant pour ne pas recouvrir la pastille. */
+  .ui-toast {
+    top: calc(116px + var(--safe-top));
+  }
+  .ui-hud__room-pill {
+    max-width: calc(100vw - 24px);
+  }
+}
+
+/* Toast à la charte : bleu électrique, texte blanc, filet corail (jamais un fond clair).
+   `width: max-content` : centré par left 50 %, il n'aurait sinon que la moitié de l'écran. */
+.ui-toast {
+  width: max-content;
+  background: var(--bleu);
+  color: var(--blanc);
+  border: 1px solid var(--corail);
 }

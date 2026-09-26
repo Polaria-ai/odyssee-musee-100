@@ -210,7 +210,7 @@ function hallFloor(room: RoomLayout): BufferGeometry {
   const plankA = new Color(room.floorColor)
   // Deuxième ton proche du premier : des lames lisibles sans effet de rayures « zèbre ».
   const plankB = new Color(room.floorColor).lerp(new Color(palette.woodDark), 0.3)
-  const rug = new Color(palette.gold)
+  const rug = new Color(room.accentColor) // accent de la charte (corail dans le hall)
   const doors: Array<{ axis: 'x' | 'z'; sign: 1 | -1; color: string }> = [
     { axis: 'z', sign: -1, color: wingThemes.industrialisation.accent }, // porte nord
     { axis: 'x', sign: -1, color: wingThemes.infrastructures.accent }, // porte ouest

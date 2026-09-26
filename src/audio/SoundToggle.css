@@ -12,7 +12,7 @@
   background: var(--cream);
   color: var(--ink);
   font-family: var(--font-display);
-  box-shadow: 0 4px 0 rgba(59, 42, 30, 0.18);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
   transition:
     transform 120ms ease,
     box-shadow 120ms ease;
@@ -21,7 +21,7 @@
 
 .audio-sound-toggle:active {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 rgba(59, 42, 30, 0.18);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
 }
 
 .audio-sound-toggle svg {

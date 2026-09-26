@@ -15,7 +15,7 @@ export const ALL_STAMPS: readonly StampId[] = [...EXHIBIT_WINGS, 'archives'] as 
 export const ARCHIVES_STAMP_MIN = 3
 
 /** Encre cyan du tampon des Archives de 2040 (dédiée : distincte des couleurs d'aile). */
-export const ARCHIVES_INK = '#0f7a8c'
+export const ARCHIVES_INK = '#57bfd6' // cyan de la charte (lisible sur le carnet bleu nuit)
 
 export interface WingProgress {
   seen: number

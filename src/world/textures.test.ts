@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { exhibitWingOrder, wingThemes } from '../styles/tokens'
-import { cartelOrganizationText, fitFontSize, mixWithWhite, PLACEHOLDER_BG_MIX, PLACEHOLDER_SILHOUETTE_MIX } from './textures'
+import { cartelOrganizationText, fitFontSize, mixWithWhite, placeholderSilhouetteColor, PLACEHOLDER_BG_MIX, PLACEHOLDER_SILHOUETTE_MIX } from './textures'
 
 function luminance(rgb: string): number {
   const m = /rgb\((\d+), (\d+), (\d+)\)/.exec(rgb)
@@ -28,7 +28,7 @@ describe('portrait d’attente — contraste fond/silhouette', () => {
 
   it.each(accentColors)('silhouette nettement plus sombre que le fond pour %s', (accent) => {
     const bg = luminance(mixWithWhite(accent, PLACEHOLDER_BG_MIX))
-    const silhouette = luminance(mixWithWhite(accent, PLACEHOLDER_SILHOUETTE_MIX))
+    const silhouette = luminance(placeholderSilhouetteColor(accent))
     expect(bg - silhouette).toBeGreaterThan(55) // luminance perçue sur 255 (régression : ~18 à 24 points)
   })
 

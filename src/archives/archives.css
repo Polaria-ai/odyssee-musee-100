@@ -7,10 +7,12 @@
  */
 
 :root {
-  --archive-navy: #232c47;
-  --archive-navy-soft: #2f3a5e;
-  --archive-cyan: #7fd6e8;
-  --archive-cyan-dim: rgba(127, 214, 232, 0.35);
+  /* Charte de l'Odyssée : la fiche est désormais sur fond bleu nuit (--cream). Les fonds des
+     Archives descendent d'un cran (bleu électrique profond) et le texte « doux » devient clair. */
+  --archive-navy: #113198;
+  --archive-navy-soft: #9fb3e6;
+  --archive-cyan: #57bfd6;
+  --archive-cyan-dim: rgba(87, 191, 214, 0.28);
 }
 
 /* ---------- Fiche d'archive ---------- */
@@ -173,9 +175,9 @@
   padding: 8px 12px;
   border-radius: var(--radius-md);
   background: var(--archive-cyan-dim);
-  color: var(--archive-navy);
+  color: var(--ink);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .archive-card__section-title {
@@ -259,7 +261,7 @@
   padding: 1px 8px;
   border-radius: var(--radius-pill);
   background: var(--leaf);
-  color: var(--ink);
+  color: var(--on-accent);
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
@@ -300,7 +302,7 @@
   color: #fff;
   font-family: var(--font-display);
   font-weight: 700;
-  box-shadow: 0 4px 0 var(--archive-navy-soft);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.45);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
@@ -311,7 +313,7 @@
 
 .archive-card__nav button:active:not(:disabled) {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--archive-navy-soft);
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.45);
 }
 
 /* ---------- Fondu de la Porte de 2040 ---------- */

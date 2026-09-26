@@ -125,7 +125,7 @@ function PreviewCanvas({ config, drag }: { config: AvatarConfig; drag: MutableRe
       camera={{ fov: PREVIEW_FOV, near: 0.1, far: 10, position: [0, 0.6, 2.7] }}
       gl={{ antialias: true, powerPreference: 'low-power' }}
     >
-      <color attach="background" args={['#fdf1d6']} />
+      <color attach="background" args={['#10214f']} />
       <hemisphereLight args={['#fff6e0', '#c8a27a', 1.2]} />
       <directionalLight position={[2, 3, 2]} intensity={1} />
       <Suspense fallback={null}>

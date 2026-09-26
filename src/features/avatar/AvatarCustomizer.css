@@ -129,7 +129,7 @@
   font-family: var(--font-body);
   font-weight: 700;
   font-size: 13px;
-  box-shadow: 0 3px 0 rgba(59, 42, 30, 0.14);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.14);
 }
 
 .pastille--swatch {
@@ -155,7 +155,7 @@
   flex-wrap: wrap;
   flex-shrink: 0;
   padding-top: 12px;
-  border-top: 2px solid rgba(140, 106, 74, 0.22);
+  border-top: 2px solid rgba(77, 140, 255, 0.22);
 }
 
 .btn-pill {
@@ -171,7 +171,7 @@
 
 .btn-pill--primary {
   background: var(--leaf);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: 0 5px 0 var(--leaf-dark);
 }
 

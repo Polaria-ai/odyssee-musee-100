@@ -5,7 +5,7 @@
 import { CanvasTexture, SRGBColorSpace, Texture } from 'three'
 import type { ExhibitWingId, Lang, Localized, Person } from '../types'
 import { pick } from '../i18n'
-import { palette } from '../styles/tokens'
+import { eventPalette, palette } from '../styles/tokens'
 import { worldStrings } from './strings'
 
 function context2d(width: number, height: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
@@ -82,7 +82,7 @@ function paintPlaceholderPortrait(accentColor: string, order: number, lang: Lang
 
   // Silhouette : couleur d'aile presque pure, sans blanc — contraste large et stable avec le fond,
   // quelle que soit la teinte (claire ou foncée) de l'aile.
-  ctx.fillStyle = mixWithWhite(accentColor, PLACEHOLDER_SILHOUETTE_MIX)
+  ctx.fillStyle = placeholderSilhouetteColor(accentColor)
   ctx.beginPath()
   ctx.arc(size / 2, size * 0.38, size * 0.2, 0, Math.PI * 2)
   ctx.fill()
@@ -196,6 +196,21 @@ export function fitFontSize(measureWidth: (size: number) => number, maxWidth: nu
   return size
 }
 
+/**
+ * Couleur de la silhouette d'un portrait d'attente : la couleur d'aile presque pure, foncée vers le
+ * bleu nuit de la charte quand elle est claire (le cyan vif de l'aile Infrastructures ne se
+ * détacherait plus de son propre fond pastel). Testée dans textures.test.ts.
+ */
+export function placeholderSilhouetteColor(accentColor: string): string {
+  const c = hexToRgb(accentColor)
+  const lum = 0.299 * c.r + 0.587 * c.g + 0.114 * c.b
+  if (lum <= 150) return mixWithWhite(accentColor, PLACEHOLDER_SILHOUETTE_MIX)
+  const night = hexToRgb('#071336')
+  const k = 0.45
+  const mix = (v: number, t: number) => Math.round(v + (t - v) * k)
+  return `rgb(${mix(c.r, night.r)}, ${mix(c.g, night.g)}, ${mix(c.b, night.b)})`
+}
+
 export function mixWithWhite(hex: string, amount: number): string {
   const c = hexToRgb(hex)
   const mix = (v: number) => Math.round(v + (255 - v) * amount)
@@ -215,14 +230,15 @@ function paintBanner(title: Localized, subtitle: Localized, lang: Lang): CanvasT
   const w = 512
   const h = 160
   const { canvas, ctx } = context2d(w, h)
-  ctx.fillStyle = palette.cream
+  // Charte de l'Odyssée : panneau bleu nuit, liseré corail, texte blanc pur, sous-titre corail.
+  ctx.fillStyle = eventPalette.bleuNuit
   roundRect(ctx, 0, 0, w, h, 22)
   ctx.fill()
-  ctx.strokeStyle = palette.gold
+  ctx.strokeStyle = eventPalette.corail
   ctx.lineWidth = 6
   roundRect(ctx, 6, 6, w - 12, h - 12, 18)
   ctx.stroke()
-  ctx.fillStyle = palette.ink
+  ctx.fillStyle = eventPalette.blanc
   ctx.textAlign = 'center'
   // Marge confortable des deux côtés du cadre doré (assez large pour laisser le FR à sa taille
   // pleine, ≈383 px sur 512 : voir le commentaire de `fitFontSize`) : `fitFontSize` réduit la police
@@ -230,10 +246,10 @@ function paintBanner(title: Localized, subtitle: Localized, lang: Lang): CanvasT
   const titleText = pick(title, lang)
   const titleMaxWidth = w - 120
   const titleSize = fitFontSize((size) => {
-    ctx.font = `700 ${size}px system-ui, sans-serif`
+    ctx.font = `600 ${size}px Poppins, Futura, 'Avenir Next', system-ui, sans-serif`
     return ctx.measureText(titleText).width
   }, titleMaxWidth, 46, 26)
-  ctx.font = `700 ${titleSize}px system-ui, sans-serif`
+  ctx.font = `600 ${titleSize}px Poppins, Futura, 'Avenir Next', system-ui, sans-serif`
   ctx.fillText(titleText, w / 2, h * 0.48)
   const subtitleText = pick(subtitle, lang)
   const subtitleMaxWidth = w - 80
@@ -242,7 +258,7 @@ function paintBanner(title: Localized, subtitle: Localized, lang: Lang): CanvasT
     return ctx.measureText(subtitleText).width
   }, subtitleMaxWidth, 24, 15)
   ctx.font = `500 ${subtitleSize}px system-ui, sans-serif`
-  ctx.fillStyle = palette.inkSoft
+  ctx.fillStyle = eventPalette.corail
   ctx.fillText(subtitleText, w / 2, h * 0.78)
   return toTexture(canvas)
 }

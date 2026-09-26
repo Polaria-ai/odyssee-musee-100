@@ -17,8 +17,8 @@
   margin-left: -60px;
   margin-top: -60px;
   border-radius: 50%;
-  background: rgba(255, 248, 231, 0.32);
-  border: 2px solid rgba(74, 55, 40, 0.22);
+  background: rgba(7, 19, 54, 0.32);
+  border: 2px solid rgba(255, 255, 255, 0.22);
   box-shadow: var(--shadow-soft);
   pointer-events: none;
   animation: joystick-base-in 140ms ease-out both;
@@ -36,7 +36,7 @@
   background: var(--leaf);
   box-shadow:
     0 4px 0 var(--leaf-dark),
-    0 6px 14px rgba(59, 42, 30, 0.25);
+    0 6px 14px rgba(0, 0, 0, 0.25);
   pointer-events: none;
   will-change: transform;
 }

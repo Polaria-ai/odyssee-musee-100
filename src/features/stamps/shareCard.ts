@@ -9,13 +9,14 @@ import { strings } from './strings'
 export const SHARE_WIDTH = 1080
 export const SHARE_HEIGHT = 1350
 
+// Charte de l'Odyssée : encres vives des ailes sur fond bleu nuit.
 const WING_INK_COLORS: Record<StampId, string> = {
-  infrastructures: '#3f7f78',
-  industrialisation: '#b86a35',
-  culture: '#7a5a9e',
+  infrastructures: '#6de4e5',
+  industrialisation: '#e8785c',
+  culture: '#4d8cff',
   archives: ARCHIVES_INK,
 }
-const PENDING_STAMP_COLOR = '#c9c2b6'
+const PENDING_STAMP_COLOR = '#3a4a78'
 
 export interface StampBadgeLayout {
   wing: StampId
@@ -90,12 +91,16 @@ function drawStampBadge(ctx: CanvasRenderingContext2D, badge: StampBadgeLayout, 
 /** Dessine la carte complète sur un contexte 2D. No-op silencieux si `ctx` est `null` (pas de canvas). */
 export function drawShareCard(ctx: CanvasRenderingContext2D | null, data: ShareCardData, layout: ShareLayout = computeShareLayout()): void {
   if (!ctx) return
-  ctx.fillStyle = '#fdf1d6'
+  // Charte de l'Odyssée : fond bleu nuit, liseré corail, texte blanc pur, Poppins.
+  ctx.fillStyle = '#071336'
   ctx.fillRect(0, 0, layout.width, layout.height)
+  ctx.strokeStyle = '#e8785c'
+  ctx.lineWidth = 12
+  ctx.strokeRect(24, 24, layout.width - 48, layout.height - 48)
 
   ctx.textAlign = 'center'
-  ctx.fillStyle = '#4a3728'
-  ctx.font = `700 ${layout.title.fontSize}px "Fredoka", sans-serif`
+  ctx.fillStyle = '#ffffff'
+  ctx.font = `600 ${layout.title.fontSize}px "Poppins", "Futura", sans-serif`
   ctx.fillText(pick(strings.shareTitle, data.lang), layout.title.x, layout.title.y)
 
   for (const badge of layout.stamps) {
@@ -103,12 +108,12 @@ export function drawShareCard(ctx: CanvasRenderingContext2D | null, data: ShareC
     drawStampBadge(ctx, badge, obtained)
   }
 
-  ctx.fillStyle = '#4a3728'
-  ctx.font = `700 ${layout.name.fontSize}px "Nunito", sans-serif`
+  ctx.fillStyle = '#ffffff'
+  ctx.font = `600 ${layout.name.fontSize}px "Poppins", "Futura", sans-serif`
   ctx.fillText(data.avatarName || '—', layout.name.x, layout.name.y)
 
-  ctx.fillStyle = '#7a6250'
-  ctx.font = `400 ${layout.event.fontSize}px "Nunito", sans-serif`
+  ctx.fillStyle = '#e8785c'
+  ctx.font = `500 ${layout.event.fontSize}px "JetBrains Mono", monospace`
   ctx.fillText(pick(strings.shareEvent, data.lang), layout.event.x, layout.event.y)
 }
 

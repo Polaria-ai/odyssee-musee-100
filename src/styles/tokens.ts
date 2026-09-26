@@ -14,10 +14,29 @@ export const palette = {
   woodDark: '#8c6a4a',
   leaf: '#7bc47f',
   leafDark: '#4f9a5a',
-  sky: '#9ed9f0',
+  // Ciel / fond de la scène : bleu nuit de la charte de l'Odyssée (skill de Cyril).
+  sky: '#071336',
   gold: '#e8c872',
   white: '#ffffff',
   shadow: '#3b2a1e',
+} as const
+
+/**
+ * Palette de l'événement « 2026 : l'Odyssée de l'IA » (skill conference-dataviz-odyssee-ia-2026).
+ * Dans le musée 3D, elle sert aux ACCENTS (ailes, bannières, panneaux, lueurs) ; les matières
+ * (bois, crème, terre cuite) restent chaudes pour garder l'esprit cosy.
+ */
+export const eventPalette = {
+  corail: '#e8785c',
+  corailDeep: '#b04a33',
+  bleu: '#1d49c1',
+  bleuDeep: '#113198',
+  bleuNuit: '#071336',
+  bleuNeon: '#4d8cff',
+  cyan: '#57bfd6',
+  cyanVif: '#6de4e5',
+  alarm: '#d6248c',
+  blanc: '#ffffff',
 } as const
 
 export interface WingTheme {
@@ -29,16 +48,16 @@ export interface WingTheme {
 
 /** Chaque aile a sa propre ambiance, comme les salles d'un musée de jeu. */
 export const wingThemes: Record<WingId, WingTheme> = {
-  // Grand hall : parquet chaud, murs crème, dorures.
-  hall: { floor: '#d9b48a', wall: '#f6ead2', accent: '#e8c872', trim: '#8c6a4a' },
-  // Infrastructures : salle des machines, pierre bleutée et sarcelle.
-  infrastructures: { floor: '#9fb8b4', wall: '#e3efec', accent: '#4fb3a9', trim: '#3f7f78' },
-  // Industrialisation : atelier sous verrière, briques et orange.
-  industrialisation: { floor: '#d8a57c', wall: '#fbe7d3', accent: '#f2a65a', trim: '#b86a35' },
-  // Culture : galerie d'art, velours violet.
-  culture: { floor: '#b9a3c9', wall: '#f1e8f7', accent: '#b48cd9', trim: '#7a5a9e' },
+  // Grand hall : parquet chaud, murs crème, accent corail de la charte.
+  hall: { floor: '#d9b48a', wall: '#f6ead2', accent: '#e8785c', trim: '#8c6a4a' },
+  // Infrastructures : salle des machines, pierre bleutée et cyan vif de la charte.
+  infrastructures: { floor: '#9fb8b4', wall: '#e3efec', accent: '#6de4e5', trim: '#2f6f78' },
+  // Industrialisation : atelier sous verrière, briques et corail de la charte.
+  industrialisation: { floor: '#d8a57c', wall: '#fbe7d3', accent: '#e8785c', trim: '#b04a33' },
+  // Culture : galerie d'art, bleu néon de la charte sur murs clairs.
+  culture: { floor: '#aab4d4', wall: '#eaeef9', accent: '#4d8cff', trim: '#33479a' },
   // Archives de 2040 : bleu nuit doux et lueurs holographiques, restées chaleureuses.
-  archives: { floor: '#5d6b8f', wall: '#e6ecfa', accent: '#7fd6e8', trim: '#3d4a6e' },
+  archives: { floor: '#5d6b8f', wall: '#e6ecfa', accent: '#57bfd6', trim: '#113198' },
 }
 
 /**

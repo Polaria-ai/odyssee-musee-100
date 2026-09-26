@@ -1,5 +1,6 @@
 /** Écran titre : la caméra tourne au-dessus du hall derrière cette surimpression transparente. */
 import { useGame } from '../state/gameStore'
+import { OdysseeLogo } from './OdysseeLogo'
 import { useT } from '../i18n'
 import { strings } from './strings'
 import { playSfx, unlockAudio } from '../audio'
@@ -39,7 +40,7 @@ export function TitleScreen() {
       </div>
 
       <div className="ui-title__panel">
-        <p className="ui-title__eyebrow">{t('titleEyebrow')}</p>
+        <OdysseeLogo size={60} />
         <h1 className="ui-title__heading">{t('titleHeading')}</h1>
         <p className="ui-title__subtitle">{t('titleSubtitle')}</p>
         <button type="button" className="ui-title__enter" data-testid="enter-button" onClick={handleEnter}>

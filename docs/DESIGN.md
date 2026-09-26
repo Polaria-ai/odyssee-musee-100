@@ -13,6 +13,16 @@ L'idéation part du musée d'un jeu de simulation de vie « cosy » : un grand h
 
 Doux, joyeux, lisible, sans cynisme. Le contenu (les 100) est sérieux ; l'écrin est ludique. On tutoie le visiteur en français (« Bienvenue au musée ! »), ton chaleureux en anglais.
 
+## Charte de l'événement (26/09/2026) — prime sur la palette ci-dessous pour l'interface
+
+Source : skill « conference-dataviz-odyssee-ia-2026 » de Cyril (charte relevée sur les captations scène 2024-2025). Décision de Baptiste : **interface entière + accents 3D** à la charte ; les **matières** du musée (bois, crème, terre cuite) restent chaudes pour garder l'esprit cosy.
+
+- **Interface** : fonds sombres uniquement (bleu nuit `#0a1738` / `#050b1e`, jamais de fond clair), texte **blanc pur**, action principale **corail `#e8785c`** (texte bleu nuit dessus pour le contraste), contrepoint **cyan `#57bfd6`**, magenta `#d6248c` réservé à un seul usage. Jetons dans `src/styles/global.css` (noms historiques remappés) et `eventPalette` dans `src/styles/tokens.ts`.
+- **Typographie** : Poppins (300 à 600, jamais 700, pas d'interlettrage négatif), JetBrains Mono pour les chiffres et les kickers (capitales espacées + filet corail de 34 px).
+- **Logo** : disque en scanlines + logotype « 2026 : l'Odyssée de l'IA » (« IA » en corail), `src/ui/OdysseeLogo.tsx`, géométrie reprise telle quelle du skill.
+- **Musée 3D** : une couleur par aile (tokens « trois zones » de la charte) — Infrastructures **cyan vif `#6de4e5`**, Industrialisation **corail**, Culture **bleu néon `#4d8cff`** ; hall en accent corail (tapis, bannière bleu nuit à liseré corail) ; ciel et brouillard bleu nuit `#071336`.
+- Les sections « Palette » et « Interface » ci-dessous décrivent la V1 (univers crème/bois) : elles restent valables pour les matières 3D, pas pour l'interface.
+
 ## Palette (voir `src/styles/tokens.ts`)
 
 | Rôle | Couleur |

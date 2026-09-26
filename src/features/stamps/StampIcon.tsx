@@ -2,10 +2,11 @@
 import { wingThemes } from '../../styles/tokens'
 import { ARCHIVES_INK, type StampId } from './stamps'
 
-const PENDING_COLOR = '#c9c2b6'
+const PENDING_COLOR = '#5a6a98'
 
 function inkFor(wing: StampId): string {
-  return wing === 'archives' ? ARCHIVES_INK : wingThemes[wing].trim
+  // Sur le carnet bleu nuit de la charte : l'accent vif de l'aile, pas sa teinte sombre.
+  return wing === 'archives' ? ARCHIVES_INK : wingThemes[wing].accent
 }
 
 /**
