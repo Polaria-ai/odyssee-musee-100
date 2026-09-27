@@ -1,7 +1,8 @@
 # Modèles 3D — Les Archives de 2040
 
 Voir `docs/ASSETS.md` pour les règles générales (licences, pipeline). Cette page consigne les modèles
-utilisés par le module « salle 3D et Porte de 2040 » (WEL-881).
+utilisés par le module « salle 3D » (WEL-881). Depuis le plan en croix (WEL-888, 27/09), la salle est
+accrochée au sud du hall et se rejoint à pied : l'anneau de l'ancienne « Porte de 2040 » a été retiré.
 
 ## Choix de conception : décor fixe en modèles, vitrines en géométrie procédurale
 
@@ -10,7 +11,7 @@ des géométries three.js procédurales partagées (`CylinderGeometry`, `Icosahe
 `PlaneGeometry`), comme le reste du jeu (`src/world/PortraitFrame.tsx`, `src/features/stamps/StampStations.tsx`).
 Un modèle CC0 (2 à 4 primitives GLB chacun) répété 24 fois dépasserait largement le budget mobile
 (≤ 150 appels de dessin **visibles**, voir `docs/DESIGN.md`) : les modèles Kenney sont donc réservés au
-décor **fixe** de la salle (podium, anneaux de la Porte de 2040, quelques accents), dont le nombre
+décor **fixe** de la salle (quelques accents), dont le nombre
 d'instances ne dépend jamais du nombre de séquences.
 
 Le Space Kit n'a pas de modèle de flore : les « plantes futuristes » demandées sont remplacées par des
@@ -20,14 +21,13 @@ cristaux (`rock_crystals`), plus cohérents avec un pack sans nature.
 
 | Fichier publié | Pack d'origine | Modèle d'origine | Usage | Retouches |
 |---|---|---|---|---|
-| `public/models/archives/pipe_ringHighEnd.glb` | Space Kit | `pipe_ringHighEnd.glb` | Anneau de la Porte de 2040 (aller, dans le hall, et retour, dans la salle) | Reteinté (matériau partagé, couleur accent de l'aile Archives), mis à l'échelle pour ≈ 2,6 m |
-| `public/models/archives/satelliteDish.glb` | Space Kit | `satelliteDish.glb` | Antennes décoratives (2 exemplaires fixes, entrée de la salle) | Reteintées (couleur `trim`) |
+| `public/models/archives/satelliteDish.glb` | Space Kit | `satelliteDish.glb` | Antennes décoratives (2 exemplaires fixes, angles nord, de part et d'autre de la porte) | Reteintées (couleur `trim`) |
 | `public/models/archives/rock_crystals.glb` | Space Kit | `rock_crystals.glb` | Cristaux décoratifs (tiennent lieu de « plantes futuristes », 2 exemplaires fixes) | Reteintés (cyan et or, couleurs d'état des vitrines) |
 
 Sources : `~/Dev/odyssee-musee-100-assets/kenney/kenney_space-kit/Models/GLTF format/` (téléchargé le
 25/09/2026, CC0, voir `docs/ASSETS.md`). Copiés bruts dans `assets-src/archives/` (non versionné),
 optimisés par `node scripts/optimize-assets.mjs archives` → `public/models/archives/` (meshopt,
-textures WebP ≤ 512 px, aucun modèle > 400 Ko — les 3 fichiers optimisés pèsent 19 Ko au total).
+textures WebP ≤ 512 px, aucun modèle > 400 Ko — les fichiers optimisés pèsent quelques Ko).
 
 Le podium et le dôme initialement prévus pour l'Archiviste (`platform_low.glb`, `hangar_roundGlass.glb`)
 ont été retirés : `src/archives/Archivist.tsx` (autre phase de ce même workflow, développée en

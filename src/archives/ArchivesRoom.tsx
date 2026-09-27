@@ -1,7 +1,7 @@
 /**
  * Salle des Archives de 2040 : rendu 3D complet (voir `docs/DESIGN.md`, `docs/ARCHITECTURE.md`).
- * Assemble l'ambiance fixe (`room/RoomShell.tsx`), la Porte de 2040 aller/retour (`room/Portal.tsx`) et
- * une vitrine par séquence (`room/Vitrine.tsx`). Propriétaire : workflow « Archives de 2040 » (module
+ * Assemble l'ambiance fixe (`room/RoomShell.tsx`), l'Archiviste et une vitrine par séquence
+ * (`room/Vitrine.tsx`). La salle est accrochée au sud du hall et se rejoint à pied (WEL-888). Propriétaire : workflow « Archives de 2040 » (module
  * salle 3D, WEL-881). Contrat (signature) : voir `docs/ARCHITECTURE.md`.
  */
 import { useFrame } from '@react-three/fiber'
@@ -12,7 +12,6 @@ import { player } from '../state/runtime'
 import { dims } from '../styles/tokens'
 import { pointInAabb } from '../world/collision'
 import { RoomShell } from './room/RoomShell'
-import { ArchivesPortals } from './room/Portal'
 import { Vitrine, pulseIdleCapsule } from './room/Vitrine'
 import { PROXIMITY_CHECK_INTERVAL } from './room/constants'
 import { Archivist } from './Archivist'
@@ -66,7 +65,6 @@ export function ArchivesRoom({ archives }: { archives: ArchivesLayout }) {
   return (
     <group>
       <RoomShell archives={archives} lang={lang} />
-      <ArchivesPortals archives={archives} />
       <Archivist placement={archives.archivist} />
       {archives.slots.map((slot) => {
         const session = sessionById.get(slot.sessionId)

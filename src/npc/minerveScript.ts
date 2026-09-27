@@ -10,7 +10,7 @@ export type MinerveEvent =
   | { kind: 'welcome' }
   /**
    * `archivesToVisit` (optionnel) : vrai si le programme de la soirée est chargé et qu'aucune
-   * archive n'a encore été consultée — ajoute un conseil sur la Porte de 2040. Absent ou faux :
+   * archive n'a encore été consultée — ajoute un conseil sur la porte des Archives (sud du hall). Absent ou faux :
    * comportement inchangé (voir `docs/ARCHITECTURE.md`, contrat de `gameStore.interact()`).
    */
   | { kind: 'talk'; visitedCount: number; stampsCount: number; total: number; archivesToVisit?: boolean }
@@ -74,8 +74,8 @@ function welcomeDialogue(): Dialogue {
       'happy',
     ),
     line(
-      "Autre chose : à droite de l'entrée, une porte scintillante mène aux Archives de 2040. Curieux·se ? Vas-y jeter un œil !",
-      "One more thing: to the right of the entrance, a shimmering door leads to the 2040 Archives. Curious? Go take a peek!",
+      "Autre chose : juste derrière toi, en bas du hall, une porte mène aux Archives de 2040. Curieux·se ? Vas-y jeter un œil !",
+      "One more thing: right behind you, at the bottom of the hall, a door leads to the 2040 Archives. Curious? Go take a peek!",
       'surprised',
     ),
   ])
@@ -185,8 +185,8 @@ function talkStampsVariants(stampsCount: number): readonly Dialogue[] {
 /** Conseil ajouté en fin de dialogue quand le programme est chargé et qu'aucune archive n'est visitée. */
 function archivesHintLine(): DialogueLine {
   return line(
-    "Au fait : une porte scintillante près de l'entrée mène aux Archives de 2040, à voir si ce n'est pas déjà fait !",
-    "By the way: a shimmering door near the entrance leads to the 2040 Archives — worth a look if you haven't yet!",
+    "Au fait : la porte en bas du hall, derrière l'entrée, mène aux Archives de 2040. À voir si ce n'est pas déjà fait !",
+    "By the way: the door at the bottom of the hall, behind the entrance, leads to the 2040 Archives. Worth a look if you haven't yet!",
     'thinking',
   )
 }

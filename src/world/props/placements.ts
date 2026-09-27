@@ -20,8 +20,8 @@
  * `layout.colliders`) : voir `hallExtras`/`infraExtras`/`indusExtras`/`cultureExtras` et `allPropPlans`
  * (fonction consommée par `RoomProps.tsx`, remplace `propPlansFromArchitecture` seule). Chaque position
  * choisie à la main (géométrie des salles, jamais aléatoire) est vérifiée par `isClearSpot` (murs/meubles/
- * cimaises déjà connus via `layout.colliders`, corridor de vue d'un cadre, `hallReservedSpots.timePortal`,
- * les trois portes du hall) — un candidat qui échoue est simplement filtré (jamais de crash), voir
+ * cimaises déjà connus via `layout.colliders`, corridor de vue d'un cadre,
+ * les quatre portes du hall, dont la porte sud des Archives) — un candidat qui échoue est simplement filtré (jamais de crash), voir
  * `placements.test.ts` pour la vérification que TOUS les candidats ci-dessous passent réellement ce test,
  * sur plusieurs répartitions de personnes (le nombre de rangées d'une aile ne change ni l'ancrage sur
  * `farWallX`, ni la zone d'entrée avant la 1ère rangée — voir le commentaire de chaque fonction).
@@ -217,14 +217,14 @@ function hallExtras(architecture: MuseumArchitecture): ExtraItem[] {
   const items: ExtraItem[] = []
 
   // Deux bancs de plus (4 au total avec les 2 déjà posés par l'architecture), le long des murs est/ouest,
-  // à l'écart des piliers/jardinières d'angle et de la Porte de 2040.
+  // à l'écart des piliers/jardinières d'angle et de la porte sud des Archives.
   items.push({ wing: 'hall', key: 'hallBench', tint: 'wood', fit: { mode: 'height', target: 0.5 }, position: { x: -9.0, z: 1.0 }, rotationY: Math.PI / 2, mountY: 0 })
   items.push({ wing: 'hall', key: 'hallBench', tint: 'wood', fit: { mode: 'height', target: 0.5 }, position: { x: 9.0, z: 1.0 }, rotationY: -Math.PI / 2, mountY: 0 })
 
   // Une jardinière basse à côté de chaque pilier (variantes 1/2 en alternance) : « grandes près des
   // colonnes » (les 4 grandes jardinières d'angle existent déjà, `architecture.decor.planters`).
-  // Décalages choisis à la main par pilier (pas de formule générique : le pilier le plus proche de la
-  // Porte de 2040, `pillars[3]`, doit s'écarter vers le hall — pas vers la porte — voir `isClearSpot`).
+  // Décalages choisis à la main par pilier (pas de formule générique : le pilier `pillars[3]`
+  // s'écarte vers le hall, jamais vers une porte — voir `isClearSpot`).
   const nearPillars: Array<{ p: Vec2; dx: number; dz: number; key: PropModelKey }> = [
     { p: pillars[0], dx: -0.85, dz: -0.55, key: 'hallPlanterSmall1' },
     { p: pillars[1], dx: 0.85, dz: -0.55, key: 'hallPlanterSmall2' },

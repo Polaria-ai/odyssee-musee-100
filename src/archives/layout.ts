@@ -2,29 +2,37 @@
  * Plan de la salle des Archives de 2040 — fonction pure et déterministe : mêmes entrées → même sortie.
  * Propriétaire : workflow « Archives de 2040 » (module salle 3D, WEL-881). Contrat : voir docs/ARCHITECTURE.md.
  *
- * Frise chronologique en rangées : le joueur arrive au sud (face au nord) et remonte les rangées de
- * vitrines (toujours face à +Z, jamais accrochées à un mur) jusqu'à l'Archiviste, au fond nord. Voir
- * `room/constants.ts` pour la justification de « toujours +Z ».
+ * Plan en croix (décision de Baptiste du 27/09, WEL-888) : la salle est accrochée au sud du hall,
+ * derrière le point d'arrivée, et rejointe à pied par la porte `tokens.archivesDoor` du mur sud du
+ * hall — plus aucun portail. Le joueur entre au nord et descend une frise chronologique en rangées
+ * de vitrines (toujours face à +Z, jamais accrochées à un mur, voir `room/constants.ts`).
  */
 import type { AABB, ArchivesLayout, ArchiveSlot, EveningSession, MuseumLayout, Placement, Vec2 } from '../types'
-import { hallReservedSpots, wingThemes } from '../styles/tokens'
+import { archivesDoor, wingThemes } from '../styles/tokens'
 import { aabb, xWall, zWall } from '../world/collision'
 import { archivesRoomStrings } from './strings'
 import {
-  ENTRANCE_CLEARANCE,
-  NORTH_CLEARANCE,
-  ROOM_HALF_DEPTH,
+  DOOR_CLEARANCE,
+  ROOM_DEPTH,
   ROOM_HALF_WIDTH,
   ROW_DEPTH,
   ROW_X_OFFSETS,
   SOCLE_HEIGHT,
+  SOUTH_CLEARANCE,
   VITRINE_FOOTPRINT_RADIUS,
   VITRINE_VIEW_DISTANCE,
   WALL_THICKNESS,
 } from './room/constants'
 
-/** Centre de la salle des Archives : loin du musée, on y arrive par la Porte de 2040 (téléportation, jamais à pied). */
-export const ARCHIVES_ORIGIN = { x: 0, z: 80 } as const
+/** Pupitre du panneau d'entrée (à l'ouest de la porte) : demi-emprise au sol, en mètres. */
+export const ENTRANCE_LECTERN = { dx: -3.4, dz: 1.6, halfWidth: 1.15, halfDepth: 0.3 } as const
+/** Archiviste, à l'est de la porte : assez loin du mur pour ne jamais répondre à un joueur resté dans le hall. */
+const ARCHIVIST_OFFSET = { dx: 3.6, dz: 2.8 } as const
+
+/** Emprise de la salle accrochée au mur sud d'un hall donné (fonction pure). */
+export function archivesBounds(hall: AABB): AABB {
+  return aabb(archivesDoor.x - ROOM_HALF_WIDTH, archivesDoor.x + ROOM_HALF_WIDTH, hall.maxZ, hall.maxZ + ROOM_DEPTH)
+}
 
 interface Candidate {
   position: [number, number, number]
@@ -37,8 +45,8 @@ function sortSessions(sessions: EveningSession[]): EveningSession[] {
 }
 
 /**
- * Candidats de la frise, rangée par rangée en descendant depuis l'entrée (sud) vers l'Archiviste
- * (nord) : chaque rangée aligne `ROW_X_OFFSETS.length` vitrines, toutes face à +Z. Fonction pure,
+ * Candidats de la frise, rangée par rangée en descendant depuis la porte (nord) vers le fond de la
+ * salle (sud) : chaque rangée aligne `ROW_X_OFFSETS.length` vitrines, toutes face à +Z. Fonction pure,
  * indépendante du nombre de séquences réelles : testée pour une capacité ≥ 24 (voir layout.test.ts).
  *
  * Rangées en serpentin (une sur deux part de l'autre côté) : deux séquences consécutives du
@@ -50,10 +58,10 @@ function sortSessions(sessions: EveningSession[]): EveningSession[] {
  */
 function buildCandidates(bounds: AABB, originX: number): Candidate[] {
   const candidates: Candidate[] = []
-  const firstRowZ = bounds.maxZ - ENTRANCE_CLEARANCE
-  const lastRowZ = bounds.minZ + NORTH_CLEARANCE
+  const firstRowZ = bounds.minZ + DOOR_CLEARANCE
+  const lastRowZ = bounds.maxZ - SOUTH_CLEARANCE
   let rowIndex = 0
-  for (let z = firstRowZ; z >= lastRowZ; z -= ROW_DEPTH) {
+  for (let z = firstRowZ; z <= lastRowZ + 1e-9; z += ROW_DEPTH) {
     const offsets = rowIndex % 2 === 0 ? ROW_X_OFFSETS : [...ROW_X_OFFSETS].reverse()
     for (const dx of offsets) {
       const x = originX + dx
@@ -64,12 +72,18 @@ function buildCandidates(bounds: AABB, originX: number): Candidate[] {
   return candidates
 }
 
-/** Colliders de la salle (murs + socles des vitrines + podium de l'Archiviste), pour le plan complet. */
+/**
+ * Colliders de la salle, pour le plan complet. Le mur nord est percé de la porte (il double le mur
+ * sud du hall, déjà percé au même endroit) : la salle reste close même testée seule.
+ */
 function buildColliders(bounds: AABB, slots: ArchiveSlot[], archivist: Placement): AABB[] {
+  const doorMin = archivesDoor.x - archivesDoor.width / 2
+  const doorMax = archivesDoor.x + archivesDoor.width / 2
   const colliders: AABB[] = [
-    // Mur sud (côté caméra), coupé bas au rendu (voir ArchivesRoom) mais collider plein comme les autres.
+    // Mur sud (côté caméra), coupé bas au rendu (voir RoomShell) mais collider plein comme les autres.
     xWall(bounds.maxZ, bounds.minX, bounds.maxX, WALL_THICKNESS),
-    xWall(bounds.minZ, bounds.minX, bounds.maxX, WALL_THICKNESS),
+    xWall(bounds.minZ, bounds.minX, doorMin, WALL_THICKNESS),
+    xWall(bounds.minZ, doorMax, bounds.maxX, WALL_THICKNESS),
     zWall(bounds.minX, bounds.minZ, bounds.maxZ, WALL_THICKNESS),
     zWall(bounds.maxX, bounds.minZ, bounds.maxZ, WALL_THICKNESS),
   ]
@@ -79,14 +93,20 @@ function buildColliders(bounds: AABB, slots: ArchiveSlot[], archivist: Placement
   }
   const pr = 0.4
   colliders.push(aabb(archivist.position.x - pr, archivist.position.x + pr, archivist.position.z - pr, archivist.position.z + pr))
+  const lx = archivesDoor.x + ENTRANCE_LECTERN.dx
+  const lz = bounds.minZ + ENTRANCE_LECTERN.dz
+  colliders.push(aabb(lx - ENTRANCE_LECTERN.halfWidth, lx + ENTRANCE_LECTERN.halfWidth, lz - ENTRANCE_LECTERN.halfDepth, lz + ENTRANCE_LECTERN.halfDepth))
   return colliders
 }
 
-/** Plan de la salle des Archives pour les séquences données (une vitrine par séquence, 0 à 24). */
-export function buildArchivesLayout(sessions: EveningSession[]): ArchivesLayout {
+/**
+ * Plan de la salle des Archives pour les séquences données (une vitrine par séquence, 0 à 24),
+ * accrochée au mur sud de `hall` (emprise du hall, voir `src/world/layout.ts`).
+ */
+export function buildArchivesLayout(sessions: EveningSession[], hall: AABB): ArchivesLayout {
   const theme = wingThemes.archives
-  const { x, z } = ARCHIVES_ORIGIN
-  const bounds = aabb(x - ROOM_HALF_WIDTH, x + ROOM_HALF_WIDTH, z - ROOM_HALF_DEPTH, z + ROOM_HALF_DEPTH)
+  const x = archivesDoor.x
+  const bounds = archivesBounds(hall)
 
   const ordered = sortSessions(sessions)
   const candidates = buildCandidates(bounds, x)
@@ -97,10 +117,9 @@ export function buildArchivesLayout(sessions: EveningSession[]): ArchivesLayout 
     viewPoint: candidates[i].viewPoint,
   }))
 
-  const archivist: Placement = { position: { x, z: bounds.minZ + 1.6 }, rotationY: 0 }
-  const arrival: Placement = { position: { x: x - 2.5, z: bounds.maxZ - 1.6 }, rotationY: Math.PI }
-  const returnPortal: Placement = { position: { x: x + 2.5, z: bounds.maxZ - 1.6 }, rotationY: 0 }
-  const hallPortal: Placement = { position: { x: hallReservedSpots.timePortal.x, z: hallReservedSpots.timePortal.z }, rotationY: 0 }
+  const archivist: Placement = { position: { x: x + ARCHIVIST_OFFSET.dx, z: bounds.minZ + ARCHIVIST_OFFSET.dz }, rotationY: 0 }
+  // Juste après le seuil, face au sud (rotationY 0 : le modèle regarde +Z), dans l'axe de la porte.
+  const arrival: Placement = { position: { x, z: bounds.minZ + 1.6 }, rotationY: 0 }
 
   return {
     room: {
@@ -114,8 +133,7 @@ export function buildArchivesLayout(sessions: EveningSession[]): ArchivesLayout 
     colliders: buildColliders(bounds, slots, archivist),
     slots,
     arrival,
-    hallPortal,
-    returnPortal,
+    door: { x, z: bounds.minZ, width: archivesDoor.width },
     archivist,
   }
 }
@@ -138,7 +156,6 @@ export function mergeArchivesIntoLayout(museum: MuseumLayout, archives: Archives
 
 /** Nombre maximal de vitrines que la salle peut accueillir (capacité de la frise). Utilisé par les tests. */
 export function archivesCapacity(): number {
-  const { x, z } = ARCHIVES_ORIGIN
-  const bounds = aabb(x - ROOM_HALF_WIDTH, x + ROOM_HALF_WIDTH, z - ROOM_HALF_DEPTH, z + ROOM_HALF_DEPTH)
-  return buildCandidates(bounds, x).length
+  const bounds = archivesBounds(aabb(-1, 1, -1, 0))
+  return buildCandidates(bounds, archivesDoor.x).length
 }

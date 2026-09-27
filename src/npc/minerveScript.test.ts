@@ -25,7 +25,7 @@ describe('minerveDialogue', () => {
     expectWellFormed(d)
   })
 
-  it('welcome : mentionne la Porte de 2040 / les Archives', () => {
+  it('welcome : mentionne les Archives de 2040', () => {
     const d = minerveDialogue({ kind: 'welcome' })
     expect(d.lines.some((l) => /2040/.test(l.text.fr))).toBe(true)
     expect(d.lines.some((l) => /2040/.test(l.text.en))).toBe(true)

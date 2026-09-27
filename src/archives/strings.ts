@@ -1,5 +1,5 @@
 /**
- * Textes de la salle des Archives de 2040 (galerie, vitrines, Porte de 2040). Propriétaire : workflow
+ * Textes de la salle des Archives de 2040 (galerie, vitrines, panneau d'entrée). Propriétaire : workflow
  * « Archives de 2040 » (module salle 3D, WEL-881). Section « salle » : d'autres phases (fiche
  * d'archive, dialogue de l'Archiviste) ajoutent leurs propres tables dans ce même fichier plus tard —
  * ne pas retirer les clés ci-dessous, en ajouter au besoin.
@@ -13,13 +13,7 @@ export const archivesRoomStrings = defineStrings({
   // Sous-titre du grand panneau d'entrée (room/textures.ts::drawEntranceSign) : date de la soirée,
   // pas une donnée personnelle — voir docs/DESIGN.md pour le nom de l'événement.
   eveningDate: { fr: 'Soirée du 6 octobre 2026', en: 'Evening of October 6, 2026' },
-
-  // Porte de 2040 : panneau dans le hall (aller) et panneau de la porte de retour (dans la salle).
-  gateTitle: { fr: 'Porte de 2040', en: 'Gate to 2040' },
-  gateSubtitleToArchives: { fr: 'Vers les Archives', en: 'To the Archives' },
-  gateSubtitleToHall: { fr: 'Retour au musée', en: 'Back to the museum' },
-
-  // Bandeau rappelant que le programme n'est pas confirmé (posé près de l'arrivée, dans la salle).
+  // Bandeau rappelant que le programme n'est pas confirmé (sur le panneau d'entrée, juste après la porte).
   provisionalBanner: { fr: 'Programme provisoire, susceptible d’évoluer', en: 'Provisional programme, subject to change' },
 })
 

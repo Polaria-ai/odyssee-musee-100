@@ -45,6 +45,7 @@ Unité : 1 m. Caméra fixe en orientation (regarde toujours vers −Z, légèrem
 
 - **Grand hall** (≈ 22 × 18 m) centré sur l'origine. Le joueur apparaît au sud, face au nord. Au centre-nord, le **comptoir en bois arrondi de Minerve**. Verrière au plafond suggérée par la lumière, 4 piliers, plantes en pot, bancs, grande bannière « Le Musée des 100 · L'Odyssée de l'IA », mosaïque au sol.
 - **Trois portes** (≈ 3,5 m, arche + bannière à la couleur de l'aile) : ouest → Infrastructures, nord → Industrialisation, est → Culture. Les trois ailes suivent les trois tables rondes de la soirée : *De la promesse aux infrastructures*, *De l'invention à l'industrialisation*, *De la réaction au changement de culture*.
+- **Plan en croix** (décision du 27/09, WEL-888) : une quatrième porte, au **sud** du hall, juste derrière le point d'apparition, mène à pied aux **Archives de 2040** (≈ 20 × 21 m). Pas de linteau (le mur sud est coupé bas, côté caméra), un seuil lumineux cyan. Dans la salle, rien de haut près de la porte : quand le joueur est dans le hall, la caméra survole la salle. Plus de portail ni de téléportation.
 - **Ailes** : longues galeries (≈ 10 m de large), longueur calculée selon le nombre de portraits. Portraits sur les murs latéraux + cimaises centrales double face si nécessaire. Doit accepter n'importe quelle répartition des 100 (y compris 100/0/0).
 - **Murs côté caméra coupés** (hauteur ≈ 1 m, effet maquette) pour ne jamais masquer le joueur.
 - Un **socle à tampon** à l'entrée de chaque aile.

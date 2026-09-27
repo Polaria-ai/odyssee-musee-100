@@ -1,5 +1,6 @@
 /**
- * E2E « Les Archives de 2040 » (salle rejointe depuis le hall par la Porte de 2040, WEL-885).
+ * E2E « Les Archives de 2040 » (WEL-885). Plan en croix (WEL-888) : la salle est accrochée au sud du
+ * hall et se rejoint à pied par la porte sud, derrière le point d'apparition — plus aucun portail.
  *
  * Comme `e2e/support/museeApi.ts` (voir son en-tête), les types ci-dessous sont une copie locale et
  * volontairement minimale du contrat exposé par `window.__musee` (`src/scene/debugApi.ts`) et de
@@ -22,6 +23,7 @@ import {
   dismissWelcomeDialogue,
   enterMuseum,
   gotoMusee,
+  museePlayer,
   teleport,
   waitForRenderInfo,
 } from './support/museeApi'
@@ -54,8 +56,7 @@ interface ArchiveSlot {
 interface ArchivesLayout {
   slots: ArchiveSlot[]
   arrival: Placement
-  hallPortal: Placement
-  returnPortal: Placement
+  door: { x: number; z: number; width: number }
   archivist: Placement
 }
 
@@ -144,11 +145,23 @@ async function closeArchiveViaState(page: Page): Promise<void> {
   })
 }
 
-/** Amène le joueur en jeu, avec le programme de la soirée chargé (sessions + plan des Archives). */
-async function enterMuseumWithArchives(page: Page): Promise<ArchivesState> {
+/**
+ * Amène le joueur en jeu, avec le programme de la soirée chargé (sessions + plan des Archives).
+ *
+ * `greeted` (vrai par défaut) marque les Archives comme déjà découvertes : sinon, la première entrée
+ * dans la salle (y compris par `teleport`) ouvre l'accueil de l'Archiviste, qui masque le bouton
+ * d'action. Seuls les tests de l'accueil lui-même passent `greeted: false`.
+ */
+async function enterMuseumWithArchives(page: Page, { greeted = true }: { greeted?: boolean } = {}): Promise<ArchivesState> {
   await gotoMusee(page)
   await enterMuseum(page)
   await dismissWelcomeDialogue(page)
+  if (greeted) {
+    await page.evaluate(() => {
+      const musee = (globalThis as unknown as { __musee?: { state: () => { markArchivesDiscovered: () => boolean } } }).__musee
+      musee?.state().markArchivesDiscovered()
+    })
+  }
   const state = await archivesState(page)
   expect(state.sessions.length, 'le programme de la soirée doit être chargé (Supabase ou repli embarqué)').toBeGreaterThan(
     0,
@@ -157,59 +170,64 @@ async function enterMuseumWithArchives(page: Page): Promise<ArchivesState> {
   return state
 }
 
+/**
+ * Marche au clavier (touche maintenue) jusqu'à ce que `currentRoom` vaille `room`, puis relâche.
+ * ArrowDown → +Z (vers le bas de l'écran, donc vers le sud), ArrowUp → −Z (voir `physics.ts`).
+ */
+async function walkUntilRoom(page: Page, key: 'ArrowDown' | 'ArrowUp', room: string): Promise<void> {
+  await page.keyboard.down(key)
+  try {
+    await expect.poll(async () => (await archivesState(page)).currentRoom, { timeout: 8_000 }).toBe(room)
+  } finally {
+    await page.keyboard.up(key)
+  }
+}
+
+/** Place le joueur dans le hall, face à la porte sud (dans son axe), à quelques pas du seuil. */
+async function standBeforeSouthDoor(page: Page, archives: ArchivesLayout): Promise<void> {
+  await teleport(page, archives.door.x, archives.door.z - 1.8)
+  await expect.poll(async () => (await archivesState(page)).currentRoom).toBe('hall')
+}
+
 // ---------------------------------------------------------------------------
-// Porte de 2040 : aller, accueil de l'Archiviste, retour.
+// Porte sud du hall : aller et retour à pied, accueil de l'Archiviste.
 // ---------------------------------------------------------------------------
 
-test('Porte de 2040 franchissable : fondu puis salle des Archives', async ({ page }) => {
+test('porte sud du hall : on entre à pied dans les Archives, sans portail ni fondu', async ({ page }) => {
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
 
-  await teleport(page, archives.hallPortal.position.x, archives.hallPortal.position.z)
+  await standBeforeSouthDoor(page, archives)
+  await walkUntilRoom(page, 'ArrowDown', 'archives')
 
-  const fade = page.getByTestId('portal-fade')
-  await expect(fade).toBeVisible()
-  await expect(fade).toBeHidden({ timeout: 5_000 })
-
-  await expect.poll(async () => (await archivesState(page)).currentRoom).toBe('archives')
+  await expect(page.getByTestId('portal-fade')).toHaveCount(0)
+  expect((await museePlayer(page)).z, 'le joueur doit avoir franchi le seuil à pied').toBeGreaterThan(archives.door.z)
 })
 
-test('accueil de l’Archiviste à la première arrivée seulement ; retour au hall', async ({ page }) => {
-  const state = await enterMuseumWithArchives(page)
+test('accueil de l’Archiviste à la première arrivée seulement ; retour au hall à pied', async ({ page }) => {
+  const state = await enterMuseumWithArchives(page, { greeted: false })
   const archives = state.archivesLayout!
   expect(state.archivesDiscovered, 'ne doit pas être déjà découvert sur une session fraîche').toBe(false)
 
-  // Aller : hall → Archives.
-  await teleport(page, archives.hallPortal.position.x, archives.hallPortal.position.z)
-  const fade = page.getByTestId('portal-fade')
-  await expect(fade).toBeVisible()
-  await expect(fade).toBeHidden({ timeout: 5_000 })
-  await expect.poll(async () => (await archivesState(page)).currentRoom).toBe('archives')
+  // Aller : hall → Archives, par la porte sud.
+  await standBeforeSouthDoor(page, archives)
+  await walkUntilRoom(page, 'ArrowDown', 'archives')
 
-  // Dialogue d'accueil (« Tu viens de franchir la Porte de 2040… »), une seule fois.
+  // Dialogue d'accueil (« Te voici dans les Archives de 2040… »), une seule fois.
   const box = page.getByTestId('dialogue-box')
   await expect(box).toBeVisible()
   await expect(box).toContainText("L'Archiviste")
-  await expect(box).toContainText('la Porte de 2040')
+  await expect(box).toContainText('Archives de 2040')
   await closeAnyDialogue(page)
   await expect(box).toBeHidden()
   expect((await archivesState(page)).archivesDiscovered).toBe(true)
 
-  // Retour : Archives → hall.
-  await teleport(page, archives.returnPortal.position.x, archives.returnPortal.position.z)
-  await expect(fade).toBeVisible()
-  await expect(fade).toBeHidden({ timeout: 5_000 })
-  await expect.poll(async () => (await archivesState(page)).currentRoom).toBe('hall')
-
-  // Le verrou anti-rebond des anneaux (1,5 s, `PORTAL_TRIGGER_LOCK_SECONDS`) doit être purgé avant
-  // de retraverser, sans quoi le second passage par la Porte de 2040 ne se déclencherait pas.
-  await page.waitForTimeout(1_800)
+  // Retour : Archives → hall, par la même porte.
+  await teleport(page, archives.arrival.position.x, archives.arrival.position.z)
+  await walkUntilRoom(page, 'ArrowUp', 'hall')
 
   // Deuxième arrivée : pas de nouveau dialogue d'accueil.
-  await teleport(page, archives.hallPortal.position.x, archives.hallPortal.position.z)
-  await expect(fade).toBeVisible()
-  await expect(fade).toBeHidden({ timeout: 5_000 })
-  await expect.poll(async () => (await archivesState(page)).currentRoom).toBe('archives')
+  await walkUntilRoom(page, 'ArrowDown', 'archives')
   await page.waitForTimeout(500)
   await expect(box).toBeHidden()
 })
@@ -341,17 +359,20 @@ test('carnet : compteur « n/4 » et 4e tampon (Archives) après 3 archives cons
   await expect(card).toBeHidden()
 })
 
-test('plan du musée : encart des Archives et marqueur de la Porte de 2040', async ({ page }) => {
+test('plan du musée : la salle des Archives est dans le plan, reliée au hall', async ({ page }) => {
   await enterMuseumWithArchives(page)
 
   await page.getByTestId('map-button').click()
   const map = page.getByTestId('museum-map')
   await expect(map).toBeVisible()
 
-  const archivesPanel = page.getByTestId('map-archives')
-  await expect(archivesPanel).toBeVisible()
-  await expect(archivesPanel).toContainText('Les Archives de 2040')
-  await expect(page.getByTestId('map-portal-marker')).toBeVisible()
+  // Hall + 3 ailes + Archives, à la même échelle ; plus d'encart ni de pictogramme de portail.
+  await expect(map.locator('.ui-map__plan svg .ui-map__room')).toHaveCount(5)
+  await expect(page.getByTestId('map-portal-marker')).toHaveCount(0)
+  const legend = page.getByTestId('map-archives')
+  await expect(legend).toBeVisible()
+  await expect(legend).toContainText('Archives de 2040')
+  await expect(page.getByTestId('map-archives-count')).toContainText('archives consultées')
 
   await page.keyboard.press('Escape')
   await expect(map).toBeHidden()
@@ -486,12 +507,9 @@ test('aucune erreur console sur le parcours complet des Archives', async ({ page
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
 
-  // Porte de 2040 : aller.
-  await teleport(page, archives.hallPortal.position.x, archives.hallPortal.position.z)
-  const fade = page.getByTestId('portal-fade')
-  await expect(fade).toBeVisible()
-  await expect(fade).toBeHidden({ timeout: 5_000 })
-  await closeAnyDialogue(page) // accueil de l'Archiviste
+  // Porte sud du hall : aller à pied.
+  await standBeforeSouthDoor(page, archives)
+  await walkUntilRoom(page, 'ArrowDown', 'archives')
 
   // Une vitrine.
   const slot = archives.slots[0]
@@ -516,10 +534,9 @@ test('aucune erreur console sur le parcours complet des Archives', async ({ page
   await expect(page.getByTestId('museum-map')).toBeVisible()
   await page.keyboard.press('Escape')
 
-  // Retour au hall.
-  await teleport(page, archives.returnPortal.position.x, archives.returnPortal.position.z)
-  await expect(fade).toBeVisible()
-  await expect(fade).toBeHidden({ timeout: 5_000 })
+  // Retour au hall à pied.
+  await teleport(page, archives.arrival.position.x, archives.arrival.position.z)
+  await walkUntilRoom(page, 'ArrowUp', 'hall')
 
   expect(issues.errors, issues.errors.join('\n')).toEqual([])
   expect(issues.pageErrors, issues.pageErrors.join('\n')).toEqual([])

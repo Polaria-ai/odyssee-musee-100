@@ -14,10 +14,11 @@ import { useGame } from '../state/gameStore'
 import { player as runtimePlayer } from '../state/runtime'
 import { palette, wingThemes } from '../styles/tokens'
 import { ARCHIVIST_NAME } from './archivistScript'
+import { ARCHIVIST_TALK_RADIUS } from './room/constants'
 
 // --- Réglages -----------------------------------------------------------------
 /** Portée de détection du joueur (contrat) : identique à `store.setNearArchivist`. */
-const ARCHIVIST_RADIUS = 2.6
+const ARCHIVIST_RADIUS = ARCHIVIST_TALK_RADIUS
 const NEARBY_CHECK_INTERVAL = 0.15 // ~150 ms, comme les autres sondes de proximité du jeu
 const CORE_BASE_Y = 1.35
 const BUBBLE_BASE_Y = 2.55

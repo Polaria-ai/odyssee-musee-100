@@ -1,9 +1,9 @@
 /**
- * Textes des Archives de 2040 (fiche d'archive, plan, fondu de la Porte de 2040, libellés du HUD).
+ * Textes des Archives de 2040 (fiche d'archive, plan, libellés du HUD).
  * Propriétaire : workflow « Archives de 2040 » (module interface).
  *
  * Nommé `cardStrings.ts` (pas `strings.ts`) : `src/i18n/strings.test.ts` ne vérifie que les fichiers
- * `strings.ts` — les tests de ce module (`ArchiveCard.test.tsx`, `PortalFade.test.tsx`) couvrent donc
+ * `strings.ts` — les tests de ce module (`ArchiveCard.test.tsx`) couvrent donc
  * eux-mêmes la présence FR/EN des clés ci-dessous.
  */
 import { defineStrings } from '../i18n'
@@ -50,15 +50,6 @@ export const cardStrings = defineStrings({
   hudConsultArchive: { fr: "Consulter l'archive", en: 'Consult the archive' },
   hudTalkArchivist: { fr: "Parler à l'Archiviste", en: 'Talk to the Archivist' },
 
-  // Porte de 2040 (fondu plein écran)
-  portalToArchives: { fr: 'Voyage vers 2040…', en: 'Traveling to 2040…' },
-  portalToHall: { fr: 'Retour en 2026…', en: 'Returning to 2026…' },
-
-  // Plan du musée : encart des Archives
-  archivesMapTitle: {
-    fr: 'Les Archives de 2040 · par la Porte de 2040',
-    en: 'The 2040 Archives · through the 2040 Gate',
-  },
-  archivesMapPortalLabel: { fr: 'Porte de 2040', en: '2040 Gate' },
+  // Plan du musée : compteur de la salle des Archives (étiquette et légende)
   archivesMapCount: { fr: '{seen}/{total} archives consultées', en: '{seen}/{total} archives visited' },
 })

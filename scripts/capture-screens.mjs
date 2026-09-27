@@ -70,6 +70,31 @@ async function session(name, contextOptions) {
   await shot('09-pres-minerve', 2000)
   await page.evaluate(() => window.__musee.state().setStampCardOpen(true))
   await shot('10-carnet', 1200)
+  await page.evaluate(() => window.__musee.state().setStampCardOpen(false))
+
+  // Plan en croix (WEL-888) : porte sud du hall, salle des Archives, retour, plan.
+  const archives = await page.evaluate(() => {
+    const a = window.__musee.state().archivesLayout
+    return { door: a.door, arrival: a.arrival.position, archivist: a.archivist.position, slots: a.slots.map((s) => s.viewPoint) }
+  })
+  await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [archives.door.x, archives.door.z - 1.6])
+  await shot('11-hall-porte-sud', 2000)
+  await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [archives.archivist.x, archives.door.z - 0.8])
+  await shot('12-hall-bord-sud-est', 2000)
+  await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [archives.arrival.x, archives.arrival.z])
+  await shot('13-archives-accueil', 3000)
+  await page.evaluate(() => window.__musee.state().closeDialogue())
+  await shot('14-archives-arrivee', 1200)
+  await page.evaluate(([x, z]) => window.__musee.teleport(x, z + 1.4), [archives.archivist.x, archives.archivist.z])
+  await shot('15-archives-archiviste', 2000)
+  const mid = archives.slots[Math.floor(archives.slots.length / 2)]
+  await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [mid.x, mid.z])
+  await shot('16-archives-milieu', 2000)
+  const last = archives.slots[archives.slots.length - 1]
+  await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [last.x, last.z])
+  await shot('17-archives-fond', 2000)
+  await page.evaluate(() => window.__musee.state().setMapOpen(true))
+  await shot('18-plan', 1200)
   console.log(name, errors.length ? `erreurs : ${errors.join(' | ')}` : 'aucune erreur de page')
   await ctx.close()
 }

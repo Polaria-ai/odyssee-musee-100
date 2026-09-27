@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { EveningSession, Vec2 } from '../types'
-import { ARCHIVES_ORIGIN, archivesCapacity, buildArchivesLayout, mergeArchivesIntoLayout } from './layout'
+import { archivesCapacity, buildArchivesLayout, mergeArchivesIntoLayout } from './layout'
 import { circleIntersectsAabb, pointInAabb } from '../world/collision'
-import { dims, hallReservedSpots } from '../styles/tokens'
+import { archivesDoor, dims } from '../styles/tokens'
 import { buildMuseumLayout } from '../world/layout'
 import { generatePlaceholderPeople } from '../data/placeholder'
-import { ROW_DEPTH, ROW_X_OFFSETS } from './room/constants'
+import { ARCHIVIST_TALK_RADIUS, DOOR_CLEARANCE, ROW_DEPTH, ROW_X_OFFSETS } from './room/constants'
 
 const GRID_STEP = 0.25
 const KINDS: EveningSession['kind'][] = ['ouverture', 'film', 'presentation', 'keynote', 'les100', 'magneto', 'table-ronde', 'face-a-face', 'final', 'cloture']
@@ -89,12 +89,16 @@ describe('archivesCapacity', () => {
 
 const counts = [0, 1, 5, 12, 18, 24]
 
+/** Hall du musée réel (même emprise quel que soit le nombre de portraits). */
+const museum = buildMuseumLayout(generatePlaceholderPeople(100))
+const hall = museum.rooms.find((r) => r.id === 'hall')!.bounds
+
 describe.each(counts)('buildArchivesLayout — %i séquence(s)', (count) => {
   const sessions = makeSessions(count)
-  const layout = buildArchivesLayout(sessions)
+  const layout = buildArchivesLayout(sessions, hall)
 
   it('déterminisme : deux appels identiques donnent le même JSON', () => {
-    expect(JSON.stringify(buildArchivesLayout(sessions))).toBe(JSON.stringify(layout))
+    expect(JSON.stringify(buildArchivesLayout(sessions, hall))).toBe(JSON.stringify(layout))
   })
 
   it('une vitrine par séquence, dans le même ordre', () => {
@@ -137,34 +141,60 @@ describe.each(counts)('buildArchivesLayout — %i séquence(s)', (count) => {
     }
   })
 
-  it('arrivée et porte de retour sont hors colliders et dans la salle', () => {
-    for (const placement of [layout.arrival, layout.returnPortal]) {
-      expect(pointInAabb(placement.position, layout.room.bounds)).toBe(true)
-      for (const c of layout.colliders) {
-        expect(circleIntersectsAabb(placement.position, dims.playerRadius, c)).toBe(false)
-      }
+  it('l’arrivée est hors colliders, dans la salle, juste après la porte et face au sud', () => {
+    expect(pointInAabb(layout.arrival.position, layout.room.bounds)).toBe(true)
+    for (const c of layout.colliders) {
+      expect(circleIntersectsAabb(layout.arrival.position, dims.playerRadius, c)).toBe(false)
     }
+    expect(layout.arrival.position.x).toBeCloseTo(archivesDoor.x)
+    expect(layout.arrival.position.z - layout.room.bounds.minZ).toBeLessThan(DOOR_CLEARANCE)
+    expect(layout.arrival.rotationY).toBeCloseTo(0)
   })
 
   // L'Archiviste est un obstacle (son podium a un collider, comme le comptoir de Minerve dans
   // src/world/layout.ts) : le joueur l'approche à portée d'interaction, il ne se tient jamais
   // exactement sur son point — seul `layout.archivist.position` doit rester dans la salle.
-  it('l’Archiviste est dans la salle, dans l’alcôve nord (loin des murs est/ouest)', () => {
-    expect(pointInAabb(layout.archivist.position, layout.room.bounds)).toBe(true)
-    expect(layout.archivist.position.z).toBeLessThan(ARCHIVES_ORIGIN.z)
+  it('l’Archiviste accueille près de la porte, avant la première rangée, hors du passage', () => {
+    const p = layout.archivist.position
+    expect(pointInAabb(p, layout.room.bounds)).toBe(true)
+    expect(p.z - layout.room.bounds.minZ).toBeLessThan(DOOR_CLEARANCE)
+    expect(Math.abs(p.x - archivesDoor.x)).toBeGreaterThan(archivesDoor.width / 2 + 1)
   })
 
-  it('arrivée face au nord (−Z), près de l’entrée', () => {
-    expect(layout.arrival.rotationY).toBeCloseTo(Math.PI)
-    expect(layout.arrival.position.z).toBeGreaterThan(ARCHIVES_ORIGIN.z)
+  // Régression possible du plan en croix : un Archiviste trop près du mur répondrait « Parler à
+  // l'Archiviste » à un joueur resté dans le hall, de l'autre côté du mur.
+  it('l’Archiviste est hors de portée de tout joueur resté dans le hall', () => {
+    const hallMaxPlayerZ = hall.maxZ - dims.wallThickness / 2 - dims.playerRadius
+    const p = layout.archivist.position
+    expect(p.z - hallMaxPlayerZ).toBeGreaterThan(ARCHIVIST_TALK_RADIUS)
   })
 
-  it('un chemin libre existe de l’arrivée à chaque viewPoint et à la porte de retour', () => {
-    const grid = buildWalkGrid(layout.room.bounds, layout.colliders)
-    for (const s of layout.slots) {
-      expect(isReachable(grid, layout.arrival.position, s.viewPoint), `pas de chemin vers ${s.sessionId}`).toBe(true)
+  it('la salle est accrochée au mur sud du hall, porte dans l’axe de tokens.archivesDoor', () => {
+    expect(layout.room.bounds.minZ).toBe(hall.maxZ)
+    expect(layout.door).toEqual({ x: archivesDoor.x, z: hall.maxZ, width: archivesDoor.width })
+    expect(layout.room.bounds.minX).toBeGreaterThanOrEqual(hall.minX)
+    expect(layout.room.bounds.maxX).toBeLessThanOrEqual(hall.maxX)
+  })
+
+  it('l’embrasure de la porte est libre (aucun collider de la salle dedans)', () => {
+    const threshold = { x: archivesDoor.x, z: layout.door.z }
+    for (const dx of [-0.6, 0, 0.6]) {
+      const p = { x: threshold.x + dx, z: threshold.z }
+      for (const c of layout.colliders) {
+        expect(circleIntersectsAabb(p, dims.playerRadius, c), `seuil (${p.x}, ${p.z}) bloqué`).toBe(false)
+      }
     }
-    expect(isReachable(grid, layout.arrival.position, layout.returnPortal.position)).toBe(true)
+  })
+
+  it('à pied depuis le point d’apparition du hall : chaque vitrine et l’Archiviste sont atteignables', () => {
+    const merged = mergeArchivesIntoLayout(museum, layout)
+    const grid = buildWalkGrid(merged.bounds, merged.colliders)
+    for (const s of layout.slots) {
+      expect(isReachable(grid, museum.spawn.position, s.viewPoint), `pas de chemin vers ${s.sessionId}`).toBe(true)
+    }
+    const talkSpot = { x: layout.archivist.position.x, z: layout.archivist.position.z + 1.4 }
+    expect(isReachable(grid, museum.spawn.position, talkSpot)).toBe(true)
+    expect(isReachable(grid, museum.spawn.position, layout.arrival.position)).toBe(true)
   })
 
   // Régression : une première version enchaînait les rangées toujours dans le même sens, si bien que
@@ -184,33 +214,35 @@ describe.each(counts)('buildArchivesLayout — %i séquence(s)', (count) => {
     }
   })
 
-  it('la Porte de 2040 (hall) est dans la zone réservée du hall', () => {
-    const z = hallReservedSpots.timePortal
-    const dx = layout.hallPortal.position.x - z.x
-    const dz = layout.hallPortal.position.z - z.z
-    expect(Math.hypot(dx, dz)).toBeLessThanOrEqual(z.radius)
+  it('la frise part de la porte : la première séquence est la plus au nord', () => {
+    if (layout.slots.length < 2) return
+    const zs = layout.slots.map((s) => s.position[2])
+    expect(zs[0]).toBe(Math.min(...zs))
   })
 })
 
 describe('mergeArchivesIntoLayout', () => {
   it('ajoute la salle, ses colliders et étend les bounds, sans muter le musée reçu', () => {
-    const museum = buildMuseumLayout(generatePlaceholderPeople(30))
-    const before = JSON.stringify(museum)
-    const archives = buildArchivesLayout(makeSessions(10))
-    const merged = mergeArchivesIntoLayout(museum, archives)
+    const small = buildMuseumLayout(generatePlaceholderPeople(30))
+    const before = JSON.stringify(small)
+    const smallHall = small.rooms.find((r) => r.id === 'hall')!.bounds
+    const archives = buildArchivesLayout(makeSessions(10), smallHall)
+    const merged = mergeArchivesIntoLayout(small, archives)
 
-    expect(JSON.stringify(museum)).toBe(before) // pas de mutation
+    expect(JSON.stringify(small)).toBe(before) // pas de mutation
     expect(merged.rooms.some((r) => r.id === 'archives')).toBe(true)
-    expect(merged.colliders.length).toBe(museum.colliders.length + archives.colliders.length)
+    expect(merged.colliders.length).toBe(small.colliders.length + archives.colliders.length)
     expect(merged.bounds.maxZ).toBeGreaterThanOrEqual(archives.room.bounds.maxZ)
-    expect(merged.bounds.minX).toBeLessThanOrEqual(Math.min(museum.bounds.minX, archives.room.bounds.minX))
+    expect(merged.bounds.minX).toBeLessThanOrEqual(Math.min(small.bounds.minX, archives.room.bounds.minX))
   })
 
-  it('la salle des Archives est loin du musée (aucun chevauchement de bounds)', () => {
-    const museum = buildMuseumLayout(generatePlaceholderPeople(100))
-    const archives = buildArchivesLayout(makeSessions(18))
-    const overlapsX = archives.room.bounds.minX < museum.bounds.maxX && archives.room.bounds.maxX > museum.bounds.minX
-    const overlapsZ = archives.room.bounds.minZ < museum.bounds.maxZ && archives.room.bounds.maxZ > museum.bounds.minZ
-    expect(overlapsX && overlapsZ).toBe(false)
+  it('plan en croix : la salle touche le hall sans chevaucher aucune autre salle', () => {
+    const archives = buildArchivesLayout(makeSessions(18), hall)
+    const b = archives.room.bounds
+    for (const room of museum.rooms) {
+      const overlapsX = b.minX < room.bounds.maxX && b.maxX > room.bounds.minX
+      const overlapsZ = b.minZ < room.bounds.maxZ && b.maxZ > room.bounds.minZ
+      expect(overlapsX && overlapsZ, `chevauche ${room.id}`).toBe(false)
+    }
   })
 })

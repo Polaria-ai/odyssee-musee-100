@@ -42,8 +42,8 @@ vide, ailes presque nues) et le contrat `DecorPlacementType` (WEL-874) n'est pas
 `layout.ts` — hors périmètre de ce module (`src/world/props/**` uniquement). Plutôt que d'attendre,
 `placements.ts` calcule son PROPRE mobilier supplémentaire à partir des bounds de salle déjà exposées
 (`architecture.rooms`/`architecture.decor`) et vérifie chaque position choisie à la main contre
-`layout.colliders`, le couloir de vue des cadres (`layout.frames`), `hallReservedSpots.timePortal` et
-les portes du hall (`isClearSpot`, testé par `placements.test.ts` sur 8 répartitions de personnes,
+`layout.colliders`, le couloir de vue des cadres (`layout.frames`) et
+les quatre portes du hall (dont la porte sud des Archives, `tokens.archivesDoor`) (`isClearSpot`, testé par `placements.test.ts` sur 8 répartitions de personnes,
 dont des ailes à 1/2/60 personnes — l'ancrage `farWallX`/zone d'entrée ne dépend jamais du nombre de
 rangées). Rendu par `RoomProps.tsx` via `allPropPlans` (= `propPlansFromArchitecture` + `extraPropPlans`),
 PAS un nouveau `DecorPlacementType`.

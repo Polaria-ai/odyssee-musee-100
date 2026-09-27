@@ -1,6 +1,5 @@
 /**
- * Textures canvas 2D de la salle des Archives (capsules holographiques, frise au sol, panneaux de la
- * Porte de 2040). Même conventions que `src/world/textures.ts` : aucune police externe (`system-ui`),
+ * Textures canvas 2D de la salle des Archives (capsules holographiques, frise au sol, panneau d'entrée). Même conventions que `src/world/textures.ts` : aucune police externe (`system-ui`),
  * textures ≤ 512 px, tout est mis en cache (jamais redessiné hors bascule FR/EN ou changement d'état).
  */
 import { CanvasTexture, SRGBColorSpace } from 'three'
@@ -318,33 +317,6 @@ function paintArchivesFloor(bounds: AABB, slots: ArchiveSlot[]): CanvasTexture {
   return toTexture(canvas)
 }
 
-/** Panneau de la Porte de 2040 (aller, dans le hall, ou retour, dans la salle). */
-const gateCache = new Map<string, CanvasTexture>()
-export function drawGateSign(subtitleKey: 'toArchives' | 'toHall', lang: Lang): CanvasTexture {
-  return cachedTexture(gateCache, `${subtitleKey}|${lang}`, () => paintGateSign(subtitleKey, lang))
-}
-function paintGateSign(subtitleKey: 'toArchives' | 'toHall', lang: Lang): CanvasTexture {
-  const w = 256
-  const h = 128
-  const { canvas, ctx } = context2d(w, h)
-  ctx.fillStyle = 'rgba(15, 22, 43, 0.92)'
-  roundRect(ctx, 0, 0, w, h, 18)
-  ctx.fill()
-  ctx.lineWidth = 4
-  ctx.strokeStyle = '#7fd6e8'
-  roundRect(ctx, 4, 4, w - 8, h - 8, 15)
-  ctx.stroke()
-  ctx.fillStyle = '#ffffff'
-  ctx.textAlign = 'center'
-  ctx.font = '700 28px system-ui, sans-serif'
-  ctx.fillText(pick(archivesRoomStrings.gateTitle, lang), w / 2, h * 0.42)
-  ctx.font = '500 17px system-ui, sans-serif'
-  ctx.fillStyle = '#7fd6e8'
-  const subtitle = subtitleKey === 'toArchives' ? archivesRoomStrings.gateSubtitleToArchives : archivesRoomStrings.gateSubtitleToHall
-  ctx.fillText(pick(subtitle, lang), w / 2, h * 0.72)
-  return toTexture(canvas)
-}
-
 /**
  * Grand panneau d'entrée (titre de la salle + date de la soirée + mention « provisoire ») : posé bien
  * en vue depuis l'arrivée, comme la grande bannière du hall (voir docs/DESIGN.md). Remplace l'ancien
@@ -380,59 +352,6 @@ function paintEntranceSign(lang: Lang): CanvasTexture {
   ctx.fillStyle = '#e8c872'
   ctx.fillText(pick(archivesRoomStrings.provisionalBanner, lang), w / 2, h * 0.86)
   return toTexture(canvas)
-}
-
-/**
- * Plafond de la salle : une voûte sombre et douce (jamais un noir plat) avec quelques lueurs
- * éparses, pour fermer la vue vers le haut sans faire caisson opaque. Une seule texture, réutilisée
- * telle quelle (mêmes bounds pour toute la salle, pas de dépendance à la langue ni au programme).
- */
-let ceilingCached: CanvasTexture | null = null
-export function archivesCeilingTexture(): CanvasTexture {
-  if (ceilingCached) return ceilingCached
-  const w = 256
-  const h = 256
-  const { canvas, ctx } = context2d(w, h)
-  const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.72)
-  g.addColorStop(0, '#232c4d')
-  g.addColorStop(1, '#11162b')
-  ctx.fillStyle = g
-  ctx.fillRect(0, 0, w, h)
-  // Semis d'étoiles discret, disposition fixe (déterministe) plutôt que `Math.random()`.
-  for (let i = 0; i < 46; i++) {
-    const a = i * 2.399963 // angle doré : répartition régulière sans motif visible
-    const r = Math.sqrt(i / 46) * w * 0.48
-    const x = w / 2 + Math.cos(a) * r
-    const y = h / 2 + Math.sin(a) * r
-    const s = 0.6 + ((i * 37) % 5) * 0.22
-    ctx.fillStyle = i % 5 === 0 ? 'rgba(232, 200, 114, 0.55)' : 'rgba(191, 235, 245, 0.45)'
-    ctx.beginPath()
-    ctx.arc(x, y, s, 0, Math.PI * 2)
-    ctx.fill()
-  }
-  ceilingCached = toTexture(canvas)
-  return ceilingCached
-}
-
-/**
- * Halo posé sur le mur nord, derrière l'Archiviste : casse le grand aplat de mur nu constaté à la
- * vérification visuelle (vue « fond de salle »), sans concurrencer l'hologramme lui-même (pas de
- * forme figurative ici, juste une lueur diffuse cyan → or).
- */
-let archivistBackdropCached: CanvasTexture | null = null
-export function drawArchivistBackdrop(): CanvasTexture {
-  if (archivistBackdropCached) return archivistBackdropCached
-  const w = 256
-  const h = 256
-  const { canvas, ctx } = context2d(w, h)
-  const g = ctx.createRadialGradient(w / 2, h * 0.6, 0, w / 2, h * 0.6, w * 0.55)
-  g.addColorStop(0, 'rgba(127, 214, 232, 0.5)')
-  g.addColorStop(0.6, 'rgba(232, 200, 114, 0.16)')
-  g.addColorStop(1, 'rgba(232, 200, 114, 0)')
-  ctx.fillStyle = g
-  ctx.fillRect(0, 0, w, h)
-  archivistBackdropCached = toTexture(canvas)
-  return archivistBackdropCached
 }
 
 /** Petite bulle « ! » flottante au-dessus d'une vitrine proche (même esprit que `world/bubbleTexture.ts`). */

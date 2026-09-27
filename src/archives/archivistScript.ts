@@ -10,7 +10,7 @@ import type { Dialogue, DialogueLine, Localized } from '../types'
 export type ArchivistEvent =
   | { kind: 'welcome' }
   | { kind: 'talk'; consulted: number; total: number; published: number }
-  /** Première arrivée dans la salle par la Porte de 2040 (voir contractRequests pour le déclenchement). */
+  /** Première arrivée dans la salle, à pied par la porte sud du hall (déclenchée par `App.tsx`). */
   | { kind: 'firstVisit' }
   /** Le 4e tampon (Archives) vient d'être obtenu (voir `useStampWatcher`). */
   | { kind: 'stampAwarded' }
@@ -32,13 +32,13 @@ function pickVariant<T>(variants: readonly T[], seed: number): T {
   return variants[i]
 }
 
-// --- Arrivée par la Porte (courte, avant même de parler à l'Archiviste) ----
+// --- Arrivée dans la salle (courte, avant même de parler à l'Archiviste) ---
 
 function firstVisitDialogue(): Dialogue {
   return dialogue('firstVisit', [
     line(
-      "Tu viens de franchir la Porte de 2040. Ici, le temps a fait son œuvre : cette soirée est devenue un souvenir qu'on archive.",
-      "You've just stepped through the 2040 Door. Here, time has done its work: this evening has become a memory to archive.",
+      "Te voici dans les Archives de 2040. Ici, le temps a fait son œuvre : cette soirée est devenue un souvenir qu'on archive.",
+      "Welcome to the 2040 Archives. Here, time has done its work: this evening has become a memory to archive.",
       'surprised',
     ),
     line(
@@ -79,8 +79,8 @@ function welcomeDialogue(): Dialogue {
       'neutral',
     ),
     line(
-      'Quand tu voudras repartir, la porte derrière moi te ramène directement au grand hall.',
-      'Whenever you want to head back, the door behind me leads straight to the great hall.',
+      'Quand tu voudras repartir, la porte juste à côté de moi te ramène au grand hall.',
+      'Whenever you want to head back, the door right next to me leads back to the great hall.',
       'neutral',
     ),
   ])
