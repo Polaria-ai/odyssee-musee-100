@@ -6,16 +6,16 @@
     {
       "sessionId": "keynote-ouverture",
       "summary": {
-        "fr": "[Exemple] Synthèse de démonstration — texte factice pour tester l'import, ne reflète aucun propos réel. La ministre a ouvert la soirée en rappelant l'enjeu de souveraineté numérique pour l'Europe.",
-        "en": "[Example] Demonstration summary — placeholder text used to test the import, does not reflect anything actually said. The minister opened the evening by recalling the stakes of digital sovereignty for Europe."
+        "fr": "[Exemple] Synthèse de démonstration — texte factice pour tester l'import, ne reflète aucun propos réel de la keynote d'ouverture.",
+        "en": "[Example] Demonstration summary — placeholder text used to test the import, does not reflect anything actually said during the opening keynote."
       },
       "quotes": [
         {
           "text": {
-            "fr": "[Exemple] Citation factice pour tester l'import — jamais servie au public telle quelle.",
-            "en": "[Example] Placeholder quote used to test the import — never served to the public as is."
+            "fr": "[Exemple] Question factice posée depuis la salle, pour tester l'import.",
+            "en": "[Example] Placeholder question from the audience, used to test the import."
           },
-          "author": "Catherine Vautrin",
+          "author": "Public",
           "verified": false
         }
       ]
@@ -29,10 +29,10 @@
       "quotes": [
         {
           "text": {
-            "fr": "[Exemple] Citation factice pour tester l'import.",
-            "en": "[Example] Placeholder quote used to test the import."
+            "fr": "[Exemple] Commentaire factice de l'Archiviste, pour tester l'import.",
+            "en": "[Example] Placeholder comment from the Archivist, used to test the import."
           },
-          "author": "Grégoire Arnould",
+          "author": "L'Archiviste",
           "verified": false
         },
         {
@@ -54,10 +54,10 @@
       "quotes": [
         {
           "text": {
-            "fr": "[Exemple] Citation factice attribuée à la modératrice, pour tester l'import.",
-            "en": "[Example] Placeholder quote attributed to the moderator, used to test the import."
+            "fr": "[Exemple] Commentaire factice de l'Archiviste, pour tester l'import.",
+            "en": "[Example] Placeholder comment from the Archivist, used to test the import."
           },
-          "author": "Muriel Motte",
+          "author": "L'Archiviste",
           "verified": false
         }
       ]

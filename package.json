@@ -21,6 +21,8 @@
     "verify:content": "tsx scripts/content-invariants.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm verify:bundle && pnpm verify:security && pnpm verify:content",
     "import:people": "tsx scripts/import-people.ts",
+    "preview:archives": "tsx scripts/preview-archives.ts",
+    "evening:prompt": "tsx scripts/evening-agent-prompt.ts",
     "export:local": "tsx scripts/export-local.ts"
   },
   "dependencies": {

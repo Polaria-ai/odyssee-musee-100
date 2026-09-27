@@ -28,6 +28,18 @@ describe('buildSeedSql', () => {
     expect(sql).not.toMatch(/published = true/)
   })
 
+  it('sans --publish : ne touche jamais à reviewed_by (NULL à l’insertion, absent de la mise à jour)', () => {
+    const sql = buildSeedSql([archive], { reviewer: 'Relecteur Test' })
+    expect(sql).not.toContain('Relecteur Test')
+    expect(sql).not.toContain('reviewed_by = excluded.reviewed_by')
+  })
+
+  it('avec --publish et --reviewer : trace la relecture dans reviewed_by', () => {
+    const sql = buildSeedSql([archive], { publish: true, reviewer: "Relect'eur Test" })
+    expect(sql).toContain("'Relect''eur Test'")
+    expect(sql).toContain('reviewed_by = excluded.reviewed_by')
+  })
+
   it('avec --publish : ajoute published = true à la clause de mise à jour', () => {
     const sql = buildSeedSql([archive], { publish: true })
     expect(sql).toContain('published = true')
@@ -59,6 +71,11 @@ describe('toSupabaseRow / toSupabasePushRows', () => {
   it('toSupabasePushRows omet complètement `published` quand publish=false (jamais juste false)', () => {
     const rows = toSupabasePushRows([archive], false)
     expect('published' in rows[0]).toBe(false)
+  })
+
+  it('toSupabasePushRows ajoute reviewed_by seulement à la publication', () => {
+    expect('reviewed_by' in toSupabasePushRows([archive], false, 'Relecteur Test')[0]).toBe(false)
+    expect(toSupabasePushRows([archive], true, 'Relecteur Test')[0].reviewed_by).toBe('Relecteur Test')
   })
 
   it('toSupabasePushRows inclut published=true quand publish=true', () => {

@@ -9,6 +9,7 @@ import { generatePlaceholderPeople } from './placeholder'
 import { getSupabase } from './supabaseClient'
 
 const SUPABASE_TIMEOUT_MS = 4000
+const STATIC_TIMEOUT_MS = 4000
 
 let warned = false
 /** Avertit une seule fois par session, quelle que soit la raison du repli. */
@@ -64,8 +65,11 @@ async function loadFromSupabase(): Promise<Person[] | null> {
 }
 
 async function loadFromStatic(): Promise<Person[] | null> {
+  // Délai borné, comme pour Supabase : jamais d'écran de chargement infini sur un réseau saturé.
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), STATIC_TIMEOUT_MS)
   try {
-    const res = await fetch('/data/people.json')
+    const res = await fetch('/data/people.json', { signal: controller.signal })
     if (!res.ok) return null
     const data: unknown = await res.json()
     const { people, errors } = parsePeople(data)
@@ -73,6 +77,8 @@ async function loadFromStatic(): Promise<Person[] | null> {
     return people.length ? people : null
   } catch {
     return null
+  } finally {
+    clearTimeout(timer)
   }
 }
 

@@ -222,6 +222,7 @@ export function ArchiveCard() {
           <button
             type="button"
             data-testid="archive-prev"
+            aria-label={t('archivePrevLabel')}
             disabled={!prevSession}
             onClick={() => {
               if (!prevSession) return
@@ -234,6 +235,7 @@ export function ArchiveCard() {
           <button
             type="button"
             data-testid="archive-next"
+            aria-label={t('archiveNextLabel')}
             disabled={!nextSession}
             onClick={() => {
               if (!nextSession) return

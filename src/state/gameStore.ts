@@ -91,6 +91,8 @@ export interface GameState {
   setAvatar: (avatar: AvatarConfig) => void
   setMuseum: (people: Person[], layout: MuseumLayout, source: DataSource) => void
   setEvening: (sessions: EveningSession[], archives: Record<string, SessionArchive>, source: EveningSource) => void
+  /** Remplace les archives publiées (rafraîchissement pendant la visite, voir `useArchivesRefresh`). */
+  setArchives: (archives: Record<string, SessionArchive>) => void
   setArchivesLayout: (archivesLayout: ArchivesLayout | null) => void
   setNearbySession: (sessionId: string | null) => void
   setNearArchivist: (near: boolean) => void
@@ -186,6 +188,7 @@ export const useGame = create<GameState>()((set, get) => ({
   },
   setMuseum: (people, layout, dataSource) => set({ people, layout, dataSource }),
   setEvening: (sessions, archives, eveningSource) => set({ sessions, archives, eveningSource }),
+  setArchives: (archives) => set({ archives }),
   setArchivesLayout: (archivesLayout) => set({ archivesLayout }),
   setNearbySession: (nearbySessionId) => {
     if (get().nearbySessionId !== nearbySessionId) set({ nearbySessionId })

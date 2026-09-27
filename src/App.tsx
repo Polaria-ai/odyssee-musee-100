@@ -18,6 +18,7 @@ import { Toast } from './ui/Toast'
 import { AvatarCustomizer } from './features/avatar/AvatarCustomizer'
 import { StampCard } from './features/stamps/StampCard'
 import { useStampWatcher } from './features/stamps/useStampWatcher'
+import { useArchivesRefresh } from './archives/useArchivesRefresh'
 import { usePresence } from './features/presence/usePresence'
 import { TouchJoystick } from './player/TouchJoystick'
 import { useKeyboardControls } from './player/useKeyboardControls'
@@ -75,6 +76,7 @@ export function App() {
   const playing = screen === 'play'
   useStampWatcher()
   usePresence(playing)
+  useArchivesRefresh(playing)
   useAudioDirector(playing)
   useKeyboardControls(playing && !overlay)
 

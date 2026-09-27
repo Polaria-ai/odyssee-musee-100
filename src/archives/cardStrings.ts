@@ -12,8 +12,10 @@ export const cardStrings = defineStrings({
   // Bandeau et tampon de la fiche
   archiveStamp: { fr: 'ARCHIVE · 2040', en: 'ARCHIVE · 2040' },
   archiveClose: { fr: "Fermer l'archive", en: 'Close the archive' },
-  archivePrev: { fr: '‹ Séquence précédente', en: '‹ Previous sequence' },
-  archiveNext: { fr: 'Séquence suivante ›', en: 'Next sequence ›' },
+  archivePrev: { fr: '‹ Précédente', en: '‹ Previous' },
+  archiveNext: { fr: 'Suivante ›', en: 'Next ›' },
+  archivePrevLabel: { fr: 'Séquence précédente', en: 'Previous sequence' },
+  archiveNextLabel: { fr: 'Séquence suivante', en: 'Next sequence' },
 
   // Programme
   archiveProvisional: {
@@ -49,6 +51,9 @@ export const cardStrings = defineStrings({
   // Libellés du bouton d'action du HUD (contrat : voir contractRequests, à câbler dans Hud.tsx)
   hudConsultArchive: { fr: "Consulter l'archive", en: 'Consult the archive' },
   hudTalkArchivist: { fr: "Parler à l'Archiviste", en: 'Talk to the Archivist' },
+
+  // Rafraîchissement pendant la visite : de nouvelles archives viennent d'être publiées.
+  archivesNewToast: { fr: "Nouvelles archives déposées par l'Archiviste", en: 'New archives left by the Archivist' },
 
   // Plan du musée : compteur de la salle des Archives (étiquette et légende)
   archivesMapCount: { fr: '{seen}/{total} archives consultées', en: '{seen}/{total} archives visited' },

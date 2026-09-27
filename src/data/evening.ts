@@ -148,8 +148,12 @@ async function loadArchivesFromSupabase(): Promise<Record<string, SessionArchive
 }
 
 async function loadArchivesFromStatic(): Promise<Record<string, SessionArchive> | null> {
+  // Même délai que Supabase : sur le réseau saturé d'une salle, un fetch sans délai pourrait
+  // laisser le visiteur indéfiniment sur l'écran de chargement (répétition du 27/09).
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), SUPABASE_TIMEOUT_MS)
   try {
-    const res = await fetch('/data/evening.json')
+    const res = await fetch('/data/evening.json', { signal: controller.signal })
     if (!res.ok) return null
     const data: unknown = await res.json()
     const rawArchives =
@@ -167,6 +171,8 @@ async function loadArchivesFromStatic(): Promise<Record<string, SessionArchive> 
     return archives
   } catch {
     return null
+  } finally {
+    clearTimeout(timer)
   }
 }
 
@@ -188,4 +194,13 @@ export async function loadEvening(): Promise<{
   const archives = supabaseArchives ?? (await loadArchivesFromStatic()) ?? {}
 
   return { sessions, archives, source }
+}
+
+/**
+ * Archives publiées, relues dans Supabase seulement (rafraîchissement pendant la visite, voir
+ * `src/archives/useArchivesRefresh.ts`). `null` si Supabase est injoignable : l'appelant garde alors
+ * ce qu'il a, sans jamais retomber sur `/data/evening.json` en cours de partie.
+ */
+export function loadPublishedArchives(): Promise<Record<string, SessionArchive> | null> {
+  return loadArchivesFromSupabase()
 }

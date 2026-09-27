@@ -232,6 +232,39 @@ test('accueil de l’Archiviste à la première arrivée seulement ; retour au h
   await expect(box).toBeHidden()
 })
 
+test('archive publiée pendant la visite : la vitrine s’allume sans recharger la page', async ({ page }) => {
+  // La lecture Supabase des archives est interceptée : rien n'est publié en base. D'abord aucune
+  // archive (état de la soirée avant publication), puis une archive factice « publiée ».
+  let published: unknown[] = []
+  await page.route('**/rest/v1/session_archives*', (route) =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(published) }),
+  )
+  const state = await enterMuseumWithArchives(page)
+  const archives = state.archivesLayout!
+  expect(Object.keys(state.archives)).toEqual([])
+
+  const slot = archives.slots[0]
+  published = [
+    {
+      session_id: slot.sessionId,
+      summary_fr: '[Test E2E] Synthèse factice publiée pendant la visite.',
+      summary_en: '',
+      quotes: [],
+      archived_at: '2026-10-06T23:00:00+02:00',
+      published: true,
+    },
+  ]
+
+  // Entrer dans la salle relance la lecture des archives (puis toutes les 60 s).
+  await teleport(page, slot.viewPoint.x, slot.viewPoint.z)
+  await expect.poll(async () => Object.keys((await archivesState(page)).archives), { timeout: 10_000 }).toEqual([slot.sessionId])
+  await expect(page.getByTestId('toast')).toContainText('Nouvelles archives')
+
+  await openArchiveViaState(page, slot.sessionId)
+  await expect(page.getByTestId('archive-card')).toContainText('[Test E2E] Synthèse factice publiée pendant la visite.')
+  await expect(page.getByTestId('archive-pending')).toHaveCount(0)
+})
+
 // ---------------------------------------------------------------------------
 // Vitrine : « Consulter l'archive » → fiche.
 // ---------------------------------------------------------------------------

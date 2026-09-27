@@ -6,7 +6,8 @@
  * service : le SQL généré est appliqué séparément (SQL editor Supabase), sauf `--push`.
  * Propriétaire : workflow « Archives de 2040 ».
  *
- * Usage : pnpm exec tsx scripts/import-evening.ts --file <sortie-agent.json> [--dry-run] [--publish] [--push]
+ * Usage : pnpm exec tsx scripts/import-evening.ts --file <sortie-agent.json> [--dry-run] [--publish --reviewer "<nom>"] [--push]
+ * `--publish` exige `--reviewer` : la base garde le nom de la personne qui a relu (`reviewed_by`).
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -35,6 +36,11 @@ export interface SeedSqlOptions {
    * qu'il arrive. Défaut : `false`.
    */
   publish?: boolean
+  /**
+   * Nom de la personne qui a relu (colonne `reviewed_by`). Écrit seulement avec `publish` : une
+   * relance en brouillon ne touche jamais à la trace de relecture existante.
+   */
+  reviewer?: string
 }
 
 /**
@@ -45,20 +51,21 @@ export interface SeedSqlOptions {
  */
 export function buildSeedSql(archives: SessionArchive[], options: SeedSqlOptions = {}): string {
   const published = options.publish ?? false
+  const reviewer = published ? (options.reviewer ?? null) : null
   const updateAssignments = [
     'summary_fr = excluded.summary_fr',
     'summary_en = excluded.summary_en',
     'quotes = excluded.quotes',
     'archived_at = excluded.archived_at',
-    ...(published ? ['published = true'] : []),
+    ...(published ? ['published = true', 'reviewed_by = excluded.reviewed_by'] : []),
     'updated_at = now()',
   ]
   const statements = archives.map(
     (a) => `insert into public.session_archives (
-  session_id, summary_fr, summary_en, quotes, archived_at, published
+  session_id, summary_fr, summary_en, quotes, archived_at, published, reviewed_by
 ) values (
   ${sqlString(a.sessionId)}, ${sqlString(a.summary.fr)}, ${sqlString(a.summary.en)},
-  ${sqlJson(a.quotes)}, ${sqlString(a.archivedAt)}, ${published}
+  ${sqlJson(a.quotes)}, ${sqlString(a.archivedAt)}, ${published}, ${sqlString(reviewer)}
 )
 on conflict (session_id) do update set
   ${updateAssignments.join(',\n  ')};`,
@@ -72,7 +79,7 @@ on conflict (session_id) do update set
 
 /** `SessionArchive` (camelCase) → ligne Supabase (snake_case), pour `--push`. */
 export function toSupabaseRow(a: SessionArchive, options: SeedSqlOptions = {}): Record<string, unknown> {
-  return {
+  const row: Record<string, unknown> = {
     session_id: a.sessionId,
     summary_fr: a.summary.fr,
     summary_en: a.summary.en,
@@ -80,6 +87,8 @@ export function toSupabaseRow(a: SessionArchive, options: SeedSqlOptions = {}): 
     archived_at: a.archivedAt,
     published: options.publish ?? false,
   }
+  if (options.publish && options.reviewer) row.reviewed_by = options.reviewer
+  return row
 }
 
 /**
@@ -87,9 +96,9 @@ export function toSupabaseRow(a: SessionArchive, options: SeedSqlOptions = {}): 
  * `publish` est faux — jamais juste `false` (même raisonnement que `scripts/import-people.ts` :
  * un upsert qui envoie `published: false` sur une archive déjà publiée la dépublierait par erreur).
  */
-export function toSupabasePushRows(archives: SessionArchive[], publish: boolean): Record<string, unknown>[] {
+export function toSupabasePushRows(archives: SessionArchive[], publish: boolean, reviewer?: string): Record<string, unknown>[] {
   return archives.map((a) => {
-    const row = toSupabaseRow(a, { publish })
+    const row = toSupabaseRow(a, { publish, reviewer })
     if (!publish) delete row.published
     return row
   })
@@ -109,6 +118,7 @@ interface CliArgs {
   dryRun: boolean
   publish: boolean
   push: boolean
+  reviewer?: string
 }
 
 function parseArgs(argv: string[]): CliArgs {
@@ -120,6 +130,8 @@ function parseArgs(argv: string[]): CliArgs {
     else if (arg === '--dry-run') args.dryRun = true
     else if (arg === '--publish') args.publish = true
     else if (arg === '--push') args.push = true
+    else if (arg === '--reviewer') args.reviewer = argv[++i]?.trim() || undefined
+    else if (arg.startsWith('--reviewer=')) args.reviewer = arg.slice('--reviewer='.length).trim() || undefined
   }
   return args
 }
@@ -138,8 +150,13 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
   if (!args.file) {
     console.error(
-      'Usage : tsx scripts/import-evening.ts --file <sortie-agent.json> [--dry-run] [--publish] [--push]',
+      'Usage : tsx scripts/import-evening.ts --file <sortie-agent.json> [--dry-run] [--publish --reviewer "<nom>"] [--push]',
     )
+    process.exitCode = 1
+    return
+  }
+  if (args.publish && !args.reviewer) {
+    console.error('--publish exige --reviewer "<nom de la personne qui a relu>" : aucune publication sans relecture humaine tracée.')
     process.exitCode = 1
     return
   }
@@ -177,7 +194,7 @@ async function main(): Promise<void> {
   await mkdir('public/data', { recursive: true })
   await writeFile('public/data/evening.json', `${JSON.stringify(buildEveningJson(archives), null, 2)}\n`, 'utf8')
   await mkdir('supabase/seed', { recursive: true })
-  await writeFile('supabase/seed/evening-archives.sql', buildSeedSql(archives, { publish: args.publish }), 'utf8')
+  await writeFile('supabase/seed/evening-archives.sql', buildSeedSql(archives, { publish: args.publish, reviewer: args.reviewer }), 'utf8')
   console.log(
     `\nÉcrit : public/data/evening.json, supabase/seed/evening-archives.sql (published = ${args.publish} — ${
       args.publish ? 'relu, prêt à publier' : 'brouillon, relire avant --publish'
@@ -199,7 +216,7 @@ async function main(): Promise<void> {
       const admin = createClient(url, serviceKey, { auth: { persistSession: false } })
       const { error } = await admin
         .from('session_archives')
-        .upsert(toSupabasePushRows(archives, args.publish), { onConflict: 'session_id' })
+        .upsert(toSupabasePushRows(archives, args.publish, args.reviewer), { onConflict: 'session_id' })
       if (error) console.error(`\nPush Supabase échoué : ${error.message}`)
       else console.log(`\nPush Supabase : ${archives.length} archive(s) upsertée(s).`)
     }
