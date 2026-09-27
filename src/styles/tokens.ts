@@ -61,12 +61,11 @@ export const wingThemes: Record<WingId, WingTheme> = {
 }
 
 /**
- * Zones du hall réservées à d'autres modules : le décor du monde ne doit rien y poser.
- * `timePortal` : la Porte de 2040 (module archives), à droite du point d'apparition.
+ * Porte sud du hall vers les Archives de 2040 (plan en croix, décision de Baptiste du 27/09 :
+ * plus de portail, la salle est accrochée au hall, derrière le point d'arrivée). Contrat partagé :
+ * le monde perce le mur sud du hall à cet endroit, le module archives perce son mur nord en face.
  */
-export const hallReservedSpots = {
-  timePortal: { x: 7.8, z: 5.6, radius: 1.4 },
-} as const
+export const archivesDoor = { x: 0, width: 3.6 } as const
 
 export const exhibitWingOrder: readonly ExhibitWingId[] = ['infrastructures', 'industrialisation', 'culture']
 

@@ -7,7 +7,7 @@ import { buildMuseumLayout } from './world/layout'
 import { loadEvening } from './data/evening'
 import { buildArchivesLayout, mergeArchivesIntoLayout } from './archives/layout'
 import { ArchiveCard } from './archives/ArchiveCard'
-import { PortalFade } from './archives/PortalFade'
+import { archivistDialogue } from './archives/archivistScript'
 import { Experience } from './scene/Experience'
 import { LoadingScreen } from './ui/LoadingScreen'
 import { TitleScreen } from './ui/TitleScreen'
@@ -36,10 +36,13 @@ export function App() {
     void Promise.all([loadPeople(), loadEvening()]).then(([{ people, source }, evening]) => {
       if (cancelled) return
       const g = useGame.getState()
-      const archivesLayout = buildArchivesLayout(evening.sessions)
+      const museum = buildMuseumLayout(people)
+      const hall = museum.rooms.find((r) => r.id === 'hall')?.bounds ?? museum.bounds
+      // Plan en croix : la salle des Archives s'accroche au sud du hall (porte tokens.archivesDoor).
+      const archivesLayout = buildArchivesLayout(evening.sessions, hall)
       g.setEvening(evening.sessions, evening.archives, evening.source)
       g.setArchivesLayout(archivesLayout)
-      g.setMuseum(people, mergeArchivesIntoLayout(buildMuseumLayout(people), archivesLayout), source)
+      g.setMuseum(people, mergeArchivesIntoLayout(museum, archivesLayout), source)
       g.setScreen('title')
     })
     return () => {
@@ -59,6 +62,15 @@ export function App() {
   useEffect(() => {
     if (overlay) resetInput()
   }, [overlay])
+
+  // Première entrée dans les Archives de 2040 (à pied, par la porte sud du hall) : l'Archiviste
+  // accueille le visiteur, une seule fois (persisté).
+  const currentRoom = useGame((s) => s.currentRoom)
+  useEffect(() => {
+    if (currentRoom !== 'archives') return
+    const g = useGame.getState()
+    if (g.markArchivesDiscovered() && !g.dialogue) g.startDialogue(archivistDialogue({ kind: 'firstVisit' }))
+  }, [currentRoom])
 
   const playing = screen === 'play'
   useStampWatcher()
@@ -82,7 +94,6 @@ export function App() {
           <DialogueBox />
         </>
       )}
-      <PortalFade />
       <Toast />
     </div>
   )

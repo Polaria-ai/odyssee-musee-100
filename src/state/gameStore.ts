@@ -68,9 +68,7 @@ export interface GameState {
   nearArchivist: boolean
   /** Archives consultées : id de séquence → horodatage ms. */
   visitedSessions: Record<string, number>
-  /** Passage par la Porte de 2040 en cours (fondu d'écran). */
-  portalTransition: 'to-archives' | 'to-hall' | null
-  /** Le visiteur a déjà franchi la Porte de 2040 (accueil de l'Archiviste une seule fois). */
+  /** Le visiteur est déjà entré dans les Archives (accueil de l'Archiviste une seule fois). */
   archivesDiscovered: boolean
   /** Personnes déjà consultées : id → horodatage ms. */
   visited: Record<string, number>
@@ -98,7 +96,6 @@ export interface GameState {
   setNearArchivist: (near: boolean) => void
   openSession: (sessionId: string) => void
   closeSession: () => void
-  setPortalTransition: (transition: 'to-archives' | 'to-hall' | null) => void
   /** Marque la première arrivée dans les Archives ; renvoie true si c'était la première. */
   markArchivesDiscovered: () => boolean
   setNearby: (personId: string | null) => void
@@ -163,7 +160,6 @@ export const useGame = create<GameState>()((set, get) => ({
   openSessionId: null,
   nearArchivist: false,
   visitedSessions: (persisted.visitedSessions as Record<string, number>) ?? {},
-  portalTransition: null,
   archivesDiscovered: persisted.archivesDiscovered === true,
   currentRoom: null,
   openPersonId: null,
@@ -207,7 +203,6 @@ export const useGame = create<GameState>()((set, get) => ({
     set({ openSessionId })
   },
   closeSession: () => set({ openSessionId: null }),
-  setPortalTransition: (portalTransition) => set({ portalTransition }),
   markArchivesDiscovered: () => {
     if (get().archivesDiscovered) return false
     savePersisted({ archivesDiscovered: true })

@@ -33,7 +33,7 @@
  */
 import { farWallX, type DecorPlacement, type DecorPlacementType, type MuseumArchitecture } from '../layout'
 import { aabb, circleIntersectsAabb } from '../collision'
-import { hallReservedSpots } from '../../styles/tokens'
+import { archivesDoor } from '../../styles/tokens'
 import { DOOR_WIDTH, HALL_HALF_DEPTH, HALL_HALF_WIDTH } from '../constants'
 import type { AABB, MuseumLayout, Vec2, WingId } from '../../types'
 import type { PropModelKey } from './models'
@@ -170,6 +170,8 @@ function nearAnyHallDoor(p: Vec2, margin: number): boolean {
   if (Math.abs(p.z - -HALL_HALF_DEPTH) < margin && Math.abs(p.x) < half) return true // porte nord (industrialisation)
   if (Math.abs(p.x - -HALL_HALF_WIDTH) < margin && Math.abs(p.z) < half) return true // porte ouest (infrastructures)
   if (Math.abs(p.x - HALL_HALF_WIDTH) < margin && Math.abs(p.z) < half) return true // porte est (culture)
+  // Porte sud (Archives de 2040) : l'embrasure et son passage vers le point d'arrivée restent libres.
+  if (Math.abs(p.z - HALL_HALF_DEPTH) < margin + 1.5 && Math.abs(p.x - archivesDoor.x) < archivesDoor.width / 2 + margin) return true
   return false
 }
 
@@ -192,7 +194,7 @@ function blocksAFrame(p: Vec2, radius: number, layout: MuseumLayout, wing: WingI
 /**
  * Vrai si un objet de rayon `radius` posé en `p` (salle `wing`) ne recoupe aucun obstacle déjà connu :
  * `layout.colliders` (murs, meubles cachés, cimaises, comptoir, socles à tampon), le couloir de vue d'un
- * cadre (`blocksAFrame`), `hallReservedSpots.timePortal` (hall seulement) ou une des trois portes du
+ * cadre (`blocksAFrame`), une des quatre portes du
  * hall. Pure (aucun rendu) — sert à VALIDER les positions choisies à la main ci-dessous (jamais à en
  * déduire une par recherche), voir `placements.test.ts`.
  */
@@ -201,12 +203,6 @@ export function isClearSpot(p: Vec2, radius: number, layout: MuseumLayout, wing:
     if (circleIntersectsAabb(p, radius + 0.15, box)) return false
   }
   if (blocksAFrame(p, radius, layout, wing)) return false
-  if (wing === 'hall') {
-    const { x, z, radius: rPortal } = hallReservedSpots.timePortal
-    const dx = p.x - x
-    const dz = p.z - z
-    if (dx * dx + dz * dz < (radius + rPortal) ** 2) return false
-  }
   if (nearAnyHallDoor(p, radius + 0.3)) return false
   return true
 }

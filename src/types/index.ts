@@ -14,7 +14,7 @@ export interface Localized {
 
 /**
  * Les trois ailes suivent les trois tables rondes de la soirée, plus le hall d'accueil
- * et les Archives de 2040 (salle de la soirée, reliée au hall par la Porte de 2040).
+ * et les Archives de 2040 (salle de la soirée, au sud du hall, derrière le point d'arrivée).
  */
 export type WingId = 'hall' | 'infrastructures' | 'industrialisation' | 'culture' | 'archives'
 /** Les trois ailes à portraits (les 100). Les Archives ne sont pas une aile d'exposition des 100. */
@@ -220,17 +220,19 @@ export interface ArchiveSlot {
   viewPoint: Vec2
 }
 
-/** Plan de la salle des Archives de 2040, fusionné dans `MuseumLayout` par le module archives. */
+/**
+ * Plan de la salle des Archives de 2040, fusionné dans `MuseumLayout` par le module archives.
+ * Plan en croix (27/09) : la salle est accrochée au sud du hall, derrière le point d'arrivée, et
+ * reliée par une porte (`tokens.archivesDoor`) — plus de portail.
+ */
 export interface ArchivesLayout {
   room: RoomLayout
   colliders: AABB[]
   slots: ArchiveSlot[]
-  /** Arrivée dans la salle après la Porte de 2040. */
+  /** Point juste après la porte, à l'intérieur de la salle (tests, accueil). */
   arrival: Placement
-  /** Porte de 2040 dans le hall (aller). */
-  hallPortal: Placement
-  /** Porte de retour vers le hall, dans la salle. */
-  returnPortal: Placement
+  /** Embrasure de la porte entre le hall et la salle (centre x, z du seuil, largeur). */
+  door: { x: number; z: number; width: number }
   /** Hologramme de l'Archiviste. */
   archivist: Placement
 }

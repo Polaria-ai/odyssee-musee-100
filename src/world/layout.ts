@@ -26,7 +26,7 @@
  */
 import type { AABB, ExhibitWingId, FrameSlot, MuseumLayout, Person, Placement, RoomLayout, StampStationSlot, Vec2, WingId } from '../types'
 import { EXHIBIT_WINGS } from '../types'
-import { wingThemes } from '../styles/tokens'
+import { wingThemes, archivesDoor } from '../styles/tokens'
 import {
   BENCH_HEIGHT,
   CAMERA_CUT_HEIGHT,
@@ -475,8 +475,11 @@ function build(people: Person[]): MuseumBuild {
   }
 
   const hallWalls: ArchBox[] = []
-  // Mur sud (côté caméra) : plein, jamais de porte.
-  hallWalls.push(wall(xWall(HALL_HALF_DEPTH, -HALL_HALF_WIDTH, HALL_HALF_WIDTH, dims.wallThickness), true))
+  // Mur sud (côté caméra, coupé bas) : percé de la porte des Archives de 2040 (tokens.archivesDoor).
+  const southDoorMin = archivesDoor.x - archivesDoor.width / 2
+  const southDoorMax = archivesDoor.x + archivesDoor.width / 2
+  hallWalls.push(wall(xWall(HALL_HALF_DEPTH, -HALL_HALF_WIDTH, southDoorMin, dims.wallThickness), true))
+  hallWalls.push(wall(xWall(HALL_HALF_DEPTH, southDoorMax, HALL_HALF_WIDTH, dims.wallThickness), true))
   // Mur nord → aile industrialisation.
   hallWalls.push(...hallWallSegments('x', -HALL_HALF_DEPTH, -HALL_HALF_WIDTH, HALL_HALF_WIDTH, !!wingBuilds.industrialisation))
   // Mur ouest → aile infrastructures.
@@ -489,6 +492,8 @@ function build(people: Person[]): MuseumBuild {
   if (wingBuilds.industrialisation) doorArches.push({ box: xWall(-HALL_HALF_DEPTH, -DOOR_HALF, DOOR_HALF, dims.wallThickness), color: wingThemes.industrialisation.accent })
   if (wingBuilds.infrastructures) doorArches.push({ box: zWall(-HALL_HALF_WIDTH, -DOOR_HALF, DOOR_HALF, dims.wallThickness), color: wingThemes.infrastructures.accent })
   if (wingBuilds.culture) doorArches.push({ box: zWall(HALL_HALF_WIDTH, -DOOR_HALF, DOOR_HALF, dims.wallThickness), color: wingThemes.culture.accent })
+  // Porte sud (Archives) : pas de linteau — le mur sud est coupé bas côté caméra, un linteau
+  // à 3,5 m barrerait l'écran au-dessus du joueur. Seul un seuil lumineux la signale (rendu).
 
   const comingSoonWings: ExhibitWingId[] = EXHIBIT_WINGS.filter((w) => !wingBuilds[w])
 

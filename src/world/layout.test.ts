@@ -4,7 +4,7 @@ import { EXHIBIT_WINGS } from '../types'
 import { archBoxHeight, buildMuseumArchitecture, buildMuseumLayout } from './layout'
 import { circleIntersectsAabb, pointInAabb } from './collision'
 import { dims, DOOR_WIDTH, MIN_WALKABLE_CORRIDOR } from './constants'
-import { hallReservedSpots } from '../styles/tokens'
+import { archivesDoor } from '../styles/tokens'
 import { occludesPlayer, worstCaseCameraFor } from './occlusion'
 import { generatePlaceholderPeople } from '../data/placeholder'
 
@@ -264,12 +264,21 @@ describe.each(Object.entries(distributions))('buildMuseumLayout — %s', (_label
     }
   })
 
-  it('aucun decorPlacement dans la zone réservée à la Porte de 2040 (hallReservedSpots.timePortal)', () => {
+  it('porte sud du hall (Archives de 2040) : mur sud percé en face de tokens.archivesDoor, embrasure libre', () => {
+    const hall = roomFor(layout, 'hall')
+    const doorZ = hall.bounds.maxZ
+    // Le seuil de la porte n'est dans aucun obstacle…
+    for (let x = archivesDoor.x - archivesDoor.width / 2 + dims.playerRadius + 0.05; x <= archivesDoor.x + archivesDoor.width / 2 - dims.playerRadius - 0.05; x += 0.25) {
+      for (const box of layout.colliders) {
+        expect(circleIntersectsAabb({ x, z: doorZ + 0.2 }, dims.playerRadius, box), `seuil bloqué en x=${x.toFixed(2)}`).toBe(false)
+      }
+    }
+    // … et aucun décor n'est posé devant l'embrasure, côté hall.
     const architecture = buildMuseumArchitecture(people)
-    const { x, z, radius } = hallReservedSpots.timePortal
     for (const d of architecture.decorPlacements) {
-      const dist = Math.hypot(d.position.x - x, d.position.z - z)
-      expect(dist, `${d.type} (${d.room}) dans la zone réservée à la Porte de 2040`).toBeGreaterThanOrEqual(radius)
+      if (d.room !== 'hall') continue
+      const inFront = Math.abs(d.position.x - archivesDoor.x) < archivesDoor.width / 2 + 0.3 && d.position.z > doorZ - 1.5
+      expect(inFront, `${d.type} devant la porte des Archives`).toBe(false)
     }
   })
 
