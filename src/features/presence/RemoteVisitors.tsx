@@ -1,21 +1,19 @@
 /**
- * Affiche les autres visiteurs connectés, dans le Canvas. Lit `peers.ts` (hors React) : la liste
- * React des pairs montés ne change qu'à l'arrivée/départ d'un pair (`useSyncExternalStore` sur le
- * roster) ; les positions, elles, sont appliquées à chaque image via des refs directement dans
- * `useFrame`, sans `setState` — donc sans re-rendu React à 60 i/s.
+ * Affiche les autres visiteurs connectés, dans le Canvas : tous jouent Cyril (`AvatarMesh`), qui marche
+ * quand ils se déplacent. Pas de pseudo, donc pas d'étiquette au-dessus d'eux.
+ *
+ * Lit `peers.ts` (hors React) : la liste React des pairs montés ne change qu'à l'arrivée/départ d'un
+ * pair (`useSyncExternalStore` sur le roster) ; les positions, elles, sont appliquées à chaque image via
+ * des refs directement dans `useFrame`, sans `setState` — donc sans re-rendu React à 60 i/s.
  */
 import { useCallback, useRef, useState, useSyncExternalStore, type RefObject } from 'react'
 import { useFrame } from '@react-three/fiber'
 import type * as THREE from 'three'
 import { AvatarMesh } from '../../player/AvatarMesh'
-import { dims } from '../../styles/tokens'
-import { getNameLabelAspect, getNameLabelTexture } from './nameLabel'
+import { remoteSpeed } from '../../player/cyrilLocomotion'
 import { getPeer, getRenderTransform, peerStore, selectVisiblePeers, subscribeRoster } from './peers'
 import { player } from '../../state/runtime'
 
-const LABEL_Y = dims.playerHeight + 0.35
-const LABEL_HEIGHT = 0.32
-const FADE_MS = 350
 export const POP_MS = 250
 const POP_START_SCALE = 0.6
 const POP_PEAK_SCALE = 1.05
@@ -43,12 +41,12 @@ export function popScale(elapsedMs: number, durationMs: number = POP_MS): number
 /**
  * Anime l'apparition d'un pair par une mise à l'échelle du groupe (jamais par ses matériaux).
  *
- * `AvatarMesh` réutilise des matériaux **mis en cache et partagés** par couleur (joueur local,
- * écran de personnalisation, et tous les pairs de même teinte), y compris la texture d'ombre : y
- * toucher (`opacity`/`transparent`, même sur un clone posé sur l'instance rendue) a déjà fait
- * clignoter/casser le rendu partagé d'un pair à l'autre. `group.scale` en revanche est une
- * propriété propre à CE groupe (un `THREE.Group` par pair) : la muter n'affecte jamais un autre
- * avatar. Aucune allocation ici — seul `scale.setScalar` est appelé à chaque image.
+ * `AvatarMesh` partage ses ressources entre toutes ses instances (joueur local compris) : un seul
+ * matériau mat pour tous les Cyril, la géométrie, la texture d'ombre et son matériau. Y toucher
+ * (`opacity`/`transparent`) a déjà fait clignoter/casser le rendu partagé d'un pair à l'autre.
+ * `group.scale` en revanche est une propriété propre à CE groupe (un `THREE.Group` par pair) : la
+ * muter n'affecte jamais un autre visiteur. Aucune allocation ici — seul `scale.setScalar` est appelé
+ * à chaque image.
  */
 function usePopIn(groupRef: RefObject<THREE.Group | null>) {
   const startRef = useRef<number | null>(null)
@@ -63,31 +61,6 @@ function usePopIn(groupRef: RefObject<THREE.Group | null>) {
     group.scale.setScalar(popScale(elapsed))
     if (elapsed >= POP_MS) doneRef.current = true
   })
-}
-
-/**
- * Étiquette de pseudo : son matériau (`spriteMaterial`) est créé une fois par instance de
- * `<sprite>`, jamais partagé (seule la texture, mise en cache par pseudo dans `nameLabel.ts`,
- * l'est) — le fondu peut donc muter `opacity` directement dessus sans risque pour un autre pair.
- */
-function NameSprite({ texture }: { texture: THREE.CanvasTexture }) {
-  const materialRef = useRef<THREE.SpriteMaterial>(null)
-  const startRef = useRef<number | null>(null)
-  const aspect = getNameLabelAspect(texture)
-
-  useFrame(() => {
-    const material = materialRef.current
-    if (!material || material.opacity >= 1) return
-    if (startRef.current === null) startRef.current = performance.now()
-    const elapsed = performance.now() - startRef.current
-    material.opacity = Math.min(1, elapsed / FADE_MS)
-  })
-
-  return (
-    <sprite position={[0, LABEL_Y, 0]} scale={[LABEL_HEIGHT * aspect, LABEL_HEIGHT, 1]}>
-      <spriteMaterial ref={materialRef} map={texture} transparent depthWrite={false} opacity={0} />
-    </sprite>
-  )
 }
 
 function RemotePeerAvatar({ id }: { id: string }) {
@@ -105,14 +78,11 @@ function RemotePeerAvatar({ id }: { id: string }) {
     if (transform.moving !== moving) setMoving(transform.moving)
   })
 
-  const record = getPeer(peerStore, id)
-  if (!record?.avatar) return null
-  const label = getNameLabelTexture(record.avatar.name)
+  if (!getPeer(peerStore, id)?.present) return null
 
   return (
     <group ref={groupRef}>
-      <AvatarMesh config={record.avatar} moving={moving} speed={moving ? 1.4 : 0} />
-      {label && <NameSprite texture={label} />}
+      <AvatarMesh moving={moving} speed={remoteSpeed(moving)} />
     </group>
   )
 }

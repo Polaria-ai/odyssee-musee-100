@@ -16,9 +16,9 @@
  * volontairement gardé procédural ici (pas de `decorPlacement`, voir commentaires dans `roomGeometry.ts`) :
  * la roue dentée et les câbles (aile Infrastructures, aucun modèle CC0 net trouvé / le modèle du catalogue
  * ne fait que « compléter » les câbles peints, pas les remplacer), le chevalet (aile Culture, « aucun
- * remplacement CC0 identifié » — `docs/assets/catalogue.md`), le cordon devant le comptoir de Minerve
+ * remplacement CC0 identifié » — `docs/assets/catalogue.md`), le cordon devant le comptoir d'accueil
  * (idem, meilleure option restée procédurale), l'Arbre des 100 et son banc circulaire (sculpture originale,
- * `docs/DESIGN.md`), le comptoir de Minerve (géométrie dédiée).
+ * `docs/DESIGN.md`), le comptoir d'accueil (géométrie dédiée).
  *
  * Deux emplacements sont des AJOUTS de ce chantier (pas de décor procédural remplacé) : `wall-lamp` et
  * `floor-lamp`, posés en embellissant l'architecture du hall (item 4 de la mission), aux murs actuellement
@@ -116,7 +116,7 @@ interface WingBuild {
   stampStation: Vec2
 }
 
-/** Comptoir de Minerve, toujours au sud d'elle (voir `CURATOR_COUNTER_OFFSET_Z`). */
+/** Comptoir d'accueil, toujours au sud du personnage (voir `CURATOR_COUNTER_OFFSET_Z`). */
 const CURATOR_POSITION: Vec2 = { x: 0, z: -4.5 }
 
 /** Décor fixe du hall (piliers, bancs, jardinières, comptoir, arbre) : partagé avec le rendu (`Museum.tsx`). */
@@ -124,7 +124,7 @@ export interface HallDecor {
   pillars: Vec2[]
   benches: Placement[]
   planters: Vec2[]
-  /** Comptoir arrondi de Minerve (plateau + façade) : rendu dédié, pas la géométrie « meuble » générique. */
+  /** Comptoir d'accueil arrondi (plateau + façade) : rendu dédié, pas la géométrie « meuble » générique. */
   counter: { center: Vec2; halfWidth: number; halfDepth: number }
   /** Sculpture originale « l'Arbre des 100 » entourée d'un banc circulaire (collider). */
   tree: { center: Vec2; benchRadius: number }
@@ -261,7 +261,7 @@ function hallDecorPlacements(decor: HallDecor): DecorPlacement[] {
   placements.push({ type: 'wall-lamp', position: { x: sideX, z: -6.5 }, rotationY: -Math.PI / 2, room: 'hall' })
   placements.push({ type: 'wall-lamp', position: { x: sideX, z: 6.5 }, rotationY: -Math.PI / 2, room: 'hall' })
 
-  // Lampadaires flanquant le comptoir de Minerve, en retrait des potelets du cordon (voir roomGeometry.ts).
+  // Lampadaires flanquant le comptoir d'accueil, en retrait des potelets du cordon (voir roomGeometry.ts).
   const { center, halfWidth } = decor.counter
   placements.push({ type: 'floor-lamp', position: { x: center.x - halfWidth - 0.9, z: center.z }, rotationY: 0, room: 'hall' })
   placements.push({ type: 'floor-lamp', position: { x: center.x + halfWidth + 0.9, z: center.z }, rotationY: 0, room: 'hall' })
@@ -478,8 +478,10 @@ function build(people: Person[]): MuseumBuild {
   // Mur sud (côté caméra, coupé bas) : percé de la porte des Archives de 2040 (tokens.archivesDoor).
   const southDoorMin = archivesDoor.x - archivesDoor.width / 2
   const southDoorMax = archivesDoor.x + archivesDoor.width / 2
-  hallWalls.push(wall(xWall(HALL_HALF_DEPTH, -HALL_HALF_WIDTH, southDoorMin, dims.wallThickness), true))
-  hallWalls.push(wall(xWall(HALL_HALF_DEPTH, southDoorMax, HALL_HALF_WIDTH, dims.wallThickness), true))
+  // Collider seulement : ce mur est aussi le mur nord des Archives, que le module Archives dessine
+  // (bas côté hall, pleine hauteur une fois dans la salle — voir `ArchivesLayout.northWall`).
+  hallWalls.push({ ...wall(xWall(HALL_HALF_DEPTH, -HALL_HALF_WIDTH, southDoorMin, dims.wallThickness), true), hidden: true })
+  hallWalls.push({ ...wall(xWall(HALL_HALF_DEPTH, southDoorMax, HALL_HALF_WIDTH, dims.wallThickness), true), hidden: true })
   // Mur nord → aile industrialisation.
   hallWalls.push(...hallWallSegments('x', -HALL_HALF_DEPTH, -HALL_HALF_WIDTH, HALL_HALF_WIDTH, !!wingBuilds.industrialisation))
   // Mur ouest → aile infrastructures.
@@ -497,7 +499,7 @@ function build(people: Person[]): MuseumBuild {
 
   const comingSoonWings: ExhibitWingId[] = EXHIBIT_WINGS.filter((w) => !wingBuilds[w])
 
-  // Comptoir de Minerve, juste au sud d'elle. Collider seulement ici (boîte simple) : le rendu
+  // Comptoir d'accueil, juste au sud du personnage. Collider seulement ici (boîte simple) : le rendu
   // (plateau + façade arrondis) est une géométrie dédiée dans `roomGeometry.ts`/`Museum.tsx`, pas la
   // géométrie « meuble » générique fusionnée avec les autres boîtes ci-dessous.
   const curator: Placement = { position: CURATOR_POSITION, rotationY: 0 }

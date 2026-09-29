@@ -1,5 +1,12 @@
 /**
- * Géométrie du cadre doré mouluré + petit spot mural (WEL-875, module cadres & cartels).
+ * Géométrie du cadre mouluré + petit spot mural (WEL-875, module cadres & cartels), à la charte 3D du
+ * 29/09/2026 (`docs/CHARTE-3D.md` §4.6) : plus de bois doré.
+ *
+ * Couches, de l'extérieur vers la toile : moulure extérieure BLANCHE (`frame.outer`, 5 cm), moulure
+ * médiane à l'ACCENT DE L'AILE (cyan vif, corail ou bleu néon : une géométrie par aile, un seul matériau
+ * partagé, la couleur étant portée par les sommets), liseré et passe-partout nuit (`frame.lip`, `frame.mat`,
+ * qui prolongent la toile sombre : la photo « flotte »). Spot mural : platine et bras nuit, vasque et
+ * ampoule blanches.
  *
  * Aucun modèle CC0 de « cadre de tableau » n'existe dans les 6 packs Kenney fournis (confirmé par
  * `docs/assets/catalogue.md`, ligne « Chevalet / cadre de présentation : aucun modèle dédié trouvé » —
@@ -12,25 +19,21 @@
  * (« profil biseauté en plusieurs couches, ou modèle CC0 de cadre s'il en existe un — sinon géométrie
  * procédurale soignée »).
  *
- * Tout est fusionné en UNE seule `BufferGeometry` non indexée (moulures + passe-partout + spot),
- * partagée par tous les cadres (comme `FRAME_BORDER_GEO` auparavant) : aucun appel de dessin
- * supplémentaire par rapport à l'ancien cadre à une seule couche, malgré le luminaire ajouté — décisif
- * pour tenir le budget `renderInfo().calls ≤ 150` avec ~100 cadres (voir `docs/DESIGN.md`).
+ * Tout est fusionné en UNE seule `BufferGeometry` non indexée par aile (moulures + passe-partout + spot),
+ * partagée par tous les cadres de l'aile : aucun appel de dessin supplémentaire par rapport à l'ancien
+ * cadre à une seule couche, malgré le luminaire ajouté — décisif pour tenir le budget
+ * `renderInfo().calls ≤ 150` avec ~100 cadres (voir `docs/DESIGN.md`).
  */
 import { BoxGeometry, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, Matrix4 } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
-import { palette } from '../styles/tokens'
+import type { ExhibitWingId } from '../types'
+import { charter3d, exhibitWingOrder, wingThemes } from '../styles/tokens'
 import { dims } from './constants'
 
-// --- Teintes du cadre (dérivées de la palette du musée, jamais une couleur inventée hors palette) ---
-// `palette.gold` (#e8c872) reste la couche médiane, comme l'ancien cadre à une seule couche : la
-// régression visuelle pour qui connaît déjà le musée reste minimale. `GOLD_DEEP`/`GOLD_BRIGHT`
-// l'encadrent pour donner le relief « plusieurs couches biseautées » demandé.
-export const GOLD_DEEP = '#a97b3d' // moulure extérieure, dans l'ombre
-export const GOLD_MID = palette.gold // couche médiane (ex-couleur unique du cadre)
-export const GOLD_BRIGHT = '#f6e3ab' // fin liseré intérieur, au plus près du passe-partout
-export const MAT_CREAM = palette.paper // passe-partout
-export const LAMP_LENS = '#fff3c4' // « ampoule » du petit spot, ton chaud
+// --- Teintes du cadre : toutes lues dans la charte 3D (`charter3d.frame`), jamais une couleur en dur ---
+const FRAME = charter3d.frame
+/** Ampoule du petit spot (blanche) ; réutilisée par le halo (`frameHalo.ts`). */
+export const LAMP_LENS = FRAME.lens
 
 /** Demi-épaisseurs (m) ajoutées à `dims.frameWidth`/`frameHeight` pour chaque couche, décroissantes du fond vers l'avant. */
 const LAYER_MARGIN = {
@@ -68,7 +71,7 @@ export const PAINTING_RECESS_Z = -0.004
  * l'ancien cadre à une seule couche). `lip` et `passepartout` étaient toutes deux des `BoxGeometry`
  * PLEINS (aucune ouverture), plus grands que la toile dans les deux dimensions
  * (`LAYER_MARGIN.lip`/`LAYER_MARGIN.passepartout`) : elles masquaient donc ENTIÈREMENT la toile
- * derrière un aplat uni (crème en pratique, le passe-partout étant la couche la plus proche de la
+ * derrière un aplat uni (de la couleur du passe-partout, le passe-partout étant la couche la plus proche de la
  * caméra), quelle que soit la texture chargée (portrait d'attente ou photo) — le cadre n'a jamais eu
  * de « fenêtre ». `buildFrameGeometry` construit maintenant ces deux couches comme de véritables
  * anneaux (4 lattes chacun, voir `ringLayer`) avec la même ouverture centrale
@@ -154,42 +157,65 @@ function ringLayer(outerMargin: number, z: number, depth: number, hex: string): 
 const LAMP_Y_ABOVE_FRAME_TOP = 0.22
 
 /**
- * Construit la géométrie fusionnée d'UN cadre : moulure dorée (3 couches biseautées) + passe-partout
- * crème + petit spot mural doré (bras + vasque + « ampoule »). Appelée une seule fois au chargement du
- * module (voir `FRAME_GEOMETRY` ci-dessous) : jamais dans `useFrame`, jamais réappelée par cadre.
+ * Construit la géométrie fusionnée d'UN cadre : moulure extérieure blanche + moulure médiane `mid`
+ * (l'accent de l'aile) + liseré et passe-partout nuit + petit spot mural (bras + vasque + « ampoule »).
+ * Appelée une fois par couleur de moulure médiane au chargement du module (voir `frameGeometryFor`) :
+ * jamais dans `useFrame`, jamais réappelée par cadre.
  */
-export function buildFrameGeometry(): BufferGeometry {
+export function buildFrameGeometry(mid: string = charter3d.rooms.hall.accent): BufferGeometry {
   const w = dims.frameWidth
   const h = dims.frameHeight
   const parts: BufferGeometry[] = [
     // `outer`/`mid` : faces avant derrière la toile reculée (`PAINTING_RECESS_Z`) — la toile opaque les
     // occulte naturellement dans la zone de recouvrement, comme l'ancien cadre à une seule couche.
     // Restent des pavés pleins : jamais devant la toile, jamais besoin d'ouverture.
-    box(0, 0, LAYER_Z.outer, w + LAYER_MARGIN.outer, h + LAYER_MARGIN.outer, 0.05, GOLD_DEEP),
-    box(0, 0, LAYER_Z.mid, w + LAYER_MARGIN.mid, h + LAYER_MARGIN.mid, 0.045, GOLD_MID),
+    box(0, 0, LAYER_Z.outer, w + LAYER_MARGIN.outer, h + LAYER_MARGIN.outer, 0.05, FRAME.outer),
+    box(0, 0, LAYER_Z.mid, w + LAYER_MARGIN.mid, h + LAYER_MARGIN.mid, 0.045, mid),
     // `lip`/`passepartout` : faces avant DEVANT la toile reculée — anneaux avec ouverture (voir
     // `ringLayer`), sans quoi elles masqueraient la toile (régression WEL-875).
-    ...ringLayer(LAYER_MARGIN.lip, LAYER_Z.lip, 0.03, GOLD_BRIGHT),
-    ...ringLayer(LAYER_MARGIN.passepartout, LAYER_Z.passepartout, 0.018, MAT_CREAM),
+    ...ringLayer(LAYER_MARGIN.lip, LAYER_Z.lip, 0.03, FRAME.lip),
+    ...ringLayer(LAYER_MARGIN.passepartout, LAYER_Z.passepartout, 0.018, FRAME.mat),
   ]
 
   // Petit spot de galerie : plaque murale (contre la moulure, tout au fond) + bras + vasque inclinée
-  // vers le tableau + « ampoule » chaude au museau de la vasque. Reste hors des colliders (purement
+  // vers le tableau + « ampoule » au museau de la vasque. Reste hors des colliders (purement
   // décoratif, comme le cadre lui-même) et hors du couloir de vue (le cadre entier n'est visible que
   // face à +Z, voir `constants.ts::CIMAISE_THICKNESS`).
   const lampY = h / 2 + LAMP_Y_ABOVE_FRAME_TOP
   parts.push(
-    box(0, lampY, LAYER_Z.outer, 0.09, 0.09, 0.03, GOLD_DEEP), // platine murale
-    box(0, lampY, -0.04, 0.045, 0.2, 0.045, GOLD_DEEP), // bras vertical
-    cylinder(0, lampY - 0.02, 0.05, 0.045, 0.075, 0.14, GOLD_MID, Math.PI * 0.14), // vasque, légèrement inclinée vers le bas
+    box(0, lampY, LAYER_Z.outer, 0.09, 0.09, 0.03, FRAME.lampArm), // platine murale
+    box(0, lampY, -0.04, 0.045, 0.2, 0.045, FRAME.lampArm), // bras vertical
+    cylinder(0, lampY - 0.02, 0.05, 0.045, 0.075, 0.14, FRAME.lampShade, Math.PI * 0.14), // vasque, légèrement inclinée vers le bas
     cylinder(0, lampY - 0.09, 0.1, 0.062, 0.062, 0.012, LAMP_LENS, Math.PI * 0.14), // « ampoule », au museau de la vasque
   )
 
   return mergeAll(parts)
 }
 
-/** Géométrie partagée par tous les cadres (~100) : une seule construction, jamais par instance. */
-export const FRAME_GEOMETRY = buildFrameGeometry()
+/** Géométries déjà construites, par couleur de moulure médiane (une par aile, jamais deux fois la même). */
+const geometryByMid = new Map<string, BufferGeometry>()
+
+/** Géométrie partagée par tous les cadres d'une moulure médiane `mid` : une seule construction, jamais par instance. */
+export function frameGeometryFor(mid: string): BufferGeometry {
+  let geo = geometryByMid.get(mid)
+  if (!geo) {
+    geo = buildFrameGeometry(mid)
+    geometryByMid.set(mid, geo)
+  }
+  return geo
+}
+
+/** Cadre à la moulure médiane du hall (corail) : géométrie de repli, égale à celle de l'Industrialisation. */
+export const FRAME_GEOMETRY = frameGeometryFor(charter3d.rooms.hall.accent)
+
+/**
+ * Une géométrie de cadre par aile d'exposition : la moulure médiane porte l'accent de l'aile (cyan vif,
+ * corail, bleu néon). Trois maillages au total pour ~100 portraits, un seul matériau partagé.
+ */
+export const FRAME_GEOMETRY_BY_WING = Object.fromEntries(exhibitWingOrder.map((wing) => [wing, frameGeometryFor(wingThemes[wing].accent)])) as Record<
+  ExhibitWingId,
+  BufferGeometry
+>
 
 /** Position Y (repère local du cadre) du halo lumineux du spot — juste sous la vasque. */
 export const HALO_LOCAL_Y = dims.frameHeight / 2 + LAMP_Y_ABOVE_FRAME_TOP - 0.16

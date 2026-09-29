@@ -9,10 +9,9 @@
 import { useEffect, useRef } from 'react'
 import { useGame } from '../../state/gameStore'
 import { player } from '../../state/runtime'
-import type { AvatarConfig } from '../../types'
 import {
   peerStore,
-  upsertAvatar,
+  upsertPeer,
   removePeer,
   recordPosition,
   pruneStale,
@@ -77,26 +76,16 @@ function parsePresenceState(state: Record<string, unknown[]>): PresenceWireMessa
 }
 
 export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps): void {
-  const avatar = useGame((s) => s.avatar)
   const visitorId = useGame((s) => s.visitorId)
   const setPeersCount = useGame((s) => s.setPeersCount)
 
-  const avatarRef = useRef<AvatarConfig>(avatar)
   const channelRef = useRef<RealtimeChannelLike | null>(null)
   const joinTsRef = useRef(0)
   // `deps` n'a pas besoin d'être une dépendance d'effet : c'est une fabrique stable en usage
   // normal (la valeur par défaut), et le lire via une ref évite de tout reconnecter si un
   // appelant (typiquement un test) passe un nouvel objet littéral à chaque rendu.
   const depsRef = useRef(deps)
-  avatarRef.current = avatar
   depsRef.current = deps
-
-  // Republie l'avatar sur la salle courante quand il change, sans tout rejoindre.
-  useEffect(() => {
-    if (!enabled) return
-    const ch = channelRef.current
-    if (ch) ch.track(encodePresence(visitorId, avatar, joinTsRef.current))
-  }, [avatar, enabled, visitorId])
 
   useEffect(() => {
     if (!enabled) return
@@ -209,7 +198,7 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
         const seen = new Set<string>()
         for (const entry of others) {
           seen.add(entry.id)
-          upsertAvatar(peerStore, entry.id, entry.avatar, now)
+          upsertPeer(peerStore, entry.id, now)
         }
         for (const id of peerStore.peers.keys()) {
           if (!seen.has(id)) removePeer(peerStore, id)
@@ -234,7 +223,7 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
         if (status === 'SUBSCRIBED') {
           attempt = 0
           channelRef.current = ch
-          ch.track(encodePresence(visitorId, avatarRef.current, joinTsRef.current))
+          ch.track(encodePresence(visitorId, joinTsRef.current))
           startSendLoop()
         } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
           scheduleReconnect(index)
@@ -316,7 +305,7 @@ export function usePresence(enabled: boolean, deps: PresenceDeps = defaultDeps):
       clearPeers(peerStore)
       setPeersCount(0)
     }
-    // avatarRef/depsRef portent les valeurs courantes : pas besoin de relancer cet effet quand
-    // l'avatar change, ni si l'appelant passe un nouvel objet `deps` à chaque rendu (tests).
+    // depsRef porte la valeur courante : pas besoin de relancer cet effet si l'appelant passe un nouvel
+    // objet `deps` à chaque rendu (tests).
   }, [enabled, visitorId, setPeersCount])
 }

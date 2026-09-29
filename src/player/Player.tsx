@@ -19,6 +19,8 @@ import {
   lookRaiseFor,
   prefersReducedMotion,
   stepBlend,
+  dialogueShiftFor,
+  DIALOGUE_TRANSITION_SECONDS,
 } from './camera'
 
 const WALK_SPEED = 3.2
@@ -80,7 +82,6 @@ function roomAt(layout: MuseumLayout, x: number, z: number): WingId | null {
 
 /** Joueur : déplacement, collisions, caméra 3e personne, détection du portrait proche. */
 export function Player({ layout }: { layout: MuseumLayout }) {
-  const avatar = useGame((s) => s.avatar)
   const { camera, gl } = useThree()
 
   const groupRef = useRef<Group>(null)
@@ -89,6 +90,7 @@ export function Player({ layout }: { layout: MuseumLayout }) {
   const nearbyTimer = useRef(0)
   const stillTimer = useRef(0)
   const lookBlend = useRef(0)
+  const dialogueBlend = useRef(0)
   const reducedMotionRef = useRef(false)
   const [visualMoving, setVisualMoving] = useState(false)
   const [visualSpeed, setVisualSpeed] = useState(0)
@@ -218,7 +220,7 @@ export function Player({ layout }: { layout: MuseumLayout }) {
       groupRef.current.rotation.y = player.rotY
     }
 
-    // Portrait proche, comptoir de Minerve, salle courante : ~toutes les 120 ms, pas chaque image.
+    // Portrait proche, comptoir d'accueil, salle courante : ~toutes les 120 ms, pas chaque image.
     nearbyTimer.current += dt
     if (nearbyTimer.current >= NEARBY_CHECK_INTERVAL) {
       nearbyTimer.current = 0
@@ -258,6 +260,8 @@ export function Player({ layout }: { layout: MuseumLayout }) {
     const nearbyPersonId = useGame.getState().nearbyPersonId
     const wantsLook = nearbyPersonId !== null && stillTimer.current >= LOOK_STILLNESS_SECONDS
     lookBlend.current = stepBlend(lookBlend.current, wantsLook ? 1 : 0, dt, LOOK_TRANSITION_SECONDS, reducedMotionRef.current)
+    const dialogueOpen = useGame.getState().dialogue !== null
+    dialogueBlend.current = stepBlend(dialogueBlend.current, dialogueOpen ? 1 : 0, dt, DIALOGUE_TRANSITION_SECONDS, reducedMotionRef.current)
 
     // Caméra : distance adaptée au format d'écran courant (contrat `cameraRig`, recalculée chaque
     // image — aucune allocation three.js, juste de l'arithmétique), resserrée en mode « regard ».
@@ -273,10 +277,11 @@ export function Player({ layout }: { layout: MuseumLayout }) {
     const camT = dampT(CAMERA_DAMP_RATE, dt)
     state.camera.position.x = lerp(state.camera.position.x, targetCam.x, camT)
     state.camera.position.y = lerp(state.camera.position.y, targetCam.y, camT)
-    state.camera.position.z = lerp(state.camera.position.z, targetCam.z, camT)
+    const dialogueShift = dialogueShiftFor(distance, dialogueBlend.current)
+    state.camera.position.z = lerp(state.camera.position.z, targetCam.z + dialogueShift, camT)
     state.camera.quaternion.copy(FIXED_CAMERA_QUATERNION)
 
-    // État visuel (anime AvatarMesh) : on ne pousse un re-render que sur un vrai changement,
+    // État visuel (idle/marche de Cyril, voir AvatarMesh) : on ne pousse un re-render que sur un vrai changement,
     // le `player` chaud lui-même reste hors React à chaque image.
     if (player.moving !== visualMoving) setVisualMoving(player.moving)
     if (Math.abs(player.speed - visualSpeed) > 0.12) setVisualSpeed(player.speed)
@@ -284,7 +289,7 @@ export function Player({ layout }: { layout: MuseumLayout }) {
 
   return (
     <group ref={groupRef}>
-      <AvatarMesh config={avatar} moving={visualMoving} speed={visualSpeed} />
+      <AvatarMesh moving={visualMoving} speed={visualSpeed} />
     </group>
   )
 }

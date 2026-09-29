@@ -57,12 +57,12 @@ describe('Hud', () => {
     expect(useGame.getState().openPersonId).toBe(target.id)
   })
 
-  it('montre « Parler à Minerve » et démarre un dialogue quand le comptoir est à portée', () => {
+  it('montre « Parler à Rémi » et démarre un dialogue quand le comptoir est à portée', () => {
     useGame.setState({ nearbyPersonId: null, nearCurator: true })
     render(<Hud />)
 
     const button = screen.getByTestId('action-button')
-    expect(button.textContent).toMatch(/Minerve/)
+    expect(button.textContent).toMatch(/Rémi/)
 
     fireEvent.click(button)
     expect(useGame.getState().dialogue).not.toBeNull()

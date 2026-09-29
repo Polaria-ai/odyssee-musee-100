@@ -1,8 +1,9 @@
 // Propriétaire : agent avatar+tampons. SVG originaux (pas de police externe, pas de trace de logo réel).
-import { wingThemes } from '../../styles/tokens'
+import { charter3d, wingThemes } from '../../styles/tokens'
 import { ARCHIVES_INK, type StampId } from './stamps'
 
-const PENDING_COLOR = '#5a6a98'
+// Encre d'un tampon pas encore obtenu : la même que le socle 3D (`charter3d.stamp.idleInk`).
+const PENDING_COLOR = charter3d.stamp.idleInk
 
 function inkFor(wing: StampId): string {
   // Sur le carnet bleu nuit de la charte : l'accent vif de l'aile, pas sa teinte sombre.

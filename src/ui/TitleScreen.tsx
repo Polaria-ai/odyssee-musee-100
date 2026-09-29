@@ -16,9 +16,10 @@ export function TitleScreen() {
 
   function handleEnter() {
     // Débloque l'audio dans ce geste utilisateur (iOS) avant de quitter l'écran titre.
+    // Plus d'écran de personnalisation : on entre directement au musée, en Cyril.
     unlockAudio()
     playSfx('click')
-    setScreen('customize')
+    setScreen('play')
   }
 
   return (

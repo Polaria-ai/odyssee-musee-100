@@ -19,13 +19,18 @@ describe('TitleScreen', () => {
     useGame.setState({ screen: 'title', lang: 'fr', dataSource: 'placeholder' })
   })
 
-  it('affiche le titre et entre au musée au clic', () => {
+  it('affiche le titre et entre directement au musée au clic (plus d’écran de personnalisation)', () => {
     render(<TitleScreen />)
     expect(screen.getByTestId('title-screen')).toBeInTheDocument()
     expect(screen.getByText('Le Musée des 100')).toBeInTheDocument()
 
+    const visited: string[] = []
+    const unsubscribe = useGame.subscribe((s) => visited.push(s.screen))
     fireEvent.click(screen.getByTestId('enter-button'))
-    expect(useGame.getState().screen).toBe('customize')
+    unsubscribe()
+
+    expect(useGame.getState().screen).toBe('play')
+    expect(visited).toEqual(['play']) // aucun écran intermédiaire
   })
 
   it('débloque l’audio avant de quitter l’écran titre', () => {
@@ -33,7 +38,7 @@ describe('TitleScreen', () => {
     const order: string[] = []
     unlockAudioMock.mockImplementation(() => order.push('unlock'))
     const unsubscribe = useGame.subscribe((s) => {
-      if (s.screen === 'customize') order.push('screen')
+      if (s.screen === 'play') order.push('screen')
     })
 
     fireEvent.click(screen.getByTestId('enter-button'))

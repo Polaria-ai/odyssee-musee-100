@@ -32,8 +32,6 @@ test('recharger la page conserve la langue et les tampons', async ({ page }) => 
   await expect(page.getByTestId('enter-button')).toHaveText('Enter the museum')
 
   await page.getByTestId('enter-button').click()
-  await expect(page.getByTestId('customizer')).toBeVisible()
-  await page.getByTestId('customizer-done').click()
   await expect(page.locator('.app')).toHaveAttribute('data-screen', 'play')
 
   const restored = await museeState(page)

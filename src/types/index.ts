@@ -110,23 +110,9 @@ export interface MuseumLayout {
   bounds: AABB
 }
 
-export type OutfitId = 'tee' | 'hoodie' | 'dress' | 'suit' | 'overalls'
-export type AccessoryId = 'none' | 'glasses' | 'beret' | 'headphones' | 'flower' | 'cap'
-
-export interface AvatarConfig {
-  /** Pseudo affiché aux autres visiteurs (nettoyé, ≤ 16 caractères). */
-  name: string
-  skinTone: string
-  hairColor: string
-  outfit: OutfitId
-  outfitColor: string
-  accessory: AccessoryId
-}
-
-/** Un autre visiteur vu via Supabase Realtime. */
+/** Un autre visiteur vu via Supabase Realtime (toujours affiché en Cyril, donc sans apparence). */
 export interface PresencePeer {
   id: string
-  avatar: AvatarConfig
   x: number
   z: number
   rotY: number
@@ -135,7 +121,7 @@ export interface PresencePeer {
   t: number
 }
 
-export type Screen = 'loading' | 'title' | 'customize' | 'play'
+export type Screen = 'loading' | 'title' | 'play'
 
 export interface DialogueLine {
   text: Localized
@@ -235,4 +221,10 @@ export interface ArchivesLayout {
   door: { x: number; z: number; width: number }
   /** Hologramme de l'Archiviste. */
   archivist: Placement
+  /**
+   * Mur sud du hall, qui sert de mur nord à la salle (toute la largeur du hall, porte exclue). Rendu
+   * par le module Archives (plus par le monde) : bas côté hall, pleine hauteur quand le joueur est
+   * dans la salle (retour de Baptiste du 29/09 : « une pièce complète »). Colliders : `world/layout.ts`.
+   */
+  northWall: AABB[]
 }

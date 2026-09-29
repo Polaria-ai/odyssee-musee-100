@@ -3,7 +3,7 @@ import { dismissWelcomeDialogue, enterMuseum, gotoMusee } from './support/museeA
 
 /**
  * Aide au premier pas (`coach-mark`, `src/ui/CoachMark.tsx`) : bulle montrée une seule fois, après
- * le dialogue d'accueil de Minerve, masquée dès que le joueur bouge (ou après 10 s), et jamais
+ * le dialogue d'accueil de Rémi, masquée dès que le joueur bouge (ou après 10 s), et jamais
  * remontrée ensuite (mémorisée en `localStorage`, clé `musee.ui.coachMarkSeen`).
  */
 

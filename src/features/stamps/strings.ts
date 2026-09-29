@@ -13,6 +13,8 @@ export const strings = defineStrings({
   share: { fr: 'Partager ma carte', en: 'Share my card' },
   stampToast: { fr: 'Tampon {wing} obtenu !', en: '{wing} stamp earned!' },
   shareTitle: { fr: 'Le Musée des 100', en: 'The Museum of the 100' },
+  /** Ligne de la carte partageable sous les tampons (plus de pseudo : tout le monde joue Cyril). */
+  shareCount: { fr: '{count}/4 tampons', en: '{count}/4 stamps' },
   shareEvent: {
     fr: 'L’Odyssée de l’IA · 6 octobre 2026 · Théâtre de la Tour Eiffel',
     en: 'The AI Odyssey · October 6, 2026 · Théâtre de la Tour Eiffel',

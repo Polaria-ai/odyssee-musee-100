@@ -1,29 +1,23 @@
 /**
- * Textures canvas 2D de la salle des Archives (capsules holographiques, frise au sol, panneau d'entrée). Même conventions que `src/world/textures.ts` : aucune police externe (`system-ui`),
- * textures ≤ 512 px, tout est mis en cache (jamais redessiné hors bascule FR/EN ou changement d'état).
+ * Textures canvas 2D de la salle des Archives (capsules holographiques, frise au sol, panneau d'entrée,
+ * bandeau de la porte, bulle « ! »). Textures ≤ 512 px, toutes mises en cache (jamais redessinées hors
+ * bascule FR/EN ou changement d'état).
+ *
+ * Charte 3D du 29/09/2026 (`docs/CHARTE-3D.md` §4.8 et §4.9) : fond nuit, texte blanc pur, cyan pour
+ * l'identité de la salle, cyan vif pour l'état « en attente », corail pour l'état « archivé ». Aucune
+ * couleur en dur ici : tout vient de `charter3d.archives`. Poppins (≤ 600) pour les mots, JetBrains Mono
+ * (≤ 500) pour les heures, via `canvasFont` ; `paintedTexture` (module monde) repeint en place une
+ * texture dessinée avant le chargement des polices.
  */
-import { CanvasTexture, SRGBColorSpace } from 'three'
+import type { CanvasTexture } from 'three'
 import type { AABB, ArchiveSlot, EveningSession, Lang, SessionKind } from '../../types'
 import { pick } from '../../i18n'
-import { wingThemes } from '../../styles/tokens'
+import { charter3d } from '../../styles/tokens'
+import { canvasFont, paintedTexture, spacedGlyphOffsets } from '../../world/textures'
 import { archivesRoomStrings, sessionKindLabels } from '../strings'
 
-function context2d(width: number, height: number): { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D } {
-  const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
-  const ctx = canvas.getContext('2d')
-  if (!ctx) throw new Error('Contexte canvas 2D indisponible')
-  return { canvas, ctx }
-}
-
-function toTexture(canvas: HTMLCanvasElement): CanvasTexture {
-  const tex = new CanvasTexture(canvas)
-  tex.colorSpace = SRGBColorSpace
-  tex.needsUpdate = true
-  tex.anisotropy = 1
-  return tex
-}
+const { archives: charter, base } = charter3d
+const { vitrine } = charter
 
 function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
@@ -35,11 +29,42 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.closePath()
 }
 
-function truncate(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
-  if (ctx.measureText(text).width <= maxWidth) return text
-  let s = text
+/** Même couleur `rgba(...)` avec une autre opacité : bout transparent d'un dégradé, sans recopier la teinte. */
+export function withAlpha(rgba: string, alpha: number): string {
+  const m = /^rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)$/.exec(rgba)
+  if (!m) throw new Error(`rgba() attendu : ${rgba}`)
+  return `rgba(${m[1]}, ${m[2]}, ${m[3]}, ${alpha})`
+}
+
+function truncate(ctx: CanvasRenderingContext2D, str: string, maxWidth: number): string {
+  if (ctx.measureText(str).width <= maxWidth) return str
+  let s = str
   while (s.length > 1 && ctx.measureText(`${s}…`).width > maxWidth) s = s.slice(0, -1)
   return `${s}…`
+}
+
+/** Taille de police (≤ `start`) pour que `str` tienne dans `maxWidth`, dans la police du contexte. */
+function fitSize(ctx: CanvasRenderingContext2D, str: string, maxWidth: number, weight: number, start: number, min: number): number {
+  let size = start
+  ctx.font = canvasFont(weight, size)
+  while (size > min && ctx.measureText(str).width > maxWidth) {
+    size -= 1
+    ctx.font = canvasFont(weight, size)
+  }
+  return size
+}
+
+/** Capitales espacées (kicker), dessinées caractère par caractère : `ctx.letterSpacing` n'est pas universel. */
+function drawSpaced(ctx: CanvasRenderingContext2D, str: string, cx: number, baseline: number, spacing: number) {
+  const glyphs = Array.from(str)
+  const { offsets, total } = spacedGlyphOffsets(
+    glyphs.map((ch) => ctx.measureText(ch).width),
+    spacing,
+  )
+  const align = ctx.textAlign
+  ctx.textAlign = 'left'
+  glyphs.forEach((ch, i) => ctx.fillText(ch, cx - total / 2 + offsets[i], baseline))
+  ctx.textAlign = align
 }
 
 function cachedTexture(cache: Map<string, CanvasTexture>, key: string, draw: () => CanvasTexture): CanvasTexture {
@@ -74,10 +99,10 @@ export function drawSessionPictogram(ctx: CanvasRenderingContext2D, kind: Sessio
       break
     }
     case 'film': {
-      // Clap de cinéma : rectangle + bande biseautée.
+      // Clap de cinéma : rectangle + bande biseautée (les biseaux reprennent le fond de l'écran).
       roundRect(ctx, cx - r, cy - r * 0.5, r * 2, r, r * 0.12)
       ctx.fill()
-      ctx.fillStyle = wingThemes.archives.wall
+      ctx.fillStyle = base.nuit
       for (let i = -3; i <= 2; i++) {
         ctx.beginPath()
         ctx.moveTo(cx + i * r * 0.34, cy - r * 0.9)
@@ -198,9 +223,9 @@ export function drawSessionPictogram(ctx: CanvasRenderingContext2D, kind: Sessio
 }
 
 /**
- * Capsule holographique d'une vitrine : pictogramme, titre et heure. Jamais de synthèse ni de
+ * Capsule holographique d'une vitrine : pictogramme, titre, heure et type. Jamais de synthèse ni de
  * citation ici (voir `ArchiveCard.tsx`, propriétaire d'une autre phase) — seul l'état (archivée/en
- * attente) change la teinte, jamais le texte affiché sur cette petite texture.
+ * attente) change la teinte : cyan vif en attente, corail une fois archivée.
  */
 const capsuleCache = new Map<string, CanvasTexture>()
 export function drawCapsuleScreen(session: Pick<EveningSession, 'kind' | 'title' | 'startTime'>, lang: Lang, archived: boolean): CanvasTexture {
@@ -210,49 +235,47 @@ export function drawCapsuleScreen(session: Pick<EveningSession, 'kind' | 'title'
 function paintCapsuleScreen(session: Pick<EveningSession, 'kind' | 'title' | 'startTime'>, lang: Lang, archived: boolean): CanvasTexture {
   const w = 320
   const h = 224
-  const { canvas, ctx } = context2d(w, h)
-  const tint = archived ? '#e8c872' : '#7fd6e8'
+  const tint = archived ? vitrine.screenArchived : vitrine.screenIdle
+  return paintedTexture(w, h, (ctx) => {
+    // Fond nuit translucide, bordure lumineuse à la teinte d'état.
+    ctx.fillStyle = vitrine.screenFill
+    roundRect(ctx, 0, 0, w, h, 20)
+    ctx.fill()
+    ctx.lineWidth = 5
+    ctx.strokeStyle = tint
+    roundRect(ctx, 4, 4, w - 8, h - 8, 17)
+    ctx.stroke()
 
-  // Fond translucide bleu nuit, bordure lumineuse à la teinte d'état.
-  ctx.fillStyle = 'rgba(15, 22, 43, 0.92)'
-  roundRect(ctx, 0, 0, w, h, 20)
-  ctx.fill()
-  ctx.lineWidth = 5
-  ctx.strokeStyle = tint
-  roundRect(ctx, 4, 4, w - 8, h - 8, 17)
-  ctx.stroke()
+    drawSessionPictogram(ctx, session.kind, w / 2, 62, 34, tint)
 
-  drawSessionPictogram(ctx, session.kind, w / 2, 62, 34, tint)
+    ctx.fillStyle = vitrine.screenText
+    ctx.textAlign = 'center'
+    ctx.font = canvasFont(600, 25)
+    ctx.fillText(truncate(ctx, pick(session.title, lang), w - 36), w / 2, 136)
 
-  ctx.fillStyle = '#ffffff'
-  ctx.textAlign = 'center'
-  ctx.font = '700 26px system-ui, sans-serif'
-  const titleText = truncate(ctx, pick(session.title, lang), w - 36)
-  ctx.fillText(titleText, w / 2, 138)
+    // L'heure, en chiffres : JetBrains Mono.
+    ctx.font = canvasFont(500, 22, 'mono')
+    ctx.fillStyle = tint
+    ctx.fillText(session.startTime, w / 2, 170)
 
-  ctx.font = '600 20px system-ui, sans-serif'
-  ctx.fillStyle = tint
-  ctx.fillText(session.startTime, w / 2, 170)
-
-  ctx.font = '500 15px system-ui, sans-serif'
-  ctx.fillStyle = 'rgba(255,255,255,0.75)'
-  ctx.fillText(pick(sessionKindLabels[session.kind], lang), w / 2, 196)
-
-  return toTexture(canvas)
+    // Type de séquence : kicker (capitales espacées).
+    ctx.font = canvasFont(500, 13)
+    ctx.fillStyle = vitrine.screenSub
+    drawSpaced(ctx, pick(sessionKindLabels[session.kind], lang).toLocaleUpperCase(lang), w / 2, 199, 2.4)
+  })
 }
 
 /**
- * Grand sol de la galerie : bleu nuit + frise chronologique, un chemin lumineux doux qui serpente
- * d'une vitrine à l'autre dans l'ordre du programme (voir `layout.ts::buildCandidates`, rangées en
- * serpentin — sans quoi ce tracé reviendrait d'un bord à l'autre de la salle à chaque rangée). Une
+ * Grand sol de la galerie : bleu profond de la charte + frise chronologique, un chemin lumineux doux qui
+ * serpente d'une vitrine à l'autre dans l'ordre du programme (voir `layout.ts::buildCandidates`, rangées
+ * en serpentin — sans quoi ce tracé reviendrait d'un bord à l'autre de la salle à chaque rangée). Une
  * seule texture pour toute la salle (1 appel de dessin), mappée directement sur le plan du sol (voir
  * `RoomShell.tsx`).
  *
- * L'heure de chaque séquence n'est PLUS peinte ici : à la résolution de cette texture (512 px pour
- * toute la salle, contrainte mobile), les libellés se chevauchaient et étaient coupés dès que deux
- * rangées se rapprochaient (constat de la vérification visuelle). Chaque vitrine porte déjà SON heure,
- * bien plus lisible, sur l'écran de sa capsule (`drawCapsuleScreen`) : le sol garde seulement le tracé
- * et un repère discret par vitrine, jamais un second horaire redondant « peint en grand ».
+ * L'heure de chaque séquence n'est PAS peinte ici : à la résolution de cette texture (512 px pour toute
+ * la salle, contrainte mobile), les libellés se chevauchaient et étaient coupés dès que deux rangées se
+ * rapprochaient. Chaque vitrine porte déjà SON heure, bien plus lisible, sur l'écran de sa capsule
+ * (`drawCapsuleScreen`) : le sol garde seulement le tracé et un repère discret par vitrine.
  */
 const floorCache = new Map<string, CanvasTexture>()
 export function drawArchivesFloor(bounds: AABB, slots: ArchiveSlot[], lang: Lang): CanvasTexture {
@@ -264,64 +287,60 @@ function paintArchivesFloor(bounds: AABB, slots: ArchiveSlot[]): CanvasTexture {
   const worldD = bounds.maxZ - bounds.minZ
   const w = 512
   const h = Math.round((worldD / worldW) * 512)
-  const { canvas, ctx } = context2d(w, h)
+  const floor = charter.floor
 
   const toPx = (x: number, z: number) => ({ px: ((x - bounds.minX) / worldW) * w, py: ((z - bounds.minZ) / worldD) * h })
 
-  // Fond bleu nuit doux (couleur de la salle, voir wingThemes.archives.floor), un peu plus sombre vers
-  // les bords (effet de profondeur léger, jamais un fond noir : régression constatée à la vérification
-  // visuelle — un fond `palette.shadow` presque noir écrasait toute la salle).
-  ctx.fillStyle = wingThemes.archives.floor
-  ctx.fillRect(0, 0, w, h)
-  const vignette = ctx.createRadialGradient(w / 2, h / 2, Math.max(w, h) * 0.15, w / 2, h / 2, Math.max(w, h) * 0.75)
-  vignette.addColorStop(0, 'rgba(0, 0, 0, 0)')
-  vignette.addColorStop(1, 'rgba(20, 26, 46, 0.35)')
-  ctx.fillStyle = vignette
-  ctx.fillRect(0, 0, w, h)
+  return paintedTexture(w, h, (ctx) => {
+    // Fond : le bleu profond du sol de tout le musée, un peu plus sombre vers les bords (profondeur douce
+    // vers `nuitProfond`, jamais un fond noir : régression constatée à la vérification visuelle).
+    ctx.fillStyle = floor.base
+    ctx.fillRect(0, 0, w, h)
+    const vignette = ctx.createRadialGradient(w / 2, h / 2, Math.max(w, h) * 0.15, w / 2, h / 2, Math.max(w, h) * 0.75)
+    vignette.addColorStop(0, withAlpha(floor.vignetteEdge, 0))
+    vignette.addColorStop(1, floor.vignetteEdge)
+    ctx.fillStyle = vignette
+    ctx.fillRect(0, 0, w, h)
 
-  if (slots.length > 0) {
+    if (slots.length === 0) return
     ctx.lineJoin = 'round'
     ctx.lineCap = 'round'
 
-    // Chemin lumineux doux : une passe large et très translucide (lueur) puis une passe fine et vive
-    // (le trait) — jamais un simple trait dur, pour rester « 2040 mais cosy ».
+    // Chemin lumineux : une passe large et translucide (lueur) puis une passe fine et vive (le trait).
     ctx.beginPath()
     slots.forEach((s, i) => {
       const { px, py } = toPx(s.position[0], s.position[2])
       if (i === 0) ctx.moveTo(px, py)
       else ctx.lineTo(px, py)
     })
-    ctx.strokeStyle = 'rgba(127, 214, 232, 0.28)'
+    ctx.strokeStyle = floor.pathGlow
     ctx.lineWidth = 13
     ctx.stroke()
-    ctx.strokeStyle = 'rgba(191, 235, 245, 0.85)'
+    ctx.strokeStyle = floor.pathLine
     ctx.lineWidth = 4
     ctx.stroke()
 
     slots.forEach((s) => {
       const { px, py } = toPx(s.position[0], s.position[2])
       const glow = ctx.createRadialGradient(px, py, 0, px, py, 15)
-      glow.addColorStop(0, 'rgba(191, 235, 245, 0.55)')
-      glow.addColorStop(1, 'rgba(191, 235, 245, 0)')
+      glow.addColorStop(0, floor.nodeGlow)
+      glow.addColorStop(1, withAlpha(floor.nodeGlow, 0))
       ctx.fillStyle = glow
       ctx.beginPath()
       ctx.arc(px, py, 15, 0, Math.PI * 2)
       ctx.fill()
-      ctx.fillStyle = '#f4fbfd'
+      ctx.fillStyle = floor.node
       ctx.beginPath()
       ctx.arc(px, py, 4.5, 0, Math.PI * 2)
       ctx.fill()
     })
-  }
-
-  return toTexture(canvas)
+  })
 }
 
 /**
  * Grand panneau d'entrée (titre de la salle + date de la soirée + mention « provisoire ») : posé bien
- * en vue depuis l'arrivée, comme la grande bannière du hall (voir docs/DESIGN.md). Remplace l'ancien
- * petit bandeau « Programme provisoire » isolé — un seul panneau, plus lisible, porte toute
- * l'information plutôt que de l'éparpiller.
+ * en vue depuis l'arrivée, comme la grande bannière du hall (voir docs/DESIGN.md). Un seul panneau, plus
+ * lisible, porte toute l'information plutôt que de l'éparpiller.
  */
 const entranceSignCache = new Map<string, CanvasTexture>()
 export function drawEntranceSign(lang: Lang): CanvasTexture {
@@ -330,28 +349,73 @@ export function drawEntranceSign(lang: Lang): CanvasTexture {
 function paintEntranceSign(lang: Lang): CanvasTexture {
   const w = 512
   const h = 176
-  const { canvas, ctx } = context2d(w, h)
-  ctx.fillStyle = 'rgba(15, 22, 43, 0.94)'
-  roundRect(ctx, 0, 0, w, h, 22)
-  ctx.fill()
-  ctx.lineWidth = 4
-  ctx.strokeStyle = '#e8c872'
-  roundRect(ctx, 5, 5, w - 10, h - 10, 18)
-  ctx.stroke()
+  const sign = charter.sign
+  return paintedTexture(w, h, (ctx) => {
+    ctx.fillStyle = sign.fill
+    roundRect(ctx, 0, 0, w, h, 22)
+    ctx.fill()
+    ctx.lineWidth = 4
+    ctx.strokeStyle = sign.border
+    roundRect(ctx, 5, 5, w - 10, h - 10, 18)
+    ctx.stroke()
 
-  ctx.textAlign = 'center'
-  ctx.fillStyle = '#ffffff'
-  ctx.font = '700 34px system-ui, sans-serif'
-  ctx.fillText(pick(archivesRoomStrings.roomLabel, lang), w / 2, h * 0.4)
+    // Filet du kicker (cyan de la salle).
+    ctx.fillStyle = sign.border
+    ctx.fillRect(w / 2 - 14, 24, 28, 3)
 
-  ctx.font = '600 18px system-ui, sans-serif'
-  ctx.fillStyle = '#7fd6e8'
-  ctx.fillText(pick(archivesRoomStrings.eveningDate, lang), w / 2, h * 0.64)
+    ctx.textAlign = 'center'
+    ctx.fillStyle = sign.title
+    const title = pick(archivesRoomStrings.roomLabel, lang)
+    ctx.font = canvasFont(600, fitSize(ctx, title, w - 60, 600, 34, 22))
+    ctx.fillText(title, w / 2, h * 0.43)
 
-  ctx.font = '500 16px system-ui, sans-serif'
-  ctx.fillStyle = '#e8c872'
-  ctx.fillText(pick(archivesRoomStrings.provisionalBanner, lang), w / 2, h * 0.86)
-  return toTexture(canvas)
+    ctx.font = canvasFont(600, 18)
+    ctx.fillStyle = sign.date
+    ctx.fillText(pick(archivesRoomStrings.eveningDate, lang), w / 2, h * 0.66)
+
+    const provisional = pick(archivesRoomStrings.provisionalBanner, lang)
+    ctx.font = canvasFont(500, fitSize(ctx, provisional, w - 50, 500, 16, 11))
+    ctx.fillStyle = sign.provisional
+    ctx.fillText(provisional, w / 2, h * 0.88)
+  })
+}
+
+/**
+ * Bandeau posé sur le linteau de la porte, côté salle : « Les Archives de 2040 ». Fond nuit, contour cyan
+ * de la salle, titre blanc ; deux petites séries de barres cyan en écho aux scanlines du logo.
+ */
+const bannerCache = new Map<string, CanvasTexture>()
+export function drawArchivesBanner(lang: Lang): CanvasTexture {
+  return cachedTexture(bannerCache, lang, () => paintArchivesBanner(lang))
+}
+function paintArchivesBanner(lang: Lang): CanvasTexture {
+  const w = 512
+  const h = 99
+  const sign = charter.sign
+  return paintedTexture(w, h, (ctx) => {
+    ctx.fillStyle = base.nuit
+    roundRect(ctx, 0, 0, w, h, 16)
+    ctx.fill()
+    ctx.lineWidth = 4
+    ctx.strokeStyle = sign.border
+    roundRect(ctx, 4, 4, w - 8, h - 8, 13)
+    ctx.stroke()
+
+    // Scanlines décoratives de part et d'autre du titre (barres de plus en plus courtes vers le titre).
+    ctx.fillStyle = sign.date
+    const bars = [44, 36, 28, 20]
+    bars.forEach((len, i) => {
+      const y = 26 + i * 15
+      ctx.fillRect(28, y, len, 6)
+      ctx.fillRect(w - 28 - len, y, len, 6)
+    })
+
+    const title = pick(archivesRoomStrings.roomLabel, lang)
+    ctx.textAlign = 'center'
+    ctx.fillStyle = sign.title
+    ctx.font = canvasFont(600, fitSize(ctx, title, w - 190, 600, 40, 22))
+    ctx.fillText(title, w / 2, h / 2 + 13)
+  })
 }
 
 /** Petite bulle « ! » flottante au-dessus d'une vitrine proche (même esprit que `world/bubbleTexture.ts`). */
@@ -359,19 +423,20 @@ let bubbleCached: CanvasTexture | null = null
 export function archivesBubbleTexture(): CanvasTexture {
   if (bubbleCached) return bubbleCached
   const size = 64
-  const { canvas, ctx } = context2d(size, size)
-  ctx.beginPath()
-  ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2)
-  ctx.fillStyle = '#7fd6e8'
-  ctx.fill()
-  ctx.strokeStyle = '#ffffff'
-  ctx.lineWidth = 3
-  ctx.stroke()
-  ctx.fillStyle = '#0f162b'
-  ctx.textAlign = 'center'
-  ctx.textBaseline = 'middle'
-  ctx.font = '700 34px system-ui, sans-serif'
-  ctx.fillText('!', size / 2, size / 2 + 2)
-  bubbleCached = toTexture(canvas)
+  const bubble = charter.bubble
+  bubbleCached = paintedTexture(size, size, (ctx) => {
+    ctx.beginPath()
+    ctx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2)
+    ctx.fillStyle = bubble.fill
+    ctx.fill()
+    ctx.strokeStyle = bubble.stroke
+    ctx.lineWidth = 3
+    ctx.stroke()
+    ctx.fillStyle = bubble.glyph
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+    ctx.font = canvasFont(600, 34)
+    ctx.fillText('!', size / 2, size / 2 + 2)
+  })
   return bubbleCached
 }

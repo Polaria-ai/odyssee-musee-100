@@ -89,7 +89,7 @@ export const ROW_STEP = 2.4
 export const NEAR_MARGIN = 2.4
 export const END_MARGIN = 2.4
 
-/** Décalage sud du comptoir de Minerve par rapport à sa position. */
+/** Décalage sud du comptoir d'accueil par rapport à sa position. */
 export const CURATOR_COUNTER_OFFSET_Z = 1.3
 export const COUNTER_HALF_WIDTH = 1.5
 export const COUNTER_HALF_DEPTH = 0.5
@@ -117,7 +117,7 @@ export const JARDINIERE_RADIUS = 0.42
 
 /**
  * Arbre des 100 (hall) : tronc + feuillage, banc circulaire autour (voir `HallDecor.tree`).
- * Assez bas (sommet ≈ 3,3 m) pour ne jamais masquer Minerve depuis le point d'apparition,
+ * Assez bas (sommet ≈ 3,3 m) pour ne jamais masquer Rémi Godeau depuis le point d'apparition,
  * même avec la caméra la plus proche (paysage, 9 m) : la ligne de visée y passe à ≈ 4 m.
  */
 export const TREE_TRUNK_HEIGHT = 1.5
@@ -142,6 +142,10 @@ export const CORNICE_HEIGHT = 0.16
 /** Espace entre le haut de la corniche et le plafond (`dims.wallHeight`). */
 export const CORNICE_TOP_GAP = 0.1
 export const TRIM_PROTRUSION = 0.05
+/** Listel blanc posé sur le haut du lambris (charte 3D, `docs/CHARTE-3D.md` §4.2). */
+export const LISTEL_HEIGHT = 0.04
+/** Bande d'accent posée sur le dessus des murs coupés côté caméra (charte 3D, §4.2). */
+export const CAP_HEIGHT = 0.06
 
 /**
  * Demi-cercle décoratif au-dessus du linteau d'une porte ouverte (« arche arrondie »). Rayon assez petit
@@ -154,7 +158,11 @@ export const DOOR_ARCH_TUBE = 0.07
 /** Longueur d'une lame du parquet à chevrons du hall (« point de Hongrie », voir `roomGeometry.ts`). */
 export const HERRINGBONE_LEN = 0.55
 
-/** Adoucit le contraste du damier/carrelage des ailes vers un ton moyen (0 = inchangé, 1 = ton unique). */
-export const SOFTEN_CHECKER = 0.35
+/**
+ * Adoucit le contraste du damier/carrelage des ailes vers un ton moyen (0 = inchangé, 1 = ton unique).
+ * Charte 3D : les deux tons A/B sont déjà rapprochés dans `charter3d.rooms` (sol `#113198`, second ton
+ * teinté de la couleur de l'aile) ; un lissage supplémentaire effacerait le motif.
+ */
+export const SOFTEN_CHECKER = 0
 
 export { dims }

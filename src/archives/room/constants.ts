@@ -12,6 +12,9 @@
  * pas accrochées aux murs.
  */
 
+import { CAMERA_CUT_HEIGHT } from '../../world/constants'
+import { dims } from '../../styles/tokens'
+
 /**
  * Emprise de la salle (plan en croix, décision de Baptiste du 27/09) : accrochée au SUD du hall,
  * derrière le point d'arrivée, et rejointe à pied par la porte `tokens.archivesDoor` percée dans le
@@ -20,17 +23,23 @@
 export const ROOM_HALF_WIDTH = 10
 export const ROOM_DEPTH = 21
 
-export const WALL_THICKNESS = 0.4
+export const WALL_THICKNESS = dims.wallThickness
 /**
- * Hauteur des murs est/ouest et des piliers d'angle : celle d'une aile du musée. La salle fait
- * désormais partie du plan : on voit le hall par-dessus son mur nord coupé bas, comme on voit le
- * musée depuis les ailes. L'ancienne salle isolée (loin du musée, rejointe par un portail) montait
- * ses murs à 12 m sous un plafond pour cacher le ciel ; accrochés au hall, ces murs et ce plafond se
- * retrouveraient entre la caméra (toujours au sud du joueur) et le joueur resté dans le hall.
+ * Hauteur des murs de la salle, des piliers d'angle et du mur nord une fois le joueur dans la salle :
+ * exactement celle des autres salles du musée (`dims.wallHeight`). Retour de Baptiste du 29/09 : « des
+ * murs complets, des murs hauts, comme les autres murs — une pièce complète ». La salle est fermée sur
+ * ses quatre côtés ; seul le côté caméra (sud) reste coupé, comme partout (`SOUTH_WALL_CUT_HEIGHT`).
  */
-export const WALL_HEIGHT = 4.4
-/** Hauteur du mur sud (côté caméra), coupé bas comme le hall : jamais rien de haut entre la caméra et le joueur. */
-export const SOUTH_WALL_CUT_HEIGHT = 1.1
+export const WALL_HEIGHT = dims.wallHeight
+/**
+ * Hauteur d'un mur « coupé » côté caméra (effet maquette) : celle de tous les murs coupés du musée
+ * (`CAMERA_CUT_HEIGHT`). Le mur sud de la salle y reste en permanence ; le mur nord (= mur sud du hall)
+ * y reste tant que le joueur n'est pas dans la salle (voir `wallRise.ts`) : la caméra, toujours au sud du
+ * joueur, ne doit jamais trouver de mur haut entre elle et un joueur resté dans le hall.
+ */
+export const SOUTH_WALL_CUT_HEIGHT = CAMERA_CUT_HEIGHT
+/** Hauteur libre sous le linteau de la porte des Archives (le mur nord la surmonte jusqu'à `WALL_HEIGHT`). */
+export const DOOR_HEIGHT = 3.2
 
 /** Décalages en X (depuis l'axe de la porte, `tokens.archivesDoor.x`) des vitrines d'une même rangée. */
 export const ROW_X_OFFSETS = [-8, -4, 0, 4, 8] as const

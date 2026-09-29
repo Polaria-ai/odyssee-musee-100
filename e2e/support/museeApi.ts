@@ -9,17 +9,8 @@
 import { expect, type Page } from '@playwright/test'
 
 export type Lang = 'fr' | 'en'
-export type Screen = 'loading' | 'title' | 'customize' | 'play'
+export type Screen = 'loading' | 'title' | 'play'
 export type ExhibitWingId = 'infrastructures' | 'industrialisation' | 'culture'
-
-export interface MuseeAvatarConfig {
-  name: string
-  skinTone: string
-  hairColor: string
-  outfit: string
-  outfitColor: string
-  accessory: string
-}
 
 export interface MuseePersonSummary {
   id: string
@@ -58,7 +49,6 @@ export interface MuseeDialogue {
 export interface MuseeGameState {
   screen: Screen
   lang: Lang
-  avatar: MuseeAvatarConfig
   people: MuseePersonSummary[]
   visited: Record<string, number>
   stamps: Partial<Record<ExhibitWingId, number>>
@@ -279,22 +269,20 @@ export async function closePersonViaState(page: Page): Promise<void> {
 }
 
 /**
- * Amène le joueur de l'écran titre à l'écran de jeu : clique « Entrer », valide la
- * personnalisation par défaut, et attend le canvas. Le dialogue d'accueil de Minerve
- * peut ensuite s'afficher (voir `dismissWelcomeDialogue`) : on ne le ferme pas ici,
- * chaque test décide s'il veut l'observer ou le fermer.
+ * Amène le joueur de l'écran titre à l'écran de jeu : clique « Entrer » (on entre directement
+ * au musée, en Cyril : plus d'écran de personnalisation) et attend le canvas. Le dialogue
+ * d'accueil de Rémi peut ensuite s'afficher (voir `dismissWelcomeDialogue`) : on ne le ferme
+ * pas ici, chaque test décide s'il veut l'observer ou le fermer.
  */
 export async function enterMuseum(page: Page): Promise<void> {
   await expect(page.getByTestId('title-screen')).toBeVisible()
   await page.getByTestId('enter-button').click()
-  await expect(page.getByTestId('customizer')).toBeVisible()
-  await page.getByTestId('customizer-done').click()
   await expect(page.locator('.app')).toHaveAttribute('data-screen', 'play')
   await expect(page.getByTestId('game-canvas')).toBeVisible()
 }
 
 /**
- * Ferme le dialogue d'accueil de Minerve s'il est affiché, en cliquant jusqu'à sa fermeture
+ * Ferme le dialogue d'accueil de Rémi s'il est affiché, en cliquant jusqu'à sa fermeture
  * (borné, pour ne jamais boucler indéfiniment si l'app ne répond pas).
  */
 export async function dismissWelcomeDialogue(page: Page): Promise<void> {

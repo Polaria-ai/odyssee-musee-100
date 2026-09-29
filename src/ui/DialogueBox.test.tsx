@@ -12,7 +12,7 @@ vi.mock('../audio', () => ({
 
 const twoLineDialogue = {
   id: 'd-test',
-  speaker: { fr: 'Minerve', en: 'Minerva' },
+  speaker: { fr: 'Rémi Godeau', en: 'Rémi Godeau' },
   lines: [
     { text: { fr: 'Bonjour cher visiteur, bienvenue.', en: 'Hello dear visitor, welcome.' } },
     { text: { fr: 'Suite.', en: 'Next.' } },
@@ -70,7 +70,7 @@ describe('DialogueBox', () => {
     expect(playSfxMock).toHaveBeenCalledWith('click')
   })
 
-  it('joue un bip toutes les 2 lettres écrites, jamais sur un espace, hauteur 1.25 pour Minerve', () => {
+  it('joue un bip toutes les 2 lettres écrites, jamais sur un espace, hauteur 0.85 pour Rémi Godeau', () => {
     useGame.setState({ dialogue: twoLineDialogue, dialogueIndex: 0 })
     render(<DialogueBox />)
 
@@ -89,7 +89,7 @@ describe('DialogueBox', () => {
 
     const blipCalls = playSfxMock.mock.calls.filter((call) => call[0] === 'blip')
     expect(blipCalls).toHaveLength(4)
-    for (const call of blipCalls) expect(call[1]).toEqual({ pitch: 1.25 })
+    for (const call of blipCalls) expect(call[1]).toEqual({ pitch: 0.85 })
   })
 
   it('un tap qui termine la ligne n’est jamais rattrapé/régressé par le tick suivant du minuteur', () => {

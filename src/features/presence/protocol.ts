@@ -3,8 +3,6 @@
  * arrive par le réseau (broadcast ou présence) vient d'un autre visiteur et n'est pas fiable —
  * on ne fait jamais confiance à sa forme.
  */
-import type { AvatarConfig } from '../../types'
-import { sanitizeAvatar } from '../avatar/options'
 import { round2, type PositionSample } from './peers'
 
 export const POSITION_EVENT = 'pos'
@@ -37,24 +35,30 @@ export function decodePosition(raw: unknown): { id: string; sample: PositionSamp
   return { id: r.i, sample: { x: r.x, z: r.z, r: r.r, m: r.m === 1 } }
 }
 
-/** Charge utile trackée via `presence.track` : identité + avatar nettoyé + date d'arrivée en salle. */
+/**
+ * Charge utile trackée via `presence.track` : identité + date d'arrivée en salle. Tous les visiteurs
+ * jouent Cyril : plus d'avatar sur le réseau (tenue, couleurs, pseudo).
+ */
 export interface PresenceWireMessage {
   id: string
-  avatar: AvatarConfig
   joinTs: number
 }
 
-export function encodePresence(id: string, avatar: AvatarConfig, joinTs: number): PresenceWireMessage {
-  return { id, avatar, joinTs }
+export function encodePresence(id: string, joinTs: number): PresenceWireMessage {
+  return { id, joinTs }
 }
 
-/** Décode une entrée de présence non fiable. `null` si malformée (avatar rejeté par `sanitizeAvatar`). */
+/**
+ * Décode une entrée de présence non fiable. `null` si malformée.
+ *
+ * Compatibilité de lecture : un client d'une version précédente publie encore un champ `avatar` (tenue,
+ * couleurs, pseudo). Il est accepté et ignoré, quel que soit son contenu — jamais lu, jamais rendu — afin
+ * que ce visiteur reste compté dans la salle et s'affiche, en Cyril comme les autres.
+ */
 export function decodePresence(raw: unknown): PresenceWireMessage | null {
   if (!raw || typeof raw !== 'object') return null
   const r = raw as Record<string, unknown>
   if (typeof r.id !== 'string' || !r.id) return null
   if (!isFiniteNumber(r.joinTs)) return null
-  const avatar = sanitizeAvatar(r.avatar)
-  if (!avatar) return null
-  return { id: r.id, avatar, joinTs: r.joinTs }
+  return { id: r.id, joinTs: r.joinTs }
 }

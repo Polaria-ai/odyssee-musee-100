@@ -1,15 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { AvatarConfig } from '../../types'
 import { decodePosition, decodePresence, encodePosition, encodePresence } from './protocol'
-
-const validAvatar: AvatarConfig = {
-  name: 'Ada',
-  skinTone: '#f5c9a3',
-  hairColor: '#3b2a1e',
-  outfit: 'tee',
-  outfitColor: '#7bc47f',
-  accessory: 'none',
-}
 
 describe('encodePosition / decodePosition', () => {
   it('arrondit à 2 décimales et encode `moving` en 0/1', () => {
@@ -31,17 +21,31 @@ describe('encodePosition / decodePosition', () => {
 })
 
 describe('encodePresence / decodePresence', () => {
-  it('fait l’aller-retour avec un avatar valide', () => {
-    const wire = encodePresence('v1', validAvatar, 1000)
-    expect(decodePresence(wire)).toEqual({ id: 'v1', avatar: validAvatar, joinTs: 1000 })
+  it('fait l’aller-retour : identité et date d’arrivée, rien d’autre (plus d’avatar sur le réseau)', () => {
+    const wire = encodePresence('v1', 1000)
+    expect(wire).toEqual({ id: 'v1', joinTs: 1000 })
+    expect(decodePresence(wire)).toEqual({ id: 'v1', joinTs: 1000 })
   })
 
-  it('rejette un avatar invalide (sanitizeAvatar échoue)', () => {
-    const raw = { id: 'v1', avatar: { ...validAvatar, outfit: 'not-an-outfit' }, joinTs: 1000 }
-    expect(decodePresence(raw)).toBeNull()
+  it('accepte et ignore l’avatar d’un client d’une version précédente (compatibilité de lecture)', () => {
+    const legacyAvatar = { name: 'Ada', skinTone: '#f5c9a3', hairColor: '#3b2a1e', outfit: 'tee', outfitColor: '#7bc47f', accessory: 'none' }
+    expect(decodePresence({ id: 'v1', avatar: legacyAvatar, joinTs: 1000 })).toEqual({ id: 'v1', joinTs: 1000 })
   })
 
-  it.each([null, 'nope', {}, { id: 'v1', avatar: validAvatar }, { id: '', avatar: validAvatar, joinTs: 1 }])(
+  it.each([
+    ['un avatar malformé', { outfit: 'not-an-outfit' }],
+    ['un avatar qui n’est pas un objet', 'Ada'],
+    ['un avatar nul', null],
+  ])('ne rejette pas la présence à cause de %s : il n’est jamais lu', (_label, avatar) => {
+    expect(decodePresence({ id: 'v1', avatar, joinTs: 1000 })).toEqual({ id: 'v1', joinTs: 1000 })
+  })
+
+  it('ne recopie aucun champ inconnu dans le message décodé', () => {
+    const decoded = decodePresence({ id: 'v1', avatar: { name: '<b>x</b>' }, joinTs: 5, extra: 'x' })
+    expect(Object.keys(decoded ?? {}).sort()).toEqual(['id', 'joinTs'])
+  })
+
+  it.each([null, 'nope', {}, { id: 'v1' }, { id: '', joinTs: 1 }, { id: 'v1', joinTs: Number.NaN }, { id: 42, joinTs: 1 }])(
     'rejette une charge utile malformée : %j',
     (raw) => {
       expect(decodePresence(raw)).toBeNull()

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { isOverlayOpen, useGame } from './gameStore'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import { buildMuseumLayout } from '../world/layout'
@@ -18,7 +18,7 @@ describe('gameStore', () => {
     expect(useGame.getState().visited[id]).toBeTypeOf('number')
   })
 
-  it('interact : portrait proche prioritaire, sinon Minerve', () => {
+  it('interact : portrait proche prioritaire, sinon Rémi', () => {
     const id = useGame.getState().people[1].id
     useGame.setState({ nearbyPersonId: id, nearCurator: true })
     useGame.getState().interact()
@@ -57,7 +57,7 @@ describe('gameStore — Archives de 2040', () => {
     useGame.setState({ nearbyPersonId: null, nearbySessionId: null, nearArchivist: false, nearCurator: false, openPersonId: null, openSessionId: null, dialogue: null, stampCardOpen: false, mapOpen: false, visitedSessions: {} })
   })
 
-  it('interact : portrait > archive > Archiviste > Minerve', () => {
+  it('interact : portrait > archive > Archiviste > Rémi', () => {
     useGame.setState({ nearbySessionId: 'table-ronde-1', nearArchivist: true, nearCurator: true })
     useGame.getState().interact()
     expect(useGame.getState().openSessionId).toBe('table-ronde-1')
@@ -86,5 +86,38 @@ describe('gameStore — surimpressions', () => {
     useGame.getState().setMapOpen(true)
     expect(useGame.getState().dialogue).toBeNull()
     useGame.getState().setMapOpen(false)
+  })
+})
+
+describe('gameStore — plus de personnalisation (tout le monde joue Cyril)', () => {
+  const KEY = 'odyssee-musee-100:v1'
+
+  beforeEach(() => localStorage.clear())
+  afterEach(() => {
+    localStorage.clear()
+    vi.resetModules()
+  })
+
+  it('ne garde plus aucun avatar : tout le monde joue Cyril', () => {
+    const state = useGame.getState() as unknown as Record<string, unknown>
+    expect(state.setAvatar).toBeUndefined()
+    expect(state.avatar).toBeUndefined()
+  })
+
+  it('ignore un avatar enregistré par une version précédente, et le retire du stockage', async () => {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify({
+        lang: 'fr',
+        visitorId: 'v-legacy',
+        avatar: { name: 'Ada', skinTone: '#f5c9a3', hairColor: '#3b2a1e', outfit: 'suit', outfitColor: '#7bc47f', accessory: 'cap' },
+      }),
+    )
+    vi.resetModules()
+    const { useGame: freshStore } = await import('./gameStore')
+
+    expect((freshStore.getState() as unknown as Record<string, unknown>).avatar).toBeUndefined()
+    expect(freshStore.getState().visitorId).toBe('v-legacy') // le reste de l'état enregistré est conservé
+    expect(JSON.parse(localStorage.getItem(KEY) ?? '{}')).not.toHaveProperty('avatar')
   })
 })

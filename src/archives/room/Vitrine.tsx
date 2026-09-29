@@ -11,6 +11,7 @@ import { CylinderGeometry, IcosahedronGeometry, MeshBasicMaterial, MeshLambertMa
 import type { ArchiveSlot, EveningSession, SessionArchive } from '../../types'
 import { useGame } from '../../state/gameStore'
 import { player } from '../../state/runtime'
+import { charter3d } from '../../styles/tokens'
 import { approach, occludesPlayer, type OcclusionObstacle } from '../../world/occlusion'
 import { drawCapsuleScreen, archivesBubbleTexture } from './textures'
 import { CAPSULE_RADIUS, SCREEN_HEIGHT, SCREEN_WIDTH, SCREEN_Y, SOCLE_HEIGHT, SOCLE_RADIUS } from './constants'
@@ -22,16 +23,17 @@ const CAPSULE_GEO = new IcosahedronGeometry(CAPSULE_RADIUS, 1)
 const SCREEN_GEO = new PlaneGeometry(SCREEN_WIDTH, SCREEN_HEIGHT)
 const BUBBLE_GEO = new PlaneGeometry(0.32, 0.32)
 
-// Socle clair (crème → bleu pâle en surbrillance), pas un cylindre sombre : à la vérification
-// visuelle, les socles très sombres (`#232b46`) fondaient les vitrines en une masse noire compacte,
-// surtout groupées par rangées. Un socle clair les rend lisibles individuellement et laisse la
-// capsule cyan/or (état en attente/archivée) rester le vrai signal de couleur de chaque vitrine.
-const SOCLE_MATERIAL = new MeshLambertMaterial({ color: '#f4ecd8', emissive: '#e8c872', emissiveIntensity: 0.04 })
-const SOCLE_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ color: '#e3f3fa', emissive: '#7fd6e8', emissiveIntensity: 0.35 })
+// Socle clair (blanc bleuté de la charte), pas un cylindre sombre : à la vérification visuelle, les
+// socles très sombres fondaient les vitrines en une masse noire compacte, surtout groupées par rangées.
+// Un socle clair les rend lisibles individuellement sur le sol bleu (9,4:1) et laisse la capsule
+// (cyan en attente, corail une fois archivée) porter le signal de couleur de chaque vitrine.
+const vitrineCharter = charter3d.archives.vitrine
+const SOCLE_MATERIAL = new MeshLambertMaterial({ color: vitrineCharter.socle, emissive: vitrineCharter.socleEmissive, emissiveIntensity: 0.04 })
+const SOCLE_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ color: vitrineCharter.socleHighlight, emissive: vitrineCharter.socleHighlightEmissive, emissiveIntensity: 0.35 })
 // Capsule « en attente » : cyan translucide, pulse lente (mutée UNE fois par image ci-dessous — effet
 // PARTAGÉ et synchronisé entre toutes les capsules en attente, jamais un effet local par instance).
-const CAPSULE_IDLE_MATERIAL = new MeshLambertMaterial({ color: '#4fc9e0', emissive: '#4fc9e0', emissiveIntensity: 0.5, transparent: true, opacity: 0.55 })
-const CAPSULE_ARCHIVED_MATERIAL = new MeshLambertMaterial({ color: '#e8c872', emissive: '#e8c872', emissiveIntensity: 0.45, transparent: true, opacity: 0.75 })
+const CAPSULE_IDLE_MATERIAL = new MeshLambertMaterial({ color: vitrineCharter.capsuleIdle, emissive: vitrineCharter.capsuleIdle, emissiveIntensity: 0.5, transparent: true, opacity: 0.55 })
+const CAPSULE_ARCHIVED_MATERIAL = new MeshLambertMaterial({ color: vitrineCharter.capsuleArchived, emissive: vitrineCharter.capsuleArchived, emissiveIntensity: 0.45, transparent: true, opacity: 0.75 })
 
 /** Sommet de la vitrine posée au sol (capsule comprise), pour le test d'occultation. */
 const VITRINE_TOP = SOCLE_HEIGHT + CAPSULE_RADIUS * 1.7

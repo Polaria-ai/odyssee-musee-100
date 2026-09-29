@@ -17,7 +17,7 @@ import { useModel, preloadModel } from '../../assets/useModel'
 import { PROP_MODELS } from './models'
 import { propParts } from './geometry'
 import { allPropPlans, usedModelKeys, type PropKindPlan } from './placements'
-import { tintFor } from './tints'
+import { FLAT_TINT_VARIANTS, tintFor } from './tints'
 
 // Précharge les modèles RÉELLEMENT posés (pas tout `PROP_MODELS`, voir `usedModelKeys`) au niveau
 // module (hors rendu) : évite un pop-in visible au premier plan large du hall ou d'une aile, sans
@@ -29,7 +29,7 @@ for (const key of usedModelKeys()) preloadModel(PROP_MODELS[key])
 function PropKind({ plan }: { plan: PropKindPlan }) {
   const url = PROP_MODELS[plan.key]
   const { scene } = useModel(url)
-  const parts = useMemo(() => propParts(scene, url, plan.tint, tintFor(plan.tint), plan.fit), [scene, url, plan.tint, plan.fit])
+  const parts = useMemo(() => propParts(scene, url, plan.tint, tintFor(plan.tint), plan.fit, FLAT_TINT_VARIANTS.has(plan.tint)), [scene, url, plan.tint, plan.fit])
   if (plan.placements.length === 0) return null
   return (
     <>

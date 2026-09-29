@@ -396,7 +396,7 @@ describe('buildMuseumLayout — hall', () => {
     expect(layout.spawn.rotationY).toBeCloseTo(Math.PI)
   })
 
-  it('comptoir de Minerve au centre-nord', () => {
+  it('comptoir d’accueil au centre-nord', () => {
     expect(layout.curator.position).toEqual({ x: 0, z: -4.5 })
   })
 })

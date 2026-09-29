@@ -1,7 +1,7 @@
 // Propriétaire : agent avatar+tampons.
 import { useCallback, useEffect, useRef } from 'react'
 import { useGame } from '../../state/gameStore'
-import { minerveDialogue } from '../../npc/minerveScript'
+import { remiDialogue } from '../../npc/remiScript'
 import { archivistDialogue } from '../../archives/archivistScript'
 import type { ExhibitWingId, Localized } from '../../types'
 import { format, pick } from '../../i18n'
@@ -55,7 +55,7 @@ export function useStampWatcher(): void {
     if (next.kind === 'archives-stamp') {
       useGame.getState().startDialogue(archivistDialogue({ kind: 'stampAwarded' }))
     } else {
-      useGame.getState().startDialogue(minerveDialogue(next))
+      useGame.getState().startDialogue(remiDialogue(next))
     }
   }, [])
 

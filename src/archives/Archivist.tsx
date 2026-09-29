@@ -1,7 +1,8 @@
 /**
  * L'Archiviste : hologramme abstrait de la salle des Archives de 2040 (silhouette translucide
- * cyan-dorée, anneaux orbitaux, particules, socle projecteur). Pas un visage, pas une personne
- * réelle : des formes simples qui suggèrent une présence, comme Minerve suggère une chouette.
+ * cyan et blanche, anneaux orbitaux, particules, socle projecteur). Charte 3D du 29/09/2026 : couleurs
+ * lues dans `charter3d.archives.archivist` (plus d'or ni de crème), formes inchangées. Pas un visage, pas une personne
+ * réelle : des formes simples qui suggèrent une présence, comme les personnages du jeu restent stylisés.
  * Géométries et matériaux partagés (créés une seule fois, au chargement du module) ; aucune
  * allocation d'objet three.js dans `useFrame` (seuls des nombres sont écrits).
  * Propriétaire : workflow « Archives de 2040 ».
@@ -12,7 +13,7 @@ import * as THREE from 'three'
 import type { Placement } from '../types'
 import { useGame } from '../state/gameStore'
 import { player as runtimePlayer } from '../state/runtime'
-import { palette, wingThemes } from '../styles/tokens'
+import { charter3d } from '../styles/tokens'
 import { ARCHIVIST_NAME } from './archivistScript'
 import { ARCHIVIST_TALK_RADIUS } from './room/constants'
 
@@ -25,7 +26,7 @@ const BUBBLE_BASE_Y = 2.55
 const PARTICLE_COUNT = 8
 const PARTICLE_RADIUS = 0.62
 
-const theme = wingThemes.archives // bleu nuit doux + accent cyan (voir src/styles/tokens.ts)
+const colors = charter3d.archives.archivist // cyan, cyan vif et blanc (voir docs/CHARTE-3D.md §4.8)
 
 // --- Géométries partagées (une seule instance : un seul Archiviste dans le jeu) ---
 const geo = {
@@ -43,19 +44,19 @@ const geo = {
 
 // --- Matériaux partagés (translucides, sans ombre temps réel) ------------------
 const mat = {
-  torso: new THREE.MeshBasicMaterial({ color: theme.accent, transparent: true, opacity: 0.78, depthWrite: false }),
-  head: new THREE.MeshBasicMaterial({ color: '#ffffff', transparent: true, opacity: 0.85, depthWrite: false }),
-  ring: new THREE.MeshBasicMaterial({ color: palette.gold, transparent: true, opacity: 0.85 }),
-  particle: new THREE.MeshBasicMaterial({ color: palette.gold, transparent: true, opacity: 0.9 }),
+  torso: new THREE.MeshBasicMaterial({ color: colors.torso, transparent: true, opacity: 0.78, depthWrite: false }),
+  head: new THREE.MeshBasicMaterial({ color: colors.head, transparent: true, opacity: 0.85, depthWrite: false }),
+  ring: new THREE.MeshBasicMaterial({ color: colors.ring, transparent: true, opacity: 0.85 }),
+  particle: new THREE.MeshBasicMaterial({ color: colors.particle, transparent: true, opacity: 0.9 }),
   beam: new THREE.MeshBasicMaterial({
-    color: theme.accent,
+    color: colors.beam,
     transparent: true,
     opacity: 0.12,
     side: THREE.DoubleSide,
     depthWrite: false,
   }),
-  plinth: new THREE.MeshLambertMaterial({ color: theme.trim }),
-  plinthRim: new THREE.MeshBasicMaterial({ color: theme.accent }),
+  plinth: new THREE.MeshLambertMaterial({ color: colors.plinth }),
+  plinthRim: new THREE.MeshBasicMaterial({ color: colors.plinthRim }),
 }
 
 let bubbleMaterialCache: THREE.MeshBasicMaterial | null = null
@@ -80,9 +81,9 @@ function getBubbleMaterial(): THREE.MeshBasicMaterial {
   if (ctx) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
     roundRect(ctx, 6, 6, 116, 58, 20)
-    ctx.fillStyle = palette.cream
+    ctx.fillStyle = colors.bubbleFill
     ctx.fill()
-    ctx.strokeStyle = theme.trim
+    ctx.strokeStyle = colors.bubbleStroke
     ctx.lineWidth = 4
     roundRect(ctx, 6, 6, 116, 58, 20)
     ctx.stroke()
@@ -91,10 +92,10 @@ function getBubbleMaterial(): THREE.MeshBasicMaterial {
     ctx.lineTo(64, 92)
     ctx.lineTo(76, 62)
     ctx.closePath()
-    ctx.fillStyle = palette.cream
+    ctx.fillStyle = colors.bubbleFill
     ctx.fill()
     ctx.stroke()
-    ctx.fillStyle = theme.trim
+    ctx.fillStyle = colors.bubbleDots
     for (let i = 0; i < 3; i++) {
       ctx.beginPath()
       ctx.arc(38 + i * 26, 35, 7, 0, Math.PI * 2)
@@ -168,7 +169,7 @@ export function Archivist({ placement }: { placement: Placement }) {
       ringInnerRef.current.rotation.z += delta * 0.6 * ringSpeedMul
     }
 
-    // Particules dorées : orbite lente autour du buste, hauteur qui ondule doucement.
+    // Particules : orbite lente autour du buste, hauteur qui ondule doucement.
     if (particlesRef.current) {
       particlesRef.current.rotation.y += delta * 0.18
       for (let i = 0; i < particlesRef.current.children.length; i++) {
@@ -212,7 +213,7 @@ export function Archivist({ placement }: { placement: Placement }) {
           <mesh ref={ringMidRef} geometry={geo.ringMid} material={mat.ring} />
           <mesh ref={ringInnerRef} geometry={geo.ringInner} material={mat.ring} />
 
-          {/* Particules dorées en orbite */}
+          {/* Particules en orbite */}
           <group ref={particlesRef}>
             {particleIndices.map((i) => {
               const a = particleAngleFor(i)

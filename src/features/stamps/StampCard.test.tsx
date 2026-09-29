@@ -17,7 +17,6 @@ describe('StampCard', () => {
       sessions: [],
       visitedSessions: {},
       lang: 'fr',
-      avatar: { ...useGame.getState().avatar, name: 'Ada' },
     })
     useGame.getState().setMuseum(people, buildMuseumLayout(people), 'placeholder')
   })

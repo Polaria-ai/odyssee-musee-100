@@ -29,7 +29,7 @@ test('ouvrir assez de fiches d’une aile donne un tampon (toast + carnet)', asy
     await openPersonViaState(page, person.id)
   }
 
-  // Le tampon déclenche aussi un toast et un dialogue de Minerve en file ; on n'a besoin que du tampon ici.
+  // Le tampon déclenche aussi un toast et un dialogue de Rémi en file ; on n'a besoin que du tampon ici.
   await expect(page.getByTestId('toast')).toBeVisible({ timeout: 5_000 })
 
   const afterAward = await museeState(page)

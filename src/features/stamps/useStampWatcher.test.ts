@@ -5,12 +5,12 @@ import { generatePlaceholderPeople } from '../../data/placeholder'
 import { buildMuseumLayout } from '../../world/layout'
 import { useStampWatcher } from './useStampWatcher'
 
-// Découple ce test du contenu réel des dialogues (Minerve et l'Archiviste) : on ne vérifie que le
+// Découple ce test du contenu réel des dialogues (Rémi et l'Archiviste) : on ne vérifie que le
 // comportement de useStampWatcher (attribution, file d'attente, ouverture du carnet).
-vi.mock('../../npc/minerveScript', () => ({
-  minerveDialogue: (event: { kind: string }) => ({
+vi.mock('../../npc/remiScript', () => ({
+  remiDialogue: (event: { kind: string }) => ({
     id: event.kind,
-    speaker: { fr: 'Minerve', en: 'Minerva' },
+    speaker: { fr: 'Rémi Godeau', en: 'Rémi Godeau' },
     lines: [{ text: { fr: event.kind, en: event.kind } }],
   }),
 }))
@@ -69,7 +69,7 @@ describe('useStampWatcher', () => {
     })
   }
 
-  it('attribue un tampon, affiche un toast, joue le son et ouvre le dialogue de Minerve quand le seuil est atteint', () => {
+  it('attribue un tampon, affiche un toast, joue le son et ouvre le dialogue de Rémi quand le seuil est atteint', () => {
     renderHook(() => useStampWatcher())
     visitWing('infrastructures')
 

@@ -18,8 +18,23 @@ chaque destinataire).
   une fois par destinataire dans sa salle) : au pire, dans une salle pleine, 8 émetteurs × 7
   destinataires × 2/s ≈ 112 « livraisons »/s par salle. C'est pour rester sous la barre que le
   plafond est de 8 personnes par salle, pas plus.
-- **Rendu** : au plus 40 pairs affichés par client (les plus proches), interpolés/extrapolés côté
-  client (`peers.ts` → `getRenderTransform`) — aucun message supplémentaire pour ça.
+- **Rendu** : au plus 8 visiteurs distants affichés par client (les plus proches ; `MAX_VISIBLE_PEERS`,
+  soit la capacité d'une salle), interpolés/extrapolés côté client (`peers.ts` → `getRenderTransform`) —
+  aucun message supplémentaire pour ça. Ce sont tous des Cyril (modèle 3D animé, ~12 400 triangles, un
+  appel de dessin chacun ; avec le joueur, au plus 9 personnages) : la borne protège le budget mobile.
+
+## Ce que voient les autres
+
+Tous les visiteurs jouent Cyril (décision du 29/09) : plus de tenue, de couleurs ni de pseudo, donc plus
+d'étiquette au-dessus des visiteurs distants. La présence (`presence.track`) ne transporte que
+`{ id, joinTs }` ; le broadcast de position, `{ i, x, z, r, m }`. Un visiteur distant qui bouge (`m` = 1)
+joue le clip « walk » de Cyril, à la cadence de la marche du joueur (le réseau n'envoie pas la vitesse).
+
+**Compatibilité de lecture** : un client d'une version précédente publie encore un champ `avatar`. Il est
+accepté et ignoré (`protocol.ts` → `decodePresence`, jamais lu, jamais rendu), donc ce visiteur reste compté
+dans la salle et s'affiche en Cyril. L'inverse ne tient pas : un ancien client rejette les messages du
+nouveau format (il exigeait un avatar valide) ; cela ne concerne que des onglets restés ouverts d'avant le
+déploiement.
 
 ## Flag de désactivation
 

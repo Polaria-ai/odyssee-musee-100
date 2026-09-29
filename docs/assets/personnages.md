@@ -54,7 +54,9 @@ Contrat inchangé : `AvatarMeshProps` (`config`, `moving`, `speed`), pieds à `y
 `materialFor`/`colorMaterialCache` partagés par couleur (jamais cloné par instance, jamais muté
 après coup — voir `src/features/presence/RemoteVisitors.test.ts`).
 
-## `src/npc/Minerve.tsx`
+## `src/npc/Minerve.tsx` (historique : supprimé le 29/09/2026)
+
+> Décision de Baptiste du 29/09 : Rémi Godeau remplace la chouette au comptoir d'accueil. Le composant `Minerve`, sa géométrie procédurale et son test de régression des yeux ont été supprimés ; l'accueil est désormais `src/npc/Remi.tsx` (personnage GLB, voir `src/characters/`) et ses textes `src/npc/remiScript.ts` (à valider : `docs/TEXTES-REMI.md`). Cette section garde la trace de ce qui existait.
 
 - Ventre : texture canvas générée une fois au chargement (motif « écailles », arcs crème sur crème,
   `RepeatWrapping`) plutôt qu'une couleur unie — même technique que la bulle « … » déjà présente

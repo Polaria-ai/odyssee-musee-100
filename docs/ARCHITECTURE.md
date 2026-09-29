@@ -11,7 +11,7 @@ main.tsx → App.tsx
   ├─ <Experience/>           scene/Experience.tsx Canvas unique
   │    ├─ <Museum/>          world/               architecture, décor, portraits
   │    ├─ <StampStations/>   features/stamps/     socles à tampon
-  │    ├─ <Minerve/>         npc/                 chouette conservatrice
+  │    ├─ <Remi/>            npc/                 Rémi Godeau, accueil au comptoir (personnage GLB)
   │    ├─ <Player/>          player/              avatar, déplacement, collisions, caméra
   │    └─ <RemoteVisitors/>  features/presence/   autres visiteurs
   └─ surimpressions DOM      ui/, features/avatar, features/stamps, player/TouchJoystick
@@ -21,7 +21,7 @@ main.tsx → App.tsx
 
 - `src/state/gameStore.ts` (zustand) : état « froid » — écran, langue, avatar, fiche ouverte, visites, tampons, dialogue, toast.
 - `src/state/runtime.ts` : état « chaud » mis à jour à chaque image — entrée joystick/clavier (`input`), position du joueur (`player`) et ponts DOM↔Canvas (`bridges.screenToFloor`). Objets mutables, **jamais** dans React.
-- Action principale unique : `useGame.getState().interact()` (bouton rond du HUD, Entrée/E) — regarde le portrait proche, sinon parle à Minerve. `Player` alimente `nearbyPersonId`, `nearCurator` et `currentRoom`.
+- Action principale unique : `useGame.getState().interact()` (bouton rond du HUD, Entrée/E) — regarde le portrait proche, sinon parle à Rémi. `Player` alimente `nearbyPersonId`, `nearCurator` et `currentRoom`.
 
 ## Contrat
 
@@ -34,7 +34,7 @@ main.tsx → App.tsx
 | Intégration | orchestrateur | `src/types/`, `src/state/`, `src/i18n/index.ts`, `src/scene/`, `src/App.tsx`, `src/main.tsx`, `src/styles/`, configs, `.github/`, `docs/ARCHITECTURE.md` |
 | Monde | agent `world` | `src/world/**` |
 | Joueur | agent `player` | `src/player/**` |
-| Minerve | agent `npc` | `src/npc/**` |
+| Rémi (accueil) | agent `npc` | `src/npc/**` |
 | Interface | agent `ui` | `src/ui/**` |
 | Avatar + tampons | agent `features` | `src/features/avatar/**`, `src/features/stamps/**` |
 | Présence | agent `presence` | `src/features/presence/**` |

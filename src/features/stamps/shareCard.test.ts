@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { ALL_STAMPS } from './stamps'
-import { buildShareFilename, computeShareLayout, drawShareCard, generateShareBlob, SHARE_HEIGHT, SHARE_WIDTH } from './shareCard'
+import { computeShareLayout, countObtainedStamps, drawShareCard, generateShareBlob, SHARE_FILENAME, SHARE_HEIGHT, SHARE_WIDTH } from './shareCard'
 
 describe('computeShareLayout', () => {
   it('utilise les dimensions par défaut 1080×1350', () => {
@@ -35,25 +35,25 @@ describe('computeShareLayout', () => {
   })
 })
 
-describe('buildShareFilename', () => {
-  it('produit un slug ASCII sûr', () => {
-    expect(buildShareFilename('Ada Lovelace')).toBe('musee-des-100-ada-lovelace.png')
-    expect(buildShareFilename('Éléa Ünïcode !!')).toBe('musee-des-100-elea-unicode.png')
+describe('carte partageable sans pseudo', () => {
+  it('compte les tampons obtenus, Archives comprises', () => {
+    expect(countObtainedStamps({ stamps: {}, archivesObtained: false })).toBe(0)
+    expect(countObtainedStamps({ stamps: { culture: 1, infrastructures: 2 }, archivesObtained: true })).toBe(3)
   })
-  it('retombe sur "carte" si le pseudo est vide', () => {
-    expect(buildShareFilename('')).toBe('musee-des-100-carte.png')
+  it('télécharge sous un nom de fichier fixe', () => {
+    expect(SHARE_FILENAME).toBe('musee-des-100-carte.png')
   })
 })
 
 describe('drawShareCard', () => {
   it('ne lève pas si le contexte canvas est indisponible (jsdom)', () => {
-    expect(() => drawShareCard(null, { avatarName: 'Ada', stamps: {}, archivesObtained: false, lang: 'fr' })).not.toThrow()
+    expect(() => drawShareCard(null, { stamps: {}, archivesObtained: false, lang: 'fr' })).not.toThrow()
   })
 })
 
 describe('generateShareBlob', () => {
   it('renvoie null sans lever quand le canvas 2D est indisponible (jsdom n’implémente pas getContext(2d))', async () => {
-    const blob = await generateShareBlob({ avatarName: 'Ada', stamps: {}, archivesObtained: false, lang: 'fr' })
+    const blob = await generateShareBlob({ stamps: {}, archivesObtained: false, lang: 'fr' })
     expect(blob).toBeNull()
   })
 })

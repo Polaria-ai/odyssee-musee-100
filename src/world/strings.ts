@@ -23,7 +23,7 @@ export const worldStrings = defineStrings({
   cartelUnknownOrg: { fr: 'Organisation à confirmer', en: 'Organization to be confirmed' },
   /** Cartel d'une fiche d'attente dont l'organisation a été volontairement vidée (voir `textures.ts`). */
   revealOctober6: { fr: 'À dévoiler le 6 octobre', en: 'Revealed on October 6' },
-  /** Plaque du comptoir de Minerve (texture canvas, FR/EN). */
-  minerveName: { fr: 'Minerve', en: 'Minerva' },
-  minerveTitle: { fr: 'Conservatrice', en: 'Curator' },
+  /** Plaque du comptoir d'accueil, où se tient Rémi Godeau (texture canvas, FR/EN). */
+  curatorName: { fr: 'Rémi Godeau', en: 'Rémi Godeau' },
+  curatorTitle: { fr: "L'Opinion", en: "L'Opinion" },
 })

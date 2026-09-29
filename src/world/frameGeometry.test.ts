@@ -6,9 +6,11 @@
  * de `buildFrameGeometry`) et jamais enfoncées dans le mur (voir le commentaire de `LAYER_Z`).
  */
 import { describe, expect, it } from 'vitest'
-import { Mesh, MeshBasicMaterial, Raycaster, Vector3 } from 'three'
+import { Color, Mesh, MeshBasicMaterial, Raycaster, Vector3 } from 'three'
+import type { BufferGeometry } from 'three'
+import { charter3d, exhibitWingOrder, wingThemes } from '../styles/tokens'
 import { dims } from './constants'
-import { APERTURE_HEIGHT, APERTURE_WIDTH, FRAME_GEOMETRY, HALO_LOCAL_Y, HALO_LOCAL_Z, PAINTING_RECESS_Z, buildFrameGeometry } from './frameGeometry'
+import { APERTURE_HEIGHT, APERTURE_WIDTH, FRAME_GEOMETRY, FRAME_GEOMETRY_BY_WING, HALO_LOCAL_Y, HALO_LOCAL_Z, LAMP_LENS, PAINTING_RECESS_Z, buildFrameGeometry } from './frameGeometry'
 
 describe('buildFrameGeometry — fusion sans exception', () => {
   it('produit une géométrie non dégénérée', () => {
@@ -107,5 +109,78 @@ describe('Halo du spot — positionné au-dessus du cadre, jamais dans son plan'
 
   it('reste devant le plan de la toile (z local positif : ne se confond jamais avec la peinture)', () => {
     expect(HALO_LOCAL_Z).toBeGreaterThan(0)
+  })
+})
+
+// --- Charte 3D du 29/09/2026 : cadres blancs à moulure d'aile, plus de bois doré ---
+
+/** Couleurs (hex sRGB, minuscules) présentes par sommet dans la géométrie, avec le nombre de sommets de chacune. */
+function vertexColors(geo: BufferGeometry): Map<string, number> {
+  const attr = geo.getAttribute('color')
+  const counts = new Map<string, number>()
+  const c = new Color()
+  for (let i = 0; i < attr.count; i++) {
+    c.fromBufferAttribute(attr, i)
+    const hex = `#${c.getHexString()}`
+    counts.set(hex, (counts.get(hex) ?? 0) + 1)
+  }
+  return counts
+}
+
+const hexOf = (css: string): string => `#${new Color(css).getHexString()}`
+
+describe('Couleurs du cadre — charte 3D (aucune teinte dorée ou crème)', () => {
+  const frame = charter3d.frame
+
+  it.each(exhibitWingOrder)('aile %s : la moulure médiane porte l’accent de l’aile, le reste vient de charter3d.frame', (wing) => {
+    const colors = vertexColors(FRAME_GEOMETRY_BY_WING[wing])
+    const accent = hexOf(wingThemes[wing].accent)
+    const allowed = new Set([frame.outer, accent, frame.lip, frame.mat, frame.lampArm, frame.lampShade, frame.lens].map(hexOf))
+    for (const hex of colors.keys()) expect(allowed.has(hex)).toBe(true)
+    // Chaque teinte de la charte est bien utilisée : moulure blanche, moulure d'aile, nuit (liseré, passe-partout, spot).
+    expect(colors.has(hexOf(frame.outer))).toBe(true)
+    expect(colors.has(accent)).toBe(true)
+    expect(colors.has(hexOf(frame.lip))).toBe(true)
+  })
+
+  it('la moulure extérieure est blanche et la moulure médiane n’est plus blanche : le cadre a deux tons', () => {
+    for (const wing of exhibitWingOrder) {
+      expect(hexOf(wingThemes[wing].accent)).not.toBe(hexOf(frame.outer))
+    }
+  })
+
+  it('les trois ailes ont trois géométries distinctes (une par accent), sans doublon', () => {
+    const geos = exhibitWingOrder.map((w) => FRAME_GEOMETRY_BY_WING[w])
+    const accents = exhibitWingOrder.map((w) => wingThemes[w].accent)
+    expect(new Set(accents).size).toBe(3)
+    expect(new Set(geos).size).toBe(3)
+  })
+
+  it('`FRAME_GEOMETRY` (sans argument) prend l’accent du hall, comme l’Industrialisation : même instance, pas de maillage en plus', () => {
+    expect(charter3d.rooms.hall.accent).toBe(charter3d.rooms.industrialisation.accent)
+    expect(FRAME_GEOMETRY).toBe(FRAME_GEOMETRY_BY_WING.industrialisation)
+  })
+
+  it('l’ampoule du spot est celle de la charte (blanche)', () => {
+    expect(LAMP_LENS).toBe(frame.lens)
+  })
+
+  it('chaque géométrie d’aile garde une ouverture libre au centre (toile visible) et le même gabarit', () => {
+    const reference = FRAME_GEOMETRY_BY_WING.infrastructures
+    reference.computeBoundingBox()
+    for (const wing of exhibitWingOrder) {
+      const geo = FRAME_GEOMETRY_BY_WING[wing]
+      geo.computeBoundingBox()
+      expect(geo.boundingBox!.equals(reference.boundingBox!)).toBe(true)
+      const mesh = new Mesh(geo, new MeshBasicMaterial())
+      const hits = new Raycaster(new Vector3(0, 0, 1), new Vector3(0, 0, -1)).intersectObject(mesh)
+      expect(hits.filter((hit) => hit.point.z >= PAINTING_RECESS_Z)).toHaveLength(0)
+    }
+  })
+
+  it('une bordure de moulure d’aile reste un buildFrameGeometry(mid) pur : une autre couleur donne une autre géométrie', () => {
+    const a = vertexColors(buildFrameGeometry('#123456'))
+    expect(a.has('#123456')).toBe(true)
+    expect(a.has(hexOf(charter3d.rooms.hall.accent))).toBe(false)
   })
 })

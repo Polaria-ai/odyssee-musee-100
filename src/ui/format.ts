@@ -143,14 +143,17 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
   }
 }
 
+/** Hauteur de bip de Rémi Godeau : une voix plus grave que la moyenne (380 Hz × 0,85). */
+export const REMI_PITCH = 0.85
+
 /**
- * Hauteur de bip déterministe pour une voix (`DialogueBox`) : Minerve a une hauteur fixe,
- * les autres orateurs (aucun aujourd'hui, le contrat `Dialogue` le permet) une légère variation
- * stable dérivée de leur nom — jamais `Math.random()`.
+ * Hauteur de bip déterministe pour une voix (`DialogueBox`) : Rémi Godeau a une hauteur fixe,
+ * les autres orateurs (l'Archiviste, par exemple) une légère variation stable dérivée de leur nom
+ * — jamais `Math.random()`.
  */
 export function pitchForSpeaker(speaker: Localized): number {
   const name = (speaker.fr || speaker.en || '').trim().toLowerCase()
-  if (name === 'minerve' || name === 'minerva') return 1.25
+  if (name.normalize('NFD').replace(/\p{M}/gu, '') === 'remi godeau') return REMI_PITCH
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) % 1000
   return 0.95 + (hash / 999) * 0.1

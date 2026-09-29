@@ -2,14 +2,12 @@
  * Registre mutable des autres visiteurs, volontairement hors de React (comme `state/runtime.ts`) :
  * `usePresence` y écrit à chaque message reçu, `RemoteVisitors` y lit à chaque image. Aucune de ces
  * écritures ne doit provoquer un rendu React à 60 i/s — seul un changement de *roster* (arrivée/départ
- * d'un pair, ou de son avatar) notifie les abonnés ; les positions se lisent à la demande dans `useFrame`.
+ * d'un pair) notifie les abonnés ; les positions se lisent à la demande dans `useFrame`.
  *
  * Fonctions pures et testables : upsert/expiration du registre, interpolation, sélection des pairs
  * visibles, décision d'envoi (throttle). `createPeerStore()` donne une instance isolée pour les tests ;
  * `peerStore` est l'instance partagée utilisée par le jeu.
  */
-import type { AvatarConfig } from '../../types'
-
 // ---------------------------------------------------------------------------------------------
 // Registre
 
@@ -28,8 +26,8 @@ interface BufferedSample extends PositionSample {
 
 export interface PeerRecord {
   id: string
-  /** `null` tant que la présence (avatar) n'est pas encore arrivée pour cet id. */
-  avatar: AvatarConfig | null
+  /** Faux tant que la présence (`presence.track`) n'est pas encore arrivée pour cet id. */
+  present: boolean
   /** Au plus `MAX_POSITION_BUFFER` échantillons, du plus ancien au plus récent. */
   buffer: BufferedSample[]
   /** Dernier signal reçu de ce pair (position ou battement), pour l'expiration par silence. */
@@ -53,7 +51,7 @@ function notifyRoster(store: PeerStore): void {
   for (const listener of store.rosterListeners) listener()
 }
 
-/** S'abonne aux changements de *roster* (arrivée/départ/avatar) — pas aux positions. */
+/** S'abonne aux changements de *roster* (arrivée/départ) — pas aux positions. */
 export function subscribeRoster(store: PeerStore, listener: () => void): () => void {
   store.rosterListeners.add(listener)
   return () => store.rosterListeners.delete(listener)
@@ -62,33 +60,21 @@ export function subscribeRoster(store: PeerStore, listener: () => void): () => v
 function getOrCreate(store: PeerStore, id: string): PeerRecord {
   let rec = store.peers.get(id)
   if (!rec) {
-    rec = { id, avatar: null, buffer: [], lastSeen: 0 }
+    rec = { id, present: false, buffer: [], lastSeen: 0 }
     store.peers.set(id, rec)
   }
   return rec
 }
 
-function avatarEquals(a: AvatarConfig, b: AvatarConfig): boolean {
-  return (
-    a.name === b.name &&
-    a.skinTone === b.skinTone &&
-    a.hairColor === b.hairColor &&
-    a.outfit === b.outfit &&
-    a.outfitColor === b.outfitColor &&
-    a.accessory === b.accessory
-  )
-}
-
 /**
- * Pair vu via `presence.track` (identité + avatar). Notifie le roster seulement si le pair est
- * nouveau ou si son avatar a changé — pas à chaque appel (la présence resynchronise tout le monde
- * à chaque arrivée/départ dans la salle).
+ * Pair vu via `presence.track` (identité seule : tous les visiteurs sont Cyril). Notifie le roster
+ * seulement si le pair est nouveau (ou connu par ses positions mais pas encore par sa présence) — pas à
+ * chaque appel (la présence resynchronise tout le monde à chaque arrivée/départ dans la salle).
  */
-export function upsertAvatar(store: PeerStore, id: string, avatar: AvatarConfig, now: number): void {
-  const existing = store.peers.get(id)
+export function upsertPeer(store: PeerStore, id: string, now: number): void {
   const rec = getOrCreate(store, id)
-  const changed = !existing || !existing.avatar || !avatarEquals(existing.avatar, avatar)
-  rec.avatar = avatar
+  const changed = !rec.present
+  rec.present = true
   rec.lastSeen = now
   if (changed) notifyRoster(store)
 }
@@ -110,16 +96,16 @@ export const MAX_POSITION_BUFFER = 2
 /**
  * Nouvelle position reçue par broadcast. Ne notifie le roster qu'à la toute première position
  * reçue pour un pair déjà connu par sa présence (transition `buffer` vide → non vide) : c'est ce
- * qui rend ce pair sélectionnable par `selectVisiblePeers` (avatar connu *et* position connue), et
+ * qui rend ce pair sélectionnable par `selectVisiblePeers` (présence connue *et* position connue), et
  * `RemoteVisitors` met en cache la liste des pairs visibles entre deux notifications de roster — sans
- * cette notification ponctuelle, un pair dont l'avatar arrive avant sa première position resterait
+ * cette notification ponctuelle, un pair dont la présence arrive avant sa première position resterait
  * invisible jusqu'au prochain aléa de roster (arrivée/départ d'un tiers), parfois jamais. Les
  * positions suivantes, elles, ne notifient jamais (elles arrivent plusieurs fois par seconde ; seul
  * `RemoteVisitors` en `useFrame` doit réagir à chaque image, pas le roster React).
  */
 export function recordPosition(store: PeerStore, id: string, sample: PositionSample, now: number): void {
   const rec = getOrCreate(store, id)
-  const becomesVisible = rec.avatar !== null && rec.buffer.length === 0
+  const becomesVisible = rec.present && rec.buffer.length === 0
   rec.buffer.push({ ...sample, recvT: now })
   if (rec.buffer.length > MAX_POSITION_BUFFER) rec.buffer.shift()
   rec.lastSeen = now
@@ -208,7 +194,13 @@ export function getRenderTransform(rec: Pick<PeerRecord, 'buffer'> | undefined, 
 // ---------------------------------------------------------------------------------------------
 // Sélection des pairs visibles
 
-export const MAX_VISIBLE_PEERS = 40
+/**
+ * Visiteurs distants rendus au plus : une salle de présence compte 8 visiteurs (`ROOM_CAPACITY`), donc 7
+ * autres en régime normal ; la borne à 8 ne joue qu'un instant, quand une salle dépasse sa capacité avant que
+ * les derniers arrivés ne la quittent. Chacun est un Cyril complet (squelette 24 os, ~12 400 triangles),
+ * avec le joueur : au plus 9 personnages animés, ~110 000 triangles, un appel de dessin chacun.
+ */
+export const MAX_VISIBLE_PEERS = 8
 
 function distSq(rec: PeerRecord, px: number, pz: number): number {
   const last = rec.buffer[rec.buffer.length - 1]
@@ -218,13 +210,13 @@ function distSq(rec: PeerRecord, px: number, pz: number): number {
 }
 
 /**
- * Pairs à afficher : ceux dont l'avatar est connu et qui ont émis au moins une position, triés
- * par distance au joueur croissante, limités à `limit` (mobile : pas plus de 40 pairs rendus).
+ * Pairs à afficher : ceux dont la présence est connue et qui ont émis au moins une position, triés
+ * par distance au joueur croissante, limités à `limit` (mobile : pas plus de `MAX_VISIBLE_PEERS` rendus).
  */
 export function selectVisiblePeers(store: PeerStore, playerX: number, playerZ: number, limit: number = MAX_VISIBLE_PEERS): PeerRecord[] {
   const candidates: PeerRecord[] = []
   for (const rec of store.peers.values()) {
-    if (rec.avatar && rec.buffer.length > 0) candidates.push(rec)
+    if (rec.present && rec.buffer.length > 0) candidates.push(rec)
   }
   candidates.sort((a, b) => distSq(a, playerX, playerZ) - distSq(b, playerX, playerZ))
   return candidates.slice(0, limit)

@@ -123,7 +123,7 @@ describe('CoachMark', () => {
 
   it('ne s’affiche jamais pendant un dialogue', () => {
     useGame.setState({
-      dialogue: { id: 'x', speaker: { fr: 'Minerve', en: 'Minerva' }, lines: [{ text: { fr: 'Bonjour', en: 'Hi' } }] },
+      dialogue: { id: 'x', speaker: { fr: 'Rémi Godeau', en: 'Rémi Godeau' }, lines: [{ text: { fr: 'Bonjour', en: 'Hi' } }] },
       dialogueIndex: 0,
     })
     render(<CoachMark />)
@@ -138,7 +138,7 @@ describe('CoachMark', () => {
     // s'afficherait ensuite plus jamais. Le joueur ne peut de toute façon pas bouger tant que le
     // dialogue est ouvert (`isOverlayOpen`), donc rien n'est perdu à attendre sa fermeture.
     useGame.setState({
-      dialogue: { id: 'welcome', speaker: { fr: 'Minerve', en: 'Minerva' }, lines: [{ text: { fr: 'Bonjour', en: 'Hi' } }] },
+      dialogue: { id: 'welcome', speaker: { fr: 'Rémi Godeau', en: 'Rémi Godeau' }, lines: [{ text: { fr: 'Bonjour', en: 'Hi' } }] },
       dialogueIndex: 0,
     })
     render(<CoachMark />)
@@ -177,7 +177,7 @@ describe('CoachMark', () => {
     render(<CoachMark />) // dialogue déjà `null` au montage (voir `beforeEach`), comme au tout début d'App.tsx
     act(() => {
       useGame.setState({
-        dialogue: { id: 'welcome', speaker: { fr: 'Minerve', en: 'Minerva' }, lines: [{ text: { fr: 'Bonjour', en: 'Hi' } }] },
+        dialogue: { id: 'welcome', speaker: { fr: 'Rémi Godeau', en: 'Rémi Godeau' }, lines: [{ text: { fr: 'Bonjour', en: 'Hi' } }] },
         dialogueIndex: 0,
       })
     })

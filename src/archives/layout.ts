@@ -135,6 +135,10 @@ export function buildArchivesLayout(sessions: EveningSession[], hall: AABB): Arc
     arrival,
     door: { x, z: bounds.minZ, width: archivesDoor.width },
     archivist,
+    northWall: [
+      xWall(hall.maxZ, hall.minX, archivesDoor.x - archivesDoor.width / 2, WALL_THICKNESS),
+      xWall(hall.maxZ, archivesDoor.x + archivesDoor.width / 2, hall.maxX, WALL_THICKNESS),
+    ],
   }
 }
 

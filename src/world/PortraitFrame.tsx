@@ -1,7 +1,8 @@
 /**
- * Un portrait accroché : cadre doré mouluré (plusieurs couches biseautées) + passe-partout crème,
- * toile (photo ou portrait d'attente) légèrement en retrait, petit spot mural doré avec halo additif
- * discret, cartel en laiton haute résolution (WEL-875 — voir `docs/assets/frames.md`).
+ * Un portrait accroché (charte 3D du 29/09/2026, `docs/CHARTE-3D.md` §4.6) : cadre mouluré à moulure
+ * extérieure blanche et moulure médiane à l'accent de l'aile (une géométrie par aile), passe-partout nuit,
+ * toile (photo ou portrait d'attente) légèrement en retrait, petit spot mural avec halo additif discret,
+ * cartel nuit à filet d'aile haute résolution (WEL-875 — voir `docs/assets/frames.md`).
  * Chargement paresseux de la photo (< 14 m, quelques vérifications par seconde, jamais déchargée).
  * Pas de <Text>/<Html> drei : tout le texte est une texture canvas 2D.
  */
@@ -12,10 +13,10 @@ import type { Mesh, Texture } from 'three'
 import type { FrameSlot, Person } from '../types'
 import { useGame } from '../state/gameStore'
 import { player } from '../state/runtime'
-import { wingThemes, dims as tokenDims } from '../styles/tokens'
+import { charter3d, wingThemes, dims as tokenDims } from '../styles/tokens'
 import { drawPlaceholderPortrait, loadPersonPhoto } from './textures'
 import { drawFrameCartel } from './frameCartel'
-import { FRAME_GEOMETRY, GOLD_BRIGHT, HALO_LOCAL_Y, HALO_LOCAL_Z, PAINTING_RECESS_Z } from './frameGeometry'
+import { FRAME_GEOMETRY_BY_WING, HALO_LOCAL_Y, HALO_LOCAL_Z, PAINTING_RECESS_Z } from './frameGeometry'
 import { HALO_GEOMETRY, fadeableHaloMaterial, sharedHaloMaterial } from './frameHalo'
 import { PORTRAIT_CHECK_RATE_HZ, PORTRAIT_LOAD_DISTANCE } from './constants'
 import { bubbleTexture } from './bubbleTexture'
@@ -38,14 +39,16 @@ const BOB_RANGE = 0.08
 const PAINTING_GEO = new PlaneGeometry(tokenDims.frameWidth, tokenDims.frameHeight)
 const CARTEL_GEO = new PlaneGeometry(CARTEL_WIDTH, CARTEL_HEIGHT)
 const BUBBLE_GEO = new PlaneGeometry(0.32, 0.32)
-// `vertexColors: true` : la géométrie fusionnée (`FRAME_GEOMETRY`) porte déjà la couleur de chaque
-// couche (moulures + passe-partout + spot) par sommet — voir `frameGeometry.ts`. Un seul matériau
-// (couleur de base blanche par défaut) suffit donc pour tout le relief, au lieu d'un matériau par
-// teinte. `flatShading: true` : la vasque du spot est un cylindre low-poly (8 segments, comme les
+// `vertexColors: true` : la géométrie fusionnée (`FRAME_GEOMETRY_BY_WING`) porte déjà la couleur de
+// chaque couche (moulures + passe-partout + spot) par sommet — voir `frameGeometry.ts`. Un seul matériau
+// (couleur de base blanche par défaut) suffit donc pour tout le relief des trois géométries, au lieu
+// d'un matériau par teinte. `flatShading: true` : la vasque du spot est un cylindre low-poly (8 segments, comme les
 // colonnes du hall, `roomGeometry.ts`) — sans cet indicateur, three.js lisserait ses normales et la
 // vasque paraîtrait ronde/floue au lieu du style « facetté » du reste du musée.
 const FRAME_MATERIAL = new MeshLambertMaterial({ vertexColors: true, flatShading: true })
-const FRAME_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ vertexColors: true, flatShading: true, emissive: GOLD_BRIGHT, emissiveIntensity: 0.32 })
+// Cadre proche : lueur corail (la couleur d'action de la charte), `charter3d.frame.highlightEmissive`.
+const HIGHLIGHT_EMISSIVE = charter3d.frame.highlightEmissive
+const FRAME_MATERIAL_HIGHLIGHT = new MeshLambertMaterial({ vertexColors: true, flatShading: true, emissive: HIGHLIGHT_EMISSIVE, emissiveIntensity: 0.32 })
 
 let bubbleMaterial: MeshBasicMaterial | null = null
 /** Matériau de la bulle « ! », créé une seule fois (paresseux : la texture a besoin d'un canvas DOM). */
@@ -105,7 +108,10 @@ export function PortraitFrame({ frame, person, fade }: { frame: FrameSlot; perso
   // cadres), pour pouvoir suivre son fondu sans jamais l'imposer aux cadres non concernés. `useMemo`
   // sur `[fade]` seul : la présence de `fade` ne change jamais après montage (mission occultation
   // figée par le plan), donc ces instances sont créées une seule fois.
-  const frameMaterial = useMemo(() => (fade ? new MeshLambertMaterial({ vertexColors: true, flatShading: true, transparent: true, depthWrite: false }) : null), [fade])
+  const frameMaterial = useMemo(
+    () => (fade ? new MeshLambertMaterial({ vertexColors: true, flatShading: true, transparent: true, depthWrite: false, emissive: HIGHLIGHT_EMISSIVE, emissiveIntensity: 0 }) : null),
+    [fade],
+  )
   const haloMaterial = useMemo(() => (fade ? fadeableHaloMaterial() : null), [fade])
   const paintingMatRef = useRef<MeshBasicMaterial>(null)
   const cartelMatRef = useRef<MeshBasicMaterial>(null)
@@ -142,7 +148,7 @@ export function PortraitFrame({ frame, person, fade }: { frame: FrameSlot; perso
         alors ces mailles par distance caméra plutôt que par le buffer de profondeur, et comme la
         toile/le cartel sont quasiment coplanaires avec la moulure (quelques millimètres d'écart en Z,
         voir `frameGeometry.ts`), ce tri est instable : la moulure (opaque à l'œil, `opacity` à 1 hors
-        fondu) pouvait se dessiner APRÈS la toile et donc la recouvrir entièrement (aplat doré uni,
+        fondu) pouvait se dessiner APRÈS la toile et donc la recouvrir entièrement (aplat uni,
         observé aile Industrialisation — cimaises occultantes, contrairement à Infrastructures/Culture
         sans cimaise sur les cadres testés). `renderOrder` prime sur la distance dans le tri des objets
         transparents (three.js) : moulure (0) → toile/cartel (1) → halo (2) → bulle « ! » (3), pour
@@ -150,8 +156,8 @@ export function PortraitFrame({ frame, person, fade }: { frame: FrameSlot; perso
         le depth buffer comme avant). Testé visuellement aile Industrialisation (seule aile de ce
         chantier avec cimaise sur les cadres capturés) : voir `docs/assets/frames.md`.
       */}
-      {/* Moulure dorée biseautée + passe-partout + spot mural : une seule géométrie fusionnée (voir frameGeometry.ts). */}
-      <mesh renderOrder={0} geometry={FRAME_GEOMETRY} material={frameMaterial ?? (highlighted ? FRAME_MATERIAL_HIGHLIGHT : FRAME_MATERIAL)} />
+      {/* Moulure blanche + moulure d'aile + passe-partout nuit + spot mural : une seule géométrie fusionnée par aile (voir frameGeometry.ts). */}
+      <mesh renderOrder={0} geometry={FRAME_GEOMETRY_BY_WING[frame.wing]} material={frameMaterial ?? (highlighted ? FRAME_MATERIAL_HIGHLIGHT : FRAME_MATERIAL)} />
       <mesh renderOrder={1} position={[0, 0, PAINTING_RECESS_Z]} geometry={PAINTING_GEO}>
         <meshBasicMaterial ref={paintingMatRef} map={paintingTex} toneMapped={false} transparent={!!fade} depthWrite={!fade} />
       </mesh>

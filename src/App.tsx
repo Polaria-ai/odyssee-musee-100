@@ -15,14 +15,13 @@ import { Hud } from './ui/Hud'
 import { PortraitCard } from './ui/PortraitCard'
 import { DialogueBox } from './ui/DialogueBox'
 import { Toast } from './ui/Toast'
-import { AvatarCustomizer } from './features/avatar/AvatarCustomizer'
 import { StampCard } from './features/stamps/StampCard'
 import { useStampWatcher } from './features/stamps/useStampWatcher'
 import { useArchivesRefresh } from './archives/useArchivesRefresh'
 import { usePresence } from './features/presence/usePresence'
 import { TouchJoystick } from './player/TouchJoystick'
 import { useKeyboardControls } from './player/useKeyboardControls'
-import { minerveDialogue } from './npc/minerveScript'
+import { remiDialogue } from './npc/remiScript'
 import { useAudioDirector } from './audio'
 
 export function App() {
@@ -51,13 +50,13 @@ export function App() {
     }
   }, [])
 
-  // Entrée dans le musée : placement au point d'apparition et accueil de Minerve.
+  // Entrée dans le musée : placement au point d'apparition et accueil de Rémi.
   useEffect(() => {
     if (screen !== 'play' || !layout) return
     placePlayer(layout.spawn.position.x, layout.spawn.position.z, layout.spawn.rotationY)
     resetInput()
     const g = useGame.getState()
-    if (Object.keys(g.visited).length === 0) g.startDialogue(minerveDialogue({ kind: 'welcome' }))
+    if (Object.keys(g.visited).length === 0) g.startDialogue(remiDialogue({ kind: 'welcome' }))
   }, [screen, layout])
 
   useEffect(() => {
@@ -85,7 +84,6 @@ export function App() {
       <Experience />
       {screen === 'loading' && <LoadingScreen />}
       {screen === 'title' && <TitleScreen />}
-      {screen === 'customize' && <AvatarCustomizer />}
       {playing && (
         <>
           <Hud />

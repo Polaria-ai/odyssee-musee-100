@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import type { AvatarConfig } from '../../types'
 import {
   IDLE_HEARTBEAT_MS,
   MAX_VISIBLE_PEERS,
@@ -15,20 +14,8 @@ import {
   selectVisiblePeers,
   shouldSendPosition,
   subscribeRoster,
-  upsertAvatar,
+  upsertPeer,
 } from './peers'
-
-function avatar(overrides: Partial<AvatarConfig> = {}): AvatarConfig {
-  return {
-    name: 'Ada',
-    skinTone: '#f5c9a3',
-    hairColor: '#3b2a1e',
-    outfit: 'tee',
-    outfitColor: '#7bc47f',
-    accessory: 'none',
-    ...overrides,
-  }
-}
 
 describe('round2', () => {
   it('arrondit à 2 décimales', () => {
@@ -38,20 +25,32 @@ describe('round2', () => {
   })
 })
 
-describe('upsertAvatar / removePeer / clearPeers — roster', () => {
+describe('upsertPeer / removePeer / clearPeers — roster', () => {
   it('notifie le roster à la première apparition d’un pair, pas au simple rafraîchissement', () => {
     const store = createPeerStore()
     let notifications = 0
     subscribeRoster(store, () => notifications++)
 
-    upsertAvatar(store, 'p1', avatar(), 1000)
+    upsertPeer(store, 'p1', 1000)
     expect(notifications).toBe(1)
 
-    upsertAvatar(store, 'p1', avatar(), 1500) // même avatar, juste un rafraîchissement de présence
+    upsertPeer(store, 'p1', 1500) // juste un rafraîchissement de présence : la présence resynchronise tout le monde
     expect(notifications).toBe(1)
+    expect(getPeer(store, 'p1')?.lastSeen).toBe(1500)
 
-    upsertAvatar(store, 'p1', avatar({ outfitColor: '#e76f6f' }), 2000) // avatar changé
+    upsertPeer(store, 'p2', 2000) // un autre pair arrive
     expect(notifications).toBe(2)
+  })
+
+  it('notifie aussi quand la présence arrive après la première position (le pair devient visible)', () => {
+    const store = createPeerStore()
+    recordPosition(store, 'p1', { x: 0, z: 0, r: 0, m: false }, 1000) // position d'abord : pair encore invisible
+    let notifications = 0
+    subscribeRoster(store, () => notifications++)
+
+    upsertPeer(store, 'p1', 1010)
+    expect(notifications).toBe(1)
+    expect(selectVisiblePeers(store, 0, 0).map((p) => p.id)).toEqual(['p1'])
   })
 
   it('removePeer notifie seulement si le pair existait', () => {
@@ -62,7 +61,7 @@ describe('upsertAvatar / removePeer / clearPeers — roster', () => {
     removePeer(store, 'inconnu')
     expect(notifications).toBe(0)
 
-    upsertAvatar(store, 'p1', avatar(), 1000)
+    upsertPeer(store, 'p1', 1000)
     removePeer(store, 'p1')
     expect(notifications).toBe(2)
     expect(getPeer(store, 'p1')).toBeUndefined()
@@ -75,21 +74,21 @@ describe('upsertAvatar / removePeer / clearPeers — roster', () => {
     clearPeers(store)
     expect(notifications).toBe(0)
 
-    upsertAvatar(store, 'p1', avatar(), 1000)
+    upsertPeer(store, 'p1', 1000)
     clearPeers(store)
     expect(store.peers.size).toBe(0)
     expect(notifications).toBe(2)
   })
 
   it('recordPosition notifie une seule fois, à la position qui rend le pair visible', () => {
-    // L'avatar est déjà là (upsertAvatar a déjà notifié une fois) mais aucune position encore :
-    // `selectVisiblePeers` exige avatar + position, donc ce pair est encore invisible. La toute
+    // La présence est déjà là (upsertPeer a déjà notifié une fois) mais aucune position encore :
+    // `selectVisiblePeers` exige présence + position, donc ce pair est encore invisible. La toute
     // première position doit notifier le roster pour que `RemoteVisitors` le fasse apparaître —
     // sinon il resterait invisible jusqu'à l'arrivée ou au départ fortuit d'un tiers.
     const store = createPeerStore()
     let notifications = 0
     subscribeRoster(store, () => notifications++)
-    upsertAvatar(store, 'p1', avatar(), 1000)
+    upsertPeer(store, 'p1', 1000)
     notifications = 0
 
     recordPosition(store, 'p1', { x: 1, z: 1, r: 0, m: true }, 1010) // devient visible
@@ -99,12 +98,12 @@ describe('upsertAvatar / removePeer / clearPeers — roster', () => {
     expect(notifications).toBe(1)
   })
 
-  it('recordPosition avant tout avatar ne notifie pas (le pair reste invisible tant que l’avatar manque)', () => {
+  it('recordPosition avant toute présence ne notifie pas (le pair reste invisible tant que sa présence manque)', () => {
     const store = createPeerStore()
     let notifications = 0
     subscribeRoster(store, () => notifications++)
 
-    recordPosition(store, 'no-avatar-yet', { x: 0, z: 0, r: 0, m: false }, 1000)
+    recordPosition(store, 'no-presence-yet', { x: 0, z: 0, r: 0, m: false }, 1000)
     expect(notifications).toBe(0)
   })
 
@@ -113,7 +112,7 @@ describe('upsertAvatar / removePeer / clearPeers — roster', () => {
     let notifications = 0
     const unsubscribe = subscribeRoster(store, () => notifications++)
     unsubscribe()
-    upsertAvatar(store, 'p1', avatar(), 1000)
+    upsertPeer(store, 'p1', 1000)
     expect(notifications).toBe(0)
   })
 })
@@ -121,8 +120,8 @@ describe('upsertAvatar / removePeer / clearPeers — roster', () => {
 describe('pruneStale — expiration par silence', () => {
   it('retire un pair silencieux depuis plus de `timeoutMs`, garde les autres', () => {
     const store = createPeerStore()
-    upsertAvatar(store, 'stale', avatar(), 0)
-    upsertAvatar(store, 'fresh', avatar(), 5000)
+    upsertPeer(store, 'stale', 0)
+    upsertPeer(store, 'fresh', 5000)
 
     const removed = pruneStale(store, 6001, 6000)
     expect(removed).toEqual(['stale'])
@@ -132,15 +131,15 @@ describe('pruneStale — expiration par silence', () => {
 
   it('ne retire rien avant le délai', () => {
     const store = createPeerStore()
-    upsertAvatar(store, 'p1', avatar(), 0)
+    upsertPeer(store, 'p1', 0)
     const removed = pruneStale(store, 5999, 6000)
     expect(removed).toEqual([])
     expect(getPeer(store, 'p1')).toBeDefined()
   })
 
-  it('recordPosition repousse l’expiration (dernier signal = position, pas seulement avatar)', () => {
+  it('recordPosition repousse l’expiration (dernier signal = position, pas seulement présence)', () => {
     const store = createPeerStore()
-    upsertAvatar(store, 'p1', avatar(), 0)
+    upsertPeer(store, 'p1', 0)
     recordPosition(store, 'p1', { x: 0, z: 0, r: 0, m: false }, 5000)
     const removed = pruneStale(store, 5000 + 6000 - 1, 6000)
     expect(removed).toEqual([])
@@ -200,39 +199,40 @@ describe('getRenderTransform — interpolation / extrapolation', () => {
 })
 
 describe('selectVisiblePeers — limite et tri par distance', () => {
-  it('ignore les pairs sans avatar ou sans position', () => {
+  it('ignore les pairs sans présence ou sans position', () => {
     const store = createPeerStore()
-    upsertAvatar(store, 'no-position', avatar(), 0) // avatar connu, jamais de position
-    recordPosition(store, 'no-avatar', { x: 0, z: 0, r: 0, m: false }, 0) // position sans avatar
+    upsertPeer(store, 'no-position', 0) // présence connue, jamais de position
+    recordPosition(store, 'no-presence', { x: 0, z: 0, r: 0, m: false }, 0) // position sans présence
     expect(selectVisiblePeers(store, 0, 0)).toEqual([])
   })
 
   it('trie par distance croissante au joueur', () => {
     const store = createPeerStore()
     for (const [id, x] of [['far', 100], ['near', 1], ['mid', 10]] as const) {
-      upsertAvatar(store, id, avatar(), 0)
+      upsertPeer(store, id, 0)
       recordPosition(store, id, { x, z: 0, r: 0, m: false }, 0)
     }
     const ids = selectVisiblePeers(store, 0, 0).map((p) => p.id)
     expect(ids).toEqual(['near', 'mid', 'far'])
   })
 
-  it('limite à 40 pairs rendus par défaut, en gardant les plus proches', () => {
+  it('limite à 8 Cyril distants rendus par défaut (budget d’une salle), en gardant les plus proches', () => {
+    expect(MAX_VISIBLE_PEERS).toBe(8)
     const store = createPeerStore()
     for (let i = 0; i < 50; i++) {
       const id = `p${i}`
-      upsertAvatar(store, id, avatar(), 0)
+      upsertPeer(store, id, 0)
       recordPosition(store, id, { x: i, z: 0, r: 0, m: false }, 0) // p0 le plus proche, p49 le plus loin
     }
     const visible = selectVisiblePeers(store, 0, 0)
     expect(visible).toHaveLength(MAX_VISIBLE_PEERS)
-    expect(visible.map((p) => p.id)).toEqual(Array.from({ length: 40 }, (_, i) => `p${i}`))
+    expect(visible.map((p) => p.id)).toEqual(Array.from({ length: MAX_VISIBLE_PEERS }, (_, i) => `p${i}`))
   })
 
   it('accepte une limite personnalisée', () => {
     const store = createPeerStore()
     for (let i = 0; i < 5; i++) {
-      upsertAvatar(store, `p${i}`, avatar(), 0)
+      upsertPeer(store, `p${i}`, 0)
       recordPosition(store, `p${i}`, { x: i, z: 0, r: 0, m: false }, 0)
     }
     expect(selectVisiblePeers(store, 0, 0, 2)).toHaveLength(2)

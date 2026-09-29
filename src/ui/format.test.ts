@@ -146,9 +146,10 @@ describe('contrastRatio', () => {
 })
 
 describe('pitchForSpeaker', () => {
-  it('donne 1.25 pour Minerve, en français comme en anglais', () => {
-    expect(pitchForSpeaker({ fr: 'Minerve', en: 'Minerva' })).toBe(1.25)
-    expect(pitchForSpeaker({ fr: '', en: 'Minerva' })).toBe(1.25)
+  it('donne 0.85 pour Rémi Godeau, en français comme en anglais, avec ou sans accent', () => {
+    expect(pitchForSpeaker({ fr: 'Rémi Godeau', en: 'Rémi Godeau' })).toBe(0.85)
+    expect(pitchForSpeaker({ fr: '', en: 'Rémi Godeau' })).toBe(0.85)
+    expect(pitchForSpeaker({ fr: 'Remi Godeau', en: '' })).toBe(0.85)
   })
   it('donne une variation stable et bornée pour un autre orateur', () => {
     const a = pitchForSpeaker({ fr: 'Quelqu’un', en: 'Someone' })

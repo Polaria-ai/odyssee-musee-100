@@ -18,15 +18,21 @@ export type PropFit = { mode: 'height'; target: number } | { mode: 'footprint'; 
 
 const materialCache = new Map<string, Material>()
 
-/** Clone + teinte un matériau une seule fois (cache par matériau d'origine + couleur cible). Ne touche jamais `base`. */
-function tintedMaterial(base: Material, hex: string | null): Material {
+/**
+ * Clone + teinte un matériau une seule fois (cache par matériau d'origine + couleur cible). Ne touche
+ * jamais `base`. `flat` : retire la texture-palette du clone, la teinte devient alors la couleur EXACTE
+ * du matériau (sinon elle MULTIPLIE les texels du modèle : dessus de colonne gris ardoise, détails verts
+ * des machines — des couleurs hors charte que la teinte ne peut pas corriger).
+ */
+function tintedMaterial(base: Material, hex: string | null, flat: boolean): Material {
   if (!hex) return base
-  const key = `${base.uuid}:${hex}`
+  const key = `${base.uuid}:${hex}:${flat ? 'flat' : 'map'}`
   const cached = materialCache.get(key)
   if (cached) return cached
   const clone = base.clone()
-  const colorable = clone as unknown as { color?: { set: (h: string) => void } }
+  const colorable = clone as unknown as { color?: { set: (h: string) => void }; map?: unknown }
   colorable.color?.set(hex)
+  if (flat) colorable.map = null
   materialCache.set(key, clone)
   return clone
 }
@@ -75,8 +81,8 @@ function dequantizeGeometry(geo: BufferGeometry): void {
  * modèle (`null` = garde sa couleur d'origine) — un modèle a souvent plusieurs matériaux (ex. pot +
  * feuillage d'une jardinière) qui ne doivent pas tous recevoir la même teinte.
  */
-export function propParts(scene: Object3D, cacheKey: string, tintVariant: string, tintFor: (materialName: string) => string | null, fit: PropFit): PropPart[] {
-  const key = `${cacheKey}:${tintVariant}:${fit.mode}:${fit.mode === 'none' ? '' : fit.target}`
+export function propParts(scene: Object3D, cacheKey: string, tintVariant: string, tintFor: (materialName: string) => string | null, fit: PropFit, flat = false): PropPart[] {
+  const key = `${cacheKey}:${tintVariant}:${fit.mode}:${fit.mode === 'none' ? '' : fit.target}:${flat ? 'flat' : 'map'}`
   const cached = partsCache.get(key)
   if (cached) return cached
 
@@ -122,7 +128,7 @@ export function propParts(scene: Object3D, cacheKey: string, tintVariant: string
       merged = geos[0]
     }
     const hex = NEVER_TINT.test(material.name) ? null : tintFor(material.name)
-    parts.push({ geometry: merged, material: tintedMaterial(material, hex) })
+    parts.push({ geometry: merged, material: tintedMaterial(material, hex, flat) })
   }
   partsCache.set(key, parts)
   return parts

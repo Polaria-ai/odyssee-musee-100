@@ -46,7 +46,7 @@ Sans langue déjà choisie, l'app retombe sur `navigator.language` (`initialLang
 | `loading.spec.ts` | Écran titre visible en moins de 10 s ; absence d'erreur console (migration Supabase appliquée, voir bugs corrigés ci-dessous) ; contenu du titre en français. |
 | `title-lang.spec.ts` | Bascule FR/EN sur le titre et dans le HUD (textes changent, y compris via `window.__musee.state().lang`). |
 | `customize.spec.ts` | Personnalisation (tenue, accessoire, pseudo) → écran de jeu, avatar enregistré dans le state ; sélection visuelle des pastilles (`aria-checked`). |
-| `dialogue.spec.ts` | Dialogue d'accueil de Minerve : affichage, avance au tap (machine à écrire), fermeture ; fermeture directe via « Passer ». |
+| `dialogue.spec.ts` | Dialogue d'accueil de Rémi Godeau : affichage, avance au tap (machine à écrire), fermeture ; fermeture directe via « Passer ». |
 | `movement.spec.ts` | Glissé sur le joystick tactile (`page.mouse` — de vrais événements souris déclenchent les mêmes `PointerEvent` que le tactile, `TouchJoystick.tsx` ne distingue pas le type de pointeur) → la position du joueur change ; tap au sol → déplacement automatique (attend `waitForCameraSettled` après `teleport`, voir « Découvertes » — résidu rarissime sous charge extrême, voir « Limites connues ») ; flèches du clavier (projet `desktop` uniquement, via `test.skip` conditionnel). |
 | `portraits.spec.ts` | `goToPerson` → bouton « Regarder » → fiche avec le nom → suivant/précédent → Échap ferme ; fermeture via ✕. |
 | `portrait-placeholder.spec.ts` *(nouveau)* | Fiche d'attente (`person.placeholder`) : organisation affichée « À dévoiler le 6 octobre » en FR / « Revealed on October 6 » en EN, jamais les deux à la fois sur la même fiche. |

@@ -235,7 +235,7 @@ function hallExtras(architecture: MuseumArchitecture): ExtraItem[] {
     items.push({ wing: 'hall', key, tint: 'planter', fit: { mode: 'height', target: key === 'hallPlanterSmall1' ? 0.42 : 0.46 }, position: { x: p.x + dx, z: p.z + dz }, rotationY: 0, mountY: 0 })
   }
 
-  // Pupitre secondaire + pile de livres, au flanc du comptoir de Minerve (même côté que le premier
+  // Pupitre secondaire + pile de livres, au flanc du comptoir d'accueil (même côté que le premier
   // lampadaire, en retrait — voir `hallDecorPlacements`).
   const tableX = counter.center.x - counter.halfWidth - 1.6
   const tableZ = counter.center.z

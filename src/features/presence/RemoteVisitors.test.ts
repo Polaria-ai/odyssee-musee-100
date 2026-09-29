@@ -34,14 +34,12 @@ describe('popScale — apparition d’un pair par mise à l’échelle', () => {
 })
 
 describe('RemoteVisitors — jamais de mutation d’un matériau partagé (par conception)', () => {
-  // `AvatarMesh` met en cache des matériaux PARTAGÉS entre toutes ses instances (joueur compris,
-  // voir son commentaire `materialFor`/`colorMaterialCache` et ses constantes `SHADOW_MATERIAL`,
-  // `EYE_MATERIAL`, etc., qui ne sont pas exportées — rien à espionner depuis l'extérieur). La
-  // garantie vérifiable ici est structurelle : ce module ne doit plus jamais parcourir
-  // (`traverse`) le groupe d'un pair pour cloner ou modifier `opacity`/`transparent` sur les
-  // matériaux qu'il y trouve — exactement le mécanisme qui affichait un carré bleu opaque à la
-  // place de l'ombre ronde. L'apparition d'un pair passe uniquement par `group.scale` (propre à
-  // chaque pair) et, pour l'étiquette de pseudo, par un matériau créé pour cette seule instance.
+  // `AvatarMesh` partage ses ressources entre toutes ses instances (joueur compris) : le matériau mat
+  // de Cyril (module personnages), et l'ombre ronde (`SHADOW_MATERIAL`, non exporté — rien à espionner
+  // depuis l'extérieur). La garantie vérifiable ici est structurelle : ce module ne doit plus jamais
+  // parcourir (`traverse`) le groupe d'un pair pour cloner ou modifier `opacity`/`transparent` sur les
+  // matériaux qu'il y trouve — exactement le mécanisme qui affichait un carré bleu opaque à la place de
+  // l'ombre ronde. L'apparition d'un pair passe uniquement par `group.scale` (propre à chaque pair).
 
   it('ne parcourt plus le groupe d’un pair pour toucher ses matériaux', () => {
     expect(source).not.toContain('.traverse(')
@@ -55,8 +53,13 @@ describe('RemoteVisitors — jamais de mutation d’un matériau partagé (par c
   it('anime l’apparition par l’échelle du groupe du pair, jamais par ses matériaux', () => {
     expect(source).toContain('group.scale.setScalar(popScale(elapsed))')
   })
+})
 
-  it('le fondu de l’étiquette de pseudo agit sur un matériau propre à cette instance (pas de cache)', () => {
-    expect(source).toContain('spriteMaterial ref={materialRef}')
+describe('RemoteVisitors — tous les visiteurs sont Cyril, sans pseudo (par conception)', () => {
+  it('rend chaque pair avec AvatarMesh, sans apparence ni étiquette de pseudo', () => {
+    expect(source).toContain('<AvatarMesh moving={moving} speed={remoteSpeed(moving)} />')
+    expect(source).not.toContain('config=')
+    expect(source).not.toContain('nameLabel')
+    expect(source).not.toContain('<sprite')
   })
 })

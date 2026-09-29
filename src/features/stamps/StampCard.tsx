@@ -17,7 +17,6 @@ export function StampCard() {
   const visited = useGame((s) => s.visited)
   const sessions = useGame((s) => s.sessions)
   const visitedSessions = useGame((s) => s.visitedSessions)
-  const avatarName = useGame((s) => s.avatar.name)
   const lang = useGame((s) => s.lang)
   const setStampCardOpen = useGame((s) => s.setStampCardOpen)
   const t = useT(strings)
@@ -98,7 +97,7 @@ export function StampCard() {
             className="stamp-card__share"
             data-testid="stamp-share"
             onClick={() => {
-              void shareCard({ avatarName, stamps, archivesObtained, lang })
+              void shareCard({ stamps, archivesObtained, lang })
             }}
           >
             {t('share')}

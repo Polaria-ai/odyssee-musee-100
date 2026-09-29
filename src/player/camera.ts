@@ -9,6 +9,19 @@ import { cameraPositionFor } from '../styles/tokens'
 export const LOOK_DISTANCE_FACTOR = 0.7
 /** Durée visée (s) de la transition douce vers/depuis le mode « regard ». */
 export const LOOK_TRANSITION_SECONDS = 0.6
+/**
+ * Dialogue ouvert : la boîte de dialogue couvre le bas de l'écran, là où l'orientation fixe place le
+ * joueur (≈ 73 % de la hauteur). On recule la caméra vers le sud d'une fraction de sa distance, à
+ * hauteur constante : le regard vers le joueur s'aplatit et il remonte vers le milieu de l'écran
+ * (≈ 55 %), au-dessus de la boîte (revue du 29/09 : le joueur disparaissait sous le dialogue).
+ */
+export const DIALOGUE_CAMERA_SHIFT_RATIO = 0.21
+export const DIALOGUE_TRANSITION_SECONDS = 0.45
+
+/** Recul de caméra (m, vers +Z) quand un dialogue est ouvert, pour une distance donnée. Fonction pure. */
+export function dialogueShiftFor(distance: number, blend: number): number {
+  return distance * DIALOGUE_CAMERA_SHIFT_RATIO * blend
+}
 /** Temps d'immobilité (s) avant que le mode « regard » ne s'engage. */
 export const LOOK_STILLNESS_SECONDS = 0.4
 /**
@@ -100,7 +113,7 @@ export function boundedCameraPosition(
  * `CAMERA_LOOK_OFFSET` vs `CAMERA_OFFSET`, angles différents) fait apparaître le joueur plus bas dans
  * le cadre, l'angle entre les deux directions étant indépendant de la distance (voir `camera.test.ts`).
  * Bonus : un angle de visée plus à plat étend aussi la portée vers l'avant (on voit plus loin dans le
- * hall — Minerve, les portes), l'un ne va pas sans l'autre.
+ * hall — Rémi Godeau, les portes), l'un ne va pas sans l'autre.
  */
 export function orientationPitchDeg(positionPitchDeg: number, fovDeg: number, screenFraction: number): number {
   const halfVFovRad = (fovDeg * Math.PI) / 180 / 2

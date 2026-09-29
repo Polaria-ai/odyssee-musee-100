@@ -151,7 +151,7 @@ describe.each(counts)('buildArchivesLayout — %i séquence(s)', (count) => {
     expect(layout.arrival.rotationY).toBeCloseTo(0)
   })
 
-  // L'Archiviste est un obstacle (son podium a un collider, comme le comptoir de Minerve dans
+  // L'Archiviste est un obstacle (son podium a un collider, comme le comptoir d'accueil dans
   // src/world/layout.ts) : le joueur l'approche à portée d'interaction, il ne se tient jamais
   // exactement sur son point — seul `layout.archivist.position` doit rester dans la salle.
   it('l’Archiviste accueille près de la porte, avant la première rangée, hors du passage', () => {

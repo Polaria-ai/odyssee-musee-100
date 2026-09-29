@@ -29,11 +29,9 @@ async function session(name, contextOptions) {
   await page.goto(`${base}/?e2e=1`)
   await page.getByTestId('title-screen').waitFor()
   await shot('01-titre', 2500)
+  // Plus d'écran de personnalisation : on entre directement en Cyril (décision du 29/09).
   await page.getByTestId('enter-button').click()
-  await page.getByTestId('customizer').waitFor()
-  await shot('02-perso', 2000)
-  await page.getByTestId('customizer-done').click()
-  await shot('03-accueil-minerve', 3500)
+  await shot('03-accueil-remi', 3500)
   await page.evaluate(() => window.__musee.state().closeDialogue())
   await shot('04-hall-spawn')
   const rooms = await page.evaluate(() => window.__musee.state().layout.rooms.map((r) => ({ id: r.id, b: r.bounds })))
@@ -46,6 +44,8 @@ async function session(name, contextOptions) {
     const deepZ = r.id === 'industrialisation' ? r.b.minZ + 2 : r.b.minZ + 1.2
     await page.evaluate(([x, z]) => window.__musee.teleport(x, z), [cx, deepZ])
     await shot(`06-aile-${r.id}-fond`, 2000)
+    // L'entrée dans les Archives ouvre l'accueil de l'Archiviste : on le ferme avant la suite.
+    await page.evaluate(() => window.__musee.state().closeDialogue())
   }
   const frameIds = await page.evaluate(() => {
     const frames = window.__musee.state().layout.frames
@@ -65,9 +65,10 @@ async function session(name, contextOptions) {
   await page.evaluate(() => window.__musee.state().interact())
   await shot('08-fiche', 1500)
   await page.keyboard.press('Escape')
+  await page.evaluate(() => window.__musee.state().closeDialogue())
   const curator = await page.evaluate(() => window.__musee.state().layout.curator.position)
   await page.evaluate(([x, z]) => window.__musee.teleport(x, z + 2.2), [curator.x, curator.z])
-  await shot('09-pres-minerve', 2000)
+  await shot('09-pres-remi', 2000)
   await page.evaluate(() => window.__musee.state().setStampCardOpen(true))
   await shot('10-carnet', 1200)
   await page.evaluate(() => window.__musee.state().setStampCardOpen(false))

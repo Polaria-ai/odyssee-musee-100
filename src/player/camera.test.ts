@@ -11,8 +11,7 @@ import {
   orientationPitchDeg,
   PLAYER_SCREEN_FRACTION,
   prefersReducedMotion,
-  stepBlend,
-} from './camera'
+  stepBlend, dialogueShiftFor, DIALOGUE_CAMERA_SHIFT_RATIO } from './camera'
 
 /** Fraction verticale (0 haut, 1 bas) à laquelle un point situé à `elevationDeg` (depuis l'horizontale,
  * vu depuis la caméra) apparaît dans le cadre, pour une caméra dont l'axe optique regarde à
@@ -272,5 +271,13 @@ describe('prefersReducedMotion', () => {
       throw new Error('nope')
     })
     expect(prefersReducedMotion()).toBe(false)
+  })
+})
+
+describe('dialogueShiftFor', () => {
+  it('recule la caméra proportionnellement à sa distance, seulement pendant un dialogue', () => {
+    expect(dialogueShiftFor(17, 0)).toBe(0)
+    expect(dialogueShiftFor(17, 1)).toBeCloseTo(17 * DIALOGUE_CAMERA_SHIFT_RATIO)
+    expect(dialogueShiftFor(9, 0.5)).toBeCloseTo(9 * DIALOGUE_CAMERA_SHIFT_RATIO * 0.5)
   })
 })

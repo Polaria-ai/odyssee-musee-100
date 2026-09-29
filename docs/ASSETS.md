@@ -28,8 +28,8 @@ Seul le module `props` (`src/world/props/**`, WEL-872 hall / WEL-873 ailes) util
 packs Kenney — détail complet (bbox brute, gabarit visé, poids, vérifications) dans
 `docs/assets/props.md`, fusionné ici. Les modules Cadres & Cartels (WEL-875) et Personnages (WEL-876)
 n'utilisent **aucun** modèle CC0 : géométrie procédurale (aucun cadre/spot de galerie exploitable trouvé
-dans les 6 packs, voir `docs/assets/frames.md`) et personnages originaux sculptés en three.js (avatar/
-Minerve, mandat explicite de `docs/DESIGN.md`, voir `docs/assets/personnages.md`).
+dans les 6 packs, voir `docs/assets/frames.md`). Personnages : voir la section « Personnages générés »
+ci-dessous (Cyril et Rémi, depuis le 29/09 ; l'avatar et Minerve sculptés en three.js sont retirés).
 
 ### Branchés via `architecture.decorPlacements` (contrat WEL-874)
 
@@ -54,7 +54,7 @@ Minerve, mandat explicite de `docs/DESIGN.md`, voir `docs/assets/personnages.md`
 |---|---|---|---|
 | `public/models/props/hall/planter-small-1.glb` | Furniture Kit | `plantSmall1.glb` | Jardinière basse, à côté de chaque pilier (alterne avec small-2) |
 | `public/models/props/hall/planter-small-2.glb` | Furniture Kit | `plantSmall2.glb` | Idem, variante |
-| `public/models/props/hall/side-table.glb` | Furniture Kit | `sideTable.glb` | Pupitre secondaire, flanc du comptoir de Minerve |
+| `public/models/props/hall/side-table.glb` | Furniture Kit | `sideTable.glb` | Pupitre secondaire, flanc du comptoir d'accueil |
 | `public/models/props/hall/books.glb` | Furniture Kit | `books.glb` | Pile de livres posée sur le pupitre |
 | `public/models/props/hall/rug.glb` | Furniture Kit | `rugRound.glb` | Tapis d'appoint devant le comptoir (non solide) |
 | `public/models/props/hall/flower-red.glb` / `flower-yellow.glb` / `flower-purple.glb` | Nature Kit | `flower_*A.glb` | Touches de fleurs au pied de 2 jardinières d'angle (non solide) |
@@ -79,3 +79,16 @@ Minerve, mandat explicite de `docs/DESIGN.md`, voir `docs/assets/personnages.md`
 | `public/models/props/infra/pipe.glb` / `pipe-bend.glb` | Factory Kit 3.0 | `pipe.glb` / `pipe-bend.glb` | Écartés par prudence (risque de chevaucher les câbles déjà peints) |
 
 35 GLB optimisés au total, 204 Ko (`pnpm verify:bundle` : largement sous 400 Ko/fichier et 6 Mo au total).
+
+## Personnages générés (29/09/2026)
+
+| Fichier publié | Personne | Provenance | Clips | Poids |
+|---|---|---|---|---|
+| `public/models/characters/cyril.glb` | Cyril de Sousa Cardoso | Photo fournie par Baptiste (accord de la personne) → image en pied Seedream 5 Pro → Meshy 7.1 (12 400 triangles) → squelette Meshy (24 os) | `idle` (Meshy Idle_02), `walk` (Meshy Casual_Walk) | 344 Ko |
+| `public/models/characters/remi.glb` | Rémi Godeau | Idem | `idle` (Meshy Idle_02), `wave` (Meshy Big_Wave_Hello) | 368 Ko |
+
+- Générés dans Magnific (projet « Odyssée de l'IA — Musée des 100 »), crédits du compte Premium+ de Baptiste : 12 000 environ au total, dont une première attente (« Idle », agitée, écartée).
+- Sources brutes (photos, images en pied, GLB Meshy ~7 Mo par clip) hors Git : `~/Dev/odyssee-musee-100-assets/personnages/`.
+- Construction : `node scripts/build-characters.mjs` fusionne les clips d'un personnage en un seul GLB (même squelette), puis optimise (meshopt, texture WebP 1024).
+- Pas de licence CC0 ici : ce sont les images de deux personnes réelles, utilisées avec leur accord pour ce jeu uniquement.
+

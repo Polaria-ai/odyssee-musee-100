@@ -2,26 +2,22 @@ import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGame } from '../../state/gameStore'
 import { player } from '../../state/runtime'
-import type { AvatarConfig } from '../../types'
 import { IDLE_HEARTBEAT_MS, clearPeers, peerStore } from './peers'
 import { EFFECTIVE_PEER_TIMEOUT_MS, usePresence } from './usePresence'
 import { MAX_ROOMS, ROOM_CAPACITY } from './roomSelection'
 import type { ChannelStatus, RealtimeChannelLike, RealtimeClientLike } from './realtimeClient'
 
-function avatar(overrides: Partial<AvatarConfig> = {}): AvatarConfig {
-  return {
-    name: 'Ada',
-    skinTone: '#f5c9a3',
-    hairColor: '#3b2a1e',
-    outfit: 'tee',
-    outfitColor: '#7bc47f',
-    accessory: 'none',
-    ...overrides,
-  }
+function presenceEntry(id: string, joinTs: number) {
+  return { id, joinTs }
 }
 
-function presenceEntry(id: string, joinTs: number) {
-  return { id, avatar: avatar(), joinTs }
+/** Entrée publiée par un client d'une version précédente : elle porte encore un avatar (ignoré à la lecture). */
+function legacyPresenceEntry(id: string, joinTs: number) {
+  return {
+    id,
+    joinTs,
+    avatar: { name: 'Ada', skinTone: '#f5c9a3', hairColor: '#3b2a1e', outfit: 'tee', outfitColor: '#7bc47f', accessory: 'none' },
+  }
 }
 
 class FakeChannel implements RealtimeChannelLike {
@@ -122,7 +118,7 @@ describe('usePresence — solo silencieux', () => {
 })
 
 describe('usePresence — rejoindre une salle', () => {
-  it('rejoint room-1, trackе l’avatar une fois abonné, et suit le nombre de pairs', () => {
+  it('rejoint room-1, trackе son identité une fois abonné, et suit le nombre de pairs', () => {
     const client = new FakeClient()
     const visitorId = useGame.getState().visitorId
     renderHook(() => usePresence(true, { getClient: () => client, now: () => Date.now() }))
@@ -133,6 +129,8 @@ describe('usePresence — rejoindre une salle', () => {
 
     act(() => room1.emitStatus('SUBSCRIBED'))
     expect(room1.trackCalls).toHaveLength(1)
+    // Identité et date d'arrivée seulement : plus d'avatar sur le réseau (tous les visiteurs sont Cyril).
+    expect(Object.keys(room1.trackCalls[0] as object).sort()).toEqual(['id', 'joinTs'])
     expect(room1.trackCalls[0]).toMatchObject({ id: visitorId })
 
     act(() =>
@@ -145,17 +143,30 @@ describe('usePresence — rejoindre une salle', () => {
     expect(peerStore.peers.size).toBe(2)
   })
 
-  it('republie l’avatar (track) quand il change, sans rejoindre une nouvelle salle', () => {
+  it('compte et affiche aussi un visiteur d’une version précédente (avatar ignoré à la lecture)', () => {
+    const client = new FakeClient()
+    renderHook(() => usePresence(true, { getClient: () => client, now: () => Date.now() }))
+    const room1 = client.channels[0]
+    act(() => room1.emitStatus('SUBSCRIBED'))
+
+    act(() => room1.emitSync({ a: [legacyPresenceEntry('old', 10)], b: [presenceEntry('new', 20)] }))
+
+    expect(useGame.getState().peersCount).toBe(2)
+    expect([...peerStore.peers.keys()].sort()).toEqual(['new', 'old'])
+    expect(peerStore.peers.get('old')?.present).toBe(true)
+  })
+
+  it('ne republie pas sa présence quand le profil du visiteur change (plus de suivi d’avatar)', () => {
     const client = new FakeClient()
     renderHook(() => usePresence(true, { getClient: () => client, now: () => Date.now() }))
     const room1 = client.channels[0]
     act(() => room1.emitStatus('SUBSCRIBED'))
     expect(room1.trackCalls).toHaveLength(1)
 
-    act(() => useGame.getState().setAvatar(avatar({ outfitColor: '#e76f6f' })))
+    act(() => useGame.setState({ lang: useGame.getState().lang === 'fr' ? 'en' : 'fr' }))
 
     expect(client.channels).toHaveLength(1) // toujours la même salle
-    expect(room1.trackCalls).toHaveLength(2) // mais un nouveau track()
+    expect(room1.trackCalls).toHaveLength(1) // aucun nouveau track()
   })
 })
 

@@ -1,7 +1,7 @@
 /**
  * Aide au premier pas : bulle en bas à gauche montrée une seule fois (mémorisée en `localStorage`),
  * au premier passage en jeu. Disparaît au premier déplacement du joueur ou après 10 s, jamais
- * pendant un dialogue (elle recouvrirait la bulle de Minerve, au même endroit de l'écran).
+ * pendant un dialogue (elle recouvrirait la bulle de Rémi, au même endroit de l'écran).
  */
 import { useEffect, useState } from 'react'
 import { useGame } from '../state/gameStore'
@@ -86,7 +86,7 @@ export function CoachMark() {
   }, [settled, alreadySeen, readyToArm, dialogue])
 
   // Effet séparé, qui ne dépend que de `readyToArm` (jamais directement de `dialogue`) : une fois
-  // armé, un dialogue ultérieur (Minerve, plus tard dans la partie) ne doit ni nettoyer ni relancer
+  // armé, un dialogue ultérieur (Rémi, plus tard dans la partie) ne doit ni nettoyer ni relancer
   // ce minuteur — seul le tout premier passage en jeu doit en poser un.
   useEffect(() => {
     if (!readyToArm) return

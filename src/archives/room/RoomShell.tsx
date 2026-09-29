@@ -1,42 +1,60 @@
 /**
  * Ambiance fixe de la salle : sol (frise chronologique), murs, seuil lumineux de la porte, pupitre
- * d'entrée, cristaux et antennes décoratives (Space Kit, voir `models.ts`). Tout est statique — les
- * seuls éléments qui changent d'état sont les vitrines (`Vitrine.tsx`).
+ * d'entrée, panneaux, piliers, cristaux et antennes décoratives (Space Kit, voir `models.ts`). Les seuls
+ * éléments qui changent d'état sont les vitrines (`Vitrine.tsx`) et la hauteur des murs (ci-dessous).
  *
- * Plan en croix (WEL-888) : la salle est accrochée au sud du hall. Son mur nord n'est PAS rendu ici :
- * c'est le mur sud du hall (coupé bas, percé de la porte), dessiné par `src/world/Museum.tsx`. Rien de
- * haut près de ce mur : la caméra, toujours au sud du joueur, survole la salle quand le joueur est
- * dans le hall.
+ * Charte 3D du 29/09/2026 (`docs/CHARTE-3D.md` §7.3) : sols et murs au bleu de la charte, lambris bleu, listel
+ * blanc, corniche cyan ; mobilier blanc bleuté ; cristaux cyan vif et corail. Aucune couleur en dur ici :
+ * tout vient de `charter3d` (directement ou via `geometry.ts`, qui fusionne les murs en couleurs par sommet).
+ *
+ * Une pièce complète (retour de Baptiste du 29/09) : murs est et ouest à la hauteur des autres salles
+ * (`dims.wallHeight`), mur sud coupé côté caméra comme partout, mur nord haut. Plan en croix (WEL-888) : ce
+ * mur nord est le mur SUD DU HALL (`ArchivesLayout.northWall`), que le monde ne dessine plus. Il reste coupé
+ * tant que le joueur est dans le hall — la caméra, toujours au sud du joueur, le survolerait — et monte à
+ * pleine hauteur, avec un linteau et le bandeau « Les Archives de 2040 » au-dessus de la porte, quand le
+ * joueur entre dans la salle (`useGame.currentRoom === 'archives'`). Voir `wallRise.ts` pour la logique.
  *
  * Le podium de l'Archiviste n'est PAS rendu ici : `src/archives/Archivist.tsx` le construit en entier
  * (socle, hologramme, anneaux, bulle de dialogue) et détecte lui-même la proximité du joueur.
  */
-import { useMemo } from 'react'
-import { BoxGeometry, CylinderGeometry, MeshLambertMaterial } from 'three'
+import { useFrame } from '@react-three/fiber'
+import { useLayoutEffect, useMemo, useRef } from 'react'
+import type { Mesh, MeshBasicMaterial as MeshBasicMaterialType } from 'three'
+import { MeshLambertMaterial, PlaneGeometry } from 'three'
 import type { ArchivesLayout, Lang } from '../../types'
-import { wingThemes, palette } from '../../styles/tokens'
+import { useGame } from '../../state/gameStore'
+import { player } from '../../state/runtime'
+import { charter3d } from '../../styles/tokens'
+import { approach, occludesPlayer, type OcclusionObstacle } from '../../world/occlusion'
 import { ENTRANCE_LECTERN } from '../layout'
-import { drawArchivesFloor, drawEntranceSign } from './textures'
+import { drawArchivesBanner, drawArchivesFloor, drawEntranceSign } from './textures'
 import { ARCHIVES_MODELS } from './models'
 import { DecorModel } from './DecorModel'
-import { SOUTH_WALL_CUT_HEIGHT, WALL_HEIGHT, WALL_THICKNESS } from './constants'
+import { DOOR_HEIGHT, WALL_HEIGHT, WALL_THICKNESS } from './constants'
+import {
+  BANNER_CENTER_Y,
+  BANNER_HEIGHT,
+  BANNER_WIDTH,
+  LECTERN_HEIGHT,
+  archivesWalls,
+  buildCrownGeometry,
+  buildPanelGeometry,
+  buildPillarGeometry,
+  buildShellGeometry,
+  buildUpperBodyGeometry,
+} from './geometry'
+import { RISE_RATE, isInArchives, northWallTarget, riseFrame, sideWallObstacles, sideWallTarget, sideWallsHidePlayer, stepRise } from './wallRise'
 
-const theme = wingThemes.archives
+const charter = charter3d.archives
 
-const PILLAR_GEO = new CylinderGeometry(0.24, 0.28, WALL_HEIGHT, 10)
-const PILLAR_MATERIAL = new MeshLambertMaterial({ color: theme.trim })
-const WALL_MATERIAL = new MeshLambertMaterial({ color: theme.wall })
-const THRESHOLD_MATERIAL = new MeshLambertMaterial({ color: theme.accent, emissive: theme.accent, emissiveIntensity: 0.55 })
-// Banc bas (une seule boîte, mobile-first) : bois clair, à la couleur du hall pour ancrer le lien
-// avec le reste du musée (« 2040 mais cosy »).
-const BENCH_GEO = new BoxGeometry(1.3, 0.32, 0.44)
-const BENCH_MATERIAL = new MeshLambertMaterial({ color: palette.wood })
-// Plaque murale (panneau) : une seule géométrie/matériau réutilisés le long des murs latéraux.
-const WALL_PANEL_GEO = new BoxGeometry(0.06, 2.2, 1.5)
-const WALL_PANEL_MATERIAL = new MeshLambertMaterial({ color: palette.paper, emissive: theme.accent, emissiveIntensity: 0.05 })
-// Pupitre du panneau d'entrée : pied bas (bois sombre du hall) + panneau incliné vers la caméra.
-const LECTERN_GEO = new BoxGeometry(ENTRANCE_LECTERN.halfWidth * 2 - 0.1, 0.72, ENTRANCE_LECTERN.halfDepth * 2 - 0.1)
-const LECTERN_MATERIAL = new MeshLambertMaterial({ color: palette.woodDark })
+// Un seul matériau à couleurs par sommet pour toute la charpente de la salle (murs, mobilier, piliers).
+const SHELL_MATERIAL = new MeshLambertMaterial({ vertexColors: true })
+const THRESHOLD_MATERIAL = new MeshLambertMaterial({ color: charter.threshold, emissive: charter.threshold, emissiveIntensity: 0.55 })
+// Écrans muraux : dalles nuit liserées de cyan (les couleurs viennent des sommets), faible émission cyan.
+const PANEL_MATERIAL = new MeshLambertMaterial({ vertexColors: true, emissive: charter.panel.emissive, emissiveIntensity: charter.panel.emissiveIntensity })
+const PILLAR_GEO = buildPillarGeometry()
+const BANNER_GEO = new PlaneGeometry(BANNER_WIDTH, BANNER_HEIGHT)
+
 const SIGN_WIDTH = 2.2
 const SIGN_HEIGHT = SIGN_WIDTH * (176 / 512)
 /** Inclinaison du panneau : 60° vers l'arrière, presque face à la caméra plongeante (48°). */
@@ -55,25 +73,120 @@ function Floor({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
 }
 
 /**
- * Murs est, ouest et sud (le mur nord est celui du hall, voir l'en-tête). Sud coupé bas, comme le
- * hall : jamais rien de haut entre la caméra et le joueur. Est/ouest à la hauteur d'une aile.
+ * Charpente fixe : la base des quatre murs (corps jusqu'à la hauteur d'un mur coupé, plinthe, lambris,
+ * listel, liseré du mur sud), les deux bancs et le pupitre. Un appel de dessin.
  */
-function Walls({ archives }: { archives: ArchivesLayout }) {
-  const b = archives.room.bounds
-  const width = b.maxX - b.minX
-  const depth = b.maxZ - b.minZ
-  const southGeo = useMemo(() => new BoxGeometry(width, SOUTH_WALL_CUT_HEIGHT, WALL_THICKNESS), [width])
-  const sideGeo = useMemo(() => new BoxGeometry(WALL_THICKNESS, WALL_HEIGHT, depth), [depth])
+function Shell({ archives }: { archives: ArchivesLayout }) {
+  const geometry = useMemo(() => buildShellGeometry(archives), [archives])
+  return <mesh geometry={geometry} material={SHELL_MATERIAL} />
+}
+
+/** Place un maillage de hauteur 1 (origine en bas) sur `[bottom, bottom + height]` ; masqué si la hauteur est nulle. */
+function setSpan(mesh: Mesh | null, bottom: number, height: number) {
+  if (!mesh) return
+  mesh.visible = height > 1e-3
+  mesh.position.y = bottom
+  mesh.scale.y = Math.max(height, 1e-3)
+}
+
+function prefersReducedMotion(): boolean {
+  try {
+    return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Parties mobiles des murs : corps supérieur et couronne (liseré d'accent sur le mur coupé, corniche sur le
+ * mur haut) du mur nord et des murs latéraux, linteau et bandeau de la porte. Deux progressions amorties
+ * indépendantes (voir `wallRise.ts`) : le mur nord suit la présence du joueur dans la salle ; les murs
+ * latéraux restent hauts sauf s'ils cachent un joueur resté dans l'angle du hall.
+ */
+function RisingWalls({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
+  const walls = useMemo(() => archivesWalls(archives), [archives])
+  const geo = useMemo(
+    () => ({
+      northBody: buildUpperBodyGeometry(walls.north),
+      northCrown: buildCrownGeometry(walls.north),
+      sideBody: buildUpperBodyGeometry([walls.east, walls.west]),
+      sideCrown: buildCrownGeometry([walls.east, walls.west]),
+      lintel: buildUpperBodyGeometry([walls.doorway]),
+      lintelCrown: buildCrownGeometry([walls.doorway]),
+    }),
+    [walls],
+  )
+  const sideObstacles = useMemo<OcclusionObstacle[]>(() => sideWallObstacles(archives), [archives])
+  const bannerTexture = useMemo(() => drawArchivesBanner(lang), [lang])
+  const reducedMotion = useMemo(prefersReducedMotion, [])
+
+  const northBody = useRef<Mesh>(null)
+  const northCrown = useRef<Mesh>(null)
+  const sideBody = useRef<Mesh>(null)
+  const sideCrown = useRef<Mesh>(null)
+  const lintel = useRef<Mesh>(null)
+  const lintelCrown = useRef<Mesh>(null)
+  const banner = useRef<Mesh>(null)
+  const bannerMaterial = useRef<MeshBasicMaterialType>(null)
+  // Dans la salle au chargement (accès direct, test) : le mur nord est déjà haut, sans animation.
+  const rise = useRef({ north: isInArchives(useGame.getState().currentRoom) ? 1 : 0, sides: 1 })
+
+  const applyNorth = (p: number) => {
+    const f = riseFrame(p)
+    setSpan(northBody.current, f.bodyBottom, f.bodyHeight)
+    setSpan(northCrown.current, f.crownBottom, f.crownHeight)
+    setSpan(lintel.current, DOOR_HEIGHT, f.lintelHeight)
+    setSpan(lintelCrown.current, f.crownBottom, f.lintelCrownVisible ? f.crownHeight : 0)
+    if (bannerMaterial.current) bannerMaterial.current.opacity = f.bannerOpacity
+    if (banner.current) banner.current.visible = f.bannerOpacity > 0.01
+  }
+  const applySides = (p: number) => {
+    const f = riseFrame(p)
+    setSpan(sideBody.current, f.bodyBottom, f.bodyHeight)
+    setSpan(sideCrown.current, f.crownBottom, f.crownHeight)
+  }
+
+  // État initial (et après chaque rendu : R3F peut avoir réappliqué des propriétés).
+  useLayoutEffect(() => {
+    applyNorth(rise.current.north)
+    applySides(rise.current.sides)
+  })
+
+  useFrame(({ camera }, dt) => {
+    const inArchives = isInArchives(useGame.getState().currentRoom)
+    const rate = reducedMotion ? Infinity : RISE_RATE
+    const north = stepRise(rise.current.north, northWallTarget(inArchives), dt, rate)
+    if (north !== rise.current.north) {
+      rise.current.north = north
+      applyNorth(north)
+    }
+    const hides = !inArchives && sideWallsHidePlayer(sideObstacles, player.x, player.z, camera.position)
+    const sides = stepRise(rise.current.sides, sideWallTarget(inArchives, hides), dt, rate)
+    if (sides !== rise.current.sides) {
+      rise.current.sides = sides
+      applySides(sides)
+    }
+  })
+
+  const doorX = (walls.doorway.minX + walls.doorway.maxX) / 2
   return (
     <>
-      <mesh geometry={southGeo} material={WALL_MATERIAL} position={[(b.minX + b.maxX) / 2, SOUTH_WALL_CUT_HEIGHT / 2, b.maxZ]} />
-      <mesh geometry={sideGeo} material={WALL_MATERIAL} position={[b.minX, WALL_HEIGHT / 2, (b.minZ + b.maxZ) / 2]} />
-      <mesh geometry={sideGeo} material={WALL_MATERIAL} position={[b.maxX, WALL_HEIGHT / 2, (b.minZ + b.maxZ) / 2]} />
+      <mesh ref={northBody} geometry={geo.northBody} material={SHELL_MATERIAL} />
+      <mesh ref={northCrown} geometry={geo.northCrown} material={SHELL_MATERIAL} />
+      <mesh ref={sideBody} geometry={geo.sideBody} material={SHELL_MATERIAL} />
+      <mesh ref={sideCrown} geometry={geo.sideCrown} material={SHELL_MATERIAL} />
+      {/* Linteau au-dessus de la porte : n'existe qu'une fois le mur plus haut que la porte. */}
+      <mesh ref={lintel} geometry={geo.lintel} material={SHELL_MATERIAL} />
+      <mesh ref={lintelCrown} geometry={geo.lintelCrown} material={SHELL_MATERIAL} />
+      {/* Bandeau « Les Archives de 2040 », face à la salle (+Z), qui apparaît quand le mur est presque haut. */}
+      <mesh ref={banner} geometry={BANNER_GEO} position={[doorX, BANNER_CENTER_Y, walls.doorway.maxZ + 0.02]}>
+        <meshBasicMaterial ref={bannerMaterial} map={bannerTexture} transparent opacity={0} toneMapped={false} depthWrite={false} />
+      </mesh>
     </>
   )
 }
 
-/** Seuil lumineux dans l'embrasure de la porte (le mur sud du hall n'a pas de linteau, voir world/layout.ts). */
+/** Seuil lumineux dans l'embrasure de la porte (la porte est percée dans le mur nord, voir `RisingWalls`). */
 function DoorThreshold({ archives }: { archives: ArchivesLayout }) {
   const d = archives.door
   return (
@@ -83,37 +196,44 @@ function DoorThreshold({ archives }: { archives: ArchivesLayout }) {
   )
 }
 
-/** Panneaux clairs le long des murs latéraux (« murs clairs à panneaux », voir docs/DESIGN.md) : une
- * plaque crème encastrée, quelques exemplaires fixes de chaque côté — jamais un mur totalement nu. */
+/** Écrans sombres liserés de cyan le long des murs latéraux (« murs à panneaux », voir docs/DESIGN.md) : jamais un mur totalement nu. */
 function WallPanels({ archives }: { archives: ArchivesLayout }) {
-  const b = archives.room.bounds
-  const zs = [b.minZ + (b.maxZ - b.minZ) * 0.28, b.minZ + (b.maxZ - b.minZ) * 0.62]
-  return (
-    <>
-      {zs.map((z) => (
-        <mesh key={`w-${z}`} geometry={WALL_PANEL_GEO} material={WALL_PANEL_MATERIAL} position={[b.minX + WALL_THICKNESS / 2 + 0.02, 1.5, z]} />
-      ))}
-      {zs.map((z) => (
-        <mesh key={`e-${z}`} geometry={WALL_PANEL_GEO} material={WALL_PANEL_MATERIAL} position={[b.maxX - WALL_THICKNESS / 2 - 0.02, 1.5, z]} />
-      ))}
-    </>
-  )
+  const geometry = useMemo(() => buildPanelGeometry(archives), [archives])
+  return <mesh geometry={geometry} material={PANEL_MATERIAL} />
 }
 
-/** Deux piliers d'angle au sud (métal sombre). Pas au nord : ils se dresseraient entre la caméra et un
- * joueur longeant le mur sud du hall. */
+/** Rayon du fût d'un pilier au pied, et échelle d'un pilier rétracté (même principe que les vitrines). */
+const PILLAR_RADIUS = 0.36
+const PILLAR_RETRACTED_SCALE = 0.25
+const PILLAR_RETRACT_SPEED = 4
+
+/**
+ * Un pilier d'angle. Au sud, donc entre la caméra et un joueur qui longe le mur du fond : il se rétracte
+ * quand il le cache, puis revient (voir `Vitrine.tsx`).
+ */
+function Pillar({ x, z }: { x: number; z: number }) {
+  const ref = useRef<Mesh>(null)
+  const scale = useRef(1)
+  const obstacle = useMemo<OcclusionObstacle>(
+    () => ({ box: { minX: x - PILLAR_RADIUS, maxX: x + PILLAR_RADIUS, minZ: z - PILLAR_RADIUS, maxZ: z + PILLAR_RADIUS }, height: WALL_HEIGHT }),
+    [x, z],
+  )
+  useFrame(({ camera }, dt) => {
+    const target = occludesPlayer(obstacle, player.x, player.z, camera.position) ? PILLAR_RETRACTED_SCALE : 1
+    scale.current = approach(scale.current, target, dt * PILLAR_RETRACT_SPEED)
+    if (ref.current) ref.current.scale.y = scale.current
+  })
+  return <mesh ref={ref} geometry={PILLAR_GEO} material={SHELL_MATERIAL} position={[x, 0, z]} />
+}
+
+/** Deux piliers d'angle au sud. Pas au nord : ils se dresseraient entre la caméra et un joueur longeant le mur sud du hall. */
 function CornerPillars({ archives }: { archives: ArchivesLayout }) {
   const b = archives.room.bounds
   const inset = 0.3
-  const corners: [number, number][] = [
-    [b.minX + inset, b.maxZ - inset],
-    [b.maxX - inset, b.maxZ - inset],
-  ]
   return (
     <>
-      {corners.map(([x, z]) => (
-        <mesh key={`${x}-${z}`} geometry={PILLAR_GEO} material={PILLAR_MATERIAL} position={[x, WALL_HEIGHT / 2, z]} />
-      ))}
+      <Pillar x={b.minX + inset} z={b.maxZ - inset} />
+      <Pillar x={b.maxX - inset} z={b.maxZ - inset} />
     </>
   )
 }
@@ -125,17 +245,17 @@ function Accents({ archives }: { archives: ArchivesLayout }) {
   const b = archives.room.bounds
   return (
     <>
-      <DecorModel path={ARCHIVES_MODELS.crystals} tint="#8fd8e6" position={[b.minX + 1.1, 0, b.maxZ - 1.0]} scale={0.8} />
-      <DecorModel path={ARCHIVES_MODELS.crystals} tint="#e8c872" position={[b.maxX - 1.1, 0, b.maxZ - 1.0]} scale={0.7} rotation={[0, Math.PI / 3, 0]} />
-      <DecorModel path={ARCHIVES_MODELS.antenna} tint={theme.trim} position={[b.minX + 1.2, 0, b.minZ + 1.1]} scale={0.9} rotation={[0, Math.PI / 4, 0]} />
-      <DecorModel path={ARCHIVES_MODELS.antenna} tint={theme.trim} position={[b.maxX - 1.2, 0, b.minZ + 1.1]} scale={0.9} rotation={[0, -Math.PI / 4, 0]} />
+      <DecorModel path={ARCHIVES_MODELS.crystals} tint={charter.crystals.a} position={[b.minX + 1.1, 0, b.maxZ - 1.0]} scale={0.8} />
+      <DecorModel path={ARCHIVES_MODELS.crystals} tint={charter.crystals.b} position={[b.maxX - 1.1, 0, b.maxZ - 1.0]} scale={0.7} rotation={[0, Math.PI / 3, 0]} />
+      <DecorModel path={ARCHIVES_MODELS.antenna} tint={charter.antenna} position={[b.minX + 1.2, 0, b.minZ + 1.1]} scale={0.9} rotation={[0, Math.PI / 4, 0]} />
+      <DecorModel path={ARCHIVES_MODELS.antenna} tint={charter.antenna} position={[b.maxX - 1.2, 0, b.minZ + 1.1]} scale={0.9} rotation={[0, -Math.PI / 4, 0]} />
     </>
   )
 }
 
 /**
- * Panneau d'entrée (titre + date + mention provisoire) sur un pupitre bas, juste après la porte, à
- * l'ouest du passage. Incliné vers la caméra plutôt que dressé : un panneau vertical à cet endroit
+ * Panneau d'entrée (titre + date + mention provisoire) sur un pupitre bas (`Shell`), juste après la porte,
+ * à l'ouest du passage. Incliné vers la caméra plutôt que dressé : un panneau vertical à cet endroit
  * se trouverait entre la caméra et un joueur resté dans le hall.
  */
 function EntranceSign({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
@@ -143,26 +263,10 @@ function EntranceSign({ archives, lang }: { archives: ArchivesLayout; lang: Lang
   const x = archives.door.x + ENTRANCE_LECTERN.dx
   const z = archives.room.bounds.minZ + ENTRANCE_LECTERN.dz
   return (
-    <group position={[x, 0, z]}>
-      <mesh geometry={LECTERN_GEO} material={LECTERN_MATERIAL} position={[0, 0.36, 0]} />
-      <mesh position={[0, 0.72 + (SIGN_HEIGHT / 2) * Math.cos(SIGN_TILT), 0]} rotation-x={SIGN_TILT}>
-        <planeGeometry args={[SIGN_WIDTH, SIGN_HEIGHT]} />
-        <meshBasicMaterial map={tex} toneMapped={false} transparent />
-      </mesh>
-    </group>
-  )
-}
-
-/** Deux bancs bas contre les murs latéraux, près de la porte : un peu de mobilier « musée cosy »,
- * hors du chemin de marche (les colonnes de vitrines s'arrêtent à `ROW_X_OFFSETS`, voir constants.ts). */
-function Benches({ archives }: { archives: ArchivesLayout }) {
-  const b = archives.room.bounds
-  const z = b.minZ + 3.2
-  return (
-    <>
-      <mesh geometry={BENCH_GEO} material={BENCH_MATERIAL} position={[b.minX + 1.0, 0.16, z]} rotation-y={Math.PI / 2} />
-      <mesh geometry={BENCH_GEO} material={BENCH_MATERIAL} position={[b.maxX - 1.0, 0.16, z]} rotation-y={Math.PI / 2} />
-    </>
+    <mesh position={[x, LECTERN_HEIGHT + (SIGN_HEIGHT / 2) * Math.cos(SIGN_TILT), z]} rotation-x={SIGN_TILT}>
+      <planeGeometry args={[SIGN_WIDTH, SIGN_HEIGHT]} />
+      <meshBasicMaterial map={tex} toneMapped={false} transparent />
+    </mesh>
   )
 }
 
@@ -170,12 +274,12 @@ export function RoomShell({ archives, lang }: { archives: ArchivesLayout; lang: 
   return (
     <>
       <Floor archives={archives} lang={lang} />
-      <Walls archives={archives} />
+      <Shell archives={archives} />
+      <RisingWalls archives={archives} lang={lang} />
       <DoorThreshold archives={archives} />
       <WallPanels archives={archives} />
       <CornerPillars archives={archives} />
       <Accents archives={archives} />
-      <Benches archives={archives} />
       <EntranceSign archives={archives} lang={lang} />
     </>
   )

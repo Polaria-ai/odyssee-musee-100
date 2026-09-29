@@ -9,14 +9,14 @@ import { useGame } from '../state/gameStore'
 import { Museum } from '../world/Museum'
 import { buildMuseumArchitecture } from '../world/layout'
 import { Player } from '../player/Player'
-import { Minerve } from '../npc/Minerve'
+import { Remi } from '../npc/Remi'
 import { ArchivesRoom } from '../archives/ArchivesRoom'
 import { RemoteVisitors } from '../features/presence/RemoteVisitors'
 import { StampStations } from '../features/stamps/StampStations'
 import { AttractCamera } from './AttractCamera'
 import { DebugProbe } from './DebugProbe'
 import { playerColliders } from './playerColliders'
-import { cameraRig, palette } from '../styles/tokens'
+import { cameraRig, charter3d } from '../styles/tokens'
 
 // Le rendu logiciel (SwiftShader, utilisé en CI et sur certains appareils sans GPU) peut parfois
 // perdre le contexte WebGL (`THREE.WebGLRenderer: Context Lost.`), avec ou sans restauration native
@@ -38,6 +38,11 @@ function useCanvasRecovery() {
   return { canvasKey, onCreated }
 }
 
+// Charte 3D (docs/CHARTE-3D.md §1 et §3) : `flat` = pas de tone mapping. ACES Filmic, le défaut de R3F,
+// fait dériver les bleus et le corail (`#1d49c1` s'afficherait `#003ec3`) ; sans lui, la charte est ce
+// qu'on voit. Fond, brouillard et lumières viennent du même objet.
+const sceneCharter = charter3d.scene
+
 export function Experience() {
   const layout = useGame((s) => s.layout)
   const archivesLayout = useGame((s) => s.archivesLayout)
@@ -58,24 +63,25 @@ export function Experience() {
   return (
     <Canvas
       key={canvasKey}
+      flat={sceneCharter.flat}
       className="game-canvas"
       data-testid="game-canvas"
       dpr={quality === 'high' ? [1, 1.75] : [1, 1.25]}
       gl={{ antialias: quality === 'high', powerPreference: 'high-performance', preserveDrawingBuffer: false }}
       camera={{ fov: cameraRig.fovDeg, near: 0.1, far: 120, position: [0, 9, 14] }}
-      frameloop={screen === 'customize' ? 'never' : 'always'}
+      frameloop="always"
       onCreated={onCreated}
     >
-      <color attach="background" args={[palette.sky]} />
-      <fog attach="fog" args={[palette.sky, 28, 70]} />
-      <hemisphereLight args={['#fff6e0', '#c8a27a', 1.1]} />
-      <directionalLight position={[8, 14, 6]} intensity={1.3} color="#fff1d6" />
+      <color attach="background" args={[sceneCharter.background]} />
+      <fog attach="fog" args={[sceneCharter.fog.color, sceneCharter.fog.near, sceneCharter.fog.far]} />
+      <hemisphereLight args={[sceneCharter.hemisphere.sky, sceneCharter.hemisphere.ground, sceneCharter.hemisphere.intensity]} />
+      <directionalLight position={sceneCharter.directional.position} intensity={sceneCharter.directional.intensity} color={sceneCharter.directional.color} />
       <DebugProbe />
       <PerformanceMonitor onDecline={() => setQuality('low')} flipflops={2} />
       <Suspense fallback={null}>
         <Museum layout={layout} people={people} />
         <StampStations layout={layout} />
-        <Minerve placement={layout.curator} />
+        <Remi placement={layout.curator} />
         {archivesLayout && <ArchivesRoom archives={archivesLayout} />}
         {playing ? <Player layout={playerLayout ?? layout} /> : <AttractCamera layout={layout} />}
         {playing && <RemoteVisitors />}

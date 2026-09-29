@@ -1,11 +1,11 @@
-// Propriétaire : agent avatar+tampons.
+// Propriétaire : agent avatar+tampons. Socles à la charte 3D du 29/09/2026 (`charter3d.stamp`, docs/CHARTE-3D.md §4.7).
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { CylinderGeometry, MeshBasicMaterial, MeshLambertMaterial, SphereGeometry, type Group } from 'three'
 import type { ExhibitWingId, MuseumLayout, Vec2 } from '../../types'
 import { EXHIBIT_WINGS } from '../../types'
 import { useGame } from '../../state/gameStore'
-import { palette, wingThemes } from '../../styles/tokens'
+import { charter3d, wingThemes } from '../../styles/tokens'
 
 const COLUMN_RADIUS = 0.26
 const COLUMN_HEIGHT = 1.0
@@ -23,10 +23,11 @@ const handleGeometry = new CylinderGeometry(STAMP_HANDLE_RADIUS, STAMP_HANDLE_RA
 const baseGeometry = new CylinderGeometry(STAMP_BASE_RADIUS, STAMP_BASE_RADIUS, STAMP_BASE_HEIGHT, 16)
 const sparkGeometry = new SphereGeometry(0.028, 6, 6)
 
-const woodMaterial = new MeshLambertMaterial({ color: palette.woodDark })
-const handleMaterial = new MeshLambertMaterial({ color: palette.wood })
-const idleInkMaterial = new MeshLambertMaterial({ color: '#c9c2b6' })
-const sparkMaterial = new MeshBasicMaterial({ color: '#fff6d8' })
+const { column, handle, idleInk, spark } = charter3d.stamp
+const columnMaterial = new MeshLambertMaterial({ color: column })
+const handleMaterial = new MeshLambertMaterial({ color: handle })
+const idleInkMaterial = new MeshLambertMaterial({ color: idleInk })
+const sparkMaterial = new MeshBasicMaterial({ color: spark })
 
 const wingInkMaterials = Object.fromEntries(
   EXHIBIT_WINGS.map((wing) => [wing, new MeshLambertMaterial({ color: wingThemes[wing].accent })]),
@@ -55,7 +56,7 @@ function StampStation({ wing, position }: { wing: ExhibitWingId; position: Vec2 
 
   return (
     <group ref={groupRef} position={[position.x, 0, position.z]}>
-      <mesh geometry={columnGeometry} material={woodMaterial} position={[0, COLUMN_HEIGHT / 2, 0]} />
+      <mesh geometry={columnGeometry} material={columnMaterial} position={[0, COLUMN_HEIGHT / 2, 0]} />
       <group ref={stampRef} position={[0, STAMP_REST_Y, 0]}>
         <mesh geometry={handleGeometry} material={handleMaterial} position={[0, STAMP_BASE_HEIGHT + STAMP_HANDLE_HEIGHT / 2, 0]} />
         <mesh geometry={baseGeometry} material={inkMaterial} position={[0, STAMP_BASE_HEIGHT / 2, 0]} />

@@ -22,7 +22,7 @@ export const strings = defineStrings({
 
   // HUD
   hudLook: { fr: 'Regarder {name}', en: 'Look at {name}' },
-  hudTalkCurator: { fr: 'Parler à Minerve', en: 'Talk to Minerva' },
+  hudTalkCurator: { fr: 'Parler à Rémi', en: 'Talk to Rémi' },
   hudStamps: { fr: 'Carnet de tampons', en: 'Stamp card' },
   hudStampsCount: { fr: '{n}/{total}', en: '{n}/{total}' },
   hudPeers: { fr: '{n} visiteurs en ligne', en: '{n} visitors online' },

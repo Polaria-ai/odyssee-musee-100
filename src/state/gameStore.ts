@@ -6,7 +6,6 @@
 import { create } from 'zustand'
 import type {
   ArchivesLayout,
-  AvatarConfig,
   DataSource,
   EveningSession,
   EveningSource,
@@ -20,8 +19,7 @@ import type {
   Screen,
   WingId,
 } from '../types'
-import { DEFAULT_AVATAR, sanitizeAvatar } from '../features/avatar/options'
-import { minerveDialogue } from '../npc/minerveScript'
+import { remiDialogue } from '../npc/remiScript'
 import { archivistDialogue } from '../archives/archivistScript'
 import { loadPersisted, savePersisted } from './persist'
 
@@ -37,7 +35,6 @@ export interface Toast {
 export interface GameState {
   screen: Screen
   lang: Lang
-  avatar: AvatarConfig
   visitorId: string
 
   people: Person[]
@@ -46,7 +43,7 @@ export interface GameState {
 
   /** Portrait le plus proche à portée d'interaction (bouton « Regarder »). */
   nearbyPersonId: string | null
-  /** Le joueur est à portée du comptoir de Minerve (bouton « Parler »). */
+  /** Le joueur est à portée du comptoir de Rémi (bouton « Parler »). */
   nearCurator: boolean
   /** Salle où se trouve le joueur (pastille du HUD). */
   currentRoom: WingId | null
@@ -88,7 +85,6 @@ export interface GameState {
 
   setScreen: (screen: Screen) => void
   setLang: (lang: Lang) => void
-  setAvatar: (avatar: AvatarConfig) => void
   setMuseum: (people: Person[], layout: MuseumLayout, source: DataSource) => void
   setEvening: (sessions: EveningSession[], archives: Record<string, SessionArchive>, source: EveningSource) => void
   /** Remplace les archives publiées (rafraîchissement pendant la visite, voir `useArchivesRefresh`). */
@@ -103,7 +99,7 @@ export interface GameState {
   setNearby: (personId: string | null) => void
   setNearCurator: (near: boolean) => void
   setCurrentRoom: (room: WingId | null) => void
-  /** Action principale (bouton rond, Entrée) : regarder le portrait proche, sinon parler à Minerve. */
+  /** Action principale (bouton rond, Entrée) : regarder le portrait proche, sinon parler à Rémi. */
   interact: () => void
   openPerson: (personId: string) => void
   closePerson: () => void
@@ -118,7 +114,7 @@ export interface GameState {
   clearToast: () => void
   setPeersCount: (count: number) => void
   setQuality: (quality: Quality) => void
-  /** Remet la progression à zéro (tampons, visites). Garde avatar et langue. */
+  /** Remet la progression à zéro (tampons, visites). Garde la langue. */
   resetProgress: () => void
 }
 
@@ -145,7 +141,7 @@ let toastSeq = 0
 export const useGame = create<GameState>()((set, get) => ({
   screen: 'loading',
   lang: initialLang(persisted.lang),
-  avatar: sanitizeAvatar(persisted.avatar) ?? DEFAULT_AVATAR,
+  // Un avatar enregistré par une version précédente est ignoré et purgé du stockage (voir `loadPersisted`).
   visitorId,
 
   people: [],
@@ -181,10 +177,6 @@ export const useGame = create<GameState>()((set, get) => ({
   setLang: (lang) => {
     savePersisted({ lang })
     set({ lang })
-  },
-  setAvatar: (avatar) => {
-    savePersisted({ avatar })
-    set({ avatar })
   },
   setMuseum: (people, layout, dataSource) => set({ people, layout, dataSource }),
   setEvening: (sessions, archives, eveningSource) => set({ sessions, archives, eveningSource }),
@@ -245,7 +237,7 @@ export const useGame = create<GameState>()((set, get) => ({
     }
     if (s.nearCurator) {
       s.startDialogue(
-        minerveDialogue({
+        remiDialogue({
           kind: 'talk',
           visitedCount: Object.keys(s.visited).length,
           stampsCount: Object.keys(s.stamps).length,

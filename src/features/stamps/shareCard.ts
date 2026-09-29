@@ -57,19 +57,15 @@ export function computeShareLayout(width = SHARE_WIDTH, height = SHARE_HEIGHT): 
   }
 }
 
-/** Nom de fichier sûr pour le téléchargement (slug ASCII). */
-export function buildShareFilename(avatarName: string): string {
-  const slug = avatarName
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-+|-+$)/g, '')
-  return `musee-des-100-${slug || 'carte'}.png`
+/** Nom du fichier téléchargé (plus de pseudo depuis que tout le monde joue Cyril). */
+export const SHARE_FILENAME = 'musee-des-100-carte.png'
+
+/** Nombre de tampons obtenus sur la carte (trois ailes + Archives de 2040). Fonction pure. */
+export function countObtainedStamps(data: Pick<ShareCardData, 'stamps' | 'archivesObtained'>): number {
+  return Object.values(data.stamps).filter(Boolean).length + (data.archivesObtained ? 1 : 0)
 }
 
 export interface ShareCardData {
-  avatarName: string
   stamps: Partial<Record<ExhibitWingId, number>>
   /** 4e tampon (Archives de 2040) : pas stocké dans `stamps` (déduit de `visitedSessions`, voir `stamps.ts`). */
   archivesObtained: boolean
@@ -110,7 +106,7 @@ export function drawShareCard(ctx: CanvasRenderingContext2D | null, data: ShareC
 
   ctx.fillStyle = '#ffffff'
   ctx.font = `600 ${layout.name.fontSize}px "Poppins", "Futura", sans-serif`
-  ctx.fillText(data.avatarName || '—', layout.name.x, layout.name.y)
+  ctx.fillText(pick(strings.shareCount, data.lang).replace('{count}', String(countObtainedStamps(data))), layout.name.x, layout.name.y)
 
   ctx.fillStyle = '#e8785c'
   ctx.font = `500 ${layout.event.fontSize}px "JetBrains Mono", monospace`
@@ -134,7 +130,7 @@ export async function generateShareBlob(data: ShareCardData): Promise<Blob | nul
 export async function shareCard(data: ShareCardData): Promise<'shared' | 'downloaded' | 'unavailable'> {
   const blob = await generateShareBlob(data)
   if (!blob) return 'unavailable'
-  const filename = buildShareFilename(data.avatarName)
+  const filename = SHARE_FILENAME
   const file = new File([blob], filename, { type: 'image/png' })
   const nav = typeof navigator !== 'undefined' ? navigator : undefined
 

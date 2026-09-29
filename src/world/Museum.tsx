@@ -16,9 +16,10 @@ import { buildComingSoonBarrierGeometry, buildDoorArchesGeometry, buildLightRays
 import { occludesPlayer, approach } from './occlusion'
 import { PortraitFrame, type FrameFade } from './PortraitFrame'
 import { RoomProps } from './props/RoomProps'
-import { drawBanner, drawComingSoonPanel, drawMinervePlate, drawWingPanel } from './textures'
+import { drawBanner, drawComingSoonPanel, drawCuratorPlate, drawWingPanel } from './textures'
 import { worldStrings } from './strings'
 import { CIMAISE_FADE_OPACITY, CIMAISE_FADE_SECONDS, HALL_HALF_DEPTH, HALL_HALF_WIDTH } from './constants'
+import { charter3d } from '../styles/tokens'
 
 const HALF_PI = Math.PI / 2
 // Vitesse de fondu (unités d'opacité par seconde) : parcourt tout l'écart (1 → CIMAISE_FADE_OPACITY)
@@ -53,7 +54,7 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
     [architecture],
   )
   const occluderGeometries = useMemo(
-    () => architecture.occluders.map((o) => buildOccluderGeometry(o.box, o.height, wallColorByWing.get(o.wing) ?? '#8c6a4a')),
+    () => architecture.occluders.map((o) => buildOccluderGeometry(o.box, o.height, wallColorByWing.get(o.wing) ?? charter3d.rooms.hall.wall)),
     [architecture, wallColorByWing],
   )
   const fadeStates = useMemo<FrameFade[]>(() => architecture.occluders.map(() => ({ opacity: 1 })), [architecture])
@@ -78,12 +79,12 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
     }
   })
 
-  // `drawBanner`/`drawWingPanel`/`drawComingSoonPanel`/`drawMinervePlate` mettent leurs textures en
+  // `drawBanner`/`drawWingPanel`/`drawComingSoonPanel`/`drawCuratorPlate` mettent leurs textures en
   // cache par langue (voir textures.ts) : pas de dispose() à faire ici, ni de risque de le faire deux
   // fois (le double rendu des effets de React.StrictMode en dev disposerait une texture encore
   // affichée si on le faisait naïvement).
   const bannerTexture = useMemo(() => drawBanner(worldStrings.bannerTitle, worldStrings.bannerSubtitle, lang), [lang])
-  const minervePlateTexture = useMemo(() => drawMinervePlate(lang), [lang])
+  const curatorPlateTexture = useMemo(() => drawCuratorPlate(lang), [lang])
   const comingSoonTexture = useMemo(() => drawComingSoonPanel(lang), [lang])
   const wingPanels = useMemo<Array<{ wing: ExhibitWingId; texture: CanvasTexture }>>(() => {
     const panels: Array<{ wing: ExhibitWingId; texture: CanvasTexture }> = []
@@ -98,7 +99,7 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
     [architecture],
   )
 
-  const minervePlatePos = useMemo<[number, number, number]>(() => {
+  const curatorPlatePos = useMemo<[number, number, number]>(() => {
     const c = architecture.decor.counter.center
     return [c.x, 0.95 + 0.16, c.z - architecture.decor.counter.halfDepth - 0.02]
   }, [architecture])
@@ -128,11 +129,11 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
         </mesh>
       )}
 
-      {/* Bannière d'accueil, au-dessus du comptoir de Minerve — nettement au sud du panneau de porte
+      {/* Bannière d'accueil, au-dessus du comptoir d'accueil — nettement au sud du panneau de porte
           de l'aile nord (Industrialisation, à x = 0 lui aussi, voir `doorPanelPosition`) : à l'ancienne
           position (z = -6,2, à seulement 2,7 m de la porte à z = -8,94) les deux se chevauchaient à
-          l'écran depuis toutes les vues par défaut du hall (écran titre, spawn, arbre, Minerve — bug
-          V2). Rapprochée de Minerve (comptoir centré à z ≈ -3,2, elle-même à z = -4,5) plutôt que
+          l'écran depuis toutes les vues par défaut du hall (écran titre, spawn, arbre, comptoir — bug
+          V2). Rapprochée du comptoir (centré à z ≈ -3,2, le personnage à z = -4,5) plutôt que
           collée au mur du fond : l'écart à l'écran (mesuré par projection, voir le rapport) reste
           ≥ 5 pt d'écran même depuis le point de vue le plus défavorable (spawn, le plus éloigné). */}
       <mesh position={[0, 3.2, -4]}>
@@ -140,10 +141,10 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
         <meshBasicMaterial map={bannerTexture} toneMapped={false} transparent />
       </mesh>
 
-      {/* Plaque « Minerve · Conservatrice », posée sur le comptoir face au joueur. */}
-      <mesh position={minervePlatePos} rotation-x={-Math.PI / 2.6}>
+      {/* Plaque « Rémi Godeau · L'Opinion », posée sur le comptoir face au joueur. */}
+      <mesh position={curatorPlatePos} rotation-x={-Math.PI / 2.6}>
         <planeGeometry args={[0.5, 0.16]} />
-        <meshBasicMaterial map={minervePlateTexture} toneMapped={false} />
+        <meshBasicMaterial map={curatorPlateTexture} toneMapped={false} />
       </mesh>
 
       {wingPanels.map(({ wing, texture }) => (
