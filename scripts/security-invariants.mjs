@@ -62,6 +62,12 @@ else {
   for (const required of ['content-security-policy', 'x-content-type-options', 'referrer-policy', 'permissions-policy']) {
     if (!headers.includes(required)) failures.push(`vercel.json : en-tête ${required} manquant`)
   }
+  // Les textures intégrées aux GLB sont lues par `fetch(blob:…)` (GLTFLoader → ImageBitmapLoader, sur
+  // Chrome, Android et Safari ≥ 17). Sans `blob:` dans connect-src, elles échouent toutes et les
+  // modèles s'affichent en blanc (29/09 : Cyril et Rémi).
+  const csp = (cfg.headers ?? []).flatMap((h) => h.headers ?? []).find((h) => h.key.toLowerCase() === 'content-security-policy')?.value ?? ''
+  const connectSrc = csp.split(';').map((d) => d.trim().split(/\s+/)).find(([name]) => name === 'connect-src')
+  if (csp && !connectSrc?.includes('blob:')) failures.push('vercel.json : connect-src doit autoriser blob: (textures des GLB)')
 }
 
 if (failures.length) {

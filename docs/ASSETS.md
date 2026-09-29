@@ -90,5 +90,6 @@ ci-dessous (Cyril et Rémi, depuis le 29/09 ; l'avatar et Minerve sculptés en t
 - Générés dans Magnific (projet « Odyssée de l'IA — Musée des 100 »), crédits du compte Premium+ de Baptiste : 12 000 environ au total, dont une première attente (« Idle », agitée, écartée).
 - Sources brutes (photos, images en pied, GLB Meshy ~7 Mo par clip) hors Git : `~/Dev/odyssee-musee-100-assets/personnages/`.
 - Construction : `node scripts/build-characters.mjs` fusionne les clips d'un personnage en un seul GLB (même squelette), puis optimise (meshopt, texture WebP 1024).
+- Texture en ligne : three.js lit les textures intégrées aux GLB par `fetch(blob:…)` (Chrome, Android, Safari ≥ 17). La CSP de `vercel.json` doit donc garder `blob:` dans `connect-src`, sinon les modèles s'affichent en blanc (constaté en production le 29/09). `pnpm verify:security` le vérifie ; `vite preview` sert les en-têtes de Vercel, les E2E locaux tournent sous la même CSP que la production.
 - Pas de licence CC0 ici : ce sont les images de deux personnes réelles, utilisées avec leur accord pour ce jeu uniquement.
 
