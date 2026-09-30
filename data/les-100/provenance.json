@@ -1,0 +1,2389 @@
+[
+ {
+  "id": "xianxin-guo",
+  "nom": "Xianxin Guo",
+  "aile": "infrastructures",
+  "aile_justification": "Lumai conçoit du matériel de calcul optique pour l'inférence IA (accélérateurs, serveurs) : brique d'infrastructure de calcul.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://lumai.ai/about/",
+   "url_image": "https://cdn.prod.website-files.com/69b317ce44d9b8ad20c0b8f3/69ea85eff86499567caf2168_69c5671f119eb19b2cc77e6b_Dr%20Xianxin%20Guo.avif",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : Lumai",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe lumai.ai/about, alt text « Dr. Xianxin Guo, CEO and Co-Founder of Lumai » ; portrait unique, visage net, polaire logotypée Lumai. Source AVIF convertie en JPEG avec sips (paysage, à recadrer en carré centré sur le visage)."
+  },
+  "citation_source": "https://lumai.ai/resources/lumai-launches-the-worlds-first-optical-computing-system-for-real-time-billion-parameter-llm-inference",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://lumai.ai/about/",
+   "https://www.unite.ai/dr-xianxin-guo-ceo-and-co-founder-of-lumai-interview-series/",
+   "https://lumai.ai/resources/lumai-launches-the-worlds-first-optical-computing-system-for-real-time-billion-parameter-llm-inference",
+   "https://optica-opn.org/home/industry/2025/april/lumai_lands_funds_to_push_3d_optical_computing",
+   "https://lumai.ai/resources/ceo-interview-with-xianxin-guo-of-lumai"
+  ]
+ },
+ {
+  "id": "jonathan-godwin",
+  "nom": "Jonathan Godwin",
+  "aile": "infrastructures",
+  "aile_justification": "Orbital fabrique du refroidissement pour GPU et des centres de données modulaires : des fondations matérielles de l'IA.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://mcj.vc/inevitable-podcast/orbital-materials",
+   "url_image": "http://static1.squarespace.com/static/61a2ba6209495b7cde63e740/61f43d924c845450659b1d27/683540a88e0bfa4023d2e75c/1785219897004/Jonathon+Godwin.jpg?format=1500w",
+   "licence": "inconnue, droits à confirmer",
+   "credit": "Photo : MCJ (podcast Inevitable)",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page d'épisode consacrée à Jonathan Godwin, avec sa biographie et ce portrait (fichier nommé Jonathon Godwin.jpg)"
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://fortune.com/2026/05/28/exclusive-orbital-industries-raises-50-million-series-b-funding-round-ai-to-discover-exotic-new-materials/",
+   "https://tech.eu/2026/05/28/orbital-industries-secures-50m-to-scale-data-centre-infrastructure-systems/",
+   "https://thenextweb.com/news/orbital-industries-50m-series-b-data-center-cooling",
+   "https://resiliencemedia.co/orbital-industries-an-alphafold-for-materials-science-raises-50m/",
+   "https://mcj.vc/inevitable-podcast/orbital-materials"
+  ]
+ },
+ {
+  "id": "mattias-astrom",
+  "nom": "Mattias Åström",
+  "aile": "infrastructures",
+  "aile_justification": "evroc construit un cloud souverain et des centres de données pour l'IA (Mougins, Stockholm) : fondations de calcul et cloud.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://news.cision.com/evroc/r/evroc-founder-joins-the-european-council-on-foreign-relations,c4388237",
+   "url_image": "https://mb.cision.com/Public/22461/4388237/91c254770be8a9b8_org.jpg",
+   "licence": "Photo de presse publiée par l'organisation, conditions de réutilisation non précisées",
+   "credit": "Photo : evroc",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Espace presse Cision d'evroc : image attachée au communiqué sur sa nomination à l'ECFR, titre de l'image « Mattias Åström »"
+  },
+  "citation_source": "https://news.cision.com/evroc/r/evroc-founder-joins-the-european-council-on-foreign-relations,c4388237",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://news.cision.com/evroc/r/evroc-founder-joins-the-european-council-on-foreign-relations,c4388237",
+   "https://techcrunch.com/2025/03/20/amid-calls-for-sovereign-eu-tech-stack-evroc-raises-55m-to-build-a-hyperscale-cloud-in-europe/",
+   "https://www.datacenter-forum.com/evroc/evroc-expands-hyperscale-ai-ambitions-with-new-site-in-france",
+   "https://www.realtid.se/it-tech/svenska-evrok-ska-radda-europa-fran-amerikanska-molnet/",
+   "https://www.siliconrepublic.com/start-ups/data-centre-evroc-funds-european-tech-independence"
+  ]
+ },
+ {
+  "id": "arthur-mensch",
+  "nom": "Arthur Mensch",
+  "aile": "infrastructures",
+  "aile_justification": "Mistral AI est un laboratoire de modèles de fondation qui investit dans le calcul et les centres de données (France, Suède).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Arthur_Mensch.png",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/2/27/Arthur_Mensch.png",
+   "licence": "CC0",
+   "credit": "Photo : Jan2342342423, CC0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Arthur Mensch at Techarena 2026 » ; image principale de l'article Wikipédia. Portrait de scène, une seule personne, éclairage violet ; recadrage carré sur le visage conseillé."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://fr.wikipedia.org/wiki/Arthur_Mensch",
+   "https://en.wikipedia.org/wiki/Arthur_Mensch",
+   "https://mistral.ai/fr/news/mistral-ai-raises-1-7-b-to-accelerate-technological-progress-with-ai",
+   "https://tech.eu/2026/09/08/mistral-secures-eur3b-series-d-to-push-sovereign-ai-into-its-next-phase/",
+   "https://www.euronews.com/2026/09/08/mistral-ai-raises-record-3-billion-in-samsung-led-funding-round"
+  ]
+ },
+ {
+  "id": "christophe-fouquet",
+  "nom": "Christophe Fouquet",
+  "aile": "infrastructures",
+  "aile_justification": "ASML fournit les machines de lithographie sans lesquelles les puces d'IA ne peuvent pas être fabriquées : fondation matérielle de l'IA.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.asml.com/company/governance/board-of-management",
+   "url_image": "https://media.asml.com/asmlnetherlaaea-asmlcom-prd-5369/media/project/asmlcom/asmlcom/asml/images/company/governance/board-of-management/christophe-fouquet.jpg",
+   "licence": "Photo officielle de la page Board of Management d'ASML, droits de réutilisation non précisés",
+   "credit": "Photo : ASML",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle 'Christophe Fouquet' de la Board of Management d'ASML, dont l'image est le portrait."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.asml.com/company/governance/board-of-management",
+   "https://www.asml.com/en/news/stories/2024/christophe-fouquet-asml-ceo",
+   "https://fr.euronews.com/business/2026/07/15/asml-plus-grande-entreprise-deurope-releve-ses-previsions-et-relance-lespoir-dun-boom-de-l",
+   "https://ioplus.nl/en/posts/asml-says-13b-investment-in-mistral-is-strategic-partnership"
+  ]
+ },
+ {
+  "id": "josh-payne",
+  "nom": "Josh Payne",
+  "aile": "infrastructures",
+  "aile_justification": "Nscale construit des centres de données, du cloud GPU et de l'approvisionnement énergétique pour l'IA.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.nscale.com/about",
+   "url_image": "https://cdn.prod.website-files.com/6a82f7ca23e97c6371bbf5c9/6aa10ac0aaac2549514b9d3d_6a7b7d978269bd0b626d4c46_6a296e1b640b885f78326167_69f4aa240e0c8dfeac3c9f30_1777557623442.png",
+   "licence": "Photo officielle de l'organisation (droits à confirmer)",
+   "credit": "Photo : Nscale",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe/leadership nscale.com/about : bio et photo individuelle de Josh Payne, CEO and Founder. Visage net, portrait seul sur fond noir."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.nscale.com/about",
+   "https://en.wikipedia.org/wiki/Nscale",
+   "https://www.lw.com/en/news/2026/03/latham-advises-nscale-on-acquisition-of-american-intelligence-power-corporation",
+   "https://www.structureresearch.net/2026/03/10/nscale-raises-2b-in-series-c-funding/",
+   "https://cryptobriefing.com/nscale-seeks-billions-financing-ahead-ipo/"
+  ]
+ },
+ {
+  "id": "demis-hassabis",
+  "nom": "Demis Hassabis",
+  "aile": "infrastructures",
+  "aile_justification": "DeepMind entraîne des grands modèles de fondation (Gemini) et des systèmes scientifiques comme AlphaFold ; l'aile infrastructures regroupe les laboratoires de modèles de fondation. Alternative défendable : industrialisation via Isomorphic Labs (découverte de médicaments).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Demis_Hassabis,_2024_Nobel_Prize_Laureate_in_Chemistry_7_(cropped).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Demis_Hassabis%2C_2024_Nobel_Prize_Laureate_in_Chemistry_7_%28cropped%29.jpg",
+   "licence": "CC BY-SA 4.0",
+   "credit": "Photo : John Sears, CC BY-SA 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Wikimedia Commons : Demis Hassabis of the United Kingdom, 2024 Nobel Prize Laureate in Chemistry, at the 2024 Nobel Prize week in Stockholm ; image principale de l'article Wikipédia. Portrait net, une seule personne (format 3:4, à recadrer en carré sur le visage)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Demis_Hassabis",
+   "https://9to5google.com/2026/08/05/demis-hassabis-deepmind/",
+   "https://time.com/article/2026/08/06/google-deepmind-ai-demis-hassabis/",
+   "https://deepmind.google/about/",
+   "https://commons.wikimedia.org/wiki/File:Demis_Hassabis,_2024_Nobel_Prize_Laureate_in_Chemistry_7_(cropped).jpg"
+  ]
+ },
+ {
+  "id": "philippe-notton",
+  "nom": "Philippe Notton",
+  "aile": "infrastructures",
+  "aile_justification": "Il conçoit des puces de calcul (processeur Rhea1) pour supercalculateurs et centres de données : fondations matérielles de l'IA.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://sipearl.com/philippe-notton",
+   "url_image": "https://sipearl.com/wp-content/uploads/2023/03/SiPearl_Philippe_Notton.jpg",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : SiPearl",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle sur sipearl.com ; légende de l'image : « Philippe Notton, CEO et fondateur de SiPearl »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://sipearl.com/philippe-notton",
+   "https://eic.ec.europa.eu/philippe-notton_en",
+   "https://heise.de/-11308863",
+   "https://www.storagenewsletter.com/2025/07/15/sipearl-raises-e32-million-to-close-its-e130-million-series-a/",
+   "https://www.frenchweb.fr/lindependance-technologique-europeenne-passera-t-elle-par-le-microprocesseur-hpc-rhea-de-sipearl/452137"
+  ]
+ },
+ {
+  "id": "james-dacombe",
+  "nom": "James Dacombe",
+  "aile": "infrastructures",
+  "aile_justification": "Olix conçoit des puces et des systèmes de calcul à liens optiques pour les centres de données d'IA : fondations matérielles.",
+  "verification": "corrige",
+  "photo": null,
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://olix.com/news/company-raises-series-b",
+   "https://runtimewire.com/article/james-dacombe-olix-raises-312-million-3-3-billion-valuation",
+   "https://www.jonpeddie.com/news/an-ai-processor-by-any-other-name/",
+   "https://businesscloud.co.uk/news/james-dacombe-profile-meet-the-uks-25-year-old-unicorn-boss/",
+   "https://www.easterneye.biz/british-ai-chip-startup-231m-funding/"
+  ]
+ },
+ {
+  "id": "david-silver",
+  "nom": "David Silver",
+  "aile": "infrastructures",
+  "aile_justification": "Il construit un laboratoire de recherche qui entraîne de nouveaux modèles fondamentaux (apprentissage par renforcement), sans produit commercial à ce stade : la définition de l'aile des laboratoires de modèles de fondation.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://royalsociety.org/people/david-silver-35033",
+   "url_image": "https://imagecdn.royalsociety.org/people/P109650.jpg",
+   "licence": "Non précisée (photo officielle de fellow de la Royal Society)",
+   "credit": "Photo : The Royal Society",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle royalsociety.org, attribut alt « Professor David Silver FRS »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/David_Silver_(computer_scientist)",
+   "https://royalsociety.org/people/david-silver-35033",
+   "https://the-decoder.com/google-deepmind-pioneer-david-silver-departs-to-found-ai-startup-betting-llms-alone-wont-reach-superintelligence/",
+   "https://tech.eu/2026/04/27/ineffable-intelligence-launches-with-record-breaking-11b-seed-round/",
+   "https://lsvp.com/company/ineffable-intelligence/",
+   "https://ineffable.ai",
+   "https://thenextweb.com/news/ineffable-intelligence-cofounders-deepmind-instadeep-flying-fish"
+  ]
+ },
+ {
+  "id": "jean-marc-chery",
+  "nom": "Jean-Marc Chéry",
+  "aile": "infrastructures",
+  "aile_justification": "ST fabrique les puces et la photonique sur silicium qui équipent les centres de données d'IA : fondations matérielles.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.capgemini.com/fr-fr/notre-groupe/gestion-gouvernance/equipe-de-direction/jean-marc-chery/",
+   "url_image": "https://www.capgemini.com/wp-content/uploads/2025/05/Photo-JM-Chery-portrait.jpg",
+   "licence": "Photo officielle publiée par Capgemini (administrateur) ; droits de réutilisation non précisés",
+   "credit": "Photo : Capgemini",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de Jean-Marc Chéry sur capgemini.com, nom du fichier Photo-JM-Chery-portrait ; portrait net d'une seule personne, non carré (recadrage nécessaire)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.capgemini.com/fr-fr/notre-groupe/gestion-gouvernance/equipe-de-direction/jean-marc-chery/",
+   "https://fr.wikipedia.org/wiki/Jean-Marc_Ch%C3%A9ry",
+   "https://evertiq.com/news/2026-03-16-st-enters-high-volume-production-of-pic100-platform",
+   "https://en.wikipedia.org/wiki/STMicroelectronics"
+  ]
+ },
+ {
+  "id": "octave-klaba",
+  "nom": "Octave Klaba",
+  "aile": "infrastructures",
+  "aile_justification": "OVHcloud construit cloud et centres de données, et entraîne désormais ses propres modèles sur un supercalculateur.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Octave_Klaba,_Chairman_of_OVHcloud_-_2025_(cropped).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/9/99/Octave_Klaba%2C_Chairman_of_OVHcloud_-_2025_%28cropped%29.jpg",
+   "licence": "CC BY 4.0",
+   "credit": "Photo : Stefanie Loos / Union européenne, CC BY 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Titre et description du fichier Commons (Octave Klaba, Founder and CEO of OVHcloud, Berlin, 18 nov. 2025) ; image recadrée sur lui seul, visage net, cadrage portrait vérifié à la lecture."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.lejournaldesentreprises.com/article/octave-klaba-reprend-les-renes-dovhcloud-2129211",
+   "https://www.maddyness.com/2021/12/27/portrait-octave-klaba-ovhcloud-bourse-paris/",
+   "https://fr.wikipedia.org/wiki/Octave_Klaba",
+   "https://www.ovhcloud.com/en/about-us/",
+   "https://www.ictjournal.ch/news/2026-06-22/ovhcloud-investit-jusqua-200-millions-deuros-dans-ses-propres-llm",
+   "https://next.ink/205353/ovhcloud-octave-klaba-reprend-encore-la-direction-revenus-en-hausse-gadin-en-bourse/",
+   "https://commons.wikimedia.org/wiki/File:Octave_Klaba,_Chairman_of_OVHcloud_-_2025_(cropped).jpg"
+  ]
+ },
+ {
+  "id": "daniel-ek",
+  "nom": "Daniel Ek",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la santé (Neko Health) et financement de start-ups deep tech européennes via Prima Materia : passage de l'IA au produit et à l'échelle.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Daniel_Ek_EC_2025_(cropped).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/3/39/Daniel_Ek_EC_2025_%28cropped%29.jpg",
+   "licence": "CC BY 4.0",
+   "credit": "Photo : Lukasz Kobus/Commission européenne, CC BY 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description Commons (visite de Daniel Ek à la Commission européenne, 25/02/2025) et badge visiteur « Daniel Georg EK » visible sur la photo"
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Daniel_Ek",
+   "https://www.musicbusinessworldwide.com/3-things-you-may-have-missed-about-daniel-eks-decision-to-step-back-as-spotify-ceo",
+   "https://www.maginative.com/article/spotify-founders-health-tech-startup-neko-raises-260m-valued-at-1-8-billion/",
+   "https://commons.wikimedia.org/wiki/File:Daniel_Ek_EC_2025_(cropped).jpg"
+  ]
+ },
+ {
+  "id": "mati-staniszewski",
+  "nom": "Mati Staniszewski",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : ElevenLabs transforme des modèles audio en produits et agents pour les entreprises et les créateurs ; il s'agit d'IA appliquée passée à l'échelle, financée par des levées de fonds.)",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Mati_Staniszewski_(2022).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/0/0d/Mati_Staniszewski_%282022%29.jpg",
+   "licence": "CC BY-SA 4.0",
+   "credit": "Photo : Rafał Masłow, CC BY-SA 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Wikimedia Commons : « Mateusz Staniszewski, cofounder of ElevenLabs » ; image principale de l'article Wikipédia en anglais. Portrait seul, visage net, éclairage sombre."
+  },
+  "citation_source": "https://tech.eu/2026/02/04/elevenlabs-raises-500m-says-building-towards-ipo/",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Mati_Staniszewski",
+   "https://www.sxswlondon.com/speakers/mati-staniszewski-8c2f7242",
+   "https://elevenlabs.io/about",
+   "https://tech.eu/2026/02/04/elevenlabs-raises-500m-says-building-towards-ipo/",
+   "https://commons.wikimedia.org/wiki/File:Mati_Staniszewski_(2022).jpg"
+  ]
+ },
+ {
+  "id": "arnaud-lepinois",
+  "nom": "Arnaud Lépinois",
+  "aile": "infrastructures",
+  "aile_justification": "Eclairion construit et exploite des centres de données à très haute densité pour supercalculateurs d'IA : fondations physiques du calcul.",
+  "verification": "corrige",
+  "photo": null,
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.se.com/fr/fr/about-us/newsroom/news/press-releases/eclairion-et-schneider-electric-renforcent-leur-partenariat-pour-acc%C3%A9l%C3%A9rer-le-d%C3%A9ploiement-d%E2%80%99infrastructures-d%E2%80%99intelligence-artificielle-souveraines-en-france-6a6c75b5cc6ba9fd1103cd79/",
+   "https://bati.zepros.fr/actu-industriels/schneider-electric-eclairion-renforcent-leur-alliance-infrastructures-ia",
+   "https://www.solutions-numeriques.com/dossiers/eclairion-precurseur-dune-nouvelle-ere-pour-lhebergement-des-supercalculateurs-de-haute-densite-en-france/",
+   "https://www.solutions-numeriques.com/arnaud-lepinois-computacenter-deviendra-le-nouveau-president-de-hp-france",
+   "https://eclairion.com/en/"
+  ]
+ },
+ {
+  "id": "antoine-bordes",
+  "nom": "Antoine Bordes",
+  "aile": "industrialisation",
+  "aile_justification": "Helsing est une entreprise d'IA appliquée à la défense (produits déployés, drones) ; Bordes dirige sa science, ce qui relève de l'IA appliquée en industrie plutôt que des fondations ou de la culture.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://www.polytechnique.edu/en/news/use-ai-military-must-serve-defend-our-european-democratic-values-antoine-bordes-ecole-polytechnique",
+   "url_image": "https://www.polytechnique.edu/sites/default/files/content/actualites/images/2026-06/JB_EP_Antoine_Bordes_4.jpg",
+   "licence": "Non précisée (photo de presse d'une institution publique)",
+   "credit": "Photo : Jérémy Barande / École polytechnique",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Article de l'École polytechnique consacré à sa conférence du 9 juin 2026 ; le pupitre de la photo porte la mention « Antoine Bordes, Chief Scientist de Helsing » et les légendes de la page le nomment."
+  },
+  "citation_source": "https://www.polytechnique.edu/en/news/use-ai-military-must-serve-defend-our-european-democratic-values-antoine-bordes-ecole-polytechnique",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.polytechnique.edu/en/news/use-ai-military-must-serve-defend-our-european-democratic-values-antoine-bordes-ecole-polytechnique",
+   "https://www.actuia.com/acteur/antoine-bordes/",
+   "https://en.wikipedia.org/wiki/Helsing_(company)"
+  ]
+ },
+ {
+  "id": "robin-rombach",
+  "nom": "Robin Rombach",
+  "aile": "infrastructures",
+  "aile_justification": "Black Forest Labs est un laboratoire qui entraîne des modèles de fondation (FLUX) ; cela correspond à la définition de l'aile infrastructures.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.bitsandpretzels.com/speaker-portal/robin-rombach-30862550741",
+   "url_image": "https://cdn.prod.website-files.com/65a7c2e34180740c0205112e/6ab149072908319792c9bef6_Robin_Rombach_400x400%20(1).jpg",
+   "licence": "Aucune licence indiquée (photo de profil d'intervenant sur le site de la conférence)",
+   "credit": "Photo : Bits & Pretzels",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle Bits & Pretzels intitulée Robin Rombach (nom dans l'URL et le nom du fichier). Même visage que le portrait HumanX, dont l'attribut alt nomme « Robin Rombach - Co-founder & CEO - Black Forest Labs » (humanx.co/us/speakers/robin-rombach). Portrait couleur, une seule personne, visage net, carré 400x400."
+  },
+  "citation_source": "https://techxplore.com/news/2026-09-ai-startup-urges-optimism-europe.html",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Flux_(text-to-image_model)",
+   "https://www.humanx.co/speakers/robin-rombach",
+   "https://www.globenewswire.com/news-release/2025/12/01/3197140/0/en/UPDATE-Black-Forest-Labs-Announces-Series-B-Investment-to-Accelerate-Frontier-Visual-Intelligence.html",
+   "https://techxplore.com/news/2026-09-ai-startup-urges-optimism-europe.html",
+   "https://fortune.com/2026/02/17/ai-startup-that-has-quietly-become-one-of-europes-most-valuable-companies"
+  ]
+ },
+ {
+  "id": "roman-orus",
+  "nom": "Román Orús",
+  "aile": "infrastructures",
+  "aile_justification": "Compression des grands modèles pour réduire calcul et énergie (infrastructure de calcul et modèles de fondation). Alternative plausible : industrialisation, Multiverse vendant des produits d'IA à des industriels.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:RomanPic.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/a/a7/RomanPic.jpg",
+   "licence": "CC0 1.0",
+   "credit": "Photo : Estudio Badator, CC0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page Commons : description du fichier 'Román Orús', permission confirmée par le VRTS (ticket 2024082210007188) ; image principale de l'article Wikipédia Román Orús"
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Rom%C3%A1n_Or%C3%BAs",
+   "https://multiversecomputing.com/ethics-committee",
+   "https://multiversecomputing.com/resources/multiverse-computing-announces-series-c-fundraising-targeting-up-to-usd570m-eur500m-to-power",
+   "https://www.newquantumera.com/podcast/quantum-inspired-ai-and-tensor-network-compression-with-roman-orus/",
+   "https://commons.wikimedia.org/wiki/File:RomanPic.jpg"
+  ]
+ },
+ {
+  "id": "fabian-hedin",
+  "nom": "Fabian Hedin",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : Lovable est un outil de création de logiciels par IA (outils de développement, IA appliquée) en forte croissance commerciale.)",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Fabian_Hedin.png",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Fabian_Hedin.png",
+   "licence": "CC0",
+   "credit": "Photo : Marcusgarage, CC0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Fabian Hedin at Techarena 2026 » (portrait d'une seule personne, visage net, prise de vue en conférence avec micro-serre-tête et fond sombre violet ; recadrage carré centré sur le visage conseillé)."
+  },
+  "citation_source": "https://www.kth.se/en/om/innovation/om/innovation-award/tidigare-mottagare/anton-osika-fabian-hedin-kth-innovation-award-2025-1.1426072",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://lovable.dev/blog/200m-series-a-fundraise",
+   "https://en.wikipedia.org/wiki/Lovable_(company)",
+   "https://tech.eu/2026/08/12/lovables-valuation-doubles-to-13bn-as-raises-400m/",
+   "https://www.verdict.co.uk/lovable-series-c-round/",
+   "https://londontechweek.com/speakers/fabian-hedin",
+   "https://www.kth.se/en/om/innovation/om/innovation-award/tidigare-mottagare/anton-osika-fabian-hedin-kth-innovation-award-2025-1.1426072",
+   "https://commons.wikimedia.org/wiki/File:Fabian_Hedin.png"
+  ]
+ },
+ {
+  "id": "alex-kendall",
+  "nom": "Alex Kendall",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la conduite autonome, portée de la recherche vers des produits commerciaux (accords Uber, Mercedes-Benz) ; ce n'est pas de l'infrastructure de calcul.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://wayve.ai/company/leadership-team/alex-kendall/",
+   "url_image": "https://wayve.ai/wp-content/uploads/2024/01/Alex-Kendall-Wavye_sq2024.jpg",
+   "licence": "Photo officielle publiée par Wayve (press kit : mention « Source: Wayve » ; usage commercial sur autorisation)",
+   "credit": "Photo : Wayve",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle d'Alex Kendall sur wayve.ai (alt : headshot of Alex Kendall)"
+  },
+  "citation_source": "https://wayve.ai/company/leadership-team/alex-kendall/",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://wayve.ai/company/leadership-team/alex-kendall/",
+   "https://wayve.ai/press/",
+   "https://en.wikipedia.org/wiki/Wayve",
+   "https://www.just-auto.com/news/wayve-raises-1-2bn-series-d/",
+   "https://www.cam.ac.uk/news/co-founder-of-billion-dollar-ai-for-autonomous-driving-company-and-cambridge-alumnus-wins-princess",
+   "https://christscollege.com/ccoba/latest-news/ties-that-bind-senior-honours-for-an-ai-innovator-and-all-black",
+   "https://www.nbcnewyork.com/news/business/money-report/new-zealanders-self-driving-car-startup-was-born-in-a-garage-now-it-has-bill-gates-attention-and-a-1-billion-valuation/4603595/"
+  ]
+ },
+ {
+  "id": "damien-lucas",
+  "nom": "Damien Lucas",
+  "aile": "infrastructures",
+  "aile_justification": "Scaleway est un fournisseur de cloud et de calcul GPU, et le consortium AION vise une gigafactory d'IA : fondations de calcul.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://tickets.raisesummit.com/2025/speaker/1770509/damien-lucas",
+   "url_image": "https://assets.swoogo.com/uploads/full/5504608-68625a9a928c8.png",
+   "licence": "Non précisée (photo de presse d'intervenant)",
+   "credit": "Photo : Scaleway",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page intervenant officielle de RAISE Summit 2025 consacrée à Damien Lucas, avec sa biographie de CEO de Scaleway. Portrait individuel affiché sur cette fiche."
+  },
+  "citation_source": "https://www.scaleway.com/en/news/scaleway-launches-the-aion-consortium-a-bold-project-to-build-europes-next-ai-gigafactory/",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.universfreebox.com/article/547030/la-filiale-cloud-diliad-se-dote-dun-nouveau-directeur-general-un-des-fondateurs-de-vlc/amp",
+   "https://www.journaldunet.com/cloud/1539919-la-croissance-de-scaleway-represente-plusieurs-fois-celle-du-marche-du-cloud-public/",
+   "https://www.clubic.com/actualite-616741-le-match-n-est-pas-plie-pour-l-europe-dit-le-pdg-de-scaleway-sur-la-course-mondiale-a-l-intelligence-artificielle.html",
+   "https://www.scaleway.com/en/news/ardian-artefact-bull-edf-capgemini-the-iliad-group-orange-and-scaleway-combine-their-expertise-to-run-as-a-candidate-for-a-european-ai-gigafactory-in-france/",
+   "https://www.maddyness.com/2026/05/20/iliad-embarque-orange-edf-hugging-face-kyutai-quandela-et-artefact-dans-un-consortium-pour-creer-une-gigafactory-dia-en-france/"
+  ]
+ },
+ {
+  "id": "evangelos-eleftheriou",
+  "nom": "Evangelos Eleftheriou",
+  "aile": "infrastructures",
+  "aile_justification": "Axelera AI conçoit des puces et du matériel d'accélération de l'IA (edge et centres de données) : c'est le calcul, donc les fondations.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://axelera.ai/our-team/evangelos-eleftheriou",
+   "url_image": "https://axelera.ai/hs-fs/hubfs/Axelera_February2025/images/evangelos-eleftheriou-e1634124694185-300x300.png",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : Axelera AI",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe axelera.ai/our-team/evangelos-eleftheriou : image avec alt « Evangelos Eleftheriou » sur sa page de profil individuelle"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://axelera.ai/our-team/evangelos-eleftheriou",
+   "https://en.wikipedia.org/wiki/Evangelos_Eleftheriou",
+   "https://www.scientificamerican.com/article/nanosize-materials-help-electronics-compute-like-real-brains/",
+   "https://eic.ec.europa.eu/news/congratulations-axelera-ai-securing-more-eu200-million-funding-global-commercial-growth-2026-02-24_en",
+   "https://www.jonpeddie.com/news/axelera-secures-250m/"
+  ]
+ },
+ {
+  "id": "jaroslaw-kutylowski",
+  "nom": "Jaroslaw Kutylowski",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : DeepL est de l'IA appliquée vendue aux entreprises (traduction, écriture, voix, agents), pas un laboratoire de modèles de fondation ni un fournisseur de calcul.)",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://www.deepl.com/en/press.html",
+   "url_image": "https://images.ctfassets.net/pplyeawnfzc7/5ESdjqm8fgNkqW26JvBTq5/09496ac6d8301fa0f8877427921ff088/Jaroslaw-Kutylowski.jpg",
+   "licence": "Photo de presse officielle DeepL, conditions de réutilisation non précisées (contact press@deepl.com)",
+   "credit": "Photo : DeepL",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Légende sur la page presse officielle de DeepL : « Jaroslaw Kutylowski, Chief Executive Officer »"
+  },
+  "citation_source": "https://pulse2.com/deepl-profile-jarek-kutylowski-interview/",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://en.wikipedia.org/wiki/DeepL_SE",
+   "https://www.re-publica.com/en/news/rp25-speaker-jarowslaw-kutylowski-deepl-dive-hidden-champion-german-ai-hallmark",
+   "https://omr.com/de/daily/deepl-im-omr-podcast",
+   "https://pulse2.com/deepl-profile-jarek-kutylowski-interview/",
+   "https://www.deepl.com/en/press.html",
+   "https://es.euronews.com/2026/06/19/vivatech-2026-el-ceo-de-deepl-pregunta-por-que-aprender-aleman-si-la-ia-habla-por-ti"
+  ]
+ },
+ {
+  "id": "jan-oberhauser",
+  "nom": "Jan Oberhauser",
+  "aile": "industrialisation",
+  "aile_justification": "n8n orchestre l'IA dans les processus d'entreprise (agents, automatisation, logiciels d'entreprise), et SAP l'intègre à son outil d'agents.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://blog.n8n.io/author/jan/",
+   "url_image": "https://storage.ghost.io/c/0d/78/0d78b34c-0c5f-4975-900e-61d00ccb1c2d/content/images/2020/12/500.png",
+   "licence": "Non précisée (photo publiée par l'organisation)",
+   "credit": "Photo : n8n",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Image de profil de la page auteur « Jan Oberhauser » du blog officiel n8n ; portrait individuel net, fond clair."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/N8n",
+   "https://www.founderspledge.com/members/995",
+   "https://www.highlandeurope.com/n8n-valuation-doubles-to-5-2bn-as-sap-makes-strategic-investment-and-plans-to-embed-the-ai-platform-into-joule-studio/",
+   "https://tech.eu/2026/05/12/n8n-s-valuation-doubles-to-5-2bn-following-sap-strategic-investment/",
+   "https://blog.n8n.io/author/jan/"
+  ]
+ },
+ {
+  "id": "walter-goodwin",
+  "nom": "Walter Goodwin",
+  "aile": "infrastructures",
+  "aile_justification": "Fractile conçoit des puces d'inférence pour les centres de données : calcul et matériel, cœur de l'aile infrastructures.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://www.fractile.ai/about",
+   "url_image": "https://images.prismic.io/fractile-landing-page/aUQQ63NYClf9oZbP_Walter4Crop.webp",
+   "licence": "Photo officielle de l'organisation (droits à confirmer)",
+   "credit": "Photo : Fractile",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe officielle fractile.ai/about, section Walter Goodwin, Founder & CEO ; nom de fichier Walter4Crop ; portrait seul, visage net."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.fractile.ai",
+   "https://www.fractile.ai/about",
+   "https://tickets.raisesummit.com/2025/speaker/1748160/walter-goodwin",
+   "https://www.verdict.co.uk/fractile-raises-220m-funding/",
+   "https://thenextweb.com/news/fractile-6-5bn-valuation-anthropic-chip-deal",
+   "https://www.silicon.co.uk/cloud/ai/fractile-funding-ai-inference-631239",
+   "https://bebeez.eu/en/news/former-intel-ceo-pat-gelsinger-invests-in-british-ai-chip-startup-fractile/"
+  ]
+ },
+ {
+  "id": "david-reger",
+  "nom": "David Reger",
+  "aile": "industrialisation",
+  "aile_justification": "Robotique et IA physique appliquées à l'industrie, avec une entreprise en phase de production en série et de passage à l'échelle.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://www.ifa-berlin.com/speakers/david-reger",
+   "url_image": "https://drive.ifa-berlin.com/drive/2025/01/_cache/02d8794d92db97324f30b16a58a53953_0f7a407588a80d15b89cecae4ceaf8b9.png.webp",
+   "licence": "Photo officielle de la page intervenant IFA Berlin ; aucune licence indiquée",
+   "credit": "Photo : IFA Berlin",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle IFA Berlin, légende « David Reger, CEO & Founder of NEURA Robotics »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/David_Reger",
+   "https://en.wikipedia.org/wiki/Neura_Robotics",
+   "https://www.ey.com/en_gl/weoy/class-of-2026/germany",
+   "https://neura-robotics.com/press/",
+   "https://davidreger.com"
+  ]
+ },
+ {
+  "id": "loic-mougeolle",
+  "nom": "Loïc Mougeolle",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la défense : un logiciel de commandement déployé auprès d'unités, financé par un tour de série A.",
+  "verification": "corrige",
+  "photo": null,
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.comand.ai/news/comand-ai-raises-%E2%82%AC32-million-series-a-to-scale-ai-native-command-and-control-platform-across-nato",
+   "https://www.navalnews.com/naval-news/2023/07/comand-ai-raises-e3-million-to-become-a-leading-player-in-ai-for-defence/",
+   "https://www.maddyness.com/?p=1359048",
+   "https://www.frenchweb.fr/comand-ai-leve-32-millions-deuros-la-defense-europeenne-ne-vise-plus-la-souverainete-mais-la-suprematie/462477",
+   "https://www.tectonicdefense.com/comand-ai-raises-32m-partners-with-saab/",
+   "https://pulse2.com/comand-ai-raises-e32-million-series-a-to-accelerate-nato-deployment/"
+  ]
+ },
+ {
+  "id": "khaled-maalej",
+  "nom": "Khaled Maalej",
+  "aile": "infrastructures",
+  "aile_justification": "VSORA conçoit des puces de calcul pour l'inférence IA en centres de données (Jotunn8), soit les fondations matérielles de l'IA.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://systematic-paris-region.org/rencontre-avec-khaled-maalej-ceo-de-vsora-champion-2025-du-pole-systematic/",
+   "url_image": "https://systematic-paris-region.org/wp-content/uploads/2026/01/B84A6900-1-1200x1279.jpg",
+   "licence": "Non précisée (photo de presse du pôle Systematic Paris-Region)",
+   "credit": "Photo : Systematic Paris-Region",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Légende/alt de l'image sur la page d'interview : Portrait de Khaled Maalej, CEO de VSORA, 2025"
+  },
+  "citation_source": "https://evertiq.com/news/2025-05-05-vsora-raises-46m-to-bring-powerful-ai-inference-chip-to-market",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://managers.tn/?p=122691",
+   "https://systematic-paris-region.org/rencontre-avec-khaled-maalej-ceo-de-vsora-champion-2025-du-pole-systematic/",
+   "https://evertiq.com/news/2025-05-05-vsora-raises-46m-to-bring-powerful-ai-inference-chip-to-market",
+   "https://www.mcdermottlaw.com/news/mcdermott-will-schulte-advises-ardian-on-a-minority-investment-in-vsora/",
+   "https://www.lemondeinformatique.fr/actualites/lire-comment-vsora-joue-sa-partition-dans-les-accelerateurs-ia-96738.html",
+   "https://vsora.com",
+   "https://www.linformaticien.com/magazine/infra/64028-vsora-met-jotunn8-en-production.html"
+  ]
+ },
+ {
+  "id": "victor-riparbelli",
+  "nom": "Victor Riparbelli",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : Synthesia est une IA appliquée (vidéo d'entreprise, formation) vendue à grande échelle : transformation de l'invention en produit.)",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Victor_Riparbello_at_2025_SXSW_London.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Victor_Riparbello_at_2025_SXSW_London.jpg",
+   "licence": "CC BY-SA 4.0",
+   "credit": "Photo : Duk3L1xon, CC BY-SA 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Victor Riparbello [sic], Co-founder at Synthesia, at the SXSW London festival ... June 2025 ». Photo de scène : une seule personne, visage net, mais cadrage large (assis, gestes) ; recadrage carré centré sur le visage conseillé (visage vers x 1100-1400, y 100-500 sur 2000x1600 affichés, soit ~x 1150-1470, y 105-525 en pixels originaux)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.synthesia.io/about",
+   "https://www.gv.com/news/interview-with-synthesia-ceo-victor-riparbelli",
+   "https://www.uktech.news/ai/synthesia-4bn-valuation-funding-round-reports-20251030",
+   "https://letsdatascience.com/news/synthesia-raises-200-million-series-e-d2097cb0",
+   "https://techcrunch.com/author/victor-riparbelli",
+   "https://commons.wikimedia.org/wiki/File:Victor_Riparbello_at_2025_SXSW_London.jpg"
+  ]
+ },
+ {
+  "id": "peter-sarlin",
+  "nom": "Peter Sarlin",
+  "aile": "infrastructures",
+  "aile_justification": "Fondateur d'un laboratoire de modèles et d'IA à grande échelle (Silo AI), puis de laboratoires d'IA physique et de calcul quantique : logique de fondations et de calcul. NestAI (défense, robotique) pourrait aussi relever de l'industrialisation.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://slush.org/2026-speakers/peter-sarlin",
+   "url_image": "https://cdn.prod.website-files.com/680cd45512772b4040d78def/6a7d682d0674bd53f843a8cb_Peter_Sarlin_hires_2__1_.jpg",
+   "licence": "Photo officielle de conférence, droits non précisés",
+   "credit": "Photo : Slush",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de Peter Sarlin sur slush.org (Slush 2026 speakers), nom du fichier Peter_Sarlin_hires"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://slush.org/2026-speakers/peter-sarlin",
+   "https://www.humanx.co/europe/speakers/peter-sarlin",
+   "https://www.aalto.fi/fi/tapahtumat/aalto-founder-talks-6-peter-sarlin-perustaja-amd-silo-ai-nestai-qutwo",
+   "https://www.globenewswire.com/news-release/2025/11/20/3191671/0/en/Nokia-and-NestAI-announce-strategic-partnership-and-NestAI-raises-100m-to-accelerate-physical-AI-innovation.html",
+   "https://techcrunch.com/2025/11/20/finlands-nestai-lands-e100m-partners-with-nokia-to-build-ai-for-defense-applications",
+   "https://corporate.zalando.com/en/node/10973",
+   "https://corporate.zalando.com/en/node/10997"
+  ]
+ },
+ {
+  "id": "stanislas-polu",
+  "nom": "Stanislas Polu",
+  "aile": "industrialisation",
+  "aile_justification": "Dust transforme l'IA en produit d'entreprise (agents connectés aux outils internes) : IA appliquée et logiciel d'entreprise.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://sequoiacap.com/founder/stanislas-polu/",
+   "url_image": "https://framerusercontent.com/images/Sw26OZAMysA5o2b9hZwdS5eVKdY.jpg?width=1840&height=1840",
+   "licence": "Droits réservés, licence non précisée",
+   "credit": "Photo : Sequoia Capital",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle « Stanislas Polu | Sequoia Capital » (fondateur de Dust), image principale de la page et og:image ; visuel contrôlé : un seul homme, portrait net."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://dust.tt/home/about",
+   "https://www.blogdumoderateur.com/histoire-dust-pepite-francaise-ia-racontee-par-fondateur/",
+   "https://tech.eu/2026/05/18/dust-raises-40m-series-b-to-build-the-multiplayer-operating-system-for-enterprise-ai/",
+   "https://luma.com/fge2d65m",
+   "https://techcrunch.com/2024/06/27/dust-grabs-another-16-million-for-its-enterprise-ai-assistants-connected-to-internal-data",
+   "https://venturebeat.com/ai/dust-hits-6m-arr-helping-enterprises-build-ai-agents-that-actually-do-stuff-instead-of-just-talking"
+  ]
+ },
+ {
+  "id": "amin-shokrollahi",
+  "nom": "Amin Shokrollahi",
+  "aile": "infrastructures",
+  "aile_justification": "Kandou AI conçoit des liaisons rapides et sobres en énergie entre puces, brique de base des infrastructures de calcul pour l'IA.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Mohammad_Amin_Shokrollahi_Oberwolfach_2007.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/8/86/Mohammad_Amin_Shokrollahi_Oberwolfach_2007.jpg",
+   "licence": "CC BY-SA 2.0 de",
+   "credit": "Photo : Renate Schmid, CC BY-SA 2.0 de, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Mohammad Amin Shokrollahi at Oberwolfach in 2007 for 'Coding Theory' » ; image principale de l'article Wikipédia Amin Shokrollahi."
+  },
+  "citation_source": "https://us.design-reuse.com/news/57668/kandou-ai-srujan-linga-ceo-amin-shokrollahi-cto.html",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://kandou.com/about/",
+   "https://us.design-reuse.com/news/57668/kandou-ai-srujan-linga-ceo-amin-shokrollahi-cto.html",
+   "https://actu.epfl.ch/news/ic-spinoff-kandou-ai-raises-225m-for-faster-ai-i-2/",
+   "https://en.wikipedia.org/wiki/Amin_Shokrollahi",
+   "https://commons.wikimedia.org/wiki/File:Mohammad_Amin_Shokrollahi_Oberwolfach_2007.jpg"
+  ]
+ },
+ {
+  "id": "olivier-dellenbach",
+  "nom": "Olivier Dellenbach",
+  "aile": "infrastructures",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : modèles ou plateforme souveraine (l'agent proposait industrialisation : ChapsVision édite des logiciels d'entreprise et de défense (données, agents IA, recherche d'entreprise) et grandit par acquisitions : de l'IA appliquée passée à l'échelle industrielle.)",
+  "verification": "corrige",
+  "photo": null,
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.chapsvision.com/about-us/",
+   "https://www.chapsvision.com/fr/",
+   "https://www.chapsvision.com/press-release/chapsvision-appoints-silvano-sansoni-as-general-manager/",
+   "https://www.boursorama.com/actualite-economique/actualites-amp/renseignement-et-ia-la-dgsi-rompt-son-contrat-avec-palantir-pour-la-pepite-francaise-chapsvision-annonce-lecornu-7583de129850845ce761f45299781e10",
+   "https://alliancy.fr/qui-est-chapsvision-le-tombeur-de-palantir-au-sein-de-letat-francais-5e94387d-0181-4729-8a0d-87ad89a27908",
+   "https://www.chapsvision.com/blog/chapsvision-chooses-scaleway-as-its-sovereign-cloud-partner/",
+   "https://next.ink/723/le-nouveau-champion-francais-cybersurveillance-veut-aider-handicapes-mentaux-a-communiquer/",
+   "https://fr.wikipedia.org/wiki/Olivier_Dellenbach"
+  ]
+ },
+ {
+  "id": "gautier-cloix",
+  "nom": "Gautier Cloix",
+  "aile": "infrastructures",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : modèles ou plateforme souveraine (l'agent proposait industrialisation : H vend des agents d'IA appliqués aux processus d'entreprise ; le parcours de Cloix (Palantir) est celui du déploiement en industrie.)",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://humanx.co/europe/speakers/gautier-cloix",
+   "url_image": "https://cdn.humanx.co/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6OTc5ODEsInB1ciI6ImJsb2JfaWQifX0=--30ce818b6f15d5c9e6fdcdcfc873acc107507bc4/Gautier-Cloix-1.png",
+   "licence": "Non précisée",
+   "credit": "Photo : HumanX",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page intervenant HumanX Europe intitulée Gautier Cloix, image nommée Gautier-Cloix-1.png"
+  },
+  "citation_source": "https://www.journaldugeek.com/2026/04/19/holo-tab-et-si-votre-navigateur-travaillait-a-votre-place/",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://humanx.co/europe/speakers/gautier-cloix",
+   "https://en.wikipedia.org/wiki/H_(company)",
+   "https://www.journaldugeek.com/2026/04/19/holo-tab-et-si-votre-navigateur-travaillait-a-votre-place/",
+   "https://www.hcompany.ai/about"
+  ]
+ },
+ {
+  "id": "robin-tuluie",
+  "nom": "Robin Tuluie",
+  "aile": "industrialisation",
+  "aile_justification": "PhysicsX applique l'IA à la conception industrielle (IA appliquée à l'ingénierie) et vient de lever des fonds pour passer à l'échelle.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.physicsx.ai/about",
+   "url_image": "https://cdn.prod.website-files.com/675714704a690860b1a91fa2/67573ec6836776e7457534c9_654512227583050288b2925b_2023_Oct_PhysicsX_Shoreditch_0293-2.jpeg",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : PhysicsX",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Image figurant sur la fiche Robin Tuluie de la page équipe physicsx.ai/about (extraction WebFetch, sans alt text)"
+  },
+  "citation_source": "https://www.physicsx.ai/newsroom/physicsx-announces-300m-series-c-to-accelerate-physics-ai-for-industrial-engineering",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.physicsx.ai/newsroom/physicsx-announces-300m-series-c-to-accelerate-physics-ai-for-industrial-engineering",
+   "https://londontechweek.com/speakers/robin-tuluie-tfaz",
+   "https://www.physicsx.ai/about",
+   "https://www.roadracingworld.com/?p=271234"
+  ]
+ },
+ {
+  "id": "vaysh-kewada",
+  "nom": "Vaysh Kewada",
+  "aile": "infrastructures",
+  "aile_justification": "Salience Labs construit la couche réseau (commutateurs photoniques) des centres de données d'IA : c'est de l'infrastructure de calcul.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://asiansintech.com/the-list/vaysh-kewada",
+   "url_image": "https://asiansintech.com/wp-content/uploads/2022/07/Kewada-Vaysh.png",
+   "licence": "Non précisée, tous droits réservés présumés",
+   "credit": "Photo : Asians in Tech",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle « Vaysh Kewada, Founder and CEO of Salience Labs » (titre, méta-description et attribut alt de l'image nomment la personne)"
+  },
+  "citation_source": "https://datacentrenews.uk/story/salience-labs-debuts-all-optical-switch-for-ai-hubs",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.eenewseurope.com/en/salience-labs-closes-funding-for-photonic-switches",
+   "https://datacentrenews.uk/story/salience-labs-debuts-all-optical-switch-for-ai-hubs",
+   "https://asiansintech.com/the-list/vaysh-kewada",
+   "https://semiwiki.com/tag/jalal-bagherli/"
+  ]
+ },
+ {
+  "id": "mouad-m-ghari",
+  "nom": "Mouad M'Ghari",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la défense (drones, autonomie) et passage à l'échelle industriel : usine, commandes publiques, levée de fonds.",
+  "verification": "valide",
+  "photo": null,
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.harmattan.ai",
+   "https://fr.wikipedia.org/wiki/Harmattan_AI",
+   "https://lessentieldeleco.fr/8408-harmattan-ai-premiere-licorne-francaise-de-la-defense/",
+   "https://www.bladi.net/marocain-grandes-fortunes-france,122916.html",
+   "https://runtimewire.com/article/france-orders-5000-harmattan-ai-drones-dassault-startup-bet"
+  ]
+ },
+ {
+  "id": "jean-philippe-baert",
+  "nom": "Jean-Philippe Baert",
+  "aile": "infrastructures",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : modèles ou plateforme souveraine (l'agent proposait industrialisation : LightOn vend une plateforme d'IA générative appliquée aux entreprises (finance, industrie, santé, défense, secteur public) ; la mission de Baert est l'exécution commerciale, donc le passage à l'échelle.)",
+  "verification": "valide",
+  "photo": null,
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://live.euronext.com/el/listview/company-press-release/601090",
+   "https://www.abcbourse.com/marches/lighton-remanie-sa-gouvernance-avec-jean-philippe-baert-comme-directeur-general_699508",
+   "https://splio.com/en/appointment-jean-philippe-baert-ceo-splio/",
+   "https://en.wikipedia.org/wiki/LightOn",
+   "https://lighton.ai/investors"
+  ]
+ },
+ {
+  "id": "ralf-gulde",
+  "nom": "Ralf Gulde",
+  "aile": "industrialisation",
+  "aile_justification": "Sereact transforme l'IA en produit industriel déployé en entrepôt (robotique appliquée, logistique).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.student.uni-stuttgart.de/en/news/all/Start-up-sereact-is-making-robots-smarter-and-has-raised-110-million-dollars-in-funding/",
+   "url_image": "https://www.uni-stuttgart.de/universitaet/aktuelles/img-presseinfo/download/sereact-start-up-gruender-gulde-marc-schultheiss.jpg",
+   "licence": "Photo de presse fournie par Sereact et publiée par l'Université de Stuttgart ; conditions de réutilisation non précisées",
+   "credit": "Photo : sereact / Marc Schultheiss",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Légende et attribut alt de la page : « Ralf Gulde (right) holding the hand of a humanoid robot ». Il est à droite ; à gauche, un homme de dos partiel au premier plan. Le carré devra être recadré sur lui (moitié droite)."
+  },
+  "citation_source": "https://www.student.uni-stuttgart.de/en/news/all/Start-up-sereact-is-making-robots-smarter-and-has-raised-110-million-dollars-in-funding/",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.student.uni-stuttgart.de/en/news/all/Start-up-sereact-is-making-robots-smarter-and-has-raised-110-million-dollars-in-funding/",
+   "https://www.uni-stuttgart.de/en/university/news/all/Alumni-thrive-with-AI-powered-formula-for-success/",
+   "https://sereact.ai",
+   "https://www.startbase.com/news/zalando-steigt-bei-robotik-startup-sereact-ein-finanzierungsrunde-waechst-auf-116-millionen-us-dollar/",
+   "https://raising.fi/news/sereact-series-b-july-2026",
+   "https://www.massrobotics.org/sereact-raises-110m-series-b/"
+  ]
+ },
+ {
+  "id": "ahmed-achchak",
+  "nom": "Ahmed Achchak",
+  "aile": "industrialisation",
+  "aile_justification": "Startup d'agents IA appliqués à la cybersécurité en entreprise, financée par des fonds de capital-risque : IA appliquée et passage à l'échelle.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.qevlar.com/about",
+   "url_image": "https://cdn.prod.website-files.com/69d65683938c2879b205528d/6a3a99911c205959a5262d32_Rectangle%202.jpg",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : Qevlar AI",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page À propos de qevlar.com, image de la section Ahmed Achchak avec attribut alt « Ahmed Achchak »"
+  },
+  "citation_source": "https://securitybrief.co.uk/story/qevlar-ai-raises-usd-30m-to-expand-autonomous-ai-soc",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.qevlar.com/about",
+   "https://www.qevlar.com/press/qevlar-ai-raises-30m",
+   "https://www.lemondedudroit.fr/deals/103570-dla-piper-conseille-eqt-ventures-investissement-serie-a-30-m-dans-qevlar-ai.html",
+   "https://securitybrief.co.uk/story/qevlar-ai-raises-usd-30m-to-expand-autonomous-ai-soc",
+   "https://www.qevlar.com/post/qevlar-ai-raises-14m-to-supercharge-security-operations-centres-with-agentic-ai"
+  ]
+ },
+ {
+  "id": "max-junestrand",
+  "nom": "Max Junestrand",
+  "aile": "industrialisation",
+  "aile_justification": "Legora applique l'IA générative au droit (logiciel d'entreprise, agents) et l'a passée à l'échelle industrielle.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Max_Junestrand_2026.png",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/c/cf/Max_Junestrand_2026.png",
+   "licence": "CC0 1.0",
+   "credit": "Photo : Thomashollande, CC0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Max Junestrand » ; le nom est aussi visible en partie sur l'écran derrière lui. Photo prise sur scène lors d'une conférence, 17/02/2026."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://summit.sifted.eu/speakers/max-junestrand",
+   "https://tech.eu/2025/05/21/swedish-legaltech-legora-raises-80m-series-b-at-675m-valuation/",
+   "https://thenextweb.com/news/legora-junestrand-europe-frontier-lab-8-5bn-round",
+   "https://commons.wikimedia.org/wiki/File:Max_Junestrand_2026.png"
+  ]
+ },
+ {
+  "id": "uljan-sharka",
+  "nom": "Uljan Sharka",
+  "aile": "infrastructures",
+  "aile_justification": "Domyn entraîne des grands modèles de fondation et exploite le supercalculateur Colosseum ; le consortium Europa doit construire un modèle européen de pointe avec du calcul EuroHPC.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://www.domyn.com/team",
+   "url_image": "https://cdn.prod.website-files.com/682dcb35e7fd7a313cae805e/697b3021b0793933c2e40743_uljan-sharka.webp",
+   "licence": "Photo officielle de l'organisation (droits à confirmer)",
+   "credit": "Photo : Domyn",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Attribut alt de l'image sur la page équipe de domyn.com : « Uljan Sharka, Chairman, Founder & CEO » ; portrait individuel vérifié à l'œil"
+  },
+  "citation_source": "https://www.domyn.com/news/domyn-selected-by-the-european-commission-to-lead-europes-frontier-ai-model-initiative",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.domyn.com/people/uljan-sharka",
+   "https://domyn.com",
+   "https://www.vertiv.com/en-emea/about/news-and-insights/news-releases/igenius-launches-one-of-the-worlds-largest-sovereign-ai-data-centers-leveraging-vertiv-infrastructure-nvidia-accelerated-computing-and-omniverse/",
+   "https://digital-strategy.ec.europa.eu/en/news/commission-selects-europa-consortium-winner-frontier-ai-grand-challenge-project-build-european-open",
+   "https://www.domyn.com/news/domyn-selected-by-the-european-commission-to-lead-europes-frontier-ai-model-initiative",
+   "https://summit.sifted.eu/speakers/uljan-sharka",
+   "https://www.santander.com/en/press-room/santander-international-banking-conference/biographies/uljan-sharka"
+  ]
+ },
+ {
+  "id": "alexandre-lebrun",
+  "nom": "Alexandre LeBrun",
+  "aile": "infrastructures",
+  "aile_justification": "AMI Labs est un laboratoire de fondation qui entraîne de nouveaux modèles d'IA (modèles du monde), levée d'un milliard de dollars pour la recherche et le calcul ; Nabla (santé) pourrait justifier l'industrialisation, mais son rôle actuel est celui d'un laboratoire de modèles.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.nabla.com/about-us",
+   "url_image": "https://cdn.prod.website-files.com/67c6ddc58c9e7b3f7d095cd9/6a02dcccc7f75904719d45c4_Alex.png",
+   "licence": "Photo officielle publiée par l'organisation (Nabla), droits à confirmer",
+   "credit": "Photo : Nabla",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe Nabla : le portrait figure dans la fiche individuelle nommée « Alexandre LeBrun », Co-founder, Executive Chairman & Chief AI Scientist (attribut alt vide, identification par le bloc nom/fonction adjacent). Portrait 4:3, à recadrer en carré sur le visage."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://ami.frenchtechjournal.com/team/alexandre-lebrun",
+   "https://www.techcrunch.com/2026/01/23/whos-behind-ami-labs-yann-lecuns-world-model-startup/",
+   "https://techcrunch.com/2026/03/09/yann-lecuns-ami-labs-raises-1-03-billion-to-build-world-models/",
+   "https://en.wikipedia.org/wiki/Advanced_Machine_Intelligence_Labs",
+   "https://amilabs.xyz",
+   "https://www.nabla.com/about-us",
+   "https://ch.marketscreener.com/insider/ALEXANDRE-LEBRUN-A0O2UQ/",
+   "https://lessentieldeleco.fr/3030-nabla-lia-francaise-que-les-medecins-americains-sarrachent/",
+   "https://www.frenchtechjournal.com/french-tech-funding-wire-june-20-nabla-animaj-pelico-more/"
+  ]
+ },
+ {
+  "id": "chad-edwards",
+  "nom": "Chad Edwards",
+  "aile": "industrialisation",
+  "aile_justification": "CuspAI applique l'IA à la découverte de matériaux pour des industriels (semi-conducteurs, énergie, climat) avec un réseau de partenaires industriels ; c'est de l'IA appliquée qui passe à l'échelle. L'aile infrastructures serait défendable (modèles de fondation pour la chimie), mais le produit est tourné vers l'industrie.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://londontechweek.com/speakers/chad-edwards-knc1",
+   "url_image": "https://cdn.asp.events/CLIENT_Informa__AADDE28D_5056_B739_5481D63BF875B0DF/sites/london-tech-week-2024/media/libraries/speakers/Chad-edwards.png",
+   "licence": "Non précisée",
+   "credit": "Photo : London Tech Week / CuspAI",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Fiche individuelle d'intervenant intitulée Chad Edwards, texte alternatif de l'image « Chad Edwards », bio le désignant cofondateur et directeur général de CuspAI"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://londontechweek.com/speakers/chad-edwards-knc1",
+   "https://gbxglobal.org/cuspais-dr-chad-edwards-on-building-two-unicorns-before-turning-35/",
+   "https://vestbee.com/insights/articles/cusp-ai-raises-450-m",
+   "https://siliconangle.com/2025/09/10/cuspai-raises-100m-build-ai-search-engine-transform-materials-science/",
+   "https://cusp.ai",
+   "https://www.techcrunch.com/2024/06/18/cuspai-raises-30m-to-create-a-gen-ai-driven-search-engine-for-new-materials/"
+  ]
+ },
+ {
+  "id": "katy-wigdahl",
+  "nom": "Katy Wigdahl",
+  "aile": "industrialisation",
+  "aile_justification": "Speechmatics vend de la reconnaissance vocale en API aux entreprises (santé, médias, centres de contact) : de l'IA appliquée en produit.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.speechmatics.com/company/about-speechmatics",
+   "url_image": "https://images.ctfassets.net/yze1aysi0225/5MkeV8AaWIRXmlTvTyYjnp/0b1287ff12cb0405a58c557e6aa93417/katy_wigdahl_headshot__1_.webp",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : Speechmatics",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Photo dans la section Leadership Team de la page officielle de Speechmatics, sous le nom Katy Wigdahl (version markdown de la page), fichier nommé katy_wigdahl_headshot ; attribut alt vide. Portrait seul, visage net, format paysage à recadrer en carré sur le visage."
+  },
+  "citation_source": "https://speechmatics.com/company/articles-and-news/speechmatics-sets-record-in-medical-speech-to-text-with-93-percent-accuracy",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.speechmatics.com/ai-info.md",
+   "https://www.speechmatics.com/company/about-speechmatics.md",
+   "https://en.wikipedia.org/wiki/Speechmatics",
+   "https://techcrunch.com/2022/06/28/speechmatics-raises-62m-for-its-inclusive-approach-to-speech-to-text-ai",
+   "https://em360tech.com/index.php/tech-articles/speech-and-language",
+   "https://speechmatics.com/company/articles-and-news/speechmatics-sets-record-in-medical-speech-to-text-with-93-percent-accuracy"
+  ]
+ },
+ {
+  "id": "eleonore-crespo",
+  "nom": "Eléonore Crespo",
+  "aile": "industrialisation",
+  "aile_justification": "Pigment est un logiciel d'entreprise (planification financière) qui intègre des agents d'IA : de l'IA appliquée, à l'échelle.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://alumni.ens-paris-saclay.fr/en/article/eleonore-crespo-founder-of-pigment-the-art-of-giving-meaning-to-data/01/08/2025/110",
+   "url_image": "https://alumni.ens-paris-saclay.fr/medias/image/5790287976809fdf46b661.png",
+   "licence": "Inconnue",
+   "credit": "Photo : ENS Paris-Saclay Alumni",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Attribut alt de l'image : « Eléonore Crespo, founder of Pigment: the art of giving meaning to data », image principale de l'article qui lui est consacré. Portrait vérifié à l'œil : une seule personne, visage net (image en 16:9, à recadrer en carré sur le visage ; petit côté 360 px). Une meilleure version existe peut-être dans le dossier presse de Pigment (Google Drive, non ouvert)."
+  },
+  "citation_source": "https://www.heyfuturenexus.com/posts/pigment-co-ceo-eleonore-crespo-wants-to-give-cfos-superpowers",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.pigment.com/about-us",
+   "https://community.pigment.com/company-news-107/pigment-has-just-raised-145m-in-series-d-funding-1968",
+   "https://www.pigment.com/newsroom/ai-agents-announcement",
+   "https://www.pigment.com/newsroom",
+   "https://www.universite-paris-saclay.fr/actualites/eleonore-crespo-recoit-le-prix-ey-de-de-la-scale-de-lannee-2025-ile-de-france",
+   "https://alumni.ens-paris-saclay.fr/en/article/eleonore-crespo-founder-of-pigment-the-art-of-giving-meaning-to-data/01/08/2025/110",
+   "https://www.heyfuturenexus.com/posts/pigment-co-ceo-eleonore-crespo-wants-to-give-cfos-superpowers"
+  ]
+ },
+ {
+  "id": "emmanuelle-martiano-rolland",
+  "nom": "Emmanuelle Martiano-Rolland",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la biotech et à la santé, avec partenariat industriel (Sanofi) : transformation de l'IA en produit.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.aqemia.com/who-we-are",
+   "url_image": "https://a.storyblok.com/f/330141/540x562/19cb15bf33/rectangle-9-1.png",
+   "licence": "Photo officielle de l'organisation (droits à confirmer)",
+   "credit": "Photo : Aqemia",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe officielle aqemia.com/who-we-are : portrait individuel sous sa fiche nominative ; portrait net, une seule personne"
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.aqemia.com/who-we-are",
+   "https://www.biospace.com/press-releases/aqemia-and-sanofi-expand-their-research-collaboration",
+   "https://www.frenchtechjournal.com/la-machine-11-aqemia-yampa/",
+   "https://www.frenchweb.fr/la-startup-aqemia-leve-38-millions-deuros-pour-predire-lefficacite-des-molecules-therapeutiques/450257"
+  ]
+ },
+ {
+  "id": "vishal-marria",
+  "nom": "Vishal Marria",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée (détection de fraude, risque, conformité) déployée à grande échelle chez banques, assureurs et administrations, financée par plusieurs levées de fonds.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.quantexa.com/team/vishal-marria/",
+   "url_image": "https://a-us.storyblok.com/f/1012896/540x540/dd75a1aefc/vmarria.png",
+   "licence": "Photo officielle publiée par l'organisation (droits non précisés)",
+   "credit": "Photo : Quantexa",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de Quantexa, alt de l'image « Vishal Marria »"
+  },
+  "citation_source": "https://www.verdict.co.uk/ceo-chat-qa-with-vishal-marria-of-quantexa/",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.quantexa.com/team/vishal-marria/",
+   "https://www.verdict.co.uk/ceo-chat-qa-with-vishal-marria-of-quantexa/",
+   "https://fintech.global/2025/03/05/uk-ai-fintech-quantexa-secures-175m-series-f-to-fuel-north-american-growth/",
+   "https://www.globenewswire.com/news-release/2026/01/29/3228939/0/en/Quantexa-Recognized-as-a-Leader-in-2026-Gartner-Magic-Quadrant-for-Decision-Intelligence-Platforms.html",
+   "https://en.wikipedia.org/wiki/Quantexa",
+   "https://www.cityam.com/?p=2071717"
+  ]
+ },
+ {
+  "id": "glen-gowers",
+  "nom": "Glen Gowers",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la biotech et à la conception de médicaments, avec passage à l'échelle par levées de fonds et pipeline thérapeutique.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.basecamp-research.com/about",
+   "url_image": "https://cdn.prod.website-files.com/6aa3d7f3c13e3f3df4204fab/6aa43bb915277af6cd5e77fe_glen.webp",
+   "licence": "Photo officielle de l'organisation (droits à confirmer)",
+   "credit": "Photo : Basecamp Research",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe de Basecamp Research listant Glen Gowers, PhD, co-founder avec ce portrait ; portrait seul, visage net, veste au logo Basecamp Research."
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.technologynetworks.com/tn/editor/glen-gowers-phd",
+   "https://www.basecamp-research.com/about",
+   "https://www.biopharmadive.com/news/basecamp-broad-david-liu-ai-genetic-medicine-series-b/729129/",
+   "https://tech.eu/2026/09/23/anthropic-and-nvidia-back-basecamp-research-in-140m-series-c/",
+   "https://www.basecamp-research.com"
+  ]
+ },
+ {
+  "id": "delphine-groll",
+  "nom": "Delphine Groll",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la santé, déployée à l'échelle dans des organisations de soins : passage de l'invention au produit.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.nabla.com/about-us",
+   "url_image": "https://cdn.prod.website-files.com/67c6ddc58c9e7b3f7d095cd9/6a02dcda93901584ff85630c_Delpine.png",
+   "licence": "Photo officielle de l'organisation (droits à confirmer)",
+   "credit": "Photo : Nabla",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe officielle de Nabla nommant Delphine Groll ; portrait individuel, visage net"
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.nabla.com/about-us",
+   "https://www.maddyness.com/2025/06/17/ia-nabla-leve-70-millions-de-dollars-pour-passer-la-vitesse-superieure-en-europe/",
+   "https://nabla.com/press-release/nabla-raises-70m-series-c-to-deliver-agentic-ai-to-the-heart-of-clinical-workflows-bringing-total-funding-to-120m",
+   "https://www.humanx.co/speakers/delphine-groll",
+   "https://www.frenchweb.fr/nabla-leve-65-millions-deuros-pour-transformer-lia-medicale-en-infrastructure-clinique/455513"
+  ]
+ },
+ {
+  "id": "sasha-haco",
+  "nom": "Sasha Haco",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : Unitary vend aujourd'hui des agents d'IA d'entreprise (assurance, services financiers), donc de l'IA appliquée et industrialisée, plutôt que de l'infrastructure ou de la recherche.)",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.unitary.ai/about-us",
+   "url_image": "https://cdn.prod.website-files.com/675823350267b290d7ca1c64/690b4423f9975e45bd7906ab_sacha-haco.avif",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : Unitary",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page 'About us' d'Unitary, profil individuel de Sasha Haco (Co-founder & CEO) ; fichier nommé sacha-haco. Converti de AVIF en JPEG (sips), 480x480."
+  },
+  "citation_source": "https://www.unitary.ai/articles/virtual-agents-for-insurance",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.unitary.ai",
+   "https://www.unitary.ai/about-us",
+   "https://www.unitary.ai/articles/virtual-agents-for-insurance",
+   "https://tech.eu/2023/10/03/unitary-raises-15m-in-series-a-funding-round-for-ai-driven-content-moderation/",
+   "https://londontechweek.com/speakers/sasha-haco",
+   "https://en.wikipedia.org/wiki/Sasha_Haco"
+  ]
+ },
+ {
+  "id": "zelda-mariet",
+  "nom": "Zelda Mariet",
+  "aile": "infrastructures",
+  "aile_justification": "Bioptimus est un laboratoire qui entraîne des modèles de fondation ; l'aile industrialisation (IA appliquée à la santé) est une alternative défendable.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.academie-technologies.fr/en/woman-in-tech/mariet-zelda/",
+   "url_image": "https://www.academie-technologies.fr/wp-content/uploads/2025/11/Zelda_MARIET.png",
+   "licence": "Non précisée",
+   "credit": "Photo : Académie des technologies",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de l'Académie des technologies nommant Zelda Mariet ; image de portrait unique, visage net."
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.academie-technologies.fr/en/woman-in-tech/mariet-zelda/",
+   "https://www.bioptimus.com/team",
+   "https://www.bioptimus.com/news/bioptimus-hits-76m-funding",
+   "https://siliconrepublic.com/start-ups/bioptimus-paris-france-start-up-funding-ai-gpt-biology"
+  ]
+ },
+ {
+  "id": "nicolas-do-huu",
+  "nom": "Nicolas Do Huu",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la santé et à la biotech : Iktos transforme l'IA générative et la robotique en outils utilisés par l'industrie pharmaceutique.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://iktos.ai/about",
+   "url_image": "https://images.prismic.io/iktos/ZmHOqpm069VX1hS3_ndh-for-website.png",
+   "licence": "Photo officielle publiée par l'organisation (droits non précisés)",
+   "credit": "Photo : Iktos",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe iktos.ai/about : fiche individuelle « Nicolas Do Huu, Co-Founder & CTO », fichier nommé ndh-for-website. Portrait seul, net, 602x600 px."
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://iktos.ai/about",
+   "https://iktos.ai",
+   "https://pharmaphorum.com/news/servier-signs-eu1bn-plus-ai-pact-iktos",
+   "https://www.m-ventures.com/news/iktos-enters-strategic-1b-multi-target-ai-partnership-with-servier-to-advance-drug-discovery-in-oncology-and-neurology",
+   "https://iktos.ai/resources/news/iktos-raises-e-15-5m-series-a-round-to-expand-its-artificial-intelligence-based-drug-discovery-technologies-and-solutions",
+   "https://iktos.ai/resources/press/nicolas-do-huu-avec-lia-iktos-veut-reduire-de-moitie-le-temps-de-decouverte-des-medicaments",
+   "https://theorg.com/org/iktos/org-chart/nicolas-do-huu-phd"
+  ]
+ },
+ {
+  "id": "eleanor-lightbody",
+  "nom": "Eleanor Lightbody",
+  "aile": "industrialisation",
+  "aile_justification": "Luminance fait de l'IA appliquée au droit et aux contrats un produit d'entreprise ; c'est de l'industrialisation (IA juridique, logiciel d'entreprise).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://event.technologyreview.com/emtech-ai-2025/speaker/1491147/eleanor-lightbody",
+   "url_image": "https://assets.swoogo.com/uploads/full/4682755-6750a1cb9ffd8.png",
+   "licence": "Non précisée, photo de presse d'intervenante fournie pour l'événement",
+   "credit": "Photo : MIT Technology Review EmTech AI",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de l'intervenante sur le site officiel de l'événement, image avec alt « Eleanor Lightbody ». Le site SXSW London 2025 utilise aussi un portrait dont l'alt est « Eleanor Lightbody » (image différente, non retenue)."
+  },
+  "citation_source": "https://www.luminance.com/press-releases/luminance-awarded-2026-kings-award-for-enterprise-in-international-trade",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://event.technologyreview.com/emtech-ai-2025/speaker/1491147/eleanor-lightbody",
+   "https://www.luminance.com/press-releases/luminance-raises-75-million-in-series-c-funding-round-led-by-point72-private-investments",
+   "https://www.luminance.com/press-releases/luminance-ceo-eleanor-lightbody-named-tech-businesswoman-of-the-year-at-the-2025-uk-tech-awards",
+   "https://www.luminance.com/press-releases/luminance-awarded-2026-kings-award-for-enterprise-in-international-trade",
+   "https://www.luminance.com/about"
+  ]
+ },
+ {
+  "id": "maik-taro-wehmeyer",
+  "nom": "Maik Taro Wehmeyer",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la finance et à l'assurance : plateforme d'agents et de décision pour institutions financières, en phase de passage à l'échelle (série C).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://taktile.com/maik-taro-wehmeyer",
+   "url_image": "https://taktile.com/media/pages/maik-taro-wehmeyer/51b6d4f1de-1753176170/maik.jpeg",
+   "licence": "Photo officielle publiée par l'organisation (droits à confirmer)",
+   "credit": "Photo : Taktile",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle sur taktile.com, image avec attribut alt « Maik Taro Wehmeyer »"
+  },
+  "citation_source": "https://taktile.com/articles/taktile-secures-110m-in-goldman-sachs-led-series-c-to-power-ai-transformation-in-financial-institutions",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://taktile.com/maik-taro-wehmeyer",
+   "https://taktile.com/about",
+   "https://taktile.com/articles/taktile-secures-110m-in-goldman-sachs-led-series-c-to-power-ai-transformation-in-financial-institutions",
+   "https://fintech.global/2026/06/25/taktile-raises-110m-to-put-ai-at-heart-of-finance/",
+   "https://pulse2.com/taktile-raises-110-million-series-c-led-by-goldman-sachs-alternatives/",
+   "https://fortune.com/2026/06/24/exclusive-taktile-goldman-sachs-ai-bank-insurance-funding/",
+   "https://taktile.com"
+  ]
+ },
+ {
+  "id": "elise-de-reus",
+  "nom": "Elise de Reus",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la biotechnologie : conception de protéines pour la pharmacie et l'industrie, financée par une série B.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://events.techleap.nl/stateofdutchtech2024/speaker/1117916/elise-de-reus",
+   "url_image": "https://assets.swoogo.com/uploads/full/3614705-65ddd63239faf.png",
+   "licence": "Non précisée",
+   "credit": "Photo : Techleap / Elise de Reus",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page individuelle d'intervenante « Elise de Reus », Co-founder at Cradle"
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.cradle.bio/blog/series-b",
+   "https://en.wikipedia.org/wiki/Cradle_(company)",
+   "https://events.techleap.nl/stateofdutchtech2024/speaker/1117916/elise-de-reus",
+   "https://www.biopharmatrend.com/post/755-navigating-protein-designs-next-wave-with-elise-de-reus-from-cradle/",
+   "https://www.messaginglab.com/groweverything/elisedereus"
+  ]
+ },
+ {
+  "id": "matthieu-rouif",
+  "nom": "Matthieu Rouif",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : Photoroom est de l'IA appliquée au commerce en ligne (produit, API, agents pour catalogues d'entreprises), donc le passage à l'échelle industrielle.)",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.photoroom.com/inside-photoroom/brand-refresh",
+   "url_image": "https://storyblok-cdn.photoroom.com/f/191576/2160x2160/50ca9aff3d/img_7521.webp",
+   "licence": "Photo publiée par l'organisation, droits non précisés",
+   "credit": "Photo : Photoroom",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Avatar d'auteur de l'article officiel du blog Photoroom, attribut alt « Matthieu Rouif », article signé Matthieu Rouif"
+  },
+  "citation_source": "https://thebridge.artefact.com/?p=8883",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://thebridge.artefact.com/?p=8883",
+   "https://www.photoroom.com/about",
+   "https://www.forbes.lu/photoroom-une-application-qui-genere-des-images-ia-en-une-seconde-vaut-desormais-500-millions-de-dollars/",
+   "https://phototrend.fr/2024/03/photoroom-editeur-photo-par-ia-levee-de-fonds/",
+   "https://www.photoroom.com/inside-photoroom/brand-refresh",
+   "https://www.photoroom.com/inside-photoroom/photoroom-launches-visual-agents-to-generate-check-and-fix-product-visuals-so-enterprises-no-longer-have-to-build-their-own-ai-stack"
+  ]
+ },
+ {
+  "id": "neil-daly",
+  "nom": "Neil Daly",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la santé (dispositif médical), passage à l'échelle dans le NHS et à l'international.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.cogxfestival.com/la-ambassadors/neil-daly-",
+   "url_image": "https://static.wixstatic.com/media/58208e_79ab3c837107403a8ab4cc5c556ab781~mv2.png/v1/fill/w_1000,h_760,al_c/Frame%2020.png",
+   "licence": "Droits réservés, réutilisation non documentée",
+   "credit": "Photo : COGX / Skin Analytics",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle COGX intitulée « Neil Daly », « Founder & CEO - Skin Analytics », dont c'est l'image principale (og:image). Même visage que le portrait officiel du site skin-analytics.com (2024-07_Neil-Daly.jpg, 270x270)."
+  },
+  "citation_source": "https://skin-analytics.com/news/funding/series-b-15million-funding/",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://skin-analytics.com/news/funding/series-b-15million-funding/",
+   "https://skin-analytics.com/about-us/",
+   "https://www.cogxfestival.com/la-ambassadors/neil-daly-",
+   "https://htn.co.uk/2025/04/23/british-healthtech-company-skin-analytics-secures-15-million-funding"
+  ]
+ },
+ {
+  "id": "james-field",
+  "nom": "James Field",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la biotech et à la découverte de médicaments, avec partenariats pharma : passage de l'invention au produit.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://labgeniustx.com/team",
+   "url_image": "https://labgeniustx.com/wp-content/uploads/2024/10/james-headshot.webp",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : LabGenius Therapeutics",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de James Field (CEO) sur le site officiel LabGenius ; l'alt de l'image est seulement « LabGenius Therapeutics CEO »."
+  },
+  "citation_source": "https://labgeniustx.com/press-release-lgchem/",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://labgeniustx.com/",
+   "https://labgeniustx.com/team",
+   "https://labgeniustx.com/news/",
+   "https://labgeniustx.com/press-release-lgchem/",
+   "https://labgeniustx.com/partnerships/",
+   "https://labgeniustx.com/technology/"
+  ]
+ },
+ {
+  "id": "nora-khaldi",
+  "nom": "Nora Khaldi",
+  "aile": "industrialisation",
+  "aile_justification": "Biotech qui applique l'IA à la découverte d'ingrédients santé et les commercialise avec des partenaires industriels (BASF, Nestlé, Givaudan...) : IA appliquée à la santé.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://www.nuritas.com/about/",
+   "url_image": "https://www.nuritas.com/wp-content/uploads/2025/02/Dr-Nora-Khaldi-CEO-and-Founder-Nuritas-scaled-e1740157832687.jpg",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : Nuritas",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page /about/ de nuritas.com, alt de l'image : « Dr Nora Khaldi, CEO and Founder of Nuritas »"
+  },
+  "citation_source": "https://insider.fitt.co/press-release/nuritas-appoints-former-unilever-north-america-president-kees-kruythoff-as-board-chair/",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.nuritas.com/about/",
+   "https://insider.fitt.co/press-release/nuritas-appoints-former-unilever-north-america-president-kees-kruythoff-as-board-chair/",
+   "https://www.siliconrepublic.com/innovation/nuritas-basf-ai-peptides-breakthrough-bioactive-ingredient",
+   "https://www.nuritas.com/"
+  ]
+ },
+ {
+  "id": "lukas-saari",
+  "nom": "Lukas Saari",
+  "aile": "industrialisation",
+  "aile_justification": "Tandem Health est une entreprise d'IA appliquée à la santé, qui déploie un produit auprès de milliers d'organisations de soins ; elle a levé une série B en 2026.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.tandemhealth.ai/about",
+   "url_image": "https://framerusercontent.com/images/VnzljLfWMhuFq8RGLIqXJpFTnU.png",
+   "licence": "Photo officielle de l'organisation (page À propos), droits non précisés",
+   "credit": "Photo : Tandem Health",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Carte d'équipe de la page À propos de tandemhealth.ai : l'image est placée juste avant la légende « Lukas Saari, CEO & Co-founder » dans le HTML. L'attribut alt de l'image est vide. Portrait d'un seul homme roux, visage net, fond uni, carré 450x450 (limite basse de résolution)."
+  },
+  "citation_source": "https://www.tandemhealth.ai/tandem-health-raises-100m-to-bring-european-healthcare-into-the-ai-era-led-by-the-scaleup-europe-fund-managed-by-eqt",
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.tandemhealth.ai/about",
+   "https://tandemhealth.ai/about/our-story",
+   "https://www.tandemhealth.ai",
+   "https://www.tandemhealth.ai/tandem-health-raises-100m-to-bring-european-healthcare-into-the-ai-era-led-by-the-scaleup-europe-fund-managed-by-eqt",
+   "https://www.arctictoday.com/%F0%9F%87%B8%F0%9F%87%AA-tandem-health-secures-50m-to-build-an-ai-native-operating-system-for-clinical-workflows-across-europe/",
+   "https://www.kinnevik.com/tandem-health"
+  ]
+ },
+ {
+  "id": "marius-meiners",
+  "nom": "Marius Meiners",
+  "aile": "industrialisation",
+  "aile_justification": "Peec AI est un logiciel d'entreprise en forte croissance (analyse de visibilité dans les moteurs d'IA) : de l'IA appliquée passée à l'échelle commerciale.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://peec.ai/blog/we-raised-21m-series-a-to-help-brands-win-in-ai-search",
+   "url_image": "https://framerusercontent.com/images/vzqV7qoln5hktEUKUiTGfEV2Q.jpg?scale-down-to=2048&width=2469&height=3700",
+   "licence": "Photo publiée par l'organisation (blog officiel), droits non précisés",
+   "credit": "Photo : Peec AI",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Sur le blog officiel de Peec AI, cette image est la photo d'auteur enregistrée avec le nom Marius Meiners et le titre Co-founder & CEO (même enregistrement de données de l'article). Portrait unique, visage net, fond sombre. Format portrait vertical (1367x2048), à recadrer en carré."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://peec.ai/blog/we-raised-21m-series-a-to-help-brands-win-in-ai-search",
+   "https://peec.ai",
+   "https://techcrunch.com/2026/05/23/peec-one-of-berlins-rising-startups-more-than-doubled-annualized-revenue-in-months-to-10m-sources-say/",
+   "https://tech.eu/2025/11/18/peec-ai-raises-21m-series-a-to-help-brands-win-in-ai-search/",
+   "https://peec.ai/blog/referral-program"
+  ]
+ },
+ {
+  "id": "malte-kosub",
+  "nom": "Malte Kosub",
+  "aile": "industrialisation",
+  "aile_justification": "Parloa transforme l'IA en produit d'entreprise (agents de service client déployés chez Allianz, Swiss Life, SAP), ce qui relève de l'IA appliquée en logiciel d'entreprise.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.parloa.com/about-us/",
+   "url_image": "https://a.storyblok.com/f/330303/1400x1972/0c49ecb951/malte.png",
+   "licence": "Photo officielle de l'organisation (droits à confirmer)",
+   "credit": "Photo : Parloa",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe officielle parloa.com/about-us, image associée à l'entrée nommée Malte Kosub, CEO & Co-founder"
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.parloa.com/parloa-in-the-press/parloa-raises-120m-series-c-to-reinvent-customer-service-with-agentic-ai/",
+   "https://www.parloa.com/parloa-in-the-press/parloa-valued-at-3-billion-with-350m-series-d/",
+   "https://techcrunch.com/2026/01/15/parloa-triples-its-valuation-in-8-months-to-3b-with-350m-raise/",
+   "https://techcrunch.com/2024/04/24/parloa-a-conversational-ai-platform-for-customer-service-raises-66m/",
+   "https://www.parloa.com/parloa-in-the-press/parloa-sap-endorsed-app/",
+   "https://www.parloa.com/about-us/"
+  ]
+ },
+ {
+  "id": "nikola-mrksic",
+  "nom": "Nikola Mrkšić",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée aux logiciels d'entreprise et à la relation client (agents vocaux déployés chez plus de 100 entreprises) : passage de la recherche au produit industriel.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://poly.ai/about",
+   "url_image": "https://cdn.sanity.io/images/u9ir40pr/production/cea6e4162f8fc0da70bc3a8cd43e6e1be2997c15-856x1124.png",
+   "licence": "Photo officielle publiée par l'organisation, droits non précisés",
+   "credit": "Photo : PolyAI",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page « À propos » de poly.ai : carte de profil de cette image, immédiatement suivie du nom « Nikola Mrkšić » et de la mention « Co-founder & CEO, PolyAI »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://poly.ai/about",
+   "https://www.amadeuscapital.com/success-stories-voice-ai-with-nikola-mrksic-and-polyai/",
+   "https://techcrunch.com/2022/09/07/polyai-lands-40m-to-handle-contact-center-calls-automatically/",
+   "https://poly.ai/blog/polyai-raises-86m-to-transform-how-enterprises-talk-to-their-customers",
+   "https://poly.ai/pressroom"
+  ]
+ },
+ {
+  "id": "jan-philipp-haas",
+  "nom": "Jan-Philipp Haas",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée aux logiciels d'entreprise (SAP), vendue à de grands groupes industriels, financée par des fonds et par SAP pour passer à l'échelle.",
+  "verification": "corrige",
+  "photo": null,
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://slush.org/2026-speakers/jp-haas",
+   "https://www.conduct.ai/blog/series-a",
+   "https://tech.eu/2026/06/17/former-palantir-employees-raise-60m-for-ai-enterprise-startup-conduct/",
+   "https://www.conduct.ai/blog/sap-partnership",
+   "https://pulse2.com/conduct-raises-60-million-series-a-from-index-ventures-iconiq-and-sap/amp/"
+  ]
+ },
+ {
+  "id": "sandra-wachter",
+  "nom": "Sandra Wachter",
+  "aile": "culture",
+  "aile_justification": "Juriste et chercheuse en éthique et régulation de l'IA : correspond à la table ronde sur le changement de culture (éthique, régulation, politique publique).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Sandra_Wachter_at_Berkman_Klein_Center_for_Internet_%26_Society.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/1/16/Sandra_Wachter_at_Berkman_Klein_Center_for_Internet_%26_Society.jpg",
+   "licence": "CC BY 3.0",
+   "credit": "Photo : The Berkman Klein Center for Internet & Society, CC BY 3.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons (12/06/2018) : « Dr. Sandra Wachter on Autonomous Vehicles and Risks to Privacy », image principale de l'article Wikipédia. Image tirée d'une vidéo (2018), nette, une seule personne."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.oii.ox.ac.uk/people/profiles/sandra-wachter/",
+   "https://en.wikipedia.org/wiki/Sandra_Wachter",
+   "https://commons.wikimedia.org/wiki/File:Sandra_Wachter_at_Berkman_Klein_Center_for_Internet_%26_Society.jpg"
+  ]
+ },
+ {
+  "id": "yann-lecun",
+  "nom": "Yann LeCun",
+  "aile": "culture",
+  "aile_justification": "Recherche fondamentale (réseaux convolutifs, prix Turing) et voix publique sur l'avenir de l'IA en Europe ; la liste le classe comme « Penseur ». AMI Labs relève aussi des laboratoires de modèles, mais son profil est d'abord celui d'un chercheur.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Laura_Chaubard_%26_Yann_Le_Cun_-_2024_(53814052697)_(cropped).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/8/8e/Laura_Chaubard_%26_Yann_Le_Cun_-_2024_%2853814052697%29_%28cropped%29.jpg",
+   "licence": "CC BY-SA 2.0",
+   "credit": "Photo : Jérémy Barande / École polytechnique, CC BY-SA 2.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons (remise des diplômes Executive master, 24 juin 2024, parrain Yann Le Cun) ; catégorie Commons « Yann LeCun » ; image principale de l'article Wikipédia. Version recadrée sur lui seul, portrait net vérifié à l'écran."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Yann_LeCun",
+   "https://fr.wikipedia.org/wiki/Yann_Le_Cun",
+   "https://amilabs.xyz",
+   "https://techcrunch.com/2026/03/09/yann-lecuns-ami-labs-raises-1-03-billion-to-build-world-models/",
+   "https://commons.wikimedia.org/wiki/File:Laura_Chaubard_%26_Yann_Le_Cun_-_2024_(53814052697)_(cropped).jpg"
+  ]
+ },
+ {
+  "id": "bernhard-scholkopf",
+  "nom": "Bernhard Schölkopf",
+  "aile": "culture",
+  "aile_justification": "Recherche fondamentale (apprentissage automatique, causalité) et structuration de la recherche européenne en IA.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Bernhard_Sch%C3%B6lkopf.png",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/1/11/Bernhard_Sch%C3%B6lkopf.png",
+   "licence": "CC BY 3.0",
+   "credit": "Photo : Latest Thinking, CC BY 3.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Schölkopf in 2019. He is Director of the Max Planck Institute for Intelligent Systems »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Bernhard_Schölkopf",
+   "https://de.wikipedia.org/wiki/Bernhard_Schölkopf",
+   "https://ellis.eu/",
+   "https://institute-tue.ellis.eu/",
+   "https://commons.wikimedia.org/wiki/File:Bernhard_Sch%C3%B6lkopf.png"
+  ]
+ },
+ {
+  "id": "max-welling",
+  "nom": "Max Welling",
+  "aile": "culture",
+  "aile_justification": "Chercheur fondamental de premier plan (autoencodeurs variationnels, réseaux équivariants), catégorie « Penseur » de la liste. On pourrait aussi le rattacher à industrialisation via CuspAI (IA appliquée aux matériaux), mais son profil dominant reste la recherche.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://www.humanx.co/europe/speakers/max-welling",
+   "url_image": "https://cdn.humanx.co/rails/active_storage/blobs/proxy/eyJfcmFpbHMiOnsiZGF0YSI6MjIxNjMsInB1ciI6ImJsb2JfaWQifX0=--0c6d707b6a468082c3af91f39b2e457acbfbe06e/Max-Welling-1.png",
+   "licence": "Photo officielle de conférencier (HumanX Europe), droits non précisés",
+   "credit": "Photo : HumanX",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page officielle du conférencier HumanX Europe ; alt de l'image « Max Welling - Co-founder & CTO - CuspAI ». Portrait individuel, une seule personne."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://fortune.com/2025/03/05/cuspai-hinton-lecun-google-deepmind-ai-foundation-models-chemistry-climate-change/",
+   "https://en.wikipedia.org/wiki/Max_Welling",
+   "https://amlab.science.uva.nl/people/MaxWelling/",
+   "https://www.uva.nl/en/profile/w/e/m.welling/m.welling.html",
+   "https://www.cusp.ai/"
+  ]
+ },
+ {
+  "id": "gael-varoquaux",
+  "nom": "Gaël Varoquaux",
+  "aile": "culture",
+  "aile_justification": "Chercheur fondamental en machine learning et défenseur d'une IA ouverte (open source) ; catégorie « Penseur » de la liste. Une aile infrastructures reste défendable (bibliothèque de base).",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Gael_varoquaux.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/1/11/Gael_varoquaux.jpg",
+   "licence": "CC BY-SA 4.0",
+   "credit": "Photo : Gael Varoquaux, CC BY-SA 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Image principale de l'article fr.wikipedia Gaël Varoquaux ; description du fichier Commons « A photo of Gael Varoquaux »."
+  },
+  "citation_source": null,
+  "role_controle_2026": "change",
+  "sources": [
+   "https://gael-varoquaux.info/",
+   "https://gael-varoquaux.info/about.html",
+   "https://fr.wikipedia.org/wiki/Gaël_Varoquaux",
+   "https://en.wikipedia.org/wiki/Scikit-learn",
+   "https://probabl.ai",
+   "https://commons.wikimedia.org/wiki/File:Gael_varoquaux.jpg"
+  ]
+ },
+ {
+  "id": "holger-h-hoos",
+  "nom": "Holger H. Hoos",
+  "aile": "culture",
+  "aile_justification": "Chercheur en IA fondamentale (apprentissage automatique, AutoML) et défenseur d'une stratégie européenne de recherche : profil recherche et politique publique.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Holger_Hoos_in_Aachen,_Comiciade_2025.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/8/8f/Holger_Hoos_in_Aachen%2C_Comiciade_2025.jpg",
+   "licence": "CC BY-SA 4.0",
+   "credit": "Photo : Qwertzu111111, CC BY-SA 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Titre et description du fichier Commons (Holger Hoos in Aachen, Comiciade 2025) ; données structurées « depicts » Holger Hoos. Portrait net d'une seule personne, cadrage à resserrer sur le visage en carré."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Holger_H._Hoos",
+   "https://de.wikipedia.org/wiki/Holger_H._Hoos",
+   "https://www.aim.rwth-aachen.de/",
+   "https://cairne.eu/",
+   "https://www.universiteitleiden.nl/en/staffmembers/holger-hoos",
+   "https://commons.wikimedia.org/wiki/File:Holger_Hoos_in_Aachen,_Comiciade_2025.jpg"
+  ]
+ },
+ {
+  "id": "joanna-bryson",
+  "nom": "Joanna Bryson",
+  "aile": "culture",
+  "aile_justification": "Éthique de l'IA, gouvernance et politique publique : relève de l'aile culture.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Joanna_Bryson_at_the_World_Economic_Forum.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/d/d6/Joanna_Bryson_at_the_World_Economic_Forum.jpg",
+   "licence": "CC BY 3.0",
+   "credit": "Photo : World Economic Forum, CC BY 3.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons (Joanna Bryson, Professor, University of Bath, speaks at the World Economic Forum, 2018) et image principale de son article Wikipédia. Capture d'une vidéo de table ronde : elle est seule au premier plan, des spectateurs flous derrière ; recadrage carré centré sur le visage conseillé."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.joannajbryson.org/biographies",
+   "https://www.bruegel.org/author/joanna-bryson",
+   "https://www.uclouvain.be/fr/hoover/events/27/02/2025-discussion-on-ai-and-ethics-with-dr-joanna-bryson",
+   "https://en.wikipedia.org/wiki/Joanna_Bryson",
+   "https://commons.wikimedia.org/wiki/File:Joanna_Bryson_at_the_World_Economic_Forum.jpg"
+  ]
+ },
+ {
+  "id": "paolo-benanti",
+  "nom": "Paolo Benanti",
+  "aile": "culture",
+  "aile_justification": "Philosophe et théologien, il travaille sur l'éthique et la gouvernance de l'IA, ce qui correspond à l'aile culture.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Paolo_Benanti.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/8/8c/Paolo_Benanti.jpg",
+   "licence": "CC BY-SA 4.0",
+   "credit": "Photo : Paolo Pegoraro, CC BY-SA 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Paolo Benanti presso Pontificia Università Gregoriana 2016 » ; image principale de l'article Wikipédia en anglais. Portrait net d'une seule personne, format vertical (à recadrer en carré sur le visage)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Paolo_Benanti",
+   "https://www.un.org/en/ai-advisory-body/members",
+   "https://it.wikipedia.org/wiki/Paolo_Benanti",
+   "https://commons.wikimedia.org/wiki/File:Paolo_Benanti.jpg"
+  ]
+ },
+ {
+  "id": "stephane-mallat",
+  "nom": "Stéphane Mallat",
+  "aile": "culture",
+  "aile_justification": "Chercheur en mathématiques fondamentales de l'apprentissage profond : il change la façon de comprendre l'IA (recherche fondamentale).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:St%C3%A9phane_Mallat_-_2019_(cropped).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/9/9a/St%C3%A9phane_Mallat_-_2019_%28cropped%29.jpg",
+   "licence": "CC BY-SA 2.0",
+   "credit": "Photo : Jérémy Barande, CC BY-SA 2.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : Stéphane MALLAT, Collège de France, CMAP, Institut DATAIA Data Science Summer School (2019). Portrait serré, visage net, une seule personne ; à recadrer en carré centré sur le visage."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.college-de-france.fr/fr/chaire/stephane-mallat-sciences-des-donnees-chaire-statutaire",
+   "https://www.college-de-france.fr/fr/chaire/stephane-mallat-sciences-des-donnees-chaire-statutaire/biography",
+   "https://www.college-de-france.fr/fr/actualites/stephane-mallat-mathematicien-recoit-la-medaille-or-2025-du-cnrs",
+   "https://www.cnrs.fr/fr/personne/stephane-mallat",
+   "https://fr.wikipedia.org/wiki/Stéphane_Mallat"
+  ]
+ },
+ {
+  "id": "fabian-theis",
+  "nom": "Fabian Theis",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Son travail est de l'IA appliquée à la santé et à la biomédecine (génomique unicellulaire, modèles de fondation biomédicaux, Helmholtz.AI) ; la liste le classe « Penseur », donc l'aile culture est une alternative défendable si l'on privilégie la recherche fondamentale.)",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.helmholtz-munich.de/en/icb/fabian-theis",
+   "url_image": "https://images.admiralcloud.com/v5/deliverEmbed/6f39b817-c83c-445a-8bdb-7ce77ddb96ef/image",
+   "licence": "Photo officielle de l'organisation, licence non précisée",
+   "credit": "Photo : Helmholtz Munich / Matthias Tunger Photodesign",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Attribut alt et titre de l'image sur la page de profil individuelle : « Prof. Dr. Dr. Fabian Theis, Director of the Computational Health Center, Director of the Institute for Computational Biology »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.helmholtz-munich.de/en/icb/fabian-theis",
+   "https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab",
+   "https://www.helmholtz-munich.de/en/icb",
+   "https://www.professoren.tum.de/en/theis-fabian",
+   "https://de.wikipedia.org/wiki/Fabian_Theis"
+  ]
+ },
+ {
+  "id": "michael-wooldridge",
+  "nom": "Michael Wooldridge",
+  "aile": "culture",
+  "aile_justification": "Chercheur fondamental et vulgarisateur de l'IA (Christmas Lectures, prix Faraday), catégorie Penseur de la liste.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Michael_Wooldridge_at_Royal_Society_in_2026.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/5/5c/Michael_Wooldridge_at_Royal_Society_in_2026.jpg",
+   "licence": "CC BY-SA 4.0",
+   "credit": "Photo : Mateusz Malta, CC BY-SA 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : Michael Wooldridge during his Prize Lecture at the Royal Society ; image principale de son article Wikipédia"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.cs.ox.ac.uk/people/michael.wooldridge/",
+   "https://www.hertford.ox.ac.uk/staff-profiles/professor-michael-wooldridge/",
+   "https://en.wikipedia.org/wiki/Michael_Wooldridge_(computer_scientist)"
+  ]
+ },
+ {
+  "id": "mark-coeckelbergh",
+  "nom": "Mark Coeckelbergh",
+  "aile": "culture",
+  "aile_justification": "Philosophe de l'éthique de l'IA et de la démocratie : il change la façon de penser l'IA (recherche, éthique, politique publique).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://youthmedialife.univie.ac.at/who-we-are/team/mark-coeckelbergh/",
+   "url_image": "https://youthmedialife.univie.ac.at/fileadmin/_processed_/csm_mark-coeckelbergh_fe262b9fbb.jpg",
+   "licence": "Photo officielle Université de Vienne (page équipe), licence non précisée",
+   "credit": "Photo : Université de Vienne",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de l'Université de Vienne (youthmedialife.univie.ac.at), image avec attributs title et alt « Mark Coeckelbergh »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Mark_Coeckelbergh",
+   "https://coeckelbergh.net/",
+   "https://www.un.org/independent-international-scientific-panel-ai/en/panel-members"
+  ]
+ },
+ {
+  "id": "kai-zenner",
+  "nom": "Kai Zenner",
+  "aile": "culture",
+  "aile_justification": "Régulation et politique publique de l'IA : il travaille sur l'AI Act et la gouvernance numérique au Parlement européen.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.kaizenner.eu/about",
+   "url_image": "https://static.wixstatic.com/media/88fe02_9d95a7b3a7b14de68543bde85a968e31~mv2.jpg",
+   "licence": "Non précisée, photo du site personnel de la personne",
+   "credit": "Photo : Kai Zenner",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page 'about' de son site personnel kaizenner.eu, portrait présenté comme le sien (texte de la page lu via WebFetch, sans attribut alt vérifié). Photo paysage, à recadrer en carré sur le visage (centre-haut, environ x 1000-1650 sur 3000)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.kaizenner.eu/about",
+   "https://www.kaizenner.eu/blog",
+   "https://oecd.ai/en/community/kai-zenner"
+  ]
+ },
+ {
+  "id": "henna-virkkunen",
+  "nom": "Henna Virkkunen",
+  "aile": "culture",
+  "aile_justification": "Son rôle est réglementaire et politique (règlements DSA/DMA, démocratie, stratégie publique). Alternative défendable : infrastructures, à cause des usines d'IA et de la loi cloud/IA.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:1718869849735_20240619_VIRKKUNEN_Henna_FI_008.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/3/3e/1718869849735_20240619_VIRKKUNEN_Henna_FI_008.jpg",
+   "licence": "European Parliament (réutilisation avec mention de source, © Union européenne)",
+   "credit": "© Union européenne 2024 – Source : PE",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « MEP Henna Virkkunen » ; nom de fichier VIRKKUNEN_Henna ; image principale de son article Wikipédia. Portrait individuel, visage net, fond blanc, vérifié à l'écran. Format portrait 3:4 à recadrer en carré (visage centré en haut)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://commission.europa.eu/about/organisation/college-commissioners/henna-virkkunen_en",
+   "https://en.wikipedia.org/wiki/Henna_Virkkunen",
+   "https://digital-strategy.ec.europa.eu/en/policies/ai-factories",
+   "https://digital-strategy.ec.europa.eu/en/policies/apply-ai",
+   "https://commons.wikimedia.org/wiki/File:1718869849735_20240619_VIRKKUNEN_Henna_FI_008.jpg"
+  ]
+ },
+ {
+  "id": "lucilla-sioli",
+  "nom": "Lucilla Sioli",
+  "aile": "culture",
+  "aile_justification": "Régulation et politique publique de l'IA : application de l'AI Act.",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://eic.ec.europa.eu/lucilla-sioli_en",
+   "url_image": "https://eic.ec.europa.eu/sites/default/files/2025-03/Sioli-photo.jpg",
+   "licence": "Photo officielle de la Commission européenne ; conditions de réutilisation de la Commission (mention de la source), aucun crédit précis affiché sur la page",
+   "credit": "Photo : Commission européenne",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle du site eic.ec.europa.eu, alt et titre « Lucilla Sioli », Director AI Office (DG CONNECT)"
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.euronews.com/2024/05/29/ai-office-set-up-announced-lucilla-sioli-to-be-in-charge",
+   "https://www.euronews.com/2025/01/07/tech-policy-in-2025-14-movers-and-shakers-to-watch-for-in-europe",
+   "https://www.wikidata.org/wiki/Q135841139",
+   "https://digital-strategy.ec.europa.eu/en/policies/contents-code-gpai",
+   "https://digital-strategy.ec.europa.eu/en/factpages/general-purpose-ai-obligations-under-ai-act",
+   "https://digital-strategy.ec.europa.eu/en/policies/ai-office"
+  ]
+ },
+ {
+  "id": "jade-leung",
+  "nom": "Jade Leung",
+  "aile": "culture",
+  "aile_justification": "Son rôle relève de la gouvernance, de la sécurité de l'IA et de la politique publique, pas de la construction d'infrastructures ni de produits.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Jade_Leung_2015_(cropped).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/f/f3/Jade_Leung_2015_%28cropped%29.jpg",
+   "licence": "CC BY 4.0",
+   "credit": "Photo : New Zealand Government, Office of the Governor-General, CC BY 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons (Jade Leung, boursière Rhodes néo-zélandaise 2016, 17 sept. 2015) et image principale de l'article Wikipédia Jade Leung (engineer)"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.aisi.gov.uk/about",
+   "https://en.wikipedia.org/wiki/AI_Security_Institute",
+   "https://en.wikipedia.org/wiki/Jade_Leung_(engineer)",
+   "https://www.governance.ai/team/jade-leung",
+   "https://commons.wikimedia.org/wiki/File:Jade_Leung_2015_(cropped).jpg"
+  ]
+ },
+ {
+  "id": "eva-maydell",
+  "nom": "Eva Maydell",
+  "aile": "culture",
+  "aile_justification": "Législatrice européenne : régulation et politique publique de l'IA (AI Act, registre de consentement d'identité).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Eva_Maydell_-_EPP_Political_Assembly_-_2019_(48706380316)_(cropped).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/6/6f/Eva_Maydell_-_EPP_Political_Assembly_-_2019_%2848706380316%29_%28cropped%29.jpg",
+   "licence": "CC BY 2.0",
+   "credit": "Photo : European People's Party, CC BY 2.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Titre du fichier Commons, catégorie Commons 'Eva Maydell' et image principale de l'article Wikipédia Eva Maydell ; portrait individuel net, une seule personne (cadrage carré à centrer sur le visage, image en portrait 2:3)."
+  },
+  "citation_source": "https://www.financialcontent.com/article/gnwcq-2026-6-23-actor-and-producer-cate-blanchett-and-eu-parliament-member-eva-maydell-launch-rsl-media-human-consent-registry-to-protect-identity-in-the-age-of-ai",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Eva_Maydell",
+   "https://fr.wikipedia.org/wiki/Eva_Maydell",
+   "https://www.evamaydell.eu",
+   "https://www.financialcontent.com/article/gnwcq-2026-6-23-actor-and-producer-cate-blanchett-and-eu-parliament-member-eva-maydell-launch-rsl-media-human-consent-registry-to-protect-identity-in-the-age-of-ai",
+   "https://commons.wikimedia.org/wiki/File:Eva_Maydell_-_EPP_Political_Assembly_-_2019_(48706380316)_(cropped).jpg"
+  ]
+ },
+ {
+  "id": "axel-voss",
+  "nom": "Axel Voss",
+  "aile": "culture",
+  "aile_justification": "Régulation et politique publique : droit d'auteur, responsabilité et encadrement de l'IA au Parlement européen.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:1718294708650_20240613_VOSS_Axel_DE_007.jpg",
+   "url_image": "https://commons.wikimedia.org/wiki/Special:FilePath/1718294708650_20240613_VOSS_Axel_DE_007.jpg?width=1200",
+   "licence": "Photo officielle du Parlement européen (© Union européenne), hébergée sur Wikimedia Commons",
+   "credit": "© Union européenne 2024 – Source : PE",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons « MEP Axel Voss » ; image principale de l'article Wikipédia Axel Voss"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://fr.wikipedia.org/wiki/Axel_Voss",
+   "https://en.wikipedia.org/wiki/Axel_Voss",
+   "https://blog.avocats.deloitte.fr/rapport-voss-le-parlement-europeen-prend-position-sur-le-droit-dauteur-et-lia-generative/",
+   "https://www.axel-voss-europa.de/kuenstliche-intelligenz",
+   "https://commons.wikimedia.org/wiki/File:1718294708650_20240613_VOSS_Axel_DE_007.jpg"
+  ]
+ },
+ {
+  "id": "francesca-bria",
+  "nom": "Francesca Bria",
+  "aile": "culture",
+  "aile_justification": "Son travail porte sur la politique publique du numérique, la souveraineté technologique et la gouvernance démocratique ; c'est de la régulation et de la politique publique plutôt que de la construction d'infrastructures ou de produits (même si EuroStack traite d'infrastructures).",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:MJK_47267_Francesca_Bria_(Republica_2019).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/MJK_47267_Francesca_Bria_%28Republica_2019%29.jpg/1280px-MJK_47267_Francesca_Bria_%28Republica_2019%29.jpg",
+   "licence": "CC BY-SA 4.0",
+   "credit": "Photo : Martin Kraft, CC BY-SA 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : Francesca Bria au panel re:publica 19 ; image principale de l'article Wikipédia anglais. Portrait seul, visage net (vérifié à l'œil)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Francesca_Bria",
+   "https://berggruen.org/library/tre-oci-series-2026-francesca-bria",
+   "https://www.bertelsmann-stiftung.de/en/publications/publication/did/eurostack-a-european-alternative-for-digital-sovereignty",
+   "https://www.stiftung-mercator.de/en/fellows/francesca-bria/",
+   "https://commons.wikimedia.org/wiki/File:MJK_47267_Francesca_Bria_(Republica_2019).jpg"
+  ]
+ },
+ {
+  "id": "xavier-niel",
+  "nom": "Xavier Niel",
+  "aile": "infrastructures",
+  "aile_justification": "Cloud Scaleway, centres de données (OpCore), GPU et laboratoire de modèles ouverts Kyutai : son apport à l'IA est d'abord l'infrastructure.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Xavier_Niel004.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/3/38/Xavier_Niel004.jpg",
+   "licence": "CC BY 2.0",
+   "credit": "Photo : cmichel67, CC BY 2.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Xavier Niel, lors de la conférence LeWeb 2014 » ; image principale de l'article Wikipédia en anglais"
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://fr.wikipedia.org/wiki/Xavier_Niel",
+   "https://en.wikipedia.org/wiki/Xavier_Niel",
+   "https://kyutai.org/",
+   "https://www.iliad.fr/en/group/governance",
+   "https://www.42.fr/",
+   "https://www.xavierstuder.com/2025/02/telecoms-iliad-free-investit-3-milliards-deuros-dans-lia/",
+   "https://www.lecourrierdesstrateges.fr/xavier-niel-alerte-leurope-risque-le-declin-si-elle-manque-la-revolution-de-lia/",
+   "https://commons.wikimedia.org/wiki/File:Xavier_Niel004.jpg"
+  ]
+ },
+ {
+  "id": "nicolas-dufourcq",
+  "nom": "Nicolas Dufourcq",
+  "aile": "industrialisation",
+  "aile_justification": "Bpifrance finance et accélère le passage à l'échelle des entreprises d'IA (fonds public, investisseur direct, programme IA Booster pour les PME). Le campus IA relève de l'aile infrastructures, mais le rôle central de Nicolas Dufourcq est celui d'un financeur public.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Nicolas_Dufourcq_-_2023_(cropped).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Nicolas_Dufourcq_-_2023_%28cropped%29.jpg",
+   "licence": "CC BY 4.0",
+   "credit": "Photo : Bogdan Hoyaux / Union européenne, CC BY 4.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « Nicolas Dufourcq, CEO of Bpifrance » ; image principale de son article Wikipédia. Version recadrée, une seule personne visible, visage net (le fichier d'origine montrait aussi Thierry Breton)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://fr.wikipedia.org/wiki/Nicolas_Dufourcq",
+   "https://en.wikipedia.org/wiki/Nicolas_Dufourcq",
+   "https://presse.bpifrance.fr/bpifrance-deploie-10-milliards-deuros-pour-developper-lecosysteme-ia-et-soutenir-lappropriation-de-lintelligence-artificielle-par-les-entreprises-francaises",
+   "https://presse.bpifrance.fr/mgx-bpifrance-mistral-ai-et-nvidia-annoncent-la-creation-dune-joint-venture-pour-developper-en-france-le-plus-grand-campus-ia-deurope",
+   "https://commons.wikimedia.org/wiki/File:Nicolas_Dufourcq_-_2023_(cropped).jpg"
+  ]
+ },
+ {
+  "id": "jeannette-zu-furstenberg",
+  "nom": "Jeannette zu Fürstenberg",
+  "aile": "industrialisation",
+  "aile_justification": "Investisseuse en capital-risque qui finance le passage à l'échelle de start-ups d'IA et de défense (Mistral AI, Helsing, Legora) : relève de la partie « ceux qui financent ce passage à l'échelle ».",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.generalcatalyst.com/team/jeannette-zu-furstenberg",
+   "url_image": "https://cdn.prod.website-files.com/69df4e62ff62d7b5568fc591/69df4e62ff62d7b5568fcee6_Jeannette%20zu%20Fu%CC%88rstenberg.jpg",
+   "licence": "Photo officielle de l'organisation, droits de réutilisation non précisés",
+   "credit": "Photo : General Catalyst",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Portrait de la page de profil individuelle de Jeannette zu Fürstenberg sur generalcatalyst.com ; nom de fichier de l'image = son nom. Aucun alt/légende explicite. Portrait noir et blanc, une seule personne, visage net, format 4:5 (recadrage carré nécessaire)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Jeannette_zu_F%C3%BCrstenberg",
+   "https://www.generalcatalyst.com/team/jeannette-zu-furstenberg",
+   "https://aichampions.eu/"
+  ]
+ },
+ {
+  "id": "bertrand-rondepierre",
+  "nom": "Bertrand Rondepierre",
+  "aile": "industrialisation",
+  "aile_justification": "L'AMIAD transforme des expérimentations d'IA en capacités opérationnelles pour les armées : IA appliquée à la défense. ASGARD pourrait aussi justifier l'aile infrastructures.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.defense.gouv.fr/amiad-agence-cle-lia-defense",
+   "url_image": "https://www.defense.gouv.fr/sites/default/files/ministere-armees/Bertrand%20Rondepierre_700x700px_72dpi.jpg",
+   "licence": "Site defense.gouv.fr sous licence Etalab 2.0 (mention en pied de page) ; à confirmer pour cette photo",
+   "credit": "Photo : ministère des Armées",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Fichier nommé Bertrand Rondepierre, métadonnées EXIF « Bertrand Rondepierre, directeur de l'AMIAD », placé dans son encart de présentation sur la page officielle de l'agence."
+  },
+  "citation_source": "https://www.defense.gouv.fr/amiad-agence-cle-lia-defense",
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.defense.gouv.fr/amiad-agence-cle-lia-defense",
+   "https://www.defense.gouv.fr/amiad-agence-ia-defense",
+   "https://fr.wikipedia.org/wiki/Agence_minist%C3%A9rielle_pour_l%27intelligence_artificielle_de_D%C3%A9fense",
+   "https://fr.wikipedia.org/wiki/Sommet_pour_l%27action_sur_l%27intelligence_artificielle",
+   "https://www.defense.gouv.fr/actualites/inauguration-du-plus-puissant-supercalculateur-classifie-dedie-lia-europe",
+   "https://lessentieldeleco.fr/3148-bertrand-rondepierre-ia-defense/"
+  ]
+ },
+ {
+  "id": "niklas-zennstrom",
+  "nom": "Niklas Zennström",
+  "aile": "industrialisation",
+  "aile_justification": "Investisseur en capital-risque qui finance le passage à l'échelle de start-up technologiques européennes : correspond à la catégorie « ceux qui financent ce passage à l'échelle ».",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Niklas_Zennstrom_TC_2016.jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/8/82/Niklas_Zennstrom_TC_2016.jpg",
+   "licence": "CC BY 2.0",
+   "credit": "Photo : TechCrunch, CC BY 2.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Description du fichier Commons : « CEO of Atomico Niklas Zennstrom attends a Q&A during day 1 of TechCrunch Disrupt London », 5 décembre 2016 ; image principale de son article Wikipédia"
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Niklas_Zennstr%C3%B6m",
+   "https://en.wikipedia.org/wiki/Atomico",
+   "https://en.wikipedia.org/wiki/Skype",
+   "https://www.forbes.com/profile/niklas-zennstrom/",
+   "https://sv.wikipedia.org/wiki/Niklas_Zennstr%C3%B6m",
+   "https://commons.wikimedia.org/wiki/File:Niklas_Zennstrom_TC_2016.jpg"
+  ]
+ },
+ {
+  "id": "klaus-hommels",
+  "nom": "Klaus Hommels",
+  "aile": "industrialisation",
+  "aile_justification": "Investisseur en capital-risque qui finance le passage à l'échelle de start-up (IA, défense, aérospatial).",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://milkeninstitute.org/events/global-conference-2024/speakers/klaus-hommels",
+   "url_image": "https://milkeninstitute.org/sites/default/files/grid/speakers/0031U00002DMGrbQAH-3eb7550460ef351200d08175a12aad56.png",
+   "licence": "Photo officielle de page d'intervenant (Milken Institute Global Conference 2024), réutilisation non précisée",
+   "credit": "Photo : Milken Institute",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de l'événement, dédiée à Klaus Hommels (URL nominative), portrait unique d'un homme à lunettes rondes, visage net. Aucune autre source (Wikipédia, Commons, page équipe Lakestar) n'offrait de portrait. Note : depuis 2025 il préside le conseil consultatif géopolitique du NATO Innovation Fund (il n'en préside plus le fonds) ; Lakestar fondateur et président reste exact."
+  },
+  "citation_source": null,
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://en.wikipedia.org/wiki/Klaus_Hommels",
+   "https://de.wikipedia.org/wiki/Klaus_Hommels",
+   "https://www.forbes.com/profile/klaus-hommels/",
+   "https://www.lakestar.com/resilience",
+   "https://www.lakestar.com/team"
+  ]
+ },
+ {
+  "id": "charles-gorintin",
+  "nom": "Charles Gorintin",
+  "aile": "industrialisation",
+  "aile_justification": "IA appliquée à la santé et à l'assurance chez Alan (produit à grande échelle), avec un rôle de cofondateur non exécutif auprès d'un laboratoire de modèles.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://frenchamerican.org/young-leader/charles/",
+   "url_image": "https://frenchamerican.org/wp-content/uploads/gorintin-charles-879x1000.png",
+   "licence": "Non précisée, photo officielle du profil Young Leader, droits à confirmer",
+   "credit": "Photo : French-American Foundation",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle 'Charles Gorintin' de la French-American Foundation (programme Young Leaders), fichier nommé gorintin-charles ; portrait d'une seule personne, visage net. Pas d'alt ni de légende, donc identité déduite du profil individuel. La photo Alan (alan.com) n'a pas pu être téléchargée (le lien renvoie un SVG)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.project-syndicate.org/columnist/charles-gorintin",
+   "https://vivatech.com/speakers/charles-gorintin-alan-6341171d-4067-f111-8fcb-6045bd954326",
+   "https://www.lesrencontreseconomiques.fr/2024/en/speakers/charles-gorintin/",
+   "https://fr.wikipedia.org/wiki/Alan_(entreprise)",
+   "https://alan.com/fr-fr/blog/tout-alan/a/alan-leve-480-millions-deuros-pour-faire-de-la-prevention-le-nouveau-standard-mondial-de-la-sante",
+   "https://alan.com/en/blog/discover-alan/a/being-a-cto-founder-associate-at-alan",
+   "https://alan.com/fr-fr/blog/etre-partenaire-sante/a/fact-check-les-etats-unis-peuvent-ils-vraiment-acceder-aux-donnees-de-sante"
+  ]
+ },
+ {
+  "id": "philippe-tibi",
+  "nom": "Philippe Tibi",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Il ne construit pas une technologie mais le financement de son passage à l'échelle : il oriente les investisseurs institutionnels vers les entreprises technologiques, ce qui relève des financeurs de l'industrialisation.)",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.polytechnique.edu/teaching-learning/en/our-teachers/tibi-philippe",
+   "url_image": "https://www.polytechnique.edu/teaching-learning/sites/elearning/files/content/enseignants/images/2022-02/000005-philippe-tibi.png",
+   "licence": "Photo officielle de profil enseignant, conditions de réutilisation non précisées",
+   "credit": "Photo : École polytechnique",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle 'Tibi Philippe' du Teaching & Learning Center de l'École polytechnique ; portrait seul, visage net"
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.polytechnique.edu/en/news/tibi-initiative-launch-phase-3-and-expansion-european-level",
+   "https://www.professioncgp.com/article/les-acteurs/actu/souverainete-europeenne-tibi-iii-est-lance.html",
+   "https://www.polytechnique.edu/presse/communiques-et-dossiers-de-presse/remise-du-rapport-de-philippe-tibi-sur-le-financement-des-entreprises-technologiques-francaises",
+   "https://www.tresor.economie.gouv.fr/Articles/2025/09/16/tiibi-initiative-a-target-raised-to-15-billion",
+   "https://businessschool.luiss.it/philippe-tibi/",
+   "https://www.coursera.org/instructor/philippe-tibi",
+   "https://www.polytechnique.edu/teaching-learning/en/our-teachers/tibi-philippe"
+  ]
+ },
+ {
+  "id": "gabriel-peyre",
+  "nom": "Gabriel Peyré",
+  "aile": "culture",
+  "aile_justification": "Recherche fondamentale en mathématiques de l'IA (transport optimal), audition parlementaire sur l'IA dans la recherche : correspond à l'aile culture.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.cnrs.fr/fr/personne/gabriel-peyre",
+   "url_image": "https://www.cnrs.fr/sites/default/files/styles/person/public/image/Argent-Gabriel-PEYRE_.gif",
+   "licence": "Photo officielle CNRS (médaille d'argent 2021), conditions de réutilisation non précisées",
+   "credit": "Photo : CNRS",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle CNRS 'Gabriel Peyré' ; nom du fichier Argent-Gabriel-PEYRE. Portrait net, une seule personne (GIF converti en PNG, format portrait non carré, recadrage à prévoir)."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://www.cnrs.fr/fr/personne/gabriel-peyre",
+   "https://www.gpeyre.com/",
+   "https://cordis.europa.eu/project/id/101141361",
+   "https://www.math.ens.psl.eu/la-recherche/erc-advanced-grant-2023-deux-laureats-au-dma/",
+   "https://www.math.ens.psl.eu/2026/04/",
+   "https://en.wikipedia.org/wiki/Gabriel_Peyré"
+  ]
+ },
+ {
+  "id": "joelle-barral",
+  "nom": "Joëlle Barral",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Son travail porte surtout sur l'IA appliquée à la santé et aux sciences de la vie (Verily, Verb Surgical, DeepMind santé). Alternative possible : culture, à cause du panel ONU.)",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.academie-technologies.fr/academiciens/barral-joelle/",
+   "url_image": "https://www.academie-technologies.fr/wp-content/uploads/2026/02/BARRAL_Joelle.png",
+   "licence": "Photo officielle de la page académicienne ; conditions de réutilisation non précisées",
+   "credit": "Photo : Académie des technologies",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de Joëlle Barral sur le site de l'Académie des technologies, fichier nommé BARRAL_Joelle.png ; portrait unique, visage net. Format portrait 371x550, à recadrer en carré."
+  },
+  "citation_source": "https://blog.google/intl/fr-fr/nouvelles-de-lentreprise/azerty/barral-ia/",
+  "role_controle_2026": "incertain",
+  "sources": [
+   "https://www.academie-technologies.fr/academiciens/barral-joelle/",
+   "https://blog.google/intl/fr-fr/nouvelles-de-lentreprise/azerty/barral-ia/",
+   "https://education.newstank.fr/article/view/431371/onu-joelle-barral-google-deepmind-membre-groupe-scientifique-international.html",
+   "https://aiforgood.itu.int/speaker/joelle-barral/",
+   "https://www.worldhealthsummit.org/speaker/joelle-barral",
+   "https://www.mind.eu.com/health/article/joelle-barral-google-deepmind-nous-voulons-demontrer-la-capacite-des-modeles-dia-a-confronter-diverses-hypotheses/",
+   "https://en.wikipedia.org/wiki/Independent_International_Scientific_Panel_on_AI"
+  ]
+ },
+ {
+  "id": "anders-dam-jensen",
+  "nom": "Anders Dam Jensen",
+  "aile": "infrastructures",
+  "aile_justification": "EuroHPC finance et exploite les supercalculateurs et les usines d'IA européennes : calcul et infrastructures.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.eurohpc-ju.europa.eu/about/staff_en",
+   "url_image": "https://www.eurohpc-ju.europa.eu/sites/default/files/2023-07/NBPORTRAIT%202023L1021955.jpg",
+   "licence": "Photo officielle de l'organisation, conditions de réutilisation non vérifiées",
+   "credit": "Photo : EuroHPC JU",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe officielle EuroHPC JU : la photo est légendée (alt) « portrait of anders dam jensen »; portrait noir et blanc, une seule personne, visage net. Format paysage, à recadrer en carré sur le visage."
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.eurohpc-ju.europa.eu/executive-director_en",
+   "https://www.eurohpc-ju.europa.eu/about/governance_en",
+   "https://www.eurohpc-ju.europa.eu/about/staff_en",
+   "https://www.eurohpc-ju.europa.eu/ai-factories_en",
+   "https://en.wikipedia.org/wiki/European_High-Performance_Computing_Joint_Undertaking"
+  ]
+ },
+ {
+  "id": "roxanne-varza",
+  "nom": "Roxanne Varza",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Station F accélère des startups d'IA et les aide à passer à l'échelle (programme F/ai, investisseurs, partenaires) : c'est un rôle d'accélérateur.)",
+  "verification": "valide",
+  "photo": {
+   "page_source": "https://commons.wikimedia.org/wiki/File:Roxanne_Varza_(16028203325).jpg",
+   "url_image": "https://upload.wikimedia.org/wikipedia/commons/9/9f/Roxanne_Varza_%2816028203325%29.jpg",
+   "licence": "CC BY-SA 2.0",
+   "credit": "Photo : jeanbaptisteparis, CC BY-SA 2.0, via Wikimedia Commons",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Image principale de l'article Wikipédia Roxanne Varza ; description du fichier Commons : « Roxanne Varza ». Fichier téléchargé en miniature 1280x853 (l'original 4368x2912 a été refusé par le serveur). Portrait en format paysage : cadrer sur le visage (centre-gauche) pour le carré."
+  },
+  "citation_source": null,
+  "role_controle_2026": "verifie_au_premier_passage",
+  "sources": [
+   "https://fr.wikipedia.org/wiki/Roxanne_Varza",
+   "https://en.wikipedia.org/wiki/Roxanne_Varza",
+   "https://en.wikipedia.org/wiki/Station_F",
+   "https://stationf.co/",
+   "https://techcrunch.com/2026/07/06/station-f-ramps-up-as-a-launchpad-for-europes-hottest-ai-startups/",
+   "https://commons.wikimedia.org/wiki/File:Roxanne_Varza_(16028203325).jpg"
+  ]
+ },
+ {
+  "id": "xavier-lazarus",
+  "nom": "Xavier Lazarus",
+  "aile": "industrialisation",
+  "aile_justification": "Investisseur en capital-risque et croissance : il finance le passage à l'échelle des start-up d'IA (critère « investisseurs, fonds »).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.elaia.com/team/xavier-lazarus",
+   "url_image": "https://wpdawhbsqofsgccipusy.storage.supabase.co/storage/v1/object/public/elaia/media/26.-XAVIER-LASARUS_08.jpg",
+   "licence": "Photo officielle publiée par l'organisation (droits à confirmer)",
+   "credit": "Photo : Elaia",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle elaia.com/team/xavier-lazarus, image légendée Xavier Lazarus ; portrait vérifié visuellement (une personne, visage net)"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.elaia.com/team/xavier-lazarus",
+   "https://www.elaia.com/",
+   "https://www.elaia.com/news/",
+   "https://www.elaia.com/news/lazard-increases-stake-in-elaia-to-51-confirming-ambition-to-build-a-leading-european-tech-investment-platform",
+   "https://www.maddyness.com/2022/08/18/xavier-lazarus/",
+   "https://www.lazardelaiacapital.com/"
+  ]
+ },
+ {
+  "id": "benedikt-von-schoeler",
+  "nom": "Benedikt von Schoeler",
+  "aile": "industrialisation",
+  "aile_justification": "Investisseur en capital-risque qui finance le passage à l'échelle de start-up de technologies avancées (aile des financeurs).",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://vsquared.vc/team_member/benedikt-von-schoeler/",
+   "url_image": "https://vsquared.vc/wp-content/uploads/2024/03/12.png",
+   "licence": "Photo officielle de l'organisation, droits à confirmer",
+   "credit": "Photo : Vsquared Ventures",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle de Benedikt von Schoeler sur vsquared.vc, légende « Photo of Benedikt von Schoeler »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://vsquared.vc/team_member/benedikt-von-schoeler/",
+   "https://vsquared.vc/",
+   "https://www.handelsblatt.com/unternehmen/start-ups/vsquared-ventures-deutscher-deeptech-investor-expandiert-in-grossbritannien/100231625.html",
+   "https://vsquared.vc/news/"
+  ]
+ },
+ {
+  "id": "marc-menase",
+  "nom": "Marc Menasé",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Investisseur qui finance le passage à l'échelle des start-up d'IA appliquée (défense, santé, logiciels), du pre-seed au growth.)",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.foundersfuture.com/team",
+   "url_image": "https://cdn.prod.website-files.com/675b0f49e8a9aae0e5259491/67bcb5c15157cf940f2ef9d0_Marc%20Menase%CC%81.avif",
+   "licence": "Photo officielle de l'organisation (page équipe), droits à confirmer",
+   "credit": "Photo : Founders Future",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page équipe Founders Future (profil individuel /teams/marc-menase) ; attribut alt de l'image « Marc Menasé »"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.foundersfuture.com/teams/marc-menase",
+   "https://www.foundersfuture.com/",
+   "https://www.foundersfuture.com/nos-fonds",
+   "https://www.foundersfuture.com/team",
+   "https://fr.wikipedia.org/wiki/France_Digitale",
+   "https://www.maddyness.com/2021/11/24/colis-prive-bourse-spac-marc-menase-deetech/"
+  ]
+ },
+ {
+  "id": "philippe-botteri",
+  "nom": "Philippe Botteri",
+  "aile": "industrialisation",
+  "aile_justification": "Investisseur en capital-risque qui finance le passage à l'échelle d'entreprises de logiciels et d'IA appliquée (UiPath, Synthesia, Doctolib) : aile industrialisation.",
+  "verification": "corrige",
+  "photo": {
+   "page_source": "https://www.accel.com/people/philippe-botteri",
+   "url_image": "https://cdn.sanity.io/images/458oembh/production/6830b9b1ba8130927dbf4b1648a4c0791211c382-1000x666.jpg",
+   "licence": "Photo officielle de profil publiée par Accel, droits de réutilisation non précisés",
+   "credit": "Photo : Accel",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle Accel (og:image:alt Philippe Botteri)"
+  },
+  "citation_source": null,
+  "role_controle_2026": "confirme",
+  "sources": [
+   "https://www.accel.com/people/philippe-botteri",
+   "https://www.accel.com/noteworthies/euroscape-2024-ai-eating-software",
+   "https://www.accel.com/relationships/uipath",
+   "https://www.accel.com/relationships/synthesia",
+   "https://www.accel.com/relationships/doctolib",
+   "https://en.wikipedia.org/wiki/Accel_(company)"
+  ]
+ }
+]
