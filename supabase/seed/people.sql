@@ -20,7 +20,7 @@ Lumai computes with beams of light rather than electrons, for the operations at 
 
 In April 2025, Lumai announced over $10 million in funding. In April 2026, it unveiled its Iris family of servers.',
   'En faisant passer le calcul des électrons aux photons, Lumai peut offrir un gain de performance d''un ordre de grandeur, avec des économies d''énergie importantes.', '',
-  '/portraits/xianxin-guo.webp', 'Photo : Lumai', '[{"label":"Lumai","url":"https://lumai.ai/about/"},{"label":"Lancement des serveurs Iris (avril 2026)","url":"https://lumai.ai/resources/lumai-launches-the-worlds-first-optical-computing-system-for-real-time-billion-parameter-llm-inference"}]'::jsonb, false, false
+  '/portraits/xianxin-guo.webp', 'Lumai', '[{"label":"Lumai","url":"https://lumai.ai/about/"},{"label":"Lancement des serveurs Iris (avril 2026)","url":"https://lumai.ai/resources/lumai-launches-the-worlds-first-optical-computing-system-for-real-time-billion-parameter-llm-inference"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -59,7 +59,7 @@ The company, now Orbital Industries, develops a PFAS-free cooling fluid (PFAS ar
 
 On 28 May 2026, it raised $50 million in a Series B led by Plural. It has around fifty employees.',
   NULL, NULL,
-  '/portraits/jonathan-godwin.webp', 'Photo : MCJ (podcast Inevitable)', '[{"label":"Orbital Industries","url":"https://www.orbitalindustries.com/"}]'::jsonb, false, false
+  '/portraits/jonathan-godwin.webp', 'MCJ (podcast Inevitable)', '[{"label":"Orbital Industries","url":"https://www.orbitalindustries.com/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -98,7 +98,7 @@ In February 2025, evroc announced a 96-megawatt AI factory in Mougins, for about
 
 In June 2026, Mattias Åström was welcomed onto the council of the ECFR, a European foreign policy think tank, for two years.',
   'La capacité de l''Europe à agir de façon indépendante dans le monde est désormais indissociable de l''infrastructure numérique qu''elle maîtrise.', 'Europe''s ability to act independently in the world is now inseparable from the digital infrastructure it commands.',
-  '/portraits/mattias-astrom.webp', 'Photo : evroc', '[{"label":"evroc","url":"https://evroc.com"},{"label":"Communiqué : nomination à l''ECFR","url":"https://news.cision.com/evroc/r/evroc-founder-joins-the-european-council-on-foreign-relations,c4388237"}]'::jsonb, false, false
+  '/portraits/mattias-astrom.webp', 'evroc', '[{"label":"evroc","url":"https://evroc.com"},{"label":"Communiqué : nomination à l''ECFR","url":"https://news.cision.com/evroc/r/evroc-founder-joins-the-european-council-on-foreign-relations,c4388237"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -137,7 +137,7 @@ In April 2023, he co-founded Mistral AI with Guillaume Lample and Timothée Lacr
 
 In September 2026, Mistral raised 3 billion euros, led by Samsung, at a valuation above 21 billion. The funds are to finance more computing capacity and new data centers, in France and Sweden.',
   NULL, NULL,
-  '/portraits/arthur-mensch.webp', 'Photo : Jan2342342423, CC0, via Wikimedia Commons', '[{"label":"Mistral AI","url":"https://mistral.ai"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Arthur_Mensch"}]'::jsonb, false, false
+  '/portraits/arthur-mensch.webp', 'Jan2342342423, CC0, via Wikimedia Commons', '[{"label":"Mistral AI","url":"https://mistral.ai"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Arthur_Mensch"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -176,7 +176,7 @@ He becomes CEO on 25 April 2024. In September 2025, ASML leads a EUR 1.3 billion
 
 In July 2026, ASML raises its 2026 sales forecast to EUR 43-45 billion, driven by AI-related demand.',
   NULL, NULL,
-  '/portraits/christophe-fouquet.webp', 'Photo : ASML', '[{"label":"ASML : Board of Management","url":"https://www.asml.com/company/governance/board-of-management"},{"label":"ASML : présentation du nouveau CEO","url":"https://www.asml.com/en/news/stories/2024/christophe-fouquet-asml-ceo"}]'::jsonb, false, false
+  '/portraits/christophe-fouquet.webp', 'ASML', '[{"label":"ASML : Board of Management","url":"https://www.asml.com/company/governance/board-of-management"},{"label":"ASML : présentation du nouveau CEO","url":"https://www.asml.com/en/news/stories/2024/christophe-fouquet-asml-ceo"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -215,7 +215,7 @@ After a $155 million Series A (December 2024), Nscale raised $2 billion in a Ser
 
 In March 2026, it acquired American Intelligence & Power Corporation: a West Virginia campus and an electric microgrid scalable to over 8 gigawatts.',
   NULL, NULL,
-  '/portraits/josh-payne.webp', 'Photo : Nscale', '[{"label":"Nscale – équipe dirigeante","url":"https://www.nscale.com/about"},{"label":"Nscale sur Wikipédia","url":"https://en.wikipedia.org/wiki/Nscale"}]'::jsonb, false, false
+  '/portraits/josh-payne.webp', 'Nscale', '[{"label":"Nscale – équipe dirigeante","url":"https://www.nscale.com/about"},{"label":"Nscale sur Wikipédia","url":"https://en.wikipedia.org/wiki/Nscale"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -254,7 +254,7 @@ AlphaFold 2 (2020) predicts the shape of proteins. The work earns him the 2024 N
 
 In August 2026, he steps down as DeepMind''s CEO to chair it and become Alphabet''s chief scientist. He remains CEO of Isomorphic Labs.',
   NULL, NULL,
-  '/portraits/demis-hassabis.webp', 'Photo : John Sears, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Google DeepMind","url":"https://deepmind.google/about/"},{"label":"Wikipédia (EN)","url":"https://en.wikipedia.org/wiki/Demis_Hassabis"}]'::jsonb, false, false
+  '/portraits/demis-hassabis.webp', 'John Sears, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Google DeepMind","url":"https://deepmind.google/about/"},{"label":"Wikipédia (EN)","url":"https://en.wikipedia.org/wiki/Demis_Hassabis"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -289,7 +289,7 @@ Le 13 mai 2026, SiPearl a allumé le premier Rhea1, une puce à 80 cœurs Arm gr
 
 On 13 May 2026, SiPearl powered on the first Rhea1, an 80-core Arm chip made by TSMC. Delivery to customers is planned for late 2026. It will equip JUPITER, Europe''s first exascale supercomputer.',
   NULL, NULL,
-  '/portraits/philippe-notton.webp', 'Photo : SiPearl', '[{"label":"Page de Philippe Notton sur SiPearl","url":"https://sipearl.com/philippe-notton"},{"label":"Profil EIC (Ambassadeur)","url":"https://eic.ec.europa.eu/philippe-notton_en"}]'::jsonb, false, false
+  '/portraits/philippe-notton.webp', 'SiPearl', '[{"label":"Page de Philippe Notton sur SiPearl","url":"https://sipearl.com/philippe-notton"},{"label":"Profil EIC (Ambassadeur)","url":"https://eic.ec.europa.eu/philippe-notton_en"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -328,7 +328,7 @@ In 2024, he created Olix, first named Flux Computing. The company designs chips 
 
 On 3 August 2026, Olix announced a $312 million round at a $3.3 billion valuation. The first DX-1 systems are due to reach customers in the second half of 2027.',
   NULL, NULL,
-  NULL, NULL, '[{"label":"Olix","url":"https://olix.com"},{"label":"Annonce de la Series B d''Olix","url":"https://olix.com/news/company-raises-series-b"}]'::jsonb, false, false
+  '/portraits/james-dacombe.webp', 'Sifted', '[{"label":"Olix","url":"https://olix.com"},{"label":"Annonce de la Series B d''Olix","url":"https://olix.com/news/company-raises-series-b"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -359,7 +359,7 @@ insert into public.people (
   'Ineffable Intelligence', 'GB', 'infrastructures',
   'Il a dirigé AlphaGo chez DeepMind. En 2026, il quitte DeepMind pour fonder à Londres Ineffable Intelligence, qui vise une IA apprenant par l''expérience.', 'He led AlphaGo at DeepMind. In 2026 he left DeepMind to found Ineffable Intelligence in London, which aims at AI that learns from experience.', 'Diplômé de Cambridge en 1997, David Silver cofonde un studio de jeux vidéo, puis passe un doctorat sur l''apprentissage par renforcement à l''université d''Alberta (2009). Il rejoint DeepMind à plein temps en 2013 et y dirige AlphaGo, AlphaZero et MuZero.\n\nIl quitte DeepMind en janvier 2026 pour fonder Ineffable Intelligence, à Londres. Il défend une IA qui apprend par l''expérience, sans dépendre des données humaines.\n\nEn avril 2026, la start-up annonce 1,1 milliard de dollars levés pour 5,1 milliards de valorisation, le plus grand tour d''amorçage d''Europe.', 'A Cambridge graduate (1997), David Silver co-founded a video game studio, then completed a PhD on reinforcement learning at the University of Alberta (2009). He joined DeepMind full time in 2013, where he led AlphaGo, AlphaZero and MuZero.\n\nHe left DeepMind in January 2026 to found Ineffable Intelligence in London. He argues for AI that learns from experience rather than relying on human data.\n\nIn April 2026, the start-up announced $1.1 billion raised at a $5.1 billion valuation, the largest seed round in Europe.',
   NULL, NULL,
-  '/portraits/david-silver.webp', 'Photo : The Royal Society', '[{"label":"Ineffable Intelligence","url":"https://ineffable.ai"},{"label":"Royal Society","url":"https://royalsociety.org/people/david-silver-35033"},{"label":"Wikipedia","url":"https://en.wikipedia.org/wiki/David_Silver_(computer_scientist)"}]'::jsonb, false, false
+  '/portraits/david-silver.webp', 'The Royal Society', '[{"label":"Ineffable Intelligence","url":"https://ineffable.ai"},{"label":"Royal Society","url":"https://royalsociety.org/people/david-silver-35033"},{"label":"Wikipedia","url":"https://en.wikipedia.org/wiki/David_Silver_(computer_scientist)"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -398,7 +398,7 @@ Chief Technology Officer in 2008, Chief Operating Officer in 2014 and Deputy CEO
 
 In March 2026, ST entered high-volume production of PIC100, a silicon photonics platform (chips that move data with light) for data centres.',
   NULL, NULL,
-  '/portraits/jean-marc-chery.webp', 'Photo : Capgemini', '[{"label":"Page de profil, Capgemini","url":"https://www.capgemini.com/fr-fr/notre-groupe/gestion-gouvernance/equipe-de-direction/jean-marc-chery/"},{"label":"Article Wikipédia","url":"https://fr.wikipedia.org/wiki/Jean-Marc_Ch%C3%A9ry"}]'::jsonb, false, false
+  '/portraits/jean-marc-chery.webp', 'Capgemini', '[{"label":"Page de profil, Capgemini","url":"https://www.capgemini.com/fr-fr/notre-groupe/gestion-gouvernance/equipe-de-direction/jean-marc-chery/"},{"label":"Article Wikipédia","url":"https://fr.wikipedia.org/wiki/Jean-Marc_Ch%C3%A9ry"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -437,7 +437,7 @@ He stepped back from day-to-day management in 2018 and stayed chairman. On 20 Oc
 
 In June 2026, OVHcloud plans to invest 150 to 200 million euros in its own language models. A first one has been pre-trained on Jupiter, a European supercomputer.',
   NULL, NULL,
-  '/portraits/octave-klaba.webp', 'Photo : Stefanie Loos / Union européenne, CC BY 4.0, via Wikimedia Commons', '[{"label":"OVHcloud - à propos","url":"https://www.ovhcloud.com/en/about-us/"},{"label":"Octave Klaba sur Wikipédia","url":"https://fr.wikipedia.org/wiki/Octave_Klaba"}]'::jsonb, false, false
+  '/portraits/octave-klaba.webp', 'Stefanie Loos / Union européenne, CC BY 4.0, via Wikimedia Commons', '[{"label":"OVHcloud - à propos","url":"https://www.ovhcloud.com/en/about-us/"},{"label":"Octave Klaba sur Wikipédia","url":"https://fr.wikipedia.org/wiki/Octave_Klaba"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -476,7 +476,7 @@ Eclairion, created in 2022, hosts supercomputers in liquid-cooled modular contai
 
 In July 2026, Eclairion strengthened its partnership with Schneider Electric, its technology partner for prefabricated electrical modules. Over one gigawatt of additional capacity is in preparation.',
   NULL, NULL,
-  NULL, NULL, '[{"label":"Eclairion","url":"https://eclairion.com/en/"},{"label":"Communiqué Schneider Electric x Eclairion","url":"https://www.se.com/fr/fr/about-us/newsroom/news/press-releases/eclairion-et-schneider-electric-renforcent-leur-partenariat-pour-acc%C3%A9l%C3%A9rer-le-d%C3%A9ploiement-d%E2%80%99infrastructures-d%E2%80%99intelligence-artificielle-souveraines-en-france-6a6c75b5cc6ba9fd1103cd79/"}]'::jsonb, false, false
+  '/portraits/arnaud-lepinois.webp', 'Solutions Numériques', '[{"label":"Eclairion","url":"https://eclairion.com/en/"},{"label":"Communiqué Schneider Electric x Eclairion","url":"https://www.se.com/fr/fr/about-us/newsroom/news/press-releases/eclairion-et-schneider-electric-renforcent-leur-partenariat-pour-acc%C3%A9l%C3%A9rer-le-d%C3%A9ploiement-d%E2%80%99infrastructures-d%E2%80%99intelligence-artificielle-souveraines-en-france-6a6c75b5cc6ba9fd1103cd79/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -515,7 +515,7 @@ In 2024, he founded Black Forest Labs in Freiburg, notably with Andreas Blattman
 
 On December 1, 2025, it raised $300 million at a $3.25 billion valuation. As of September 2026, the team has just over 100 people; its latest model, for robotics, is being tested at Audi.',
   'Je pense que l''état d''esprit en Europe doit évoluer vers l''optimisme et l''opportunité, et non vers le risque et la peur.', 'I think the mindset in Europe needs to shift to one of optimism and to one of opportunity, and not to one of risk and fear',
-  '/portraits/robin-rombach.webp', 'Photo : Bits & Pretzels', '[{"label":"Black Forest Labs","url":"https://bfl.ai/about"},{"label":"Black Forest Labs (Wikipédia)","url":"https://en.wikipedia.org/wiki/Flux_(text-to-image_model)"}]'::jsonb, false, false
+  '/portraits/robin-rombach.webp', 'Bits & Pretzels', '[{"label":"Black Forest Labs","url":"https://bfl.ai/about"},{"label":"Black Forest Labs (Wikipédia)","url":"https://en.wikipedia.org/wiki/Flux_(text-to-image_model)"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -554,7 +554,7 @@ In 2019, he co-founded Multiverse Computing. He draws on tensor networks, a quan
 
 On 27 July 2026, the company announced a Series C round targeting up to 500 million euros.',
   NULL, NULL,
-  '/portraits/roman-orus.webp', 'Photo : Estudio Badator, CC0, via Wikimedia Commons', '[{"label":"Multiverse Computing","url":"https://multiversecomputing.com/ethics-committee"},{"label":"Wikipedia","url":"https://en.wikipedia.org/wiki/Rom%C3%A1n_Or%C3%BAs"}]'::jsonb, false, false
+  '/portraits/roman-orus.webp', 'Estudio Badator, CC0, via Wikimedia Commons', '[{"label":"Multiverse Computing","url":"https://multiversecomputing.com/ethics-committee"},{"label":"Wikipedia","url":"https://en.wikipedia.org/wiki/Rom%C3%A1n_Or%C3%BAs"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -593,7 +593,7 @@ He has led Scaleway, the cloud subsidiary of the Iliad group, since 2023. The cl
 
 In May 2026, Scaleway announces, with other partners, the AION consortium, bidding for an AI "gigafactory" in France, with one gigawatt of computing power targeted.',
   'L''Europe ne peut plus se permettre de sous-traiter les fondations de son avenir en IA, et nous saluons l''initiative des autorités européennes,', 'Europe can no longer afford to outsource the foundations of its AI future, and we welcome the initiative of the European authorities,',
-  '/portraits/damien-lucas.webp', 'Photo : Scaleway', '[{"label":"Scaleway","url":"https://www.scaleway.com/en/about-us/"},{"label":"Scaleway et le consortium AION","url":"https://www.scaleway.com/en/news/scaleway-launches-the-aion-consortium-a-bold-project-to-build-europes-next-ai-gigafactory/"}]'::jsonb, false, false
+  '/portraits/damien-lucas.webp', 'Scaleway', '[{"label":"Scaleway","url":"https://www.scaleway.com/en/about-us/"},{"label":"Scaleway et le consortium AION","url":"https://www.scaleway.com/en/news/scaleway-launches-the-aion-consortium-a-bold-project-to-build-europes-next-ai-gigafactory/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -632,7 +632,7 @@ In 2016, his team presented in Nature Nanotechnology artificial neurons made of 
 
 In February 2026, Axelera announced over 200 million euros in funding, with participation from the EIC Fund.',
   NULL, NULL,
-  '/portraits/evangelos-eleftheriou.webp', 'Photo : Axelera AI', '[{"label":"Page équipe Axelera AI","url":"https://axelera.ai/our-team/evangelos-eleftheriou"},{"label":"Wikipédia (EN)","url":"https://en.wikipedia.org/wiki/Evangelos_Eleftheriou"}]'::jsonb, false, false
+  '/portraits/evangelos-eleftheriou.webp', 'Axelera AI', '[{"label":"Page équipe Axelera AI","url":"https://axelera.ai/our-team/evangelos-eleftheriou"},{"label":"Wikipédia (EN)","url":"https://en.wikipedia.org/wiki/Evangelos_Eleftheriou"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -671,7 +671,7 @@ Fractile designs inference chips, the ones that make an already-trained model an
 
 In May 2026, it raised 220 million dollars. In August, the press reported an initial deal of about 250 million dollars of chips with Anthropic, to be delivered in 2027.',
   NULL, NULL,
-  '/portraits/walter-goodwin.webp', 'Photo : Fractile', '[{"label":"Fractile","url":"https://www.fractile.ai"},{"label":"Équipe Fractile","url":"https://www.fractile.ai/about"}]'::jsonb, false, false
+  '/portraits/walter-goodwin.webp', 'Fractile', '[{"label":"Fractile","url":"https://www.fractile.ai"},{"label":"Équipe Fractile","url":"https://www.fractile.ai/about"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -706,7 +706,7 @@ En 2015, il crée VSORA avec d''anciens collègues. Elle conçoit des puces d''i
 
 In 2015, he created VSORA with former colleagues. It designs inference chips, the stage where an already trained AI model answers requests. In April 2025, it raised 46 million dollars; in July 2026, Ardian Semiconductor took a minority stake.',
   'Cette levée de fonds marque un tournant pour VSORA : nous accélérons notre mission de révolutionner les puces d''IA et de garantir la souveraineté technologique de l''Europe en calcul IA.', 'This funding marks a pivotal moment for VSORA as we accelerate our mission to revolutionize AI chips and ensure Europe''s technological sovereignty in AI computing.',
-  '/portraits/khaled-maalej.webp', 'Photo : Systematic Paris-Region', '[{"label":"VSORA","url":"https://vsora.com"},{"label":"Interview Systematic Paris-Region","url":"https://systematic-paris-region.org/rencontre-avec-khaled-maalej-ceo-de-vsora-champion-2025-du-pole-systematic/"}]'::jsonb, false, false
+  '/portraits/khaled-maalej.webp', 'Systematic Paris-Region', '[{"label":"VSORA","url":"https://vsora.com"},{"label":"Interview Systematic Paris-Region","url":"https://systematic-paris-region.org/rencontre-avec-khaled-maalej-ceo-de-vsora-champion-2025-du-pole-systematic/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -745,7 +745,7 @@ He now chairs NestAI, which aims to build a European physical AI lab (AI that dr
 
 In November 2025, NestAI raised 100 million euros with Nokia and Tesi. In May 2026, Zalando elected him to its supervisory board.',
   NULL, NULL,
-  '/portraits/peter-sarlin.webp', 'Photo : Slush', '[{"label":"Profil Slush 2026","url":"https://slush.org/2026-speakers/peter-sarlin"},{"label":"Annonce du partenariat Nokia et de la levée de NestAI","url":"https://www.globenewswire.com/news-release/2025/11/20/3191671/0/en/Nokia-and-NestAI-announce-strategic-partnership-and-NestAI-raises-100m-to-accelerate-physical-AI-innovation.html"}]'::jsonb, false, false
+  '/portraits/peter-sarlin.webp', 'Slush', '[{"label":"Profil Slush 2026","url":"https://slush.org/2026-speakers/peter-sarlin"},{"label":"Annonce du partenariat Nokia et de la levée de NestAI","url":"https://www.globenewswire.com/news-release/2025/11/20/3191671/0/en/Nokia-and-NestAI-announce-strategic-partnership-and-NestAI-raises-100m-to-accelerate-physical-AI-innovation.html"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -784,7 +784,7 @@ In 2011, he founded Kandou Bus at EPFL in Lausanne, to speed up exchanges betwee
 
 In April 2025, he became chief technology officer of Kandou AI. In March 2026, the company raised 225 million dollars, led by Maverick Silicon.',
   'En devenant directeur technique, je me réjouis de consacrer mon énergie à la prochaine génération d''innovations technologiques pour le matériel d''IA.', 'As I step into the role of CTO, I am excited to dedicate my focus to driving the next generation of technological innovations in the AI hardware space.',
-  '/portraits/amin-shokrollahi.webp', 'Photo : Renate Schmid, CC BY-SA 2.0 de, via Wikimedia Commons', '[{"label":"Kandou AI, équipe dirigeante","url":"https://kandou.com/about/"},{"label":"Article Wikipédia","url":"https://en.wikipedia.org/wiki/Amin_Shokrollahi"},{"label":"EPFL : levée de fonds de Kandou AI","url":"https://actu.epfl.ch/news/ic-spinoff-kandou-ai-raises-225m-for-faster-ai-i-2/"}]'::jsonb, false, false
+  '/portraits/amin-shokrollahi.webp', 'Renate Schmid, CC BY-SA 2.0 de, via Wikimedia Commons', '[{"label":"Kandou AI, équipe dirigeante","url":"https://kandou.com/about/"},{"label":"Article Wikipédia","url":"https://en.wikipedia.org/wiki/Amin_Shokrollahi"},{"label":"EPFL : levée de fonds de Kandou AI","url":"https://actu.epfl.ch/news/ic-spinoff-kandou-ai-raises-225m-for-faster-ai-i-2/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -862,7 +862,7 @@ He became CEO of H in June 2025, after Charles Kantor left. H builds AI agents: 
 
 In April 2026, H offers Holo Tab, a free Chrome extension for individuals.',
   'C''est exactement ce que fait un humain sur sa machine', 'It''s exactly what a human does on their machine',
-  '/portraits/gautier-cloix.webp', 'Photo : HumanX', '[{"label":"H Company","url":"https://www.hcompany.ai/about"},{"label":"H (company) sur Wikipédia","url":"https://en.wikipedia.org/wiki/H_(company)"}]'::jsonb, false, false
+  '/portraits/gautier-cloix.webp', 'HumanX', '[{"label":"H Company","url":"https://www.hcompany.ai/about"},{"label":"H (company) sur Wikipédia","url":"https://en.wikipedia.org/wiki/H_(company)"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -901,7 +901,7 @@ She co-founded Salience Labs, a spin-out of Oxford and the University of Münste
 
 In February 2025, she raised 30 million dollars in a Series A. In March 2026, Salience Labs launched a 32-port optical switch.',
   'La commutation optique fait passer les réseaux du routage électronique de paquets à une connectivité optique très prévisible et économe en énergie.', 'Optical switching is moving networks from electronic packet routing to highly predictable, energy-efficient optical connectivity.',
-  '/portraits/vaysh-kewada.webp', 'Photo : Asians in Tech', '[{"label":"Lancement du commutateur 32 ports (DataCentreNews UK, mars 2026)","url":"https://datacentrenews.uk/story/salience-labs-debuts-all-optical-switch-for-ai-hubs"},{"label":"Levée de 30 M$ en série A (eeNews Europe, février 2025)","url":"https://www.eenewseurope.com/en/salience-labs-closes-funding-for-photonic-switches"}]'::jsonb, false, false
+  '/portraits/vaysh-kewada.webp', 'Asians in Tech', '[{"label":"Lancement du commutateur 32 ports (DataCentreNews UK, mars 2026)","url":"https://datacentrenews.uk/story/salience-labs-debuts-all-optical-switch-for-ai-hubs"},{"label":"Levée de 30 M$ en série A (eeNews Europe, février 2025)","url":"https://www.eenewseurope.com/en/salience-labs-closes-funding-for-photonic-switches"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -940,7 +940,7 @@ On 9 July 2026, LightOn named him CEO after the resignation of Igor Carron, a co
 
 Founded in 2016 and listed on Euronext Growth Paris, LightOn offers a generative AI platform to businesses. His mission: speed up commercial growth.',
   NULL, NULL,
-  NULL, NULL, '[{"label":"LightOn, relations investisseurs","url":"https://lighton.ai/investors"},{"label":"LightOn (site officiel)","url":"https://lighton.ai/"}]'::jsonb, false, false
+  '/portraits/jean-philippe-baert.webp', '01net.it', '[{"label":"LightOn, relations investisseurs","url":"https://lighton.ai/investors"},{"label":"LightOn (site officiel)","url":"https://lighton.ai/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -979,7 +979,7 @@ In April 2025, he announced Colosseum, a supercomputer (a very powerful computer
 
 On 19 June 2026, the Europa consortium, led by Domyn, won the European Commission''s challenge: an open model of more than 400 billion parameters, in the EU''s 24 languages.',
   'L''Europe peut développer, maîtriser et faire progresser en continu ses propres capacités d''IA de pointe.', 'Europe can develop, control and continuously advance its own frontier AI capabilities.',
-  '/portraits/uljan-sharka.webp', 'Photo : Domyn', '[{"label":"Domyn - profil d''Uljan Sharka","url":"https://www.domyn.com/people/uljan-sharka"},{"label":"Domyn - site officiel","url":"https://domyn.com"}]'::jsonb, false, false
+  '/portraits/uljan-sharka.webp', 'Domyn', '[{"label":"Domyn - profil d''Uljan Sharka","url":"https://www.domyn.com/people/uljan-sharka"},{"label":"Domyn - site officiel","url":"https://domyn.com"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1018,7 +1018,7 @@ He then co-founded Nabla, an AI assistant that writes up doctors'' consultation 
 
 In late 2025, he became CEO of AMI Labs, which builds "world models", AI meant to understand the physical world. In March 2026, the company raised $1.03 billion.',
   NULL, NULL,
-  '/portraits/alexandre-lebrun.webp', 'Photo : Nabla', '[{"label":"AMI Labs","url":"https://amilabs.xyz"},{"label":"Nabla, équipe","url":"https://www.nabla.com/about-us"},{"label":"AMI Labs sur Wikipédia","url":"https://en.wikipedia.org/wiki/Advanced_Machine_Intelligence_Labs"}]'::jsonb, false, false
+  '/portraits/alexandre-lebrun.webp', 'Nabla', '[{"label":"AMI Labs","url":"https://amilabs.xyz"},{"label":"Nabla, équipe","url":"https://www.nabla.com/about-us"},{"label":"AMI Labs sur Wikipédia","url":"https://en.wikipedia.org/wiki/Advanced_Machine_Intelligence_Labs"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1057,7 +1057,7 @@ In 2023, she co-founded Bioptimus in Paris, where she leads research. The start-
 
 In July 2024, Bioptimus launched H-Optimus-0, its first model, built for pathology (the study of tissue under the microscope).',
   NULL, NULL,
-  '/portraits/zelda-mariet.webp', 'Photo : Académie des technologies', '[{"label":"Bioptimus - équipe","url":"https://www.bioptimus.com/team"},{"label":"Académie des technologies - Women in Tech","url":"https://www.academie-technologies.fr/en/woman-in-tech/mariet-zelda/"}]'::jsonb, false, false
+  '/portraits/zelda-mariet.webp', 'Académie des technologies', '[{"label":"Bioptimus - équipe","url":"https://www.bioptimus.com/team"},{"label":"Académie des technologies - Women in Tech","url":"https://www.academie-technologies.fr/en/woman-in-tech/mariet-zelda/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1096,7 +1096,7 @@ He was an early investor in Mistral AI and backs Kyutai, an open-science researc
 
 On 11 February 2025, ahead of the AI Action Summit in Paris, Iliad announced 3 billion euros of AI investment, including 2.5 billion for data centers.',
   NULL, NULL,
-  '/portraits/xavier-niel.webp', 'Photo : cmichel67, CC BY 2.0, via Wikimedia Commons', '[{"label":"Groupe Iliad","url":"https://www.iliad.fr/en/group/governance"},{"label":"Kyutai","url":"https://kyutai.org/"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Xavier_Niel"}]'::jsonb, false, false
+  '/portraits/xavier-niel.webp', 'cmichel67, CC BY 2.0, via Wikimedia Commons', '[{"label":"Groupe Iliad","url":"https://www.iliad.fr/en/group/governance"},{"label":"Kyutai","url":"https://kyutai.org/"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Xavier_Niel"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1135,7 +1135,7 @@ Since September 2020, he has been Executive Director of EuroHPC, the European jo
 
 In February 2025, the European Commission announces InvestAI, a 200 billion euro initiative for AI. EuroHPC oversees the "AI Factories": 19 are listed on its website.',
   NULL, NULL,
-  '/portraits/anders-dam-jensen.webp', 'Photo : EuroHPC JU', '[{"label":"Page du directeur exécutif, EuroHPC JU","url":"https://www.eurohpc-ju.europa.eu/executive-director_en"},{"label":"EuroHPC JU","url":"https://www.eurohpc-ju.europa.eu/index_en"},{"label":"Les usines d''IA (AI Factories)","url":"https://www.eurohpc-ju.europa.eu/ai-factories_en"}]'::jsonb, false, false
+  '/portraits/anders-dam-jensen.webp', 'EuroHPC JU', '[{"label":"Page du directeur exécutif, EuroHPC JU","url":"https://www.eurohpc-ju.europa.eu/executive-director_en"},{"label":"EuroHPC JU","url":"https://www.eurohpc-ju.europa.eu/index_en"},{"label":"Les usines d''IA (AI Factories)","url":"https://www.eurohpc-ju.europa.eu/ai-factories_en"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1174,7 +1174,7 @@ In 2018, he co-founded Neko Health with Hjalmar Nilsonne. The start-up offers a 
 
 In January 2025, Neko raised $260 million at a $1.8 billion valuation, and is preparing to enter the US market.',
   NULL, NULL,
-  '/portraits/daniel-ek.webp', 'Photo : Lukasz Kobus/Commission européenne, CC BY 4.0, via Wikimedia Commons', '[{"label":"Daniel Ek sur Wikipédia","url":"https://en.wikipedia.org/wiki/Daniel_Ek"},{"label":"Neko Health","url":"https://www.nekohealth.com"}]'::jsonb, false, false
+  '/portraits/daniel-ek.webp', 'Lukasz Kobus/Commission européenne, CC BY 4.0, via Wikimedia Commons', '[{"label":"Daniel Ek sur Wikipédia","url":"https://en.wikipedia.org/wiki/Daniel_Ek"},{"label":"Neko Health","url":"https://www.nekohealth.com"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1213,7 +1213,7 @@ He joined Facebook AI Research in 2014 and spent nine years at Meta. He then tur
 
 In June 2026, speaking to École Polytechnique students, he described AI as an aid: the decision to open fire must remain human.',
   'L''IA est très utile, y compris en défense, mais ce n''est qu''une aide : ce n''est pas à cet outil de décider d''ouvrir le feu.', 'AI is very useful, including in defence, but it is merely an aid; it should not be the one to decide to open fire.',
-  '/portraits/antoine-bordes.webp', 'Photo : Jérémy Barande / École polytechnique', '[{"label":"Article de l''École polytechnique (juin 2026)","url":"https://www.polytechnique.edu/en/news/use-ai-military-must-serve-defend-our-european-democratic-values-antoine-bordes-ecole-polytechnique"},{"label":"Helsing","url":"https://helsing.ai"}]'::jsonb, false, false
+  '/portraits/antoine-bordes.webp', 'Jérémy Barande / École polytechnique', '[{"label":"Article de l''École polytechnique (juin 2026)","url":"https://www.polytechnique.edu/en/news/use-ai-military-must-serve-defend-our-european-democratic-values-antoine-bordes-ecole-polytechnique"},{"label":"Helsing","url":"https://helsing.ai"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1252,7 +1252,7 @@ His approach: a single AI learns to drive from images, without detailed maps of 
 
 On 25 February 2026, Wayve raised $1.2 billion. On 3 September 2026, with Uber, it launched supervised rides in London.',
   'Pour la première fois, nous verrons des machines intelligentes de confiance interagir physiquement avec notre monde, enrichir nos vies et nous libérer pour l''essentiel.', '',
-  '/portraits/alex-kendall.webp', 'Photo : Wayve', '[{"label":"Profil sur Wayve","url":"https://wayve.ai/company/leadership-team/alex-kendall/"},{"label":"Wayve","url":"https://wayve.ai/press/"},{"label":"Article Wikipédia sur Wayve","url":"https://en.wikipedia.org/wiki/Wayve"}]'::jsonb, false, false
+  '/portraits/alex-kendall.webp', 'Wayve', '[{"label":"Profil sur Wayve","url":"https://wayve.ai/company/leadership-team/alex-kendall/"},{"label":"Wayve","url":"https://wayve.ai/press/"},{"label":"Article Wikipédia sur Wayve","url":"https://en.wikipedia.org/wiki/Wayve"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1291,7 +1291,7 @@ He founded n8n in Berlin in 2019. The tool chains steps between apps and AI mode
 
 In May 2026, SAP joined the cap table (valuation: $5.2 billion) and is embedding n8n in Joule Studio, its AI agent-building tool.',
   NULL, NULL,
-  '/portraits/jan-oberhauser.webp', 'Photo : n8n', '[{"label":"n8n","url":"https://n8n.io"},{"label":"Page auteur, blog n8n","url":"https://blog.n8n.io/author/jan/"},{"label":"n8n sur Wikipédia","url":"https://en.wikipedia.org/wiki/N8n"}]'::jsonb, false, false
+  '/portraits/jan-oberhauser.webp', 'n8n', '[{"label":"n8n","url":"https://n8n.io"},{"label":"Page auteur, blog n8n","url":"https://blog.n8n.io/author/jan/"},{"label":"n8n sur Wikipédia","url":"https://en.wikipedia.org/wiki/N8n"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1330,7 +1330,7 @@ He founded NEURA Robotics in 2019. The company builds so-called cognitive robots
 
 In June 2026, NEURA announced a funding round of up to 1.4 billion dollars, after a 120 million euro Series B in January 2025.',
   NULL, NULL,
-  '/portraits/david-reger.webp', 'Photo : IFA Berlin', '[{"label":"NEURA Robotics - presse","url":"https://neura-robotics.com/press/"},{"label":"Wikipédia : David Reger","url":"https://en.wikipedia.org/wiki/David_Reger"},{"label":"Site de David Reger","url":"https://davidreger.com"}]'::jsonb, false, false
+  '/portraits/david-reger.webp', 'IFA Berlin', '[{"label":"NEURA Robotics - presse","url":"https://neura-robotics.com/press/"},{"label":"Wikipédia : David Reger","url":"https://en.wikipedia.org/wiki/David_Reger"},{"label":"Site de David Reger","url":"https://davidreger.com"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1369,7 +1369,7 @@ In 2023 he co-founded Comand AI with Antoine Chassang, a former Snapchat employe
 
 On 17 June 2026, Comand AI announced a 32 million euro Series A led by Blossom Capital, with Swedish group Saab. Prevail is used by units in France, Germany and Ukraine.',
   NULL, NULL,
-  NULL, NULL, '[{"label":"Comand AI","url":"https://www.comand.ai/"},{"label":"Annonce de la série A (Comand AI)","url":"https://www.comand.ai/news/comand-ai-raises-%E2%82%AC32-million-series-a-to-scale-ai-native-command-and-control-platform-across-nato"}]'::jsonb, false, false
+  '/portraits/loic-mougeolle.webp', 'CFNews', '[{"label":"Comand AI","url":"https://www.comand.ai/"},{"label":"Annonce de la série A (Comand AI)","url":"https://www.comand.ai/news/comand-ai-raises-%E2%82%AC32-million-series-a-to-scale-ai-native-command-and-control-platform-across-nato"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1408,7 +1408,7 @@ He then joined OpenAI''s research team and spent three years on the mathematical
 
 In January 2023 he launched Dust with Gabriel Hubert: AI assistants (agents) that employees build themselves, connected to Slack, Notion or GitHub. In May 2026, Dust announced a $40 million round led by Abstract and Sequoia.',
   NULL, NULL,
-  '/portraits/stanislas-polu.webp', 'Photo : Sequoia Capital', '[{"label":"Dust, équipe","url":"https://dust.tt/home/about"},{"label":"Tech.eu, levée de série B de Dust","url":"https://tech.eu/2026/05/18/dust-raises-40m-series-b-to-build-the-multiplayer-operating-system-for-enterprise-ai/"}]'::jsonb, false, false
+  '/portraits/stanislas-polu.webp', 'Sequoia Capital', '[{"label":"Dust, équipe","url":"https://dust.tt/home/about"},{"label":"Tech.eu, levée de série B de Dust","url":"https://tech.eu/2026/05/18/dust-raises-40m-series-b-to-build-the-multiplayer-operating-system-for-enterprise-ai/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1447,7 +1447,7 @@ He founded PhysicsX with Jacomo Corbo. The British start-up trains AI on physics
 
 On 8 June 2026, it announced a $300 million funding round led by Temasek, at a valuation of about $2.4 billion.',
   'La simulation physique haute fidélité a toujours été puissante, mais aussi lente, coûteuse et réservée à un petit groupe de spécialistes.', 'High-fidelity physics simulation has always been powerful, but it has also been slow, costly, and the preserve of a small group of specialists.',
-  '/portraits/robin-tuluie.webp', 'Photo : PhysicsX', '[{"label":"PhysicsX","url":"https://www.physicsx.ai/"},{"label":"Annonce de la série C (8 juin 2026)","url":"https://www.physicsx.ai/newsroom/physicsx-announces-300m-series-c-to-accelerate-physics-ai-for-industrial-engineering"}]'::jsonb, false, false
+  '/portraits/robin-tuluie.webp', 'PhysicsX', '[{"label":"PhysicsX","url":"https://www.physicsx.ai/"},{"label":"Annonce de la série C (8 juin 2026)","url":"https://www.physicsx.ai/newsroom/physicsx-announces-300m-series-c-to-accelerate-physics-ai-for-industrial-engineering"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1525,7 +1525,7 @@ In 2021, the two found Sereact. The company does not build robots: it supplies t
 
 In 2026, Sereact announces a $116 million Series B, joined by Zalando, and plans to expand into the United States.',
   'Nous ne construisons pas de robots : nous leur donnons un cerveau.', 'We don''t build robots; we give them a brain.',
-  '/portraits/ralf-gulde.webp', 'Photo : sereact / Marc Schultheiss', '[{"label":"Sereact","url":"https://sereact.ai"},{"label":"Université de Stuttgart : article sur Sereact","url":"https://www.student.uni-stuttgart.de/en/news/all/Start-up-sereact-is-making-robots-smarter-and-has-raised-110-million-dollars-in-funding/"}]'::jsonb, false, false
+  '/portraits/ralf-gulde.webp', 'sereact / Marc Schultheiss', '[{"label":"Sereact","url":"https://sereact.ai"},{"label":"Université de Stuttgart : article sur Sereact","url":"https://www.student.uni-stuttgart.de/en/news/all/Start-up-sereact-is-making-robots-smarter-and-has-raised-110-million-dollars-in-funding/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1564,7 +1564,7 @@ His target: security operations centres (SOCs), where analysts sort through IT a
 
 In March 2026, Qevlar raised $30 million from Partech and Forgepoint, with EQT Ventures. Its customers include Mercedes-Benz, Sodexo, Orange Cyberdefense and Atos.',
   'On éteint l''incendie et on cherche ce qui l''a déclenché pour que cela ne se reproduise pas.', 'We''re putting out the fire and finding out what started it to make sure it doesn''t happen again.',
-  '/portraits/ahmed-achchak.webp', 'Photo : Qevlar AI', '[{"label":"Qevlar AI","url":"https://www.qevlar.com"},{"label":"Qevlar AI, à propos","url":"https://www.qevlar.com/about"}]'::jsonb, false, false
+  '/portraits/ahmed-achchak.webp', 'Qevlar AI', '[{"label":"Qevlar AI","url":"https://www.qevlar.com"},{"label":"Qevlar AI, à propos","url":"https://www.qevlar.com/about"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1603,7 +1603,7 @@ In May 2025, it raised $80 million (Series B) at a $675 million valuation. Opene
 
 In September 2026, Legora has 2,100 law firms and legal teams as customers in more than 80 countries, according to The Next Web.',
   NULL, NULL,
-  '/portraits/max-junestrand.webp', 'Photo : Thomashollande, CC0, via Wikimedia Commons', '[{"label":"Legora","url":"https://legora.com"}]'::jsonb, false, false
+  '/portraits/max-junestrand.webp', 'Thomashollande, CC0, via Wikimedia Commons', '[{"label":"Legora","url":"https://legora.com"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1642,7 +1642,7 @@ He co-founded CuspAI with Max Welling. The company trains AI models that, starti
 
 In July 2026, CuspAI raised $450 million in a Series B round.',
   NULL, NULL,
-  '/portraits/chad-edwards.webp', 'Photo : London Tech Week / CuspAI', '[{"label":"CuspAI","url":"https://cusp.ai/"}]'::jsonb, false, false
+  '/portraits/chad-edwards.webp', 'London Tech Week / CuspAI', '[{"label":"CuspAI","url":"https://cusp.ai/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1681,7 +1681,7 @@ Founded in Cambridge in 2006 by researcher Tony Robinson, the company raises $62
 
 In September 2025, Speechmatics announces a medical transcription model reaching 93% real-world accuracy, according to the company.',
   'Notre objectif est simple : construire une technologie vocale à laquelle les cliniciens peuvent se fier dans le désordre de la pratique réelle.', 'Our goal is simple: build speech tech clinicians can trust in the messiness of real-world practice.',
-  '/portraits/katy-wigdahl.webp', 'Photo : Speechmatics', '[{"label":"Speechmatics, à propos","url":"https://www.speechmatics.com/company/about-speechmatics"},{"label":"Speechmatics sur Wikipédia","url":"https://en.wikipedia.org/wiki/Speechmatics"}]'::jsonb, false, false
+  '/portraits/katy-wigdahl.webp', 'Speechmatics', '[{"label":"Speechmatics, à propos","url":"https://www.speechmatics.com/company/about-speechmatics"},{"label":"Speechmatics sur Wikipédia","url":"https://en.wikipedia.org/wiki/Speechmatics"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1720,7 +1720,7 @@ In 2019, she co-founded Pigment with Romain Niccoli, co-founder of Criteo. The s
 
 In March 2025, Pigment launched an AI analyst agent. In September 2025, Éléonore Crespo received the EY Scale-Up of the Year award for Île-de-France.',
   'Les agents d''IA sont en réalité le contraire d''une boîte noire. Ils sont plus auditables qu''un être humain.', 'AI agents are actually the contrary of a black box. They are more auditable than a human being.',
-  '/portraits/eleonore-crespo.webp', 'Photo : ENS Paris-Saclay Alumni', '[{"label":"Pigment","url":"https://www.pigment.com/about-us"},{"label":"Portrait, ENS Paris-Saclay Alumni","url":"https://alumni.ens-paris-saclay.fr/en/article/eleonore-crespo-founder-of-pigment-the-art-of-giving-meaning-to-data/01/08/2025/110"}]'::jsonb, false, false
+  '/portraits/eleonore-crespo.webp', 'ENS Paris-Saclay Alumni', '[{"label":"Pigment","url":"https://www.pigment.com/about-us"},{"label":"Portrait, ENS Paris-Saclay Alumni","url":"https://alumni.ens-paris-saclay.fr/en/article/eleonore-crespo-founder-of-pigment-the-art-of-giving-meaning-to-data/01/08/2025/110"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1759,7 +1759,7 @@ She co-founded Aqemia in 2019 with Maximilien Levesque and runs operations. The 
 
 In July 2026, Aqemia expanded its collaboration with Sanofi: a new target was nominated, with up to $140 million in potential payments.',
   NULL, NULL,
-  '/portraits/emmanuelle-martiano-rolland.webp', 'Photo : Aqemia', '[{"label":"Aqemia - Qui sommes-nous","url":"https://www.aqemia.com/who-we-are"},{"label":"Aqemia","url":"https://www.aqemia.com"}]'::jsonb, false, false
+  '/portraits/emmanuelle-martiano-rolland.webp', 'Aqemia', '[{"label":"Aqemia - Qui sommes-nous","url":"https://www.aqemia.com/who-we-are"},{"label":"Aqemia","url":"https://www.aqemia.com"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1798,7 +1798,7 @@ He co-founded Quantexa in 2016. Its software links scattered data to give decisi
 
 In March 2025, the company raised $175 million at a $2.6 billion valuation. In January 2026, Gartner named it a Leader among decision intelligence platforms.',
   'Entourez-vous de gens en qui vous avez confiance et qui croient en votre vision. Et surtout : concentration, concentration, concentration.', 'Hire and surround yourself with people you trust and who believe in your vision. Plus… focus, focus, focus.',
-  '/portraits/vishal-marria.webp', 'Photo : Quantexa', '[{"label":"Profil sur le site de Quantexa","url":"https://www.quantexa.com/team/vishal-marria/"},{"label":"Quantexa (Wikipédia)","url":"https://en.wikipedia.org/wiki/Quantexa"}]'::jsonb, false, false
+  '/portraits/vishal-marria.webp', 'Quantexa', '[{"label":"Profil sur le site de Quantexa","url":"https://www.quantexa.com/team/vishal-marria/"},{"label":"Quantexa (Wikipédia)","url":"https://en.wikipedia.org/wiki/Quantexa"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1837,7 +1837,7 @@ That expedition led to Basecamp Research, which gathers genetic data from nature
 
 On 23 September 2026, it announced a $140 million round led by S32, with NVentures (Nvidia) and the Anthology Fund (Menlo Ventures and Anthropic). Total raised: $225 million.',
   NULL, NULL,
-  '/portraits/glen-gowers.webp', 'Photo : Basecamp Research', '[{"label":"Basecamp Research","url":"https://www.basecamp-research.com"},{"label":"Équipe - Basecamp Research","url":"https://www.basecamp-research.com/about"}]'::jsonb, false, false
+  '/portraits/glen-gowers.webp', 'Basecamp Research', '[{"label":"Basecamp Research","url":"https://www.basecamp-research.com"},{"label":"Équipe - Basecamp Research","url":"https://www.basecamp-research.com/about"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1876,7 +1876,7 @@ She co-founded Nabla with Alexandre Lebrun and Martin Raison. Their assistant li
 
 In June 2025, Nabla raised $70 million in a Series C led by HV Capital. In 2026, HumanX cites more than 40 million patient encounters a year.',
   NULL, NULL,
-  '/portraits/delphine-groll.webp', 'Photo : Nabla', '[{"label":"Nabla, équipe dirigeante","url":"https://www.nabla.com/about-us"},{"label":"HumanX, profil","url":"https://www.humanx.co/speakers/delphine-groll"}]'::jsonb, false, false
+  '/portraits/delphine-groll.webp', 'Nabla', '[{"label":"Nabla, équipe dirigeante","url":"https://www.nabla.com/about-us"},{"label":"HumanX, profil","url":"https://www.humanx.co/speakers/delphine-groll"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1915,7 +1915,7 @@ Iktos designs molecules with generative AI, then has robots synthesize them. It 
 
 In January 2026, it signed a multi-year agreement with Servier that could exceed 1 billion euros, milestone payments included.',
   NULL, NULL,
-  '/portraits/nicolas-do-huu.webp', 'Photo : Iktos', '[{"label":"Iktos - équipe","url":"https://iktos.ai/about"},{"label":"Iktos - site officiel","url":"https://iktos.ai"}]'::jsonb, false, false
+  '/portraits/nicolas-do-huu.webp', 'Iktos', '[{"label":"Iktos - équipe","url":"https://iktos.ai/about"},{"label":"Iktos - site officiel","url":"https://iktos.ai"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1954,7 +1954,7 @@ She then leads Luminance, a University of Cambridge spin-out whose tools analyse
 
 In 2025, Luminance''s global revenue doubles and the company processes more than 18 million contracts. In May 2026, it receives the King''s Award for Enterprise for international trade.',
   'Notre croissance internationale repose sur une seule chose : une IA sur laquelle tous les juristes, des grands cabinets aux équipes d''entreprise, peuvent vraiment compter.', 'Our international growth has been built on one thing: AI that all legal professionals, from big law to enterprise teams, can actually rely on.',
-  '/portraits/eleanor-lightbody.webp', 'Photo : MIT Technology Review EmTech AI', '[{"label":"Luminance","url":"https://www.luminance.com"},{"label":"Luminance : prix Tech Businesswoman of the Year 2025","url":"https://www.luminance.com/press-releases/luminance-ceo-eleanor-lightbody-named-tech-businesswoman-of-the-year-at-the-2025-uk-tech-awards"}]'::jsonb, false, false
+  '/portraits/eleanor-lightbody.webp', 'MIT Technology Review EmTech AI', '[{"label":"Luminance","url":"https://www.luminance.com"},{"label":"Luminance : prix Tech Businesswoman of the Year 2025","url":"https://www.luminance.com/press-releases/luminance-ceo-eleanor-lightbody-named-tech-businesswoman-of-the-year-at-the-2025-uk-tech-awards"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1993,7 +1993,7 @@ He is a member of the European Commission''s AI Alliance and a founding member o
 
 In June 2026, Taktile raised $110 million in a Series C led by Goldman Sachs Alternatives, to expand in the United States, EMEA and Latin America.',
   'Les outils d''IA généralistes suffisent pour des automatisations simples, pas pour des décisions financières critiques où une erreur peut coûter des millions.', 'General purpose AI tooling is fine for simple automations, but it isn''t sufficient for operating mission-critical financial decisions where errors can cost millions.',
-  '/portraits/maik-taro-wehmeyer.webp', 'Photo : Taktile', '[{"label":"Taktile","url":"https://taktile.com"},{"label":"Profil sur taktile.com","url":"https://taktile.com/maik-taro-wehmeyer"}]'::jsonb, false, false
+  '/portraits/maik-taro-wehmeyer.webp', 'Taktile', '[{"label":"Taktile","url":"https://taktile.com"},{"label":"Profil sur taktile.com","url":"https://taktile.com/maik-taro-wehmeyer"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2032,7 +2032,7 @@ In 2021, she co-founds Cradle in Amsterdam. A protein is a molecule whose sequen
 
 On 26 November 2024, Cradle announces a $73M Series B led by IVP, with more than 21 customers, including Novo Nordisk and Grifols.',
   NULL, NULL,
-  '/portraits/elise-de-reus.webp', 'Photo : Techleap / Elise de Reus', '[{"label":"Cradle","url":"https://www.cradle.bio"},{"label":"Annonce de la série B","url":"https://www.cradle.bio/blog/series-b"},{"label":"Cradle (Wikipédia)","url":"https://en.wikipedia.org/wiki/Cradle_(company)"}]'::jsonb, false, false
+  '/portraits/elise-de-reus.webp', 'Techleap / Elise de Reus', '[{"label":"Cradle","url":"https://www.cradle.bio"},{"label":"Annonce de la série B","url":"https://www.cradle.bio/blog/series-b"},{"label":"Cradle (Wikipédia)","url":"https://en.wikipedia.org/wiki/Cradle_(company)"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2071,7 +2071,7 @@ Its tool, DERM, detects skin cancer. It received a Class III CE mark and is pres
 
 In April 2025, the company raised 15 million pounds sterling to expand in Europe, Australia and the United States.',
   'L''IA nous permet de passer d''un monde de pénurie de spécialistes à un monde où nous pouvons voir toute personne inquiète pour sa peau.', '',
-  '/portraits/neil-daly.webp', 'Photo : COGX / Skin Analytics', '[{"label":"Page de Neil Daly sur Skin Analytics","url":"https://skin-analytics.com/about-us/"},{"label":"Annonce de la série B","url":"https://skin-analytics.com/news/funding/series-b-15million-funding/"}]'::jsonb, false, false
+  '/portraits/neil-daly.webp', 'COGX / Skin Analytics', '[{"label":"Page de Neil Daly sur Skin Analytics","url":"https://skin-analytics.com/about-us/"},{"label":"Annonce de la série B","url":"https://skin-analytics.com/news/funding/series-b-15million-funding/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2110,7 +2110,7 @@ Today, the London company designs multispecific antibodies, able to target sever
 
 On 18 June 2026, LabGenius signed a research collaboration, option and licence agreement with Korea''s LG Chem. On 4 December 2025, it had announced an expanded collaboration with Sanofi.',
   'S''associer à LG Chem est un moment très important pour LabGenius et valide à nouveau la capacité de notre plateforme à concevoir des anticorps multispécifiques très optimisés.', 'Partnering with LG Chem represents a very important moment for LabGenius and provides further validation of our platform''s ability to design highly optimised multispecific antibodies.',
-  '/portraits/james-field.webp', 'Photo : LabGenius Therapeutics', '[{"label":"LabGenius Therapeutics","url":"https://labgeniustx.com/"},{"label":"Équipe LabGenius","url":"https://labgeniustx.com/team"}]'::jsonb, false, false
+  '/portraits/james-field.webp', 'LabGenius Therapeutics', '[{"label":"LabGenius Therapeutics","url":"https://labgeniustx.com/"},{"label":"Équipe LabGenius","url":"https://labgeniustx.com/team"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2149,7 +2149,7 @@ The company uses AI to spot, in plant proteins, peptides (short chains of amino 
 
 On 10 September 2026, Nuritas named Kees Kruythoff, former president of Unilever North America, as Chair of its board.',
   'Son expérience pour construire des marchés et ancrer santé et durabilité dans de grands groupes de consommation fait de lui le partenaire idéal pour Nuritas en ce moment.', '',
-  '/portraits/nora-khaldi.webp', 'Photo : Nuritas', '[{"label":"Nuritas : page équipe (Nora Khaldi)","url":"https://www.nuritas.com/about/"},{"label":"Nuritas","url":"https://www.nuritas.com/"}]'::jsonb, false, false
+  '/portraits/nora-khaldi.webp', 'Nuritas', '[{"label":"Nuritas : page équipe (Nora Khaldi)","url":"https://www.nuritas.com/about/"},{"label":"Nuritas","url":"https://www.nuritas.com/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2188,7 +2188,7 @@ The problem, according to Tandem: administrative work takes up about 40% of clin
 
 On 14 September 2026, the company announced a $100M Series B led by the Scaleup Europe Fund, managed by EQT. It serves 10,000 care organisations across 14 European markets.',
   'L''Europe devrait fixer la norme pour l''entrée de l''IA dans la santé, plutôt que d''adopter celle d''un autre.', 'Europe should be setting the standard for how AI enters healthcare, not adopting someone else’s.',
-  '/portraits/lukas-saari.webp', 'Photo : Tandem Health', '[{"label":"Tandem Health, à propos","url":"https://www.tandemhealth.ai/about"},{"label":"Tandem Health, actualités","url":"https://www.tandemhealth.ai/news"}]'::jsonb, false, false
+  '/portraits/lukas-saari.webp', 'Tandem Health', '[{"label":"Tandem Health, à propos","url":"https://www.tandemhealth.ai/about"},{"label":"Tandem Health, actualités","url":"https://www.tandemhealth.ai/news"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2227,7 +2227,7 @@ Peec AI launched its platform in February 2025. It measures how brands appear in
 
 In November 2025, the company raised $21 million in a Series A. In May 2026, TechCrunch, citing internal data it verified, credited it with more than $10 million in annualized revenue.',
   NULL, NULL,
-  '/portraits/marius-meiners.webp', 'Photo : Peec AI', '[{"label":"Peec AI","url":"https://peec.ai"},{"label":"Annonce de la série A par Marius Meiners","url":"https://peec.ai/blog/we-raised-21m-series-a-to-help-brands-win-in-ai-search"}]'::jsonb, false, false
+  '/portraits/marius-meiners.webp', 'Peec AI', '[{"label":"Peec AI","url":"https://peec.ai"},{"label":"Annonce de la série A par Marius Meiners","url":"https://peec.ai/blog/we-raised-21m-series-a-to-help-brands-win-in-ai-search"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2266,7 +2266,7 @@ In April 2024, Parloa raised $66 million in a Series B. In May 2025 it raised $1
 
 In July 2026, its platform became an "SAP Endorsed App", meaning certified by SAP.',
   NULL, NULL,
-  '/portraits/malte-kosub.webp', 'Photo : Parloa', '[{"label":"Parloa","url":"https://www.parloa.com/"},{"label":"Parloa : à propos","url":"https://www.parloa.com/about-us/"}]'::jsonb, false, false
+  '/portraits/malte-kosub.webp', 'Parloa', '[{"label":"Parloa","url":"https://www.parloa.com/"},{"label":"Parloa : à propos","url":"https://www.parloa.com/about-us/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2305,7 +2305,7 @@ In 2017, he co-founded PolyAI in London with Tsung-Hsien Wen and Pei-Hao Su. Its
 
 In December 2025, PolyAI raised 86 million dollars, bringing its total funding to over 200 million.',
   NULL, NULL,
-  '/portraits/nikola-mrksic.webp', 'Photo : PolyAI', '[{"label":"PolyAI","url":"https://poly.ai/about"},{"label":"PolyAI lève 86 M$ (décembre 2025)","url":"https://poly.ai/blog/polyai-raises-86m-to-transform-how-enterprises-talk-to-their-customers"}]'::jsonb, false, false
+  '/portraits/nikola-mrksic.webp', 'PolyAI', '[{"label":"PolyAI","url":"https://poly.ai/about"},{"label":"PolyAI lève 86 M$ (décembre 2025)","url":"https://poly.ai/blog/polyai-raises-86m-to-transform-how-enterprises-talk-to-their-customers"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2336,7 +2336,7 @@ insert into public.people (
   'Conduct', 'GB', 'industrialisation',
   'Ancien de Palantir, il dirige à Londres Conduct, une IA qui aide les grandes entreprises à comprendre et à transformer leurs logiciels, notamment SAP.', 'A Palantir alumnus, he runs Conduct in London, an AI that helps large companies understand and transform their software, notably SAP.', 'Jan-Philipp Haas a dirigé chez Palantir les avant-ventes et l''après-vente pour l''Allemagne, la Suisse et l''Autriche. En 2024, il fonde Conduct avec deux anciens collègues de Palantir.\n\nConduct propose une IA qui lit le code personnalisé des logiciels d''entreprise, notamment SAP, pour en révéler les dépendances et accompagner leur transformation.\n\nLe 17 juin 2026, l''entreprise annonce une série A de 60 millions de dollars, menée par Index Ventures et ICONIQ, avec SAP comme investisseur stratégique. Elle compte alors environ 35 personnes à Londres.', 'Jan-Philipp Haas led pre- and post-sales at Palantir for Germany, Switzerland and Austria. In 2024, he founded Conduct with two former Palantir colleagues.\n\nConduct offers an AI that reads the custom code of enterprise software, notably SAP, to reveal its dependencies and support its transformation.\n\nOn 17 June 2026, the company announced a $60 million Series A, co-led by Index Ventures and ICONIQ, with SAP as a strategic investor. It then had about 35 people in London.',
   NULL, NULL,
-  NULL, NULL, '[{"label":"Conduct, site officiel","url":"https://www.conduct.ai"},{"label":"Conduct, annonce de la série A","url":"https://www.conduct.ai/blog/series-a"}]'::jsonb, false, false
+  '/portraits/jan-philipp-haas.webp', 'Slush', '[{"label":"Conduct, site officiel","url":"https://www.conduct.ai"},{"label":"Conduct, annonce de la série A","url":"https://www.conduct.ai/blog/series-a"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2375,7 +2375,7 @@ He has led Bpifrance since its creation in January 2013. He also chairs the supe
 
 In 2025, Bpifrance announced 10 billion euros through 2029 for AI. In May 2025, it co-founded with MGX, Mistral AI and NVIDIA a 1.4 GW AI campus in the Paris region.',
   NULL, NULL,
-  '/portraits/nicolas-dufourcq.webp', 'Photo : Bogdan Hoyaux / Union européenne, CC BY 4.0, via Wikimedia Commons', '[{"label":"Bpifrance","url":"https://www.bpifrance.fr"},{"label":"Article Wikipédia","url":"https://fr.wikipedia.org/wiki/Nicolas_Dufourcq"}]'::jsonb, false, false
+  '/portraits/nicolas-dufourcq.webp', 'Bogdan Hoyaux / Union européenne, CC BY 4.0, via Wikimedia Commons', '[{"label":"Bpifrance","url":"https://www.bpifrance.fr"},{"label":"Article Wikipédia","url":"https://fr.wikipedia.org/wiki/Nicolas_Dufourcq"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2414,7 +2414,7 @@ In 2016, she co-founded the fund La Famiglia with Robert Lacher, designed as a b
 
 She sits on the boards of Mistral AI, Helsing and Legora, and of Iceye since December 2025. She is one of the leaders of the EU AI Champions initiative.',
   NULL, NULL,
-  '/portraits/jeannette-zu-furstenberg.webp', 'Photo : General Catalyst', '[{"label":"Page General Catalyst","url":"https://www.generalcatalyst.com/team/jeannette-zu-furstenberg"},{"label":"EU AI Champions Initiative","url":"https://aichampions.eu/"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Jeannette_zu_F%C3%BCrstenberg"}]'::jsonb, false, false
+  '/portraits/jeannette-zu-furstenberg.webp', 'General Catalyst', '[{"label":"Page General Catalyst","url":"https://www.generalcatalyst.com/team/jeannette-zu-furstenberg"},{"label":"EU AI Champions Initiative","url":"https://aichampions.eu/"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Jeannette_zu_F%C3%BCrstenberg"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2445,7 +2445,7 @@ insert into public.people (
   'Agence ministérielle pour l''intelligence artificielle de défense (AMIAD)', 'FR', 'industrialisation',
   'Il dirige depuis 2024 l''agence qui pilote l''IA de défense en France, après la Direction générale de l''armement puis Google.', 'Since 2024 he has led the agency that steers defence AI in France, after the French defence procurement agency (DGA) and then Google.', 'Polytechnicien, diplômé de Télécom Paris et du master MVA de l''ENS Paris-Saclay, Bertrand Rondepierre débute à la Direction générale de l''armement. Il contribue, aux côtés de Cédric Villani, à la stratégie nationale pour l''IA présentée en 2018.\n\nIl occupe ensuite des fonctions de direction chez Google Research puis Google Brain, et participe à la fusion avec DeepMind. Depuis 2024, il dirige l''AMIAD, l''agence de l''IA de défense du ministère des Armées.\n\nEn septembre 2025, le ministère inaugure ASGARD, supercalculateur classifié de 1 024 puces installé au Mont-Valérien et exploité par l''AMIAD.', 'A graduate of École polytechnique, Télécom Paris and the MVA master''s at ENS Paris-Saclay, Bertrand Rondepierre starts at the French defence procurement agency (DGA). Alongside Cédric Villani, he contributes to the national AI strategy presented in 2018.\n\nHe then holds leadership roles at Google Research and then Google Brain, and takes part in the merger with DeepMind. Since 2024, he has led AMIAD, the defence AI agency of the Ministry of the Armed Forces.\n\nIn September 2025, the ministry inaugurates ASGARD, a classified supercomputer with 1,024 chips, installed at Mont-Valérien and operated by AMIAD.',
   'L''IA militaire, ce n''est pas une IA hors-sol. C''est une IA capable de fonctionner dans la poussière, la boue, sous les chocs…', 'Military AI is not detached from reality. It is AI able to work in dust, mud, under shocks…',
-  '/portraits/bertrand-rondepierre.webp', 'Photo : ministère des Armées', '[{"label":"AMIAD, page officielle (ministère des Armées)","url":"https://www.defense.gouv.fr/amiad-agence-ia-defense"},{"label":"Focus sur Bertrand Rondepierre","url":"https://www.defense.gouv.fr/amiad-agence-cle-lia-defense"},{"label":"AMIAD sur Wikipédia","url":"https://fr.wikipedia.org/wiki/Agence_minist%C3%A9rielle_pour_l%27intelligence_artificielle_de_D%C3%A9fense"}]'::jsonb, false, false
+  '/portraits/bertrand-rondepierre.webp', 'ministère des Armées', '[{"label":"AMIAD, page officielle (ministère des Armées)","url":"https://www.defense.gouv.fr/amiad-agence-ia-defense"},{"label":"Focus sur Bertrand Rondepierre","url":"https://www.defense.gouv.fr/amiad-agence-cle-lia-defense"},{"label":"AMIAD sur Wikipédia","url":"https://fr.wikipedia.org/wiki/Agence_minist%C3%A9rielle_pour_l%27intelligence_artificielle_de_D%C3%A9fense"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2484,7 +2484,7 @@ He then creates Atomico, a venture capital firm (it funds start-ups in exchange 
 
 In September 2024, Atomico announces a new fund to invest in European tech. Skype shut down on 5 May 2025.',
   NULL, NULL,
-  '/portraits/niklas-zennstrom.webp', 'Photo : TechCrunch, CC BY 2.0, via Wikimedia Commons', '[{"label":"Atomico","url":"https://www.atomico.com/"},{"label":"Wikipédia (EN)","url":"https://en.wikipedia.org/wiki/Niklas_Zennstr%C3%B6m"}]'::jsonb, false, false
+  '/portraits/niklas-zennstrom.webp', 'TechCrunch, CC BY 2.0, via Wikimedia Commons', '[{"label":"Atomico","url":"https://www.atomico.com/"},{"label":"Wikipédia (EN)","url":"https://en.wikipedia.org/wiki/Niklas_Zennstr%C3%B6m"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2519,7 +2519,7 @@ Il fonde Lakestar à Zurich en 2012. En avril 2024, le fonds annonce 600 million
 
 He founded Lakestar in Zurich in 2012. In April 2024, the firm announced $600 million raised. Its defence arm, Lakestar Resilience, counts Helsing and Isar Aerospace. In October 2025, according to Forbes, he said he would now invest his own capital.',
   NULL, NULL,
-  '/portraits/klaus-hommels.webp', 'Photo : Milken Institute', '[{"label":"Lakestar","url":"https://www.lakestar.com/"},{"label":"Wikipédia (allemand)","url":"https://de.wikipedia.org/wiki/Klaus_Hommels"}]'::jsonb, false, false
+  '/portraits/klaus-hommels.webp', 'Milken Institute', '[{"label":"Lakestar","url":"https://www.lakestar.com/"},{"label":"Wikipédia (allemand)","url":"https://de.wikipedia.org/wiki/Klaus_Hommels"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2558,7 +2558,7 @@ In 2016, he co-founded the health insurer Alan with Jean-Charles Samuelian-Werve
 
 In June 2026, Alan raised 480 million euros at a 5.5 billion euro valuation, to expand into new countries and invest in AI.',
   NULL, NULL,
-  '/portraits/charles-gorintin.webp', 'Photo : French-American Foundation', '[{"label":"Alan","url":"https://alan.com/en/careers"},{"label":"Project Syndicate : Charles Gorintin","url":"https://www.project-syndicate.org/columnist/charles-gorintin"}]'::jsonb, false, false
+  '/portraits/charles-gorintin.webp', 'French-American Foundation', '[{"label":"Alan","url":"https://alan.com/en/careers"},{"label":"Project Syndicate : Charles Gorintin","url":"https://www.project-syndicate.org/columnist/charles-gorintin"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2597,7 +2597,7 @@ He co-founds Elaia, which invests from pre-seed to pre-IPO, and Lazard Elaia Cap
 
 In July 2026, Lazard takes a 51% stake in Elaia, which keeps its independence in management.',
   NULL, NULL,
-  '/portraits/xavier-lazarus.webp', 'Photo : Elaia', '[{"label":"Profil sur Elaia","url":"https://www.elaia.com/team/xavier-lazarus"},{"label":"Elaia","url":"https://www.elaia.com/"},{"label":"Lazard Elaia Capital","url":"https://www.lazardelaiacapital.com/"}]'::jsonb, false, false
+  '/portraits/xavier-lazarus.webp', 'Elaia', '[{"label":"Profil sur Elaia","url":"https://www.elaia.com/team/xavier-lazarus"},{"label":"Elaia","url":"https://www.elaia.com/"},{"label":"Lazard Elaia Capital","url":"https://www.lazardelaiacapital.com/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2636,7 +2636,7 @@ Based in Munich, Vsquared backs frontier-technology start-ups: rockets (Isar Aer
 
 In June 2026, the fund opens its first office outside Munich, in London. Its largest fund, at 214 million euros, was launched in late 2022.',
   NULL, NULL,
-  '/portraits/benedikt-von-schoeler.webp', 'Photo : Vsquared Ventures', '[{"label":"Profil chez Vsquared","url":"https://vsquared.vc/team_member/benedikt-von-schoeler/"},{"label":"Vsquared Ventures","url":"https://vsquared.vc/"}]'::jsonb, false, false
+  '/portraits/benedikt-von-schoeler.webp', 'Vsquared Ventures', '[{"label":"Profil chez Vsquared","url":"https://vsquared.vc/team_member/benedikt-von-schoeler/"},{"label":"Vsquared Ventures","url":"https://vsquared.vc/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2675,7 +2675,7 @@ From London, he follows AI, enterprise software and cybersecurity. His portfolio
 
 In October 2024, he co-authors Euroscape: in 2023-2024, about 80% of the roughly $56 billion invested in AI went to US companies.',
   NULL, NULL,
-  '/portraits/philippe-botteri.webp', 'Photo : Accel', '[{"label":"Profil Accel","url":"https://www.accel.com/people/philippe-botteri"},{"label":"Euroscape 2024 : AI eating software","url":"https://www.accel.com/noteworthies/euroscape-2024-ai-eating-software"}]'::jsonb, false, false
+  '/portraits/philippe-botteri.webp', 'Accel', '[{"label":"Profil Accel","url":"https://www.accel.com/people/philippe-botteri"},{"label":"Euroscape 2024 : AI eating software","url":"https://www.accel.com/noteworthies/euroscape-2024-ai-eating-software"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2714,7 +2714,7 @@ In 2022, he founds ElevenLabs with his high school friend Piotr Dabkowski. The c
 
 In February 2026, ElevenLabs raises 500 million dollars at an 11 billion valuation, in a round led by Sequoia.',
   'Ce financement nous aide à aller au-delà de la seule voix pour transformer notre façon d''interagir avec la technologie.', 'This funding helps us go beyond voice alone to transform how we interact with technology altogether.',
-  '/portraits/mati-staniszewski.webp', 'Photo : Rafał Masłow, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"ElevenLabs","url":"https://elevenlabs.io/about"},{"label":"Wikipédia (en)","url":"https://en.wikipedia.org/wiki/Mati_Staniszewski"}]'::jsonb, false, false
+  '/portraits/mati-staniszewski.webp', 'Rafał Masłow, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"ElevenLabs","url":"https://elevenlabs.io/about"},{"label":"Wikipédia (en)","url":"https://en.wikipedia.org/wiki/Mati_Staniszewski"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2753,7 +2753,7 @@ Lovable lets people build an app by describing their idea in plain language, wit
 
 In August 2026, Lovable raised $400 million at a $13.3 billion valuation.',
   'C''est formidable de voir le prix KTH Innovation et des initiatives similaires mettre en lumière les jeunes entrepreneurs suédois et inspirer plus de gens à concrétiser leurs idées.', 'It''s fantastic to see the KTH Innovation Award and similar initiatives shine a spotlight on young entrepreneurs in Sweden and inspire more people to pursue their ideas.',
-  '/portraits/fabian-hedin.webp', 'Photo : Marcusgarage, CC0, via Wikimedia Commons', '[{"label":"Lovable","url":"https://lovable.dev"},{"label":"Lovable (Wikipédia)","url":"https://en.wikipedia.org/wiki/Lovable_(company)"}]'::jsonb, false, false
+  '/portraits/fabian-hedin.webp', 'Marcusgarage, CC0, via Wikimedia Commons', '[{"label":"Lovable","url":"https://lovable.dev"},{"label":"Lovable (Wikipédia)","url":"https://en.wikipedia.org/wiki/Lovable_(company)"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2792,7 +2792,7 @@ In 2017, he founded DeepL in Cologne: a translator built on neural networks, pro
 
 In November 2025, DeepL launched DeepL Agent, an autonomous assistant for business. In April 2026, its voice translation expanded to more than 40 languages.',
   'Nous avons vu que la prochaine grande avancée de la traduction viendrait de l''IA et de l''apprentissage profond.', 'We saw the next big breakthrough in translation would come through AI and deep learning.',
-  '/portraits/jaroslaw-kutylowski.webp', 'Photo : DeepL', '[{"label":"DeepL","url":"https://www.deepl.com"},{"label":"DeepL sur Wikipédia","url":"https://en.wikipedia.org/wiki/DeepL_SE"}]'::jsonb, false, false
+  '/portraits/jaroslaw-kutylowski.webp', 'DeepL', '[{"label":"DeepL","url":"https://www.deepl.com"},{"label":"DeepL sur Wikipédia","url":"https://en.wikipedia.org/wiki/DeepL_SE"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2831,7 +2831,7 @@ The studio first works for film and advertising. Around 2021, large companies as
 
 In January 2026, it raises $200 million at a $4 billion valuation.',
   NULL, NULL,
-  '/portraits/victor-riparbelli.webp', 'Photo : Duk3L1xon, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Synthesia - équipe et à propos","url":"https://www.synthesia.io/about"},{"label":"Synthesia - annonce de la série E (janvier 2026)","url":"https://www.synthesia.io/post/series-e-200-million-4-billion-valuation-future-work"}]'::jsonb, false, false
+  '/portraits/victor-riparbelli.webp', 'Duk3L1xon, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Synthesia - équipe et à propos","url":"https://www.synthesia.io/about"},{"label":"Synthesia - annonce de la série E (janvier 2026)","url":"https://www.synthesia.io/post/series-e-200-million-4-billion-valuation-future-work"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2870,7 +2870,7 @@ Unitary started in online content moderation. In October 2023, the company raise
 
 In October 2025, it launched "virtual agents" for insurance: they work inside existing software, with no technical integration or change to processes.',
   'Les agents virtuels ne demandent ni intégration technique ni changement des processus existants, et apportent très vite une vraie valeur.', 'Virtual Agents require no engineering integration or changes to existing processes while delivering real value, incredibly quickly.',
-  '/portraits/sasha-haco.webp', 'Photo : Unitary', '[{"label":"Unitary","url":"https://www.unitary.ai"},{"label":"Sasha Haco, page équipe Unitary","url":"https://www.unitary.ai/about-us"},{"label":"Sasha Haco sur Wikipédia","url":"https://en.wikipedia.org/wiki/Sasha_Haco"}]'::jsonb, false, false
+  '/portraits/sasha-haco.webp', 'Unitary', '[{"label":"Unitary","url":"https://www.unitary.ai"},{"label":"Sasha Haco, page équipe Unitary","url":"https://www.unitary.ai/about-us"},{"label":"Sasha Haco sur Wikipédia","url":"https://en.wikipedia.org/wiki/Sasha_Haco"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2905,7 +2905,7 @@ En mars 2024, l''entreprise lève 43 millions de dollars auprès de Balderton Ca
 
 In March 2024, the company raised $43 million from Balderton Capital and Aglaé Ventures, at a $500 million valuation. In June 2026, it said it processes 7 billion images a year for over a million businesses.',
   'L''idée de PhotoRoom est de rendre les photos de qualité studio accessibles à tous, partout dans le monde.', 'The idea of PhotoRoom is to make studio quality photos accessible to everyone in the world.',
-  '/portraits/matthieu-rouif.webp', 'Photo : Photoroom', '[{"label":"Photoroom","url":"https://www.photoroom.com/about"},{"label":"Article de Matthieu Rouif sur le blog Photoroom","url":"https://www.photoroom.com/inside-photoroom/brand-refresh"}]'::jsonb, false, false
+  '/portraits/matthieu-rouif.webp', 'Photoroom', '[{"label":"Photoroom","url":"https://www.photoroom.com/about"},{"label":"Article de Matthieu Rouif sur le blog Photoroom","url":"https://www.photoroom.com/inside-photoroom/brand-refresh"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2944,7 +2944,7 @@ A professor at the Oxford Internet Institute since August 2022, she leads the GE
 
 In 2025, she received a research award from the Alexander von Humboldt Foundation, worth 3.5 million euros.',
   NULL, NULL,
-  '/portraits/sandra-wachter.webp', 'Photo : The Berkman Klein Center for Internet & Society, CC BY 3.0, via Wikimedia Commons', '[{"label":"Profil Oxford Internet Institute","url":"https://www.oii.ox.ac.uk/people/profiles/sandra-wachter/"},{"label":"Wikipédia (anglais)","url":"https://en.wikipedia.org/wiki/Sandra_Wachter"}]'::jsonb, false, false
+  '/portraits/sandra-wachter.webp', 'The Berkman Klein Center for Internet & Society, CC BY 3.0, via Wikimedia Commons', '[{"label":"Profil Oxford Internet Institute","url":"https://www.oii.ox.ac.uk/people/profiles/sandra-wachter/"},{"label":"Wikipédia (anglais)","url":"https://en.wikipedia.org/wiki/Sandra_Wachter"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2983,7 +2983,7 @@ In November 2025, he announced he was leaving Meta to found AMI Labs, focused on
 
 In March 2026, the Paris-based company raised $1.03 billion at a $3.5 billion pre-money valuation.',
   NULL, NULL,
-  '/portraits/yann-lecun.webp', 'Photo : Jérémy Barande / École polytechnique, CC BY-SA 2.0, via Wikimedia Commons', '[{"label":"AMI Labs","url":"https://amilabs.xyz"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Yann_Le_Cun"}]'::jsonb, false, false
+  '/portraits/yann-lecun.webp', 'Jérémy Barande / École polytechnique, CC BY-SA 2.0, via Wikimedia Commons', '[{"label":"AMI Labs","url":"https://amilabs.xyz"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Yann_Le_Cun"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3022,7 +3022,7 @@ Since 2011, he has directed the Max Planck Institute for Intelligent Systems. He
 
 He is a co-founder of ELLIS, the European AI research network, and founding director of the ELLIS Institute Tübingen. In 2026, he is elected to the Royal Society.',
   NULL, NULL,
-  '/portraits/bernhard-scholkopf.webp', 'Photo : Latest Thinking, CC BY 3.0, via Wikimedia Commons', '[{"label":"Wikipedia (EN)","url":"https://en.wikipedia.org/wiki/Bernhard_Schölkopf"},{"label":"ELLIS Institute Tübingen","url":"https://institute-tue.ellis.eu/"}]'::jsonb, false, false
+  '/portraits/bernhard-scholkopf.webp', 'Latest Thinking, CC BY 3.0, via Wikimedia Commons', '[{"label":"Wikipedia (EN)","url":"https://en.wikipedia.org/wiki/Bernhard_Schölkopf"},{"label":"ELLIS Institute Tübingen","url":"https://institute-tue.ellis.eu/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3061,7 +3061,7 @@ He co-developed variational autoencoders, a method that teaches a neural network
 
 Co-founder of CuspAI in 2024, he aims to build foundation models for chemistry: designing materials from the properties one wants. In 2025, he was elected to the Royal Netherlands Academy of Arts and Sciences.',
   NULL, NULL,
-  '/portraits/max-welling.webp', 'Photo : HumanX', '[{"label":"Page AMLab (université d''Amsterdam)","url":"https://amlab.science.uva.nl/people/MaxWelling/"},{"label":"CuspAI","url":"https://www.cusp.ai/"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Max_Welling"}]'::jsonb, false, false
+  '/portraits/max-welling.webp', 'HumanX', '[{"label":"Page AMLab (université d''Amsterdam)","url":"https://amlab.science.uva.nl/people/MaxWelling/"},{"label":"CuspAI","url":"https://www.cusp.ai/"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Max_Welling"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3100,7 +3100,7 @@ In 2010, he was among the Inria researchers who took over scikit-learn, an open-
 
 In 2025, he received an honorary doctorate from UCLouvain and was made a Knight of the National Order of Merit.',
   NULL, NULL,
-  '/portraits/gael-varoquaux.webp', 'Photo : Gael Varoquaux, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Site personnel","url":"https://gael-varoquaux.info/"},{"label":"Probabl","url":"https://probabl.ai"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Gaël_Varoquaux"}]'::jsonb, false, false
+  '/portraits/gael-varoquaux.webp', 'Gael Varoquaux, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Site personnel","url":"https://gael-varoquaux.info/"},{"label":"Probabl","url":"https://probabl.ai"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Gaël_Varoquaux"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3139,7 +3139,7 @@ Since January 2022, he has led the Chair for AI Methodology at RWTH Aachen, unde
 
 He co-founded CLAIRE, a European AI research network renamed CAIRNE, which now counts more than 500 member groups and organisations.',
   NULL, NULL,
-  '/portraits/holger-h-hoos.webp', 'Photo : Qwertzu111111, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Chaire AIM, RWTH Aachen","url":"https://www.aim.rwth-aachen.de/"},{"label":"CAIRNE (ex-CLAIRE)","url":"https://cairne.eu/"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Holger_H._Hoos"}]'::jsonb, false, false
+  '/portraits/holger-h-hoos.webp', 'Qwertzu111111, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Chaire AIM, RWTH Aachen","url":"https://www.aim.rwth-aachen.de/"},{"label":"CAIRNE (ex-CLAIRE)","url":"https://cairne.eu/"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Holger_H._Hoos"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3178,7 +3178,7 @@ From 2002 to 2019, she taught computer science at the University of Bath, where 
 
 Since 2020, she has taught ethics and technology at the Hertie School in Berlin. In February 2025, UCLouvain awarded her an honorary doctorate.',
   NULL, NULL,
-  '/portraits/joanna-bryson.webp', 'Photo : World Economic Forum, CC BY 3.0, via Wikimedia Commons', '[{"label":"Page biographique de Joanna Bryson","url":"https://www.joannajbryson.org/biographies"},{"label":"Article Wikipédia (anglais)","url":"https://en.wikipedia.org/wiki/Joanna_Bryson"}]'::jsonb, false, false
+  '/portraits/joanna-bryson.webp', 'World Economic Forum, CC BY 3.0, via Wikimedia Commons', '[{"label":"Page biographique de Joanna Bryson","url":"https://www.joannajbryson.org/biographies"},{"label":"Article Wikipédia (anglais)","url":"https://en.wikipedia.org/wiki/Joanna_Bryson"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3217,7 +3217,7 @@ He has taught at the Gregorian since 2008 and works on the ethics of technology 
 
 He was a member of the UN Secretary-General''s High-level Advisory Body on AI, and chairs Italy''s commission on AI for information, which has existed since 2024.',
   NULL, NULL,
-  '/portraits/paolo-benanti.webp', 'Photo : Paolo Pegoraro, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Wikipédia (anglais)","url":"https://en.wikipedia.org/wiki/Paolo_Benanti"},{"label":"ONU, organe consultatif sur l''IA","url":"https://www.un.org/en/ai-advisory-body/members"}]'::jsonb, false, false
+  '/portraits/paolo-benanti.webp', 'Paolo Pegoraro, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Wikipédia (anglais)","url":"https://en.wikipedia.org/wiki/Paolo_Benanti"},{"label":"ONU, organe consultatif sur l''IA","url":"https://www.un.org/en/ai-advisory-body/members"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3256,7 +3256,7 @@ Holder of the Data Science chair at the Collège de France since 2017, he uses m
 
 In 2025, he received the CNRS Gold Medal.',
   NULL, NULL,
-  '/portraits/stephane-mallat.webp', 'Photo : Jérémy Barande, CC BY-SA 2.0, via Wikimedia Commons', '[{"label":"Chaire Sciences des données, Collège de France","url":"https://www.college-de-france.fr/fr/chaire/stephane-mallat-sciences-des-donnees-chaire-statutaire"},{"label":"Stéphane Mallat, CNRS","url":"https://www.cnrs.fr/fr/personne/stephane-mallat"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Stéphane_Mallat"}]'::jsonb, false, false
+  '/portraits/stephane-mallat.webp', 'Jérémy Barande, CC BY-SA 2.0, via Wikimedia Commons', '[{"label":"Chaire Sciences des données, Collège de France","url":"https://www.college-de-france.fr/fr/chaire/stephane-mallat-sciences-des-donnees-chaire-statutaire"},{"label":"Stéphane Mallat, CNRS","url":"https://www.cnrs.fr/fr/personne/stephane-mallat"},{"label":"Wikipédia","url":"https://fr.wikipedia.org/wiki/Stéphane_Mallat"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3295,7 +3295,7 @@ Since 2022, he has headed the Computational Health Center. His team builds machi
 
 He received the Leibniz Prize in 2023 and was elected to the Leopoldina Academy in 2025.',
   NULL, NULL,
-  '/portraits/fabian-theis.webp', 'Photo : Helmholtz Munich / Matthias Tunger Photodesign', '[{"label":"Profil, Helmholtz Munich","url":"https://www.helmholtz-munich.de/en/icb/fabian-theis"},{"label":"Theis Lab","url":"https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab"},{"label":"Profil, TU Munich","url":"https://www.professoren.tum.de/en/theis-fabian"}]'::jsonb, false, false
+  '/portraits/fabian-theis.webp', 'Helmholtz Munich / Matthias Tunger Photodesign', '[{"label":"Profil, Helmholtz Munich","url":"https://www.helmholtz-munich.de/en/icb/fabian-theis"},{"label":"Theis Lab","url":"https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab"},{"label":"Profil, TU Munich","url":"https://www.professoren.tum.de/en/theis-fabian"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3326,7 +3326,7 @@ insert into public.people (
   'University of Oxford', 'GB', 'culture',
   'Professeur à Oxford, il étudie les systèmes multi-agents et explique l''IA au grand public, notamment lors des Christmas Lectures de la Royal Institution en 2023.', 'An Oxford professor, he studies multi-agent systems and explains AI to the public, notably in the Royal Institution Christmas Lectures in 2023.', 'Michael Wooldridge est titulaire de la chaire Ashall de fondations de l''intelligence artificielle à Oxford. Formé à Wolverhampton Polytechnic (licence, 1989) puis à l''UMIST (doctorat, 1991), il a dirigé le département d''informatique d''Oxford de 2014 à 2018.\n\nIl travaille sur les systèmes multi-agents : des programmes autonomes qui coopèrent ou négocient. Il a présidé l''IJCAI, grande conférence internationale d''IA (2015-2017), et l''association européenne d''IA, EurAI (2014-2016).\n\nEn 2025, il reçoit le prix Michael Faraday de la Royal Society ; en 2026, il en est élu membre.', 'Michael Wooldridge holds the Ashall Chair of the Foundations of Artificial Intelligence at Oxford. Trained at Wolverhampton Polytechnic (BSc, 1989) then UMIST (PhD, 1991), he chaired Oxford''s Department of Computer Science from 2014 to 2018.\n\nHe works on multi-agent systems: autonomous programs that cooperate or negotiate. He was president of IJCAI, a leading international AI conference (2015-2017), and of the European Association for AI, EurAI (2014-2016).\n\nIn 2025, he received the Royal Society''s Michael Faraday Prize; in 2026, he was elected a Fellow of the Society.',
   NULL, NULL,
-  '/portraits/michael-wooldridge.webp', 'Photo : Mateusz Malta, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Page Oxford Computer Science","url":"https://www.cs.ox.ac.uk/people/michael.wooldridge/"},{"label":"Profil Hertford College","url":"https://www.hertford.ox.ac.uk/staff-profiles/professor-michael-wooldridge/"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Michael_Wooldridge_(computer_scientist)"}]'::jsonb, false, false
+  '/portraits/michael-wooldridge.webp', 'Mateusz Malta, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Page Oxford Computer Science","url":"https://www.cs.ox.ac.uk/people/michael.wooldridge/"},{"label":"Profil Hertford College","url":"https://www.hertford.ox.ac.uk/staff-profiles/professor-michael-wooldridge/"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Michael_Wooldridge_(computer_scientist)"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3365,7 +3365,7 @@ Since 2015, he has been Professor of Philosophy of Media and Technology at the U
 
 In 2026, he was appointed to the UN Independent Scientific Panel on AI and published "Artificial Religion" (MIT Press).',
   NULL, NULL,
-  '/portraits/mark-coeckelbergh.webp', 'Photo : Université de Vienne', '[{"label":"Site personnel","url":"https://coeckelbergh.net/"},{"label":"Groupe scientifique de l''ONU sur l''IA","url":"https://www.un.org/independent-international-scientific-panel-ai/en/panel-members"},{"label":"Wikipédia (EN)","url":"https://en.wikipedia.org/wiki/Mark_Coeckelbergh"}]'::jsonb, false, false
+  '/portraits/mark-coeckelbergh.webp', 'Université de Vienne', '[{"label":"Site personnel","url":"https://coeckelbergh.net/"},{"label":"Groupe scientifique de l''ONU sur l''IA","url":"https://www.un.org/independent-international-scientific-panel-ai/en/panel-members"},{"label":"Wikipédia (EN)","url":"https://en.wikipedia.org/wiki/Mark_Coeckelbergh"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3404,7 +3404,7 @@ Since mid-2017, he has worked in the European Parliament for MEP Axel Voss (EPP 
 
 In 2026, his blog publishes analyses of the AI Act "omnibus" and of the enforcement of European digital rules.',
   NULL, NULL,
-  '/portraits/kai-zenner.webp', 'Photo : Kai Zenner', '[{"label":"Site personnel de Kai Zenner","url":"https://www.kaizenner.eu"},{"label":"Profil OECD.AI","url":"https://oecd.ai/en/community/kai-zenner"}]'::jsonb, false, false
+  '/portraits/kai-zenner.webp', 'Kai Zenner', '[{"label":"Site personnel de Kai Zenner","url":"https://www.kaizenner.eu"},{"label":"Profil OECD.AI","url":"https://oecd.ai/en/community/kai-zenner"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3482,7 +3482,7 @@ She was Director for AI and Digital Industry at DG CONNECT when the Commission p
 
 In 2025, the Commission published the code of practice for general-purpose AI (10 July), ahead of the start of the related obligations (2 August).',
   NULL, NULL,
-  '/portraits/lucilla-sioli.webp', 'Photo : Commission européenne', '[{"label":"Office européen de l''IA","url":"https://digital-strategy.ec.europa.eu/en/policies/ai-office"},{"label":"Wikidata","url":"https://www.wikidata.org/wiki/Q135841139"}]'::jsonb, false, false
+  '/portraits/lucilla-sioli.webp', 'Commission européenne', '[{"label":"Office européen de l''IA","url":"https://digital-strategy.ec.europa.eu/en/policies/ai-office"},{"label":"Wikidata","url":"https://www.wikidata.org/wiki/Q135841139"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3513,7 +3513,7 @@ insert into public.people (
   'AI Security Institute', 'GB', 'culture',
   'Directrice technique de l''AI Security Institute britannique et conseillère IA du Premier ministre, elle travaille à évaluer les risques des modèles d''IA les plus avancés.', 'Chief technology officer of the UK''s AI Security Institute and AI adviser to the Prime Minister, she works on assessing the risks of the most advanced AI models.', 'Ingénieure civile de formation (université d''Auckland, 2015), Jade Leung est boursière Rhodes en 2016, puis obtient en 2019 un doctorat en relations internationales à Oxford, consacré à l''histoire de la politique stratégique des technologies émergentes.\n\nCofondatrice du Centre for the Governance of AI à Oxford, elle dirige ensuite la gouvernance chez OpenAI, jusqu''en octobre 2023.\n\nDepuis, elle est directrice technique de l''AI Security Institute, l''organisme public britannique qui évalue les risques de l''IA avancée. En 2025, elle devient aussi conseillère IA du Premier ministre.', 'A civil engineer by training (University of Auckland, 2015), Jade Leung became a Rhodes Scholar in 2016, then earned a DPhil in international relations at Oxford in 2019, on the history of the strategic politics of emerging technologies.\n\nA co-founder of the Centre for the Governance of AI at Oxford, she went on to lead governance at OpenAI until October 2023.\n\nSince then, she has been chief technology officer of the AI Security Institute, the UK public body that assesses the risks of advanced AI. In 2025, she also became the Prime Minister''s AI adviser.',
   NULL, NULL,
-  '/portraits/jade-leung.webp', 'Photo : New Zealand Government, Office of the Governor-General, CC BY 4.0, via Wikimedia Commons', '[{"label":"AI Security Institute","url":"https://www.aisi.gov.uk/"},{"label":"Wikipédia (en)","url":"https://en.wikipedia.org/wiki/Jade_Leung_(engineer)"},{"label":"GovAI","url":"https://www.governance.ai/team/jade-leung"}]'::jsonb, false, false
+  '/portraits/jade-leung.webp', 'New Zealand Government, Office of the Governor-General, CC BY 4.0, via Wikimedia Commons', '[{"label":"AI Security Institute","url":"https://www.aisi.gov.uk/"},{"label":"Wikipédia (en)","url":"https://en.wikipedia.org/wiki/Jade_Leung_(engineer)"},{"label":"GovAI","url":"https://www.governance.ai/team/jade-leung"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3552,7 +3552,7 @@ She sits on the Industry, Research and Energy Committee and coordinated the EPP 
 
 On 23 June 2026, she presented at the European Parliament in Brussels, with actor Cate Blanchett, a public registry where anyone states whether an AI may use their image or voice.',
   'un outil qui rend les droits transparents, renforce la confiance à grande échelle et maintient la créativité humaine au centre du progrès technologique', 'a tool that makes rights transparent, scales trust, and keeps human creativity at the centre of technological progress',
-  '/portraits/eva-maydell.webp', 'Photo : European People''s Party, CC BY 2.0, via Wikimedia Commons', '[{"label":"Article Wikipédia","url":"https://en.wikipedia.org/wiki/Eva_Maydell"},{"label":"Site personnel","url":"https://www.evamaydell.eu"}]'::jsonb, false, false
+  '/portraits/eva-maydell.webp', 'European People''s Party, CC BY 2.0, via Wikimedia Commons', '[{"label":"Article Wikipédia","url":"https://en.wikipedia.org/wiki/Eva_Maydell"},{"label":"Site personnel","url":"https://www.evamaydell.eu"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3630,7 +3630,7 @@ From 2016 to 2020, she leads technology and innovation for the city of Barcelona
 
 In February 2025, she co-authors the EuroStack report: over 80% of Europe''s digital technologies are imported. She has sat on the European Innovation Council board since 2025.',
   NULL, NULL,
-  '/portraits/francesca-bria.webp', 'Photo : Martin Kraft, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Article Wikipédia","url":"https://en.wikipedia.org/wiki/Francesca_Bria"},{"label":"Site EuroStack","url":"https://eurostack.eu"},{"label":"Rapport EuroStack (Bertelsmann Stiftung)","url":"https://www.bertelsmann-stiftung.de/en/publications/publication/did/eurostack-a-european-alternative-for-digital-sovereignty"}]'::jsonb, false, false
+  '/portraits/francesca-bria.webp', 'Martin Kraft, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Article Wikipédia","url":"https://en.wikipedia.org/wiki/Francesca_Bria"},{"label":"Site EuroStack","url":"https://eurostack.eu"},{"label":"Rapport EuroStack (Bertelsmann Stiftung)","url":"https://www.bertelsmann-stiftung.de/en/publications/publication/did/eurostack-a-european-alternative-for-digital-sovereignty"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3669,7 +3669,7 @@ In July 2019, he handed the government a report on financing technology companie
 
 In June 2026, the third phase was announced: 13 billion euros from about forty institutional investors.',
   NULL, NULL,
-  '/portraits/philippe-tibi.webp', 'Photo : École polytechnique', '[{"label":"Initiative Tibi III et extension européenne (École polytechnique)","url":"https://www.polytechnique.edu/en/news/tibi-initiative-launch-phase-3-and-expansion-european-level"},{"label":"Initiative Tibi, rapport d''activité (Direction générale du Trésor)","url":"https://www.tresor.economie.gouv.fr/Articles/2025/09/16/tiibi-initiative-a-target-raised-to-15-billion"}]'::jsonb, false, false
+  '/portraits/philippe-tibi.webp', 'École polytechnique', '[{"label":"Initiative Tibi III et extension européenne (École polytechnique)","url":"https://www.polytechnique.edu/en/news/tibi-initiative-launch-phase-3-and-expansion-european-level"},{"label":"Initiative Tibi, rapport d''activité (Direction générale du Trésor)","url":"https://www.tresor.economie.gouv.fr/Articles/2025/09/16/tiibi-initiative-a-target-raised-to-15-billion"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3708,7 +3708,7 @@ His specialty is optimal transport: the most economical way to move one set of p
 
 Since October 2024 he has led WOLF, a project funded until 2029 by a 2.5 million euro ERC grant, on the development of cells. On 20 April 2026, he spoke at the French National Assembly on AI in research.',
   NULL, NULL,
-  '/portraits/gabriel-peyre.webp', 'Photo : CNRS', '[{"label":"Page personnelle","url":"https://www.gpeyre.com/"},{"label":"Profil CNRS","url":"https://www.cnrs.fr/fr/personne/gabriel-peyre"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Gabriel_Peyré"}]'::jsonb, false, false
+  '/portraits/gabriel-peyre.webp', 'CNRS', '[{"label":"Page personnelle","url":"https://www.gpeyre.com/"},{"label":"Profil CNRS","url":"https://www.cnrs.fr/fr/personne/gabriel-peyre"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Gabriel_Peyré"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3747,7 +3747,7 @@ At Google DeepMind in Paris, she leads foundational research on frontier models 
 
 Elected to the Académie des technologies on 10 December 2025, she was named on 12 February 2026 among the 40 experts of the UN scientific panel on AI.',
   'Bien sûr, l''IA est un outil, et ne pourra jamais remplacer l''humain.', 'Of course, AI is a tool, and it will never be able to replace humans.',
-  '/portraits/joelle-barral.webp', 'Photo : Académie des technologies', '[{"label":"Académie des technologies","url":"https://www.academie-technologies.fr/academiciens/barral-joelle/"},{"label":"Google, entretien avec Joëlle Barral","url":"https://blog.google/intl/fr-fr/nouvelles-de-lentreprise/azerty/barral-ia/"}]'::jsonb, false, false
+  '/portraits/joelle-barral.webp', 'Académie des technologies', '[{"label":"Académie des technologies","url":"https://www.academie-technologies.fr/academiciens/barral-joelle/"},{"label":"Google, entretien avec Joëlle Barral","url":"https://blog.google/intl/fr-fr/nouvelles-de-lentreprise/azerty/barral-ia/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3786,7 +3786,7 @@ She has directed Station F since October 2015. The campus, opened in 2017 in the
 
 In January 2026, Station F launched F/ai, a program for AI startups. Its first cohort raised $34 million in pre-seed funding; the second starts in September 2026.',
   NULL, NULL,
-  '/portraits/roxanne-varza.webp', 'Photo : jeanbaptisteparis, CC BY-SA 2.0, via Wikimedia Commons', '[{"label":"Station F","url":"https://stationf.co/"},{"label":"Wikipédia : Roxanne Varza","url":"https://fr.wikipedia.org/wiki/Roxanne_Varza"}]'::jsonb, false, false
+  '/portraits/roxanne-varza.webp', 'jeanbaptisteparis, CC BY-SA 2.0, via Wikimedia Commons', '[{"label":"Station F","url":"https://stationf.co/"},{"label":"Wikipédia : Roxanne Varza","url":"https://fr.wikipedia.org/wiki/Roxanne_Varza"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3825,7 +3825,7 @@ In 2012, he co-founds France Digitale with Marie Ekeland, an association bringin
 
 In 2026, Founders Future''s FF Growth US fund, aimed at AI leaders from Series B onward, is open for subscription.',
   NULL, NULL,
-  '/portraits/marc-menase.webp', 'Photo : Founders Future', '[{"label":"Founders Future","url":"https://www.foundersfuture.com/"},{"label":"Profil sur Founders Future","url":"https://www.foundersfuture.com/teams/marc-menase"},{"label":"France Digitale (Wikipédia)","url":"https://fr.wikipedia.org/wiki/France_Digitale"}]'::jsonb, false, false
+  '/portraits/marc-menase.webp', 'Founders Future', '[{"label":"Founders Future","url":"https://www.foundersfuture.com/"},{"label":"Profil sur Founders Future","url":"https://www.foundersfuture.com/teams/marc-menase"},{"label":"France Digitale (Wikipédia)","url":"https://fr.wikipedia.org/wiki/France_Digitale"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
