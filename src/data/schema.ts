@@ -8,7 +8,8 @@ import { EXHIBIT_WINGS } from '../types'
 
 const KEBAB_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const COUNTRY_CODE_RE = /^[A-Z]{2}$/
-const PORTRAIT_PATH_RE = /^\/portraits\/[a-zA-Z0-9._-]+\.(?:webp|jpg|jpeg|png)$/i
+/** Chemin local d'un portrait produit par l'import (`public/portraits/<id>.webp`). */
+export const PORTRAIT_PATH_RE = /^\/portraits\/[a-zA-Z0-9._-]+\.(?:webp|jpg|jpeg|png)$/i
 
 const WING_VALUES = EXHIBIT_WINGS as unknown as [ExhibitWingId, ...ExhibitWingId[]]
 

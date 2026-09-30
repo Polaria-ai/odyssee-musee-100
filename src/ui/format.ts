@@ -3,6 +3,7 @@
  * Propriétaire : agent interface.
  */
 import type { ExhibitWingId, Localized, Person, RoomLayout } from '../types'
+import { PORTRAIT_PATH_RE } from '../data/schema'
 
 /**
  * Emoji drapeau à partir d'un code pays ISO 3166-1 alpha-2 (ou `EU`).
@@ -45,6 +46,17 @@ export function safeUrl(url: string | null | undefined): string | null {
   } catch {
     return null
   }
+}
+
+/**
+ * Valide la photo d'une fiche : URL http(s) (comme `safeUrl`) ou chemin local `/portraits/…` écrit
+ * par l'import. `safeUrl` seul rejetait ces chemins relatifs : la fiche affichait la silhouette
+ * d'attente alors que le cadre 3D montrait la vraie photo (constaté le 30/09 avec les vrais 100).
+ */
+export function safePhotoUrl(url: string | null | undefined): string | null {
+  const trimmed = url?.trim()
+  if (trimmed && PORTRAIT_PATH_RE.test(trimmed)) return trimmed
+  return safeUrl(trimmed)
 }
 
 /**

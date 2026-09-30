@@ -6,6 +6,7 @@ import {
   flagEmoji,
   organizationLabel,
   pitchForSpeaker,
+  safePhotoUrl,
   safeUrl,
   splitParagraphs,
 } from './format'
@@ -57,6 +58,23 @@ describe('safeUrl', () => {
     expect(safeUrl('')).toBeNull()
     expect(safeUrl(undefined)).toBeNull()
     expect(safeUrl('not a url')).toBeNull()
+  })
+})
+
+describe('safePhotoUrl', () => {
+  it('accepte les portraits locaux écrits par l’import', () => {
+    expect(safePhotoUrl('/portraits/exemple-a-supprimer.webp')).toBe('/portraits/exemple-a-supprimer.webp')
+    expect(safePhotoUrl(' /portraits/exemple.jpg ')).toBe('/portraits/exemple.jpg')
+  })
+  it('accepte les URL http(s), comme safeUrl', () => {
+    expect(safePhotoUrl('https://example.com/p.webp')).toBe('https://example.com/p.webp')
+  })
+  it('refuse tout autre chemin ou schéma', () => {
+    expect(safePhotoUrl('/autre/p.webp')).toBeNull()
+    expect(safePhotoUrl('/portraits/../secret.webp')).toBeNull()
+    expect(safePhotoUrl('javascript:alert(1)')).toBeNull()
+    expect(safePhotoUrl('data:image/png;base64,AAAA')).toBeNull()
+    expect(safePhotoUrl(null)).toBeNull()
   })
 })
 

@@ -6,7 +6,7 @@ import { useEffect, useRef, type CSSProperties, type TouchEvent as ReactTouchEve
 import { useGame } from '../state/gameStore'
 import { useT, usePick } from '../i18n'
 import { strings } from './strings'
-import { flagEmoji, organizationLabel, safeUrl, splitParagraphs } from './format'
+import { flagEmoji, organizationLabel, safePhotoUrl, safeUrl, splitParagraphs } from './format'
 import { wingThemes } from '../styles/tokens'
 import type { Person } from '../types'
 import { playSfx } from '../audio'
@@ -84,7 +84,7 @@ export function PortraitCard() {
   const wingColor = room?.accentColor ?? wingThemes[person.wing].accent
   const wingLabel = room ? p(room.label) : ''
   const organization = organizationLabel(person, t('portraitOrgPending'))
-  const photo = safeUrl(person.photoUrl)
+  const photo = safePhotoUrl(person.photoUrl)
   const paragraphs = splitParagraphs(p(person.story))
   const safeLinks = (person.links ?? [])
     .map((link) => ({ label: link.label, href: safeUrl(link.url) }))
