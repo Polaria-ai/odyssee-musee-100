@@ -236,12 +236,17 @@ test('archive publiée pendant la visite : la vitrine s’allume sans recharger 
   // La lecture Supabase des archives est interceptée : rien n'est publié en base. D'abord aucune
   // archive (état de la soirée avant publication), puis une archive factice « publiée ».
   let published: unknown[] = []
-  await page.route('**/rest/v1/session_archives*', (route) =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(published) }),
-  )
+  let reads = 0
+  await page.route('**/rest/v1/session_archives*', (route) => {
+    reads += 1
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(published) })
+  })
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
   expect(Object.keys(state.archives)).toEqual([])
+  // Sans `VITE_SUPABASE_URL` dans le build, le jeu ne lit jamais Supabase et rien ne peut être
+  // publié : mieux vaut le dire que laisser attendre l'archive 10 s (voir docs/tests/archives.md).
+  expect(reads, 'le jeu doit lire session_archives au chargement : build sans VITE_SUPABASE_URL ?').toBeGreaterThan(0)
 
   const slot = archives.slots[0]
   published = [

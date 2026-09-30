@@ -7,6 +7,7 @@
  * côté application, ces tests échoueront à l'exécution — voir docs/TESTS.md.
  */
 import { expect, type Page } from '@playwright/test'
+import { stubSupabase } from './supabaseStub'
 
 export type Lang = 'fr' | 'en'
 export type Screen = 'loading' | 'title' | 'play'
@@ -114,6 +115,8 @@ export interface MuseeDebugApi {
  * Passer `&presenceRoom=<id>` dans `extraQuery` pour réunir plusieurs contextes.
  */
 export async function gotoMusee(page: Page, extraQuery = ''): Promise<void> {
+  // Dans le build E2E de la CI, Supabase est un faux projet (`supabaseStub.ts`) : à répondre avant toute requête.
+  await stubSupabase(page.context())
   const room = extraQuery.includes('presenceRoom=') ? '' : `&presenceRoom=e2e-${crypto.randomUUID().slice(0, 12)}`
   await page.goto(`/?e2e=1${room}${extraQuery}`)
 }
