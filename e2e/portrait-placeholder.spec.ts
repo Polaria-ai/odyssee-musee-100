@@ -19,6 +19,9 @@ test.use({ locale: 'fr-FR' })
 test('fiche d’attente : « À dévoiler le 6 octobre » en FR, « Revealed on October 6 » en EN, sans mélange', async ({
   page,
 }) => {
+  // Depuis l'intégration des vrais 100 (branche feat/les-100-reels), `/data/people.json` n'est plus
+  // vide : on le vide pour ce test, qui couvre le repli sur les fiches d'attente (liste absente).
+  await page.route('**/data/people.json', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: '[]' }))
   await gotoMusee(page)
   await enterMuseum(page)
   await dismissWelcomeDialogue(page)
