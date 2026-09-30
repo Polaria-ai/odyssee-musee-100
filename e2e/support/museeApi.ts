@@ -174,28 +174,54 @@ export async function waitForRenderInfo(page: Page, timeout = 5_000): Promise<Mu
  * Playwright en parallèle, images plus rares), atterrir trop près du joueur (sous
  * `TAP_STOP_DISTANCE`, `src/player/Player.tsx`) : le joueur ne bouge alors jamais, de façon
  * instable (régression trouvée en vérification, pas au premier passage de ce test).
+ *
+ * La convergence se compte en IMAGES rendues, pas en secondes : `Player.tsx` borne `dt` à 1/15 s,
+ * donc, sous 15 images/s, chaque image rapproche la caméra d'un tiers du chemin restant, quelle que
+ * soit la durée réelle de l'image. Il faut ~18 images pour passer de ~10 m (saut du spawn au point
+ * libre du hall, recul de caméra du dialogue d'accueil compris) à moins de 1 cm. Les runners CI
+ * (SwiftShader, 2 cœurs) rendent ~5 images/s (déduit de la vitesse de convergence lue dans les
+ * traces du 30/09) : ~4 s de convergence. L'ancien `expect.poll` (budget 5 s, lectures espacées
+ * jusqu'à 1 s, deux lectures sous 5 mm exigées) avait besoin d'une lecture de plus que son budget :
+ * à l'expiration la caméra était déjà à ~2 mm de son repos, mais le dernier écart entre deux
+ * lectures valait encore 6 à 9 mm.
+ *
+ * D'où : (1) un échantillonnage image par image (`requestAnimationFrame`) plutôt qu'à intervalle de
+ * temps — le critère ne dépend plus de la cadence de lecture, et deux lectures d'une même image ne
+ * passent plus pour une caméra immobile — ; (2) un budget en temps réel large (20 s), sans coût
+ * quand la machine est rapide puisqu'on sort dès le calme constaté ; (3) 3 images consécutives
+ * sous `EPSILON` (5 mm) exigées, soit un résidu < ~1,5 cm à 5 images/s et < ~5 cm à 60, négligeable
+ * face aux 2,5 m de la cible visée.
  */
-export async function waitForCameraSettled(page: Page, timeout = 5_000): Promise<void> {
-  let last: MuseeCameraPosition | null = null
-  await expect
-    .poll(
-      async () => {
-        const pos = await page.evaluate(() => {
-          const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
-          return musee?.cameraPosition ? musee.cameraPosition() : null
-        })
-        if (!pos) return false
-        const stable =
-          last !== null &&
-          Math.abs(pos.x - last.x) < 0.005 &&
-          Math.abs(pos.y - last.y) < 0.005 &&
-          Math.abs(pos.z - last.z) < 0.005
-        last = pos
-        return stable
-      },
-      { timeout },
-    )
-    .toBe(true)
+export async function waitForCameraSettled(page: Page, timeout = 20_000): Promise<void> {
+  const settled = await page.evaluate(
+    ({ timeout, EPSILON, CALM_FRAMES }) =>
+      new Promise<boolean>((resolve) => {
+        const g = globalThis as unknown as {
+          __musee?: MuseeDebugApi
+          requestAnimationFrame: (callback: () => void) => number
+        }
+        const deadline = performance.now() + timeout
+        let last: MuseeCameraPosition | null = null
+        let calmFrames = 0
+        const onFrame = () => {
+          const pos = g.__musee?.cameraPosition?.() ?? null
+          const still =
+            pos !== null &&
+            last !== null &&
+            Math.abs(pos.x - last.x) < EPSILON &&
+            Math.abs(pos.y - last.y) < EPSILON &&
+            Math.abs(pos.z - last.z) < EPSILON
+          calmFrames = still ? calmFrames + 1 : 0
+          last = pos
+          if (calmFrames >= CALM_FRAMES) return resolve(true)
+          if (performance.now() > deadline) return resolve(false)
+          g.requestAnimationFrame(onFrame)
+        }
+        g.requestAnimationFrame(onFrame)
+      }),
+    { timeout, EPSILON: 0.005, CALM_FRAMES: 3 },
+  )
+  expect(settled, `la caméra devrait cesser de bouger en moins de ${timeout} ms`).toBe(true)
 }
 
 /** Centre (x, z) de l'emprise d'une salle (`RoomLayout.bounds`) : point de téléportation stable pour s'y tenir « au milieu ». */
