@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test'
+import { STUB_SUPABASE_ANON_KEY, STUB_SUPABASE_URL } from './e2e/support/supabaseStub'
 
 /**
  * E2E sur smartphone d'abord. Le serveur est le build de production (`vite preview`).
@@ -42,5 +43,12 @@ export default defineConfig({
         url: 'http://127.0.0.1:4173',
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
+        // En CI, ni `.env.local` ni secret : `getSupabase()` vaudrait `null` et le jeu ne lirait jamais
+        // Supabase, donc aucun test ne pourrait intercepter ses requêtes. Le build E2E reçoit un faux
+        // projet, auquel répond `gotoMusee` (`e2e/support/supabaseStub.ts`). Hors CI on garde le
+        // `.env.local` réel, dont dépend le test `@live`.
+        env: process.env.CI
+          ? { VITE_SUPABASE_URL: STUB_SUPABASE_URL, VITE_SUPABASE_ANON_KEY: STUB_SUPABASE_ANON_KEY }
+          : {},
       },
 })
