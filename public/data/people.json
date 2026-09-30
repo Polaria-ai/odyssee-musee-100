@@ -23,7 +23,7 @@
       "en": ""
     },
     "photoUrl": "/portraits/xianxin-guo.webp",
-    "photoCredit": "Photo : Lumai",
+    "photoCredit": "Lumai",
     "links": [
       {
         "label": "Lumai",
@@ -56,7 +56,7 @@
       "en": "Jonathan Godwin worked at Google DeepMind, Google's AI lab, on AI for science and materials. In 2022, he founded Orbital, then called Orbital Materials, with James Gin-Pollock and Daniel Miodovnik.\n\nThe company, now Orbital Industries, develops a PFAS-free cooling fluid (PFAS are persistent chemicals) for graphics chips, and modular data centres that can be deployed in as little as six months.\n\nOn 28 May 2026, it raised $50 million in a Series B led by Plural. It has around fifty employees."
     },
     "photoUrl": "/portraits/jonathan-godwin.webp",
-    "photoCredit": "Photo : MCJ (podcast Inevitable)",
+    "photoCredit": "MCJ (podcast Inevitable)",
     "links": [
       {
         "label": "Orbital Industries",
@@ -89,7 +89,7 @@
       "en": "Europe's ability to act independently in the world is now inseparable from the digital infrastructure it commands."
     },
     "photoUrl": "/portraits/mattias-astrom.webp",
-    "photoCredit": "Photo : evroc",
+    "photoCredit": "evroc",
     "links": [
       {
         "label": "evroc",
@@ -122,7 +122,7 @@
       "en": "A graduate of École Polytechnique, Télécom Paris and ENS Paris-Saclay, Arthur Mensch earned a PhD on brain MRI image analysis (2015-2018). He joined DeepMind Paris in 2020, working on large language models.\n\nIn April 2023, he co-founded Mistral AI with Guillaume Lample and Timothée Lacroix.\n\nIn September 2026, Mistral raised 3 billion euros, led by Samsung, at a valuation above 21 billion. The funds are to finance more computing capacity and new data centers, in France and Sweden."
     },
     "photoUrl": "/portraits/arthur-mensch.webp",
-    "photoCredit": "Photo : Jan2342342423, CC0, via Wikimedia Commons",
+    "photoCredit": "Jan2342342423, CC0, via Wikimedia Commons",
     "links": [
       {
         "label": "Mistral AI",
@@ -155,7 +155,7 @@
       "en": "French engineer born in 1973, with a master's degree in physics from Grenoble Institute of Technology, Christophe Fouquet works at Applied Materials and KLA Tencor before joining ASML in 2008. There he leads applications, then the EUV business (the ultraviolet light that etches the finest chips).\n\nHe becomes CEO on 25 April 2024. In September 2025, ASML leads a EUR 1.3 billion funding round in Mistral AI (about 11% of the capital, on a fully diluted basis).\n\nIn July 2026, ASML raises its 2026 sales forecast to EUR 43-45 billion, driven by AI-related demand."
     },
     "photoUrl": "/portraits/christophe-fouquet.webp",
-    "photoCredit": "Photo : ASML",
+    "photoCredit": "ASML",
     "links": [
       {
         "label": "ASML : Board of Management",
@@ -188,7 +188,7 @@
       "en": "Josh Payne founded companies in recruitment, capital markets and supercomputing infrastructure. Nscale was born in London in 2024, out of Arkon Energy, an infrastructure company based in Melbourne.\n\nAfter a $155 million Series A (December 2024), Nscale raised $2 billion in a Series C in March 2026, at a $14.6 billion valuation.\n\nIn March 2026, it acquired American Intelligence & Power Corporation: a West Virginia campus and an electric microgrid scalable to over 8 gigawatts."
     },
     "photoUrl": "/portraits/josh-payne.webp",
-    "photoCredit": "Photo : Nscale",
+    "photoCredit": "Nscale",
     "links": [
       {
         "label": "Nscale – équipe dirigeante",
@@ -221,7 +221,7 @@
       "en": "A Cambridge computer science graduate (1997), Demis Hassabis founds a video game studio, then earns a neuroscience PhD at UCL (2009). He co-founds DeepMind in 2010; Google acquires it in 2014.\n\nAlphaFold 2 (2020) predicts the shape of proteins. The work earns him the 2024 Nobel Prize in Chemistry, a shared prize.\n\nIn August 2026, he steps down as DeepMind's CEO to chair it and become Alphabet's chief scientist. He remains CEO of Isomorphic Labs."
     },
     "photoUrl": "/portraits/demis-hassabis.webp",
-    "photoCredit": "Photo : John Sears, CC BY-SA 4.0, via Wikimedia Commons",
+    "photoCredit": "John Sears, CC BY-SA 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Google DeepMind",
@@ -254,7 +254,7 @@
       "en": "Philippe Notton is a Supélec-trained engineer with an Executive MBA from ESSEC and Mannheim. He worked at Thomson, Canal+, LSI Logic, STMicroelectronics and Atos. In 2017, at Atos, he set up the European Processor Initiative consortium to bring high-performance processor design back to Europe. He created SiPearl in June 2019.\n\nOn 13 May 2026, SiPearl powered on the first Rhea1, an 80-core Arm chip made by TSMC. Delivery to customers is planned for late 2026. It will equip JUPITER, Europe's first exascale supercomputer."
     },
     "photoUrl": "/portraits/philippe-notton.webp",
-    "photoCredit": "Photo : SiPearl",
+    "photoCredit": "SiPearl",
     "links": [
       {
         "label": "Page de Philippe Notton sur SiPearl",
@@ -286,7 +286,8 @@
       "fr": "Originaire de Harrogate (Royaume-Uni), James Dacombe quitte le lycée après deux jours. À 17 ans, il fonde CoMind, une entreprise de neurotechnologie. Il reçoit une bourse Thiel en 2022.\n\nEn 2024, il crée Olix, d'abord nommée Flux Computing. La société conçoit des puces pour l'inférence (faire tourner un modèle d'IA déjà entraîné), reliées par des liens optiques plutôt que par du cuivre.\n\nLe 3 août 2026, Olix annonce une levée de 312 millions de dollars, pour une valorisation de 3,3 milliards. Les premiers systèmes DX-1 sont attendus chez les clients au second semestre 2027.",
       "en": "Originally from Harrogate, UK, James Dacombe left sixth-form college after two days. At 17, he founded CoMind, a neurotechnology company. He received a Thiel Fellowship in 2022.\n\nIn 2024, he created Olix, first named Flux Computing. The company designs chips for inference (running an already-trained AI model), linked by optical connections rather than copper.\n\nOn 3 August 2026, Olix announced a $312 million round at a $3.3 billion valuation. The first DX-1 systems are due to reach customers in the second half of 2027."
     },
-    "photoUrl": null,
+    "photoUrl": "/portraits/james-dacombe.webp",
+    "photoCredit": "Sifted",
     "links": [
       {
         "label": "Olix",
@@ -319,7 +320,7 @@
       "en": "A Cambridge graduate (1997), David Silver co-founded a video game studio, then completed a PhD on reinforcement learning at the University of Alberta (2009). He joined DeepMind full time in 2013, where he led AlphaGo, AlphaZero and MuZero.\\n\\nHe left DeepMind in January 2026 to found Ineffable Intelligence in London. He argues for AI that learns from experience rather than relying on human data.\\n\\nIn April 2026, the start-up announced $1.1 billion raised at a $5.1 billion valuation, the largest seed round in Europe."
     },
     "photoUrl": "/portraits/david-silver.webp",
-    "photoCredit": "Photo : The Royal Society",
+    "photoCredit": "The Royal Society",
     "links": [
       {
         "label": "Ineffable Intelligence",
@@ -356,7 +357,7 @@
       "en": "Born in Orléans in 1960, Jean-Marc Chéry graduated from Arts et Métiers (ENSAM) in 1983. He started at Matra, then joined Thomson Semiconducteurs in 1986, later renamed STMicroelectronics, where he ran factories.\n\nChief Technology Officer in 2008, Chief Operating Officer in 2014 and Deputy CEO in 2017, he became President and CEO in May 2018. He has chaired the Global Semiconductor Alliance since December 2024.\n\nIn March 2026, ST entered high-volume production of PIC100, a silicon photonics platform (chips that move data with light) for data centres."
     },
     "photoUrl": "/portraits/jean-marc-chery.webp",
-    "photoCredit": "Photo : Capgemini",
+    "photoCredit": "Capgemini",
     "links": [
       {
         "label": "Page de profil, Capgemini",
@@ -389,7 +390,7 @@
       "en": "Born in Poland, Octave Klaba studied engineering at ICAM in Lille and founded OVH in Roubaix in November 1999. The company rents servers and web hosting. Now OVHcloud, it runs 46 data centres across four continents.\n\nHe stepped back from day-to-day management in 2018 and stayed chairman. On 20 October 2025, he became chairman and CEO again.\n\nIn June 2026, OVHcloud plans to invest 150 to 200 million euros in its own language models. A first one has been pre-trained on Jupiter, a European supercomputer."
     },
     "photoUrl": "/portraits/octave-klaba.webp",
-    "photoCredit": "Photo : Stefanie Loos / Union européenne, CC BY 4.0, via Wikimedia Commons",
+    "photoCredit": "Stefanie Loos / Union européenne, CC BY 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "OVHcloud - à propos",
@@ -421,7 +422,8 @@
       "fr": "Diplômé de l'INSA Lyon en 1998, Arnaud Lépinois débute chez IBM, passe par le conseil informatique et fonde Neoxo. Il dirige Computacenter France dès janvier 2018, puis préside HP France dès novembre 2020.\n\nEclairion, créée en 2022, héberge des supercalculateurs dans des conteneurs modulaires refroidis par liquide : jusqu'à 600 kW par baie, contre 6 à 10 kW dans un centre classique.\n\nEn juillet 2026, Eclairion renforce son partenariat avec Schneider Electric, partenaire technologique pour ses modules électriques préfabriqués. Plus d'un gigawatt de capacité supplémentaire est en préparation.",
       "en": "A graduate of INSA Lyon in 1998, Arnaud Lépinois started at IBM, worked in IT consulting and founded Neoxo. He ran Computacenter France from January 2018, then chaired HP France from November 2020.\n\nEclairion, created in 2022, hosts supercomputers in liquid-cooled modular containers: up to 600 kW per rack, versus 6 to 10 kW in a conventional data centre.\n\nIn July 2026, Eclairion strengthened its partnership with Schneider Electric, its technology partner for prefabricated electrical modules. Over one gigawatt of additional capacity is in preparation."
     },
-    "photoUrl": null,
+    "photoUrl": "/portraits/arnaud-lepinois.webp",
+    "photoCredit": "Solutions Numériques",
     "links": [
       {
         "label": "Eclairion",
@@ -458,7 +460,7 @@
       "en": "I think the mindset in Europe needs to shift to one of optimism and to one of opportunity, and not to one of risk and fear"
     },
     "photoUrl": "/portraits/robin-rombach.webp",
-    "photoCredit": "Photo : Bits & Pretzels",
+    "photoCredit": "Bits & Pretzels",
     "links": [
       {
         "label": "Black Forest Labs",
@@ -491,7 +493,7 @@
       "en": "Román Orús earned his physics PhD at the University of Barcelona in 2006. After posts at the University of Queensland and the Max Planck Institute of Quantum Optics, he became an Ikerbasque Research Professor at the Donostia International Physics Center in 2017.\n\nIn 2019, he co-founded Multiverse Computing. He draws on tensor networks, a quantum physics tool that represents large datasets compactly, to shrink AI models by 80 to 95%, according to the company.\n\nOn 27 July 2026, the company announced a Series C round targeting up to 500 million euros."
     },
     "photoUrl": "/portraits/roman-orus.webp",
-    "photoCredit": "Photo : Estudio Badator, CC0, via Wikimedia Commons",
+    "photoCredit": "Estudio Badator, CC0, via Wikimedia Commons",
     "links": [
       {
         "label": "Multiverse Computing",
@@ -528,7 +530,7 @@
       "en": "Europe can no longer afford to outsource the foundations of its AI future, and we welcome the initiative of the European authorities,"
     },
     "photoUrl": "/portraits/damien-lucas.webp",
-    "photoCredit": "Photo : Scaleway",
+    "photoCredit": "Scaleway",
     "links": [
       {
         "label": "Scaleway",
@@ -561,7 +563,7 @@
       "en": "A graduate of the University of Patras (Greece) in 1979, he earned a master's and a PhD in electrical engineering at Carleton University (Ottawa). He joined IBM Research – Zurich in 1986 and became an IBM Fellow in 2005.\n\nIn 2016, his team presented in Nature Nanotechnology artificial neurons made of phase-change material, which mimic how a neuron fires. He then co-founded Axelera AI.\n\nIn February 2026, Axelera announced over 200 million euros in funding, with participation from the EIC Fund."
     },
     "photoUrl": "/portraits/evangelos-eleftheriou.webp",
-    "photoCredit": "Photo : Axelera AI",
+    "photoCredit": "Axelera AI",
     "links": [
       {
         "label": "Page équipe Axelera AI",
@@ -594,7 +596,7 @@
       "en": "Walter Goodwin carried out doctoral research at the University of Oxford, on using large foundation models for general-purpose robotics. He founded Fractile in 2022, following that research.\n\nFractile designs inference chips, the ones that make an already-trained model answer. Its memory and compute are interleaved; the company claims models up to 25 times faster at a tenth of the cost.\n\nIn May 2026, it raised 220 million dollars. In August, the press reported an initial deal of about 250 million dollars of chips with Anthropic, to be delivered in 2027."
     },
     "photoUrl": "/portraits/walter-goodwin.webp",
-    "photoCredit": "Photo : Fractile",
+    "photoCredit": "Fractile",
     "links": [
       {
         "label": "Fractile",
@@ -631,7 +633,7 @@
       "en": "This funding marks a pivotal moment for VSORA as we accelerate our mission to revolutionize AI chips and ensure Europe's technological sovereignty in AI computing."
     },
     "photoUrl": "/portraits/khaled-maalej.webp",
-    "photoCredit": "Photo : Systematic Paris-Region",
+    "photoCredit": "Systematic Paris-Region",
     "links": [
       {
         "label": "VSORA",
@@ -664,7 +666,7 @@
       "en": "A PhD in machine learning, Peter Sarlin has held academic posts at Imperial College London, the London School of Economics and the University of Technology Sydney, and worked at the European Central Bank and the IMF. He co-founded Silo AI, a private AI lab acquired by AMD in 2024.\n\nHe now chairs NestAI, which aims to build a European physical AI lab (AI that drives machines), and Qutwo, focused on quantum computing. He is also Professor of Practice at Aalto University.\n\nIn November 2025, NestAI raised 100 million euros with Nokia and Tesi. In May 2026, Zalando elected him to its supervisory board."
     },
     "photoUrl": "/portraits/peter-sarlin.webp",
-    "photoCredit": "Photo : Slush",
+    "photoCredit": "Slush",
     "links": [
       {
         "label": "Profil Slush 2026",
@@ -701,7 +703,7 @@
       "en": "As I step into the role of CTO, I am excited to dedicate my focus to driving the next generation of technological innovations in the AI hardware space."
     },
     "photoUrl": "/portraits/amin-shokrollahi.webp",
-    "photoCredit": "Photo : Renate Schmid, CC BY-SA 2.0 de, via Wikimedia Commons",
+    "photoCredit": "Renate Schmid, CC BY-SA 2.0 de, via Wikimedia Commons",
     "links": [
       {
         "label": "Kandou AI, équipe dirigeante",
@@ -774,7 +776,7 @@
       "en": "It's exactly what a human does on their machine"
     },
     "photoUrl": "/portraits/gautier-cloix.webp",
-    "photoCredit": "Photo : HumanX",
+    "photoCredit": "HumanX",
     "links": [
       {
         "label": "H Company",
@@ -811,7 +813,7 @@
       "en": "Optical switching is moving networks from electronic packet routing to highly predictable, energy-efficient optical connectivity."
     },
     "photoUrl": "/portraits/vaysh-kewada.webp",
-    "photoCredit": "Photo : Asians in Tech",
+    "photoCredit": "Asians in Tech",
     "links": [
       {
         "label": "Lancement du commutateur 32 ports (DataCentreNews UK, mars 2026)",
@@ -843,7 +845,8 @@
       "fr": "Plus de 30 ans dans le logiciel d'entreprise en abonnement (SaaS), avec des postes de direction chez ExactTarget, Salesforce, GE Digital, Mention Solution et Splio, dont il devient directeur général en mars 2024.\n\nLe 9 juillet 2026, LightOn le nomme directeur général après la démission d'Igor Carron, cofondateur qui cumulait présidence et direction générale. Marie de Lauzon préside désormais le conseil.\n\nFondée en 2016 et cotée sur Euronext Growth Paris, LightOn propose une plateforme d'IA générative aux entreprises. Sa mission : accélérer le développement commercial.",
       "en": "Over 30 years in subscription-based enterprise software (SaaS), with leadership roles at ExactTarget, Salesforce, GE Digital, Mention Solution and Splio, where he became CEO in March 2024.\n\nOn 9 July 2026, LightOn named him CEO after the resignation of Igor Carron, a co-founder who held both the chair and CEO roles. Marie de Lauzon now chairs the board.\n\nFounded in 2016 and listed on Euronext Growth Paris, LightOn offers a generative AI platform to businesses. His mission: speed up commercial growth."
     },
-    "photoUrl": null,
+    "photoUrl": "/portraits/jean-philippe-baert.webp",
+    "photoCredit": "01net.it",
     "links": [
       {
         "label": "LightOn, relations investisseurs",
@@ -880,7 +883,7 @@
       "en": "Europe can develop, control and continuously advance its own frontier AI capabilities."
     },
     "photoUrl": "/portraits/uljan-sharka.webp",
-    "photoCredit": "Photo : Domyn",
+    "photoCredit": "Domyn",
     "links": [
       {
         "label": "Domyn - profil d'Uljan Sharka",
@@ -913,7 +916,7 @@
       "en": "An École Polytechnique graduate who also studied at Télécom Paris, Alexandre LeBrun founded VirtuOz, sold to Nuance in 2012, then Wit.ai, acquired by Facebook in 2015. He then led engineering at Facebook AI Research until 2018.\n\nHe then co-founded Nabla, an AI assistant that writes up doctors' consultation notes, used by more than 85,000 clinicians.\n\nIn late 2025, he became CEO of AMI Labs, which builds \"world models\", AI meant to understand the physical world. In March 2026, the company raised $1.03 billion."
     },
     "photoUrl": "/portraits/alexandre-lebrun.webp",
-    "photoCredit": "Photo : Nabla",
+    "photoCredit": "Nabla",
     "links": [
       {
         "label": "AMI Labs",
@@ -950,7 +953,7 @@
       "en": "Zelda Mariet graduated from École polytechnique, then earned a PhD in computer science at MIT. Starting in 2019, she did research at Google on the uncertainty of AI predictions, with applications to drug discovery.\n\nIn 2023, she co-founded Bioptimus in Paris, where she leads research. The start-up trains foundation models, large general-purpose models, to read biological data.\n\nIn July 2024, Bioptimus launched H-Optimus-0, its first model, built for pathology (the study of tissue under the microscope)."
     },
     "photoUrl": "/portraits/zelda-mariet.webp",
-    "photoCredit": "Photo : Académie des technologies",
+    "photoCredit": "Académie des technologies",
     "links": [
       {
         "label": "Bioptimus - équipe",
@@ -983,7 +986,7 @@
       "en": "Born in 1967, Xavier Niel left school at 19, taught himself programming and founded Iliad, the parent company of Free. In 2013 he created École 42, a tuition-free coding school.\n\nHe was an early investor in Mistral AI and backs Kyutai, an open-science research lab created in late 2023, and Scaleway, Iliad's cloud arm.\n\nOn 11 February 2025, ahead of the AI Action Summit in Paris, Iliad announced 3 billion euros of AI investment, including 2.5 billion for data centers."
     },
     "photoUrl": "/portraits/xavier-niel.webp",
-    "photoCredit": "Photo : cmichel67, CC BY 2.0, via Wikimedia Commons",
+    "photoCredit": "cmichel67, CC BY 2.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Groupe Iliad",
@@ -1020,7 +1023,7 @@
       "en": "Anders Dam Jensen holds a master's degree from the Technical University of Denmark and an MBA. He starts as an engineer working on wireless networks at Symbol Technologies, then runs IT at the airline Cargolux. In 2011, he becomes head of information systems at NATO.\n\nSince September 2020, he has been Executive Director of EuroHPC, the European joint undertaking dedicated to high-performance computing, that is, supercomputers.\n\nIn February 2025, the European Commission announces InvestAI, a 200 billion euro initiative for AI. EuroHPC oversees the \"AI Factories\": 19 are listed on its website."
     },
     "photoUrl": "/portraits/anders-dam-jensen.webp",
-    "photoCredit": "Photo : EuroHPC JU",
+    "photoCredit": "EuroHPC JU",
     "links": [
       {
         "label": "Page du directeur exécutif, EuroHPC JU",
@@ -1057,7 +1060,7 @@
       "en": "Daniel Ek launched Spotify in October 2008 with Martin Lorentzon. He was its CEO until 31 December 2025, then became executive chairman.\n\nIn 2018, he co-founded Neko Health with Hjalmar Nilsonne. The start-up offers a full-body check-up, using sensors and AI analysis, to spot risks such as skin cancer early.\n\nIn January 2025, Neko raised $260 million at a $1.8 billion valuation, and is preparing to enter the US market."
     },
     "photoUrl": "/portraits/daniel-ek.webp",
-    "photoCredit": "Photo : Lukasz Kobus/Commission européenne, CC BY 4.0, via Wikimedia Commons",
+    "photoCredit": "Lukasz Kobus/Commission européenne, CC BY 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Daniel Ek sur Wikipédia",
@@ -1094,7 +1097,7 @@
       "en": "AI is very useful, including in defence, but it is merely an aid; it should not be the one to decide to open fire."
     },
     "photoUrl": "/portraits/antoine-bordes.webp",
-    "photoCredit": "Photo : Jérémy Barande / École polytechnique",
+    "photoCredit": "Jérémy Barande / École polytechnique",
     "links": [
       {
         "label": "Article de l'École polytechnique (juin 2026)",
@@ -1131,7 +1134,7 @@
       "en": ""
     },
     "photoUrl": "/portraits/alex-kendall.webp",
-    "photoCredit": "Photo : Wayve",
+    "photoCredit": "Wayve",
     "links": [
       {
         "label": "Profil sur Wayve",
@@ -1168,7 +1171,7 @@
       "en": "Jan Oberhauser spent years in visual effects, including work on Maleficent and Happy Feet Two. There he sought to simplify the artists' work through automation.\n\nHe founded n8n in Berlin in 2019. The tool chains steps between apps and AI models, with little code. In October 2025, n8n raised $180 million at a $2.5 billion valuation.\n\nIn May 2026, SAP joined the cap table (valuation: $5.2 billion) and is embedding n8n in Joule Studio, its AI agent-building tool."
     },
     "photoUrl": "/portraits/jan-oberhauser.webp",
-    "photoCredit": "Photo : n8n",
+    "photoCredit": "n8n",
     "links": [
       {
         "label": "n8n",
@@ -1205,7 +1208,7 @@
       "en": "Born in 1988 in Metzingen, David Reger trained as a technical model maker and did not attend university. Around 2009 he worked as a social worker in San Francisco, then returned to Europe in 2013 to join Swiss automation and robotics firms.\n\nHe founded NEURA Robotics in 2019. The company builds so-called cognitive robots, fitted with sensors and AI so they can adapt to their surroundings, including the 4NE1 humanoid.\n\nIn June 2026, NEURA announced a funding round of up to 1.4 billion dollars, after a 120 million euro Series B in January 2025."
     },
     "photoUrl": "/portraits/david-reger.webp",
-    "photoCredit": "Photo : IFA Berlin",
+    "photoCredit": "IFA Berlin",
     "links": [
       {
         "label": "NEURA Robotics - presse",
@@ -1241,7 +1244,8 @@
       "fr": "Diplômé de HEC Paris, Loïc Mougeolle a dirigé l'incubateur d'innovations de rupture de Naval Group, le constructeur naval de défense français.\n\nEn 2023, il cofonde Comand AI avec Antoine Chassang, ancien de Snapchat. La start-up lève 3 millions d'euros en juillet 2023, puis 8,5 millions. Son logiciel, Prevail, aide les états-majors à établir des plans d'opérations, tâche qui peut prendre plusieurs heures à plusieurs jours.\n\nLe 17 juin 2026, Comand AI annonce une série A de 32 millions d'euros menée par Blossom Capital, avec le groupe suédois Saab. Prevail est utilisé par des unités en France, en Allemagne et en Ukraine.",
       "en": "A graduate of HEC Paris, Loïc Mougeolle led the disruptive-innovation incubator at Naval Group, the French naval defence builder.\n\nIn 2023 he co-founded Comand AI with Antoine Chassang, a former Snapchat employee. The start-up raised 3 million euros in July 2023, then 8.5 million. Its software, Prevail, helps military staff draft operation plans, a task that can take several hours to several days.\n\nOn 17 June 2026, Comand AI announced a 32 million euro Series A led by Blossom Capital, with Swedish group Saab. Prevail is used by units in France, Germany and Ukraine."
     },
-    "photoUrl": null,
+    "photoUrl": "/portraits/loic-mougeolle.webp",
+    "photoCredit": "CFNews",
     "links": [
       {
         "label": "Comand AI",
@@ -1274,7 +1278,7 @@
       "en": "Stanislas Polu studied at Polytechnique and Stanford. With Gabriel Hubert he co-founded a first start-up, specialised in Instagram data analytics, which was acquired by Stripe, where he worked for five years as an engineer.\n\nHe then joined OpenAI's research team and spent three years on the mathematical reasoning of language models.\n\nIn January 2023 he launched Dust with Gabriel Hubert: AI assistants (agents) that employees build themselves, connected to Slack, Notion or GitHub. In May 2026, Dust announced a $40 million round led by Abstract and Sequoia."
     },
     "photoUrl": "/portraits/stanislas-polu.webp",
-    "photoCredit": "Photo : Sequoia Capital",
+    "photoCredit": "Sequoia Capital",
     "links": [
       {
         "label": "Dust, équipe",
@@ -1311,7 +1315,7 @@
       "en": "High-fidelity physics simulation has always been powerful, but it has also been slow, costly, and the preserve of a small group of specialists."
     },
     "photoUrl": "/portraits/robin-tuluie.webp",
-    "photoCredit": "Photo : PhysicsX",
+    "photoCredit": "PhysicsX",
     "links": [
       {
         "label": "PhysicsX",
@@ -1380,7 +1384,7 @@
       "en": "We don't build robots; we give them a brain."
     },
     "photoUrl": "/portraits/ralf-gulde.webp",
-    "photoCredit": "Photo : sereact / Marc Schultheiss",
+    "photoCredit": "sereact / Marc Schultheiss",
     "links": [
       {
         "label": "Sereact",
@@ -1417,7 +1421,7 @@
       "en": "We're putting out the fire and finding out what started it to make sure it doesn't happen again."
     },
     "photoUrl": "/portraits/ahmed-achchak.webp",
-    "photoCredit": "Photo : Qevlar AI",
+    "photoCredit": "Qevlar AI",
     "links": [
       {
         "label": "Qevlar AI",
@@ -1450,7 +1454,7 @@
       "en": "Max Junestrand co-founded Legora in 2023 in Stockholm, first under the name Leya. The company offers a workspace where AI assists lawyers: research, contract review, drafting.\n\nIn May 2025, it raised $80 million (Series B) at a $675 million valuation. Opened in March 2026, its $550 million Series D valued it at $5.55 billion; an extension then brought it to $600 million and $5.6 billion.\n\nIn September 2026, Legora has 2,100 law firms and legal teams as customers in more than 80 countries, according to The Next Web."
     },
     "photoUrl": "/portraits/max-junestrand.webp",
-    "photoCredit": "Photo : Thomashollande, CC0, via Wikimedia Commons",
+    "photoCredit": "Thomashollande, CC0, via Wikimedia Commons",
     "links": [
       {
         "label": "Legora",
@@ -1479,7 +1483,7 @@
       "en": "Chad Edwards holds a PhD in chemistry and an MBA. As commercial co-founder of Cambridge Quantum, he helped the company grow from 14 to 550 staff before it merged with Honeywell to form Quantinuum. He also worked at Google Quantum AI and BASF.\n\nHe co-founded CuspAI with Max Welling. The company trains AI models that, starting from the properties wanted, propose new materials.\n\nIn July 2026, CuspAI raised $450 million in a Series B round."
     },
     "photoUrl": "/portraits/chad-edwards.webp",
-    "photoCredit": "Photo : London Tech Week / CuspAI",
+    "photoCredit": "London Tech Week / CuspAI",
     "links": [
       {
         "label": "CuspAI",
@@ -1512,7 +1516,7 @@
       "en": "Our goal is simple: build speech tech clinicians can trust in the messiness of real-world practice."
     },
     "photoUrl": "/portraits/katy-wigdahl.webp",
-    "photoCredit": "Photo : Speechmatics",
+    "photoCredit": "Speechmatics",
     "links": [
       {
         "label": "Speechmatics, à propos",
@@ -1549,7 +1553,7 @@
       "en": "AI agents are actually the contrary of a black box. They are more auditable than a human being."
     },
     "photoUrl": "/portraits/eleonore-crespo.webp",
-    "photoCredit": "Photo : ENS Paris-Saclay Alumni",
+    "photoCredit": "ENS Paris-Saclay Alumni",
     "links": [
       {
         "label": "Pigment",
@@ -1582,7 +1586,7 @@
       "en": "An engineer from CentraleSupélec with a master's from Imperial College London, Emmanuelle Martiano-Rolland was a Principal at Boston Consulting Group, working with pharma and software executives.\n\nShe co-founded Aqemia in 2019 with Maximilien Levesque and runs operations. The company, in Paris and London, combines generative AI and physics to design small molecules, the classic non-biological drugs.\n\nIn July 2026, Aqemia expanded its collaboration with Sanofi: a new target was nominated, with up to $140 million in potential payments."
     },
     "photoUrl": "/portraits/emmanuelle-martiano-rolland.webp",
-    "photoCredit": "Photo : Aqemia",
+    "photoCredit": "Aqemia",
     "links": [
       {
         "label": "Aqemia - Qui sommes-nous",
@@ -1619,7 +1623,7 @@
       "en": "Hire and surround yourself with people you trust and who believe in your vision. Plus… focus, focus, focus."
     },
     "photoUrl": "/portraits/vishal-marria.webp",
-    "photoCredit": "Photo : Quantexa",
+    "photoCredit": "Quantexa",
     "links": [
       {
         "label": "Profil sur le site de Quantexa",
@@ -1652,7 +1656,7 @@
       "en": "Glen Gowers studied at the University of Oxford, then earned a PhD in engineering biology at Imperial College London and started out at GSK. With Oliver Vince, he carried out the first off-grid DNA sequencing on Europe's largest ice cap.\n\nThat expedition led to Basecamp Research, which gathers genetic data from nature to train AI models that design medicines. In 2024, it partnered with David Liu's lab at the Broad Institute.\n\nOn 23 September 2026, it announced a $140 million round led by S32, with NVentures (Nvidia) and the Anthology Fund (Menlo Ventures and Anthropic). Total raised: $225 million."
     },
     "photoUrl": "/portraits/glen-gowers.webp",
-    "photoCredit": "Photo : Basecamp Research",
+    "photoCredit": "Basecamp Research",
     "links": [
       {
         "label": "Basecamp Research",
@@ -1685,7 +1689,7 @@
       "en": "Before Nabla, Delphine Groll worked in business development at My Little Paris, then in communications at Auféminin.\n\nShe co-founded Nabla with Alexandre Lebrun and Martin Raison. Their assistant listens to the consultation and writes the medical note, so clinicians write less.\n\nIn June 2025, Nabla raised $70 million in a Series C led by HV Capital. In 2026, HumanX cites more than 40 million patient encounters a year."
     },
     "photoUrl": "/portraits/delphine-groll.webp",
-    "photoCredit": "Photo : Nabla",
+    "photoCredit": "Nabla",
     "links": [
       {
         "label": "Nabla, équipe dirigeante",
@@ -1718,7 +1722,7 @@
       "en": "Nicolas Do Huu holds a PhD in organic chemistry from MIT and an MBA from NYU's Stern School of Business. He has worked in pharmaceutical research, investment and company leadership, and has filed more than 20 patents. He co-founded Iktos in 2016.\n\nIktos designs molecules with generative AI, then has robots synthesize them. It has run more than 60 projects with partners.\n\nIn January 2026, it signed a multi-year agreement with Servier that could exceed 1 billion euros, milestone payments included."
     },
     "photoUrl": "/portraits/nicolas-do-huu.webp",
-    "photoCredit": "Photo : Iktos",
+    "photoCredit": "Iktos",
     "links": [
       {
         "label": "Iktos - équipe",
@@ -1755,7 +1759,7 @@
       "en": "Our international growth has been built on one thing: AI that all legal professionals, from big law to enterprise teams, can actually rely on."
     },
     "photoUrl": "/portraits/eleanor-lightbody.webp",
-    "photoCredit": "Photo : MIT Technology Review EmTech AI",
+    "photoCredit": "MIT Technology Review EmTech AI",
     "links": [
       {
         "label": "Luminance",
@@ -1792,7 +1796,7 @@
       "en": "General purpose AI tooling is fine for simple automations, but it isn't sufficient for operating mission-critical financial decisions where errors can cost millions."
     },
     "photoUrl": "/portraits/maik-taro-wehmeyer.webp",
-    "photoCredit": "Photo : Taktile",
+    "photoCredit": "Taktile",
     "links": [
       {
         "label": "Taktile",
@@ -1825,7 +1829,7 @@
       "en": "Elise de Reus holds a master's degree in metabolic engineering from TU Delft and a PhD in fungal synthetic biology from DTU. She then works at Zymergen and Perfect Day, in California, on high-throughput methods to engineer microorganisms.\n\nIn 2021, she co-founds Cradle in Amsterdam. A protein is a molecule whose sequence determines its function: Cradle uses machine learning to help biologists design them.\n\nOn 26 November 2024, Cradle announces a $73M Series B led by IVP, with more than 21 customers, including Novo Nordisk and Grifols."
     },
     "photoUrl": "/portraits/elise-de-reus.webp",
-    "photoCredit": "Photo : Techleap / Elise de Reus",
+    "photoCredit": "Techleap / Elise de Reus",
     "links": [
       {
         "label": "Cradle",
@@ -1866,7 +1870,7 @@
       "en": ""
     },
     "photoUrl": "/portraits/neil-daly.webp",
-    "photoCredit": "Photo : COGX / Skin Analytics",
+    "photoCredit": "COGX / Skin Analytics",
     "links": [
       {
         "label": "Page de Neil Daly sur Skin Analytics",
@@ -1903,7 +1907,7 @@
       "en": "Partnering with LG Chem represents a very important moment for LabGenius and provides further validation of our platform's ability to design highly optimised multispecific antibodies."
     },
     "photoUrl": "/portraits/james-field.webp",
-    "photoCredit": "Photo : LabGenius Therapeutics",
+    "photoCredit": "LabGenius Therapeutics",
     "links": [
       {
         "label": "LabGenius Therapeutics",
@@ -1940,7 +1944,7 @@
       "en": ""
     },
     "photoUrl": "/portraits/nora-khaldi.webp",
-    "photoCredit": "Photo : Nuritas",
+    "photoCredit": "Nuritas",
     "links": [
       {
         "label": "Nuritas : page équipe (Nora Khaldi)",
@@ -1977,7 +1981,7 @@
       "en": "Europe should be setting the standard for how AI enters healthcare, not adopting someone else’s."
     },
     "photoUrl": "/portraits/lukas-saari.webp",
-    "photoCredit": "Photo : Tandem Health",
+    "photoCredit": "Tandem Health",
     "links": [
       {
         "label": "Tandem Health, à propos",
@@ -2010,7 +2014,7 @@
       "en": "Marius Meiners met his co-founders, Daniel Drabo and Tobias Siwonia, in Antler's Winter 2024 cohort in Berlin. He was an esports player, once ranked among the top 100 League of Legends players.\n\nPeec AI launched its platform in February 2025. It measures how brands appear in answers from ChatGPT, Perplexity or Gemini, AI-based search engines.\n\nIn November 2025, the company raised $21 million in a Series A. In May 2026, TechCrunch, citing internal data it verified, credited it with more than $10 million in annualized revenue."
     },
     "photoUrl": "/portraits/marius-meiners.webp",
-    "photoCredit": "Photo : Peec AI",
+    "photoCredit": "Peec AI",
     "links": [
       {
         "label": "Peec AI",
@@ -2043,7 +2047,7 @@
       "en": "Malte Kosub co-founded Parloa with Stefan Ostwald, its CTO. The Berlin start-up builds AI agents that answer the customers of large companies, voice first.\n\nIn April 2024, Parloa raised $66 million in a Series B. In May 2025 it raised $120 million at a $1 billion valuation, then $350 million in January 2026 at a valuation of $3 billion. It then had about 380 people in New York, Berlin and Munich.\n\nIn July 2026, its platform became an \"SAP Endorsed App\", meaning certified by SAP."
     },
     "photoUrl": "/portraits/malte-kosub.webp",
-    "photoCredit": "Photo : Parloa",
+    "photoCredit": "Parloa",
     "links": [
       {
         "label": "Parloa",
@@ -2076,7 +2080,7 @@
       "en": "Nikola Mrkšić was born in Belgrade and went to the University of Cambridge on a full scholarship. There he did a PhD under Steve Young and, alongside it, joined the young company VocalIQ, later acquired by Apple.\n\nIn 2017, he co-founded PolyAI in London with Tsung-Hsien Wen and Pei-Hao Su. Its voice agents answer calls for customers such as Marriott and PG&E.\n\nIn December 2025, PolyAI raised 86 million dollars, bringing its total funding to over 200 million."
     },
     "photoUrl": "/portraits/nikola-mrksic.webp",
-    "photoCredit": "Photo : PolyAI",
+    "photoCredit": "PolyAI",
     "links": [
       {
         "label": "PolyAI",
@@ -2108,7 +2112,8 @@
       "fr": "Jan-Philipp Haas a dirigé chez Palantir les avant-ventes et l'après-vente pour l'Allemagne, la Suisse et l'Autriche. En 2024, il fonde Conduct avec deux anciens collègues de Palantir.\\n\\nConduct propose une IA qui lit le code personnalisé des logiciels d'entreprise, notamment SAP, pour en révéler les dépendances et accompagner leur transformation.\\n\\nLe 17 juin 2026, l'entreprise annonce une série A de 60 millions de dollars, menée par Index Ventures et ICONIQ, avec SAP comme investisseur stratégique. Elle compte alors environ 35 personnes à Londres.",
       "en": "Jan-Philipp Haas led pre- and post-sales at Palantir for Germany, Switzerland and Austria. In 2024, he founded Conduct with two former Palantir colleagues.\\n\\nConduct offers an AI that reads the custom code of enterprise software, notably SAP, to reveal its dependencies and support its transformation.\\n\\nOn 17 June 2026, the company announced a $60 million Series A, co-led by Index Ventures and ICONIQ, with SAP as a strategic investor. It then had about 35 people in London."
     },
-    "photoUrl": null,
+    "photoUrl": "/portraits/jan-philipp-haas.webp",
+    "photoCredit": "Slush",
     "links": [
       {
         "label": "Conduct, site officiel",
@@ -2141,7 +2146,7 @@
       "en": "A graduate of HEC and ENA, he worked at the Inspection générale des finances, then at France Télécom, where he ran Wanadoo from 2000 to 2002, and at Capgemini.\n\nHe has led Bpifrance since its creation in January 2013. He also chairs the supervisory board of STMicroelectronics, a European chipmaker.\n\nIn 2025, Bpifrance announced 10 billion euros through 2029 for AI. In May 2025, it co-founded with MGX, Mistral AI and NVIDIA a 1.4 GW AI campus in the Paris region."
     },
     "photoUrl": "/portraits/nicolas-dufourcq.webp",
-    "photoCredit": "Photo : Bogdan Hoyaux / Union européenne, CC BY 4.0, via Wikimedia Commons",
+    "photoCredit": "Bogdan Hoyaux / Union européenne, CC BY 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Bpifrance",
@@ -2174,7 +2179,7 @@
       "en": "Born in 1982 in Duisburg, Jeannette zu Fürstenberg studied communications and economics in Munich, then at ESCP in Paris, and earned a doctorate at the Freie Universität Berlin. She worked at Ernst & Young and AXA before joining the startup world in 2013.\n\nIn 2016, she co-founded the fund La Famiglia with Robert Lacher, designed as a bridge between startups and industrial SMEs. In 2023, La Famiglia merged with General Catalyst, where she leads European operations.\n\nShe sits on the boards of Mistral AI, Helsing and Legora, and of Iceye since December 2025. She is one of the leaders of the EU AI Champions initiative."
     },
     "photoUrl": "/portraits/jeannette-zu-furstenberg.webp",
-    "photoCredit": "Photo : General Catalyst",
+    "photoCredit": "General Catalyst",
     "links": [
       {
         "label": "Page General Catalyst",
@@ -2215,7 +2220,7 @@
       "en": "Military AI is not detached from reality. It is AI able to work in dust, mud, under shocks…"
     },
     "photoUrl": "/portraits/bertrand-rondepierre.webp",
-    "photoCredit": "Photo : ministère des Armées",
+    "photoCredit": "ministère des Armées",
     "links": [
       {
         "label": "AMIAD, page officielle (ministère des Armées)",
@@ -2252,7 +2257,7 @@
       "en": "Niklas Zennström studies engineering physics and business administration at Uppsala University in Sweden. He starts at telecom operator Tele2 in 1991, then co-founds Skype with Janus Friis in 2003. eBay buys Skype in 2005, Microsoft in 2011.\n\nHe then creates Atomico, a venture capital firm (it funds start-ups in exchange for shares) based in London, where he is CEO. The firm has backed Supercell, Klarna and DeepL.\n\nIn September 2024, Atomico announces a new fund to invest in European tech. Skype shut down on 5 May 2025."
     },
     "photoUrl": "/portraits/niklas-zennstrom.webp",
-    "photoCredit": "Photo : TechCrunch, CC BY 2.0, via Wikimedia Commons",
+    "photoCredit": "TechCrunch, CC BY 2.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Atomico",
@@ -2285,7 +2290,7 @@
       "en": "Klaus Hommels was born in 1967. He holds a PhD in finance from the University of Fribourg and worked at Bertelsmann, AOL Germany (1995-1999) and Apax Partners. As a private investor he backed Skype, Facebook, then Spotify, whose board he joined in 2009.\n\nHe founded Lakestar in Zurich in 2012. In April 2024, the firm announced $600 million raised. Its defence arm, Lakestar Resilience, counts Helsing and Isar Aerospace. In October 2025, according to Forbes, he said he would now invest his own capital."
     },
     "photoUrl": "/portraits/klaus-hommels.webp",
-    "photoCredit": "Photo : Milken Institute",
+    "photoCredit": "Milken Institute",
     "links": [
       {
         "label": "Lakestar",
@@ -2318,7 +2323,7 @@
       "en": "Trained at École des Ponts ParisTech and the Haas School of Business at the University of California, Berkeley, Charles Gorintin held data science leadership positions at Facebook, Instagram and Twitter.\n\nIn 2016, he co-founded the health insurer Alan with Jean-Charles Samuelian-Werve and became its CTO. Since 2023, he has also been a non-executive co-founder of Mistral AI.\n\nIn June 2026, Alan raised 480 million euros at a 5.5 billion euro valuation, to expand into new countries and invest in AI."
     },
     "photoUrl": "/portraits/charles-gorintin.webp",
-    "photoCredit": "Photo : French-American Foundation",
+    "photoCredit": "French-American Foundation",
     "links": [
       {
         "label": "Alan",
@@ -2351,7 +2356,7 @@
       "en": "A graduate of the École Normale Supérieure, with the agrégation and a PhD in mathematics, Xavier Lazarus starts in research on group theory and arithmetic geometry. He then founds an e-learning start-up, acquired in 1999, and builds the venture capital arm of CPR, later bought by Crédit Agricole Indosuez.\n\nHe co-founds Elaia, which invests from pre-seed to pre-IPO, and Lazard Elaia Capital. Aqemia and H are in Elaia’s portfolio.\n\nIn July 2026, Lazard takes a 51% stake in Elaia, which keeps its independence in management."
     },
     "photoUrl": "/portraits/xavier-lazarus.webp",
-    "photoCredit": "Photo : Elaia",
+    "photoCredit": "Elaia",
     "links": [
       {
         "label": "Profil sur Elaia",
@@ -2388,7 +2393,7 @@
       "en": "Benedikt von Schoeler has more than fifteen years in finance. A graduate of the University of St. Gallen and INSEAD (MBA), he worked in mergers and acquisitions at GCA Altium, then at HgCapital. He then led Vito Ventures, the fund that preceded Vsquared, of which he is one of the founding partners.\n\nBased in Munich, Vsquared backs frontier-technology start-ups: rockets (Isar Aerospace), quantum computers (IQM), graphene chips (Black Semiconductor), robots (Neura Robotics).\n\nIn June 2026, the fund opens its first office outside Munich, in London. Its largest fund, at 214 million euros, was launched in late 2022."
     },
     "photoUrl": "/portraits/benedikt-von-schoeler.webp",
-    "photoCredit": "Photo : Vsquared Ventures",
+    "photoCredit": "Vsquared Ventures",
     "links": [
       {
         "label": "Profil chez Vsquared",
@@ -2421,7 +2426,7 @@
       "en": "A graduate of École Polytechnique and École des Mines, Philippe Botteri starts at McKinsey, then joins Bessemer Venture Partners in Silicon Valley, where he invests in cloud software. He joins Accel in 2011.\n\nFrom London, he follows AI, enterprise software and cybersecurity. His portfolio includes BlaBlaCar, Doctolib, UiPath, Snyk and Synthesia.\n\nIn October 2024, he co-authors Euroscape: in 2023-2024, about 80% of the roughly $56 billion invested in AI went to US companies."
     },
     "photoUrl": "/portraits/philippe-botteri.webp",
-    "photoCredit": "Photo : Accel",
+    "photoCredit": "Accel",
     "links": [
       {
         "label": "Profil Accel",
@@ -2458,7 +2463,7 @@
       "en": "This funding helps us go beyond voice alone to transform how we interact with technology altogether."
     },
     "photoUrl": "/portraits/mati-staniszewski.webp",
-    "photoCredit": "Photo : Rafał Masłow, CC BY-SA 4.0, via Wikimedia Commons",
+    "photoCredit": "Rafał Masłow, CC BY-SA 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "ElevenLabs",
@@ -2495,7 +2500,7 @@
       "en": "It's fantastic to see the KTH Innovation Award and similar initiatives shine a spotlight on young entrepreneurs in Sweden and inspire more people to pursue their ideas."
     },
     "photoUrl": "/portraits/fabian-hedin.webp",
-    "photoCredit": "Photo : Marcusgarage, CC0, via Wikimedia Commons",
+    "photoCredit": "Marcusgarage, CC0, via Wikimedia Commons",
     "links": [
       {
         "label": "Lovable",
@@ -2532,7 +2537,7 @@
       "en": "We saw the next big breakthrough in translation would come through AI and deep learning."
     },
     "photoUrl": "/portraits/jaroslaw-kutylowski.webp",
-    "photoCredit": "Photo : DeepL",
+    "photoCredit": "DeepL",
     "links": [
       {
         "label": "DeepL",
@@ -2565,7 +2570,7 @@
       "en": "Danish-born Victor Riparbelli studies computer science at the IT University of Copenhagen and spends a semester at Stanford. Settled in London, he meets researcher Matthias Niessner, author of work on AI video generation, and founds Synthesia in 2017.\n\nThe studio first works for film and advertising. Around 2021, large companies ask for training videos with avatars: Synthesia makes that its core business.\n\nIn January 2026, it raises $200 million at a $4 billion valuation."
     },
     "photoUrl": "/portraits/victor-riparbelli.webp",
-    "photoCredit": "Photo : Duk3L1xon, CC BY-SA 4.0, via Wikimedia Commons",
+    "photoCredit": "Duk3L1xon, CC BY-SA 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Synthesia - équipe et à propos",
@@ -2602,7 +2607,7 @@
       "en": "Virtual Agents require no engineering integration or changes to existing processes while delivering real value, incredibly quickly."
     },
     "photoUrl": "/portraits/sasha-haco.webp",
-    "photoCredit": "Photo : Unitary",
+    "photoCredit": "Unitary",
     "links": [
       {
         "label": "Unitary",
@@ -2643,7 +2648,7 @@
       "en": "The idea of PhotoRoom is to make studio quality photos accessible to everyone in the world."
     },
     "photoUrl": "/portraits/matthieu-rouif.webp",
-    "photoCredit": "Photo : Photoroom",
+    "photoCredit": "Photoroom",
     "links": [
       {
         "label": "Photoroom",
@@ -2676,7 +2681,7 @@
       "en": "Austrian by origin, Sandra Wachter studied law at the University of Vienna, where she earned a PhD in 2015, and took a master's degree in social sciences at Oxford. She worked at the Austrian Ministry of Health, then became a researcher at the Alan Turing Institute in 2016.\n\nA professor at the Oxford Internet Institute since August 2022, she leads the GET programme on the governance of emerging technologies. She works on explainable AI, algorithmic bias and the impact of generative AI.\n\nIn 2025, she received a research award from the Alexander von Humboldt Foundation, worth 3.5 million euros."
     },
     "photoUrl": "/portraits/sandra-wachter.webp",
-    "photoCredit": "Photo : The Berkman Klein Center for Internet & Society, CC BY 3.0, via Wikimedia Commons",
+    "photoCredit": "The Berkman Klein Center for Internet & Society, CC BY 3.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Profil Oxford Internet Institute",
@@ -2709,7 +2714,7 @@
       "en": "Born in France in 1960, Yann LeCun holds an engineering degree from ESIEE Paris (1983) and a PhD from Pierre-and-Marie-Curie University (1987). A professor at New York University, he became in December 2013 the first director of Meta's AI research laboratory. He received the Turing Award in 2018 with Yoshua Bengio and Geoffrey Hinton.\n\nIn November 2025, he announced he was leaving Meta to found AMI Labs, focused on \"world models\": AI that understands physical reality.\n\nIn March 2026, the Paris-based company raised $1.03 billion at a $3.5 billion pre-money valuation."
     },
     "photoUrl": "/portraits/yann-lecun.webp",
-    "photoCredit": "Photo : Jérémy Barande / École polytechnique, CC BY-SA 2.0, via Wikimedia Commons",
+    "photoCredit": "Jérémy Barande / École polytechnique, CC BY-SA 2.0, via Wikimedia Commons",
     "links": [
       {
         "label": "AMI Labs",
@@ -2742,7 +2747,7 @@
       "en": "Bernhard Schölkopf studies mathematics in London and physics in Tübingen, then earns a PhD in computer science at TU Berlin in 1997 under Vladimir Vapnik. In 2001, he founds a research department on empirical inference in Tübingen.\n\nSince 2011, he has directed the Max Planck Institute for Intelligent Systems. He works on kernel methods and causal inference: understanding why a phenomenon happens, not just that it happens.\n\nHe is a co-founder of ELLIS, the European AI research network, and founding director of the ELLIS Institute Tübingen. In 2026, he is elected to the Royal Society."
     },
     "photoUrl": "/portraits/bernhard-scholkopf.webp",
-    "photoCredit": "Photo : Latest Thinking, CC BY 3.0, via Wikimedia Commons",
+    "photoCredit": "Latest Thinking, CC BY 3.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Wikipedia (EN)",
@@ -2775,7 +2780,7 @@
       "en": "Max Welling earned a physics PhD at Utrecht in 1998 under Nobel laureate Gerard 't Hooft. He became a professor of machine learning at the University of Amsterdam, then vice president of technology at Qualcomm in the Netherlands after it acquired his start-up Scyfer in 2017.\n\nHe co-developed variational autoencoders, a method that teaches a neural network to generate data.\n\nCo-founder of CuspAI in 2024, he aims to build foundation models for chemistry: designing materials from the properties one wants. In 2025, he was elected to the Royal Netherlands Academy of Arts and Sciences."
     },
     "photoUrl": "/portraits/max-welling.webp",
-    "photoCredit": "Photo : HumanX",
+    "photoCredit": "HumanX",
     "links": [
       {
         "label": "Page AMLab (université d'Amsterdam)",
@@ -2812,7 +2817,7 @@
       "en": "A former student of the École normale supérieure (2001-2004), Gaël Varoquaux earned a PhD in quantum physics at Université Paris-Sud. He joined Inria in 2008 and became a research director.\n\nIn 2010, he was among the Inria researchers who took over scikit-learn, an open-source machine learning toolkit started in 2007. Its first public release came on 1 February 2010. Today he works in Inria's Soda team and is Chief Science Officer of Probabl.\n\nIn 2025, he received an honorary doctorate from UCLouvain and was made a Knight of the National Order of Merit."
     },
     "photoUrl": "/portraits/gael-varoquaux.webp",
-    "photoCredit": "Photo : Gael Varoquaux, CC BY-SA 4.0, via Wikimedia Commons",
+    "photoCredit": "Gael Varoquaux, CC BY-SA 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Site personnel",
@@ -2849,7 +2854,7 @@
       "en": "Holger Hoos studied computer science at the Technical University of Darmstadt, where he earned his PhD in 1998. He was a professor at the University of British Columbia (Canada) from 2000 to 2016, then at Leiden University (Netherlands).\n\nSince January 2022, he has led the Chair for AI Methodology at RWTH Aachen, under an Alexander von Humboldt Professorship.\n\nHe co-founded CLAIRE, a European AI research network renamed CAIRNE, which now counts more than 500 member groups and organisations."
     },
     "photoUrl": "/portraits/holger-h-hoos.webp",
-    "photoCredit": "Photo : Qwertzu111111, CC BY-SA 4.0, via Wikimedia Commons",
+    "photoCredit": "Qwertzu111111, CC BY-SA 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Chaire AIM, RWTH Aachen",
@@ -2886,7 +2891,7 @@
       "en": "Joanna Bryson studied behavioral science at Chicago, then artificial intelligence at Edinburgh. She earned a PhD at MIT in 2001.\n\nFrom 2002 to 2019, she taught computer science at the University of Bath, where she founded an AI research group. In 2010, she contributed to the UK Principles of Robotics. In 2017, she co-authored a paper in Science: programs learn human biases from text.\n\nSince 2020, she has taught ethics and technology at the Hertie School in Berlin. In February 2025, UCLouvain awarded her an honorary doctorate."
     },
     "photoUrl": "/portraits/joanna-bryson.webp",
-    "photoCredit": "Photo : World Economic Forum, CC BY 3.0, via Wikimedia Commons",
+    "photoCredit": "World Economic Forum, CC BY 3.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Page biographique de Joanna Bryson",
@@ -2919,7 +2924,7 @@
       "en": "Born in Rome in 1973, Paolo Benanti joined the Third Order Regular of Saint Francis in 1999 and was ordained a priest in 2009. In 2012 he earned a doctorate in moral theology at the Pontifical Gregorian University, with a thesis on the cyborg, the body and corporeality in the post-human era.\n\nHe has taught at the Gregorian since 2008 and works on the ethics of technology and algorithms. He advised Pope Francis on AI and technology.\n\nHe was a member of the UN Secretary-General's High-level Advisory Body on AI, and chairs Italy's commission on AI for information, which has existed since 2024."
     },
     "photoUrl": "/portraits/paolo-benanti.webp",
-    "photoCredit": "Photo : Paolo Pegoraro, CC BY-SA 4.0, via Wikimedia Commons",
+    "photoCredit": "Paolo Pegoraro, CC BY-SA 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Wikipédia (anglais)",
@@ -2952,7 +2957,7 @@
       "en": "A graduate of École polytechnique, Stéphane Mallat earned his PhD at the University of Pennsylvania in 1988. He taught at New York's Courant Institute, at Polytechnique, then at the ENS. His wavelets, tools that break a signal down at several scales, led to the JPEG-2000 image standard. In 2001, he co-founded Let it Wave, a start-up making chips that improve the picture of high-definition televisions.\n\nHolder of the Data Science chair at the Collège de France since 2017, he uses mathematics to explain why neural networks work.\n\nIn 2025, he received the CNRS Gold Medal."
     },
     "photoUrl": "/portraits/stephane-mallat.webp",
-    "photoCredit": "Photo : Jérémy Barande, CC BY-SA 2.0, via Wikimedia Commons",
+    "photoCredit": "Jérémy Barande, CC BY-SA 2.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Chaire Sciences des données, Collège de France",
@@ -2989,7 +2994,7 @@
       "en": "Fabian Theis studied mathematics and physics in Regensburg, then earned two doctorates: physics (2002) and computer science (2003). A professor at TU Munich since 2013, he directs the Institute of Computational Biology at Helmholtz Munich.\n\nSince 2022, he has headed the Computational Health Center. His team builds machine-learning models that read gene activity cell by cell, and releases open-source tools such as Scanpy.\n\nHe received the Leibniz Prize in 2023 and was elected to the Leopoldina Academy in 2025."
     },
     "photoUrl": "/portraits/fabian-theis.webp",
-    "photoCredit": "Photo : Helmholtz Munich / Matthias Tunger Photodesign",
+    "photoCredit": "Helmholtz Munich / Matthias Tunger Photodesign",
     "links": [
       {
         "label": "Profil, Helmholtz Munich",
@@ -3026,7 +3031,7 @@
       "en": "Michael Wooldridge holds the Ashall Chair of the Foundations of Artificial Intelligence at Oxford. Trained at Wolverhampton Polytechnic (BSc, 1989) then UMIST (PhD, 1991), he chaired Oxford's Department of Computer Science from 2014 to 2018.\\n\\nHe works on multi-agent systems: autonomous programs that cooperate or negotiate. He was president of IJCAI, a leading international AI conference (2015-2017), and of the European Association for AI, EurAI (2014-2016).\\n\\nIn 2025, he received the Royal Society's Michael Faraday Prize; in 2026, he was elected a Fellow of the Society."
     },
     "photoUrl": "/portraits/michael-wooldridge.webp",
-    "photoCredit": "Photo : Mateusz Malta, CC BY-SA 4.0, via Wikimedia Commons",
+    "photoCredit": "Mateusz Malta, CC BY-SA 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Page Oxford Computer Science",
@@ -3063,7 +3068,7 @@
       "en": "Born in 1975 in Leuven, Mark Coeckelbergh studied social sciences at KU Leuven, then philosophy at East Anglia and Birmingham. He taught at De Montfort University from 2014 to 2019.\n\nSince 2015, he has been Professor of Philosophy of Media and Technology at the University of Vienna. He served on the European Commission's High-Level Expert Group on AI. His book \"Why AI Undermines Democracy and What To Do About It\" (Polity) examines the risks AI poses to democracy.\n\nIn 2026, he was appointed to the UN Independent Scientific Panel on AI and published \"Artificial Religion\" (MIT Press)."
     },
     "photoUrl": "/portraits/mark-coeckelbergh.webp",
-    "photoCredit": "Photo : Université de Vienne",
+    "photoCredit": "Université de Vienne",
     "links": [
       {
         "label": "Site personnel",
@@ -3100,7 +3105,7 @@
       "en": "Kai Zenner studied political science in Bremen, law in Freiburg, York and Münster, then international relations in Edinburgh. He has also been a research associate at the European office of the Konrad Adenauer Foundation in Brussels.\n\nSince mid-2017, he has worked in the European Parliament for MEP Axel Voss (EPP group), whose office he heads. He takes part in negotiations on the AI Act, the EU's AI law, as well as those on the AI liability directive and the ePrivacy regulation (online privacy).\n\nIn 2026, his blog publishes analyses of the AI Act \"omnibus\" and of the enforcement of European digital rules."
     },
     "photoUrl": "/portraits/kai-zenner.webp",
-    "photoCredit": "Photo : Kai Zenner",
+    "photoCredit": "Kai Zenner",
     "links": [
       {
         "label": "Site personnel de Kai Zenner",
@@ -3166,7 +3171,7 @@
       "en": "Italian economist Lucilla Sioli has been a European Commission official since 1997. She studied at the University of Southampton and the Catholic University of the Sacred Heart.\n\nShe was Director for AI and Digital Industry at DG CONNECT when the Commission put her in charge of the European AI Office on 29 May 2024. The Office, effective 16 June 2024, oversees the AI Act, the EU's AI law.\n\nIn 2025, the Commission published the code of practice for general-purpose AI (10 July), ahead of the start of the related obligations (2 August)."
     },
     "photoUrl": "/portraits/lucilla-sioli.webp",
-    "photoCredit": "Photo : Commission européenne",
+    "photoCredit": "Commission européenne",
     "links": [
       {
         "label": "Office européen de l'IA",
@@ -3199,7 +3204,7 @@
       "en": "A civil engineer by training (University of Auckland, 2015), Jade Leung became a Rhodes Scholar in 2016, then earned a DPhil in international relations at Oxford in 2019, on the history of the strategic politics of emerging technologies.\\n\\nA co-founder of the Centre for the Governance of AI at Oxford, she went on to lead governance at OpenAI until October 2023.\\n\\nSince then, she has been chief technology officer of the AI Security Institute, the UK public body that assesses the risks of advanced AI. In 2025, she also became the Prime Minister's AI adviser."
     },
     "photoUrl": "/portraits/jade-leung.webp",
-    "photoCredit": "Photo : New Zealand Government, Office of the Governor-General, CC BY 4.0, via Wikimedia Commons",
+    "photoCredit": "New Zealand Government, Office of the Governor-General, CC BY 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "AI Security Institute",
@@ -3240,7 +3245,7 @@
       "en": "a tool that makes rights transparent, scales trust, and keeps human creativity at the centre of technological progress"
     },
     "photoUrl": "/portraits/eva-maydell.webp",
-    "photoCredit": "Photo : European People's Party, CC BY 2.0, via Wikimedia Commons",
+    "photoCredit": "European People's Party, CC BY 2.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Article Wikipédia",
@@ -3306,7 +3311,7 @@
       "en": "Trained in Rome, then at University College London and Imperial College London (PhD in innovation economics), Francesca Bria spends eight years at Nesta, a UK innovation agency.\n\nFrom 2016 to 2020, she leads technology and innovation for the city of Barcelona, then chairs Italy's public innovation fund from 2020 to 2024.\n\nIn February 2025, she co-authors the EuroStack report: over 80% of Europe's digital technologies are imported. She has sat on the European Innovation Council board since 2025."
     },
     "photoUrl": "/portraits/francesca-bria.webp",
-    "photoCredit": "Photo : Martin Kraft, CC BY-SA 4.0, via Wikimedia Commons",
+    "photoCredit": "Martin Kraft, CC BY-SA 4.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Article Wikipédia",
@@ -3343,7 +3348,7 @@
       "en": "A graduate of École polytechnique (class of 1977) and Télécom Paris, he ran UBS's equity markets and investment banking in France until 2012. He chaired Amafi, the association of market banks, from 2007 to 2014 and founded Pergamon Campus in 2013.\n\nIn July 2019, he handed the government a report on financing technology companies. The Tibi Initiative followed: insurers and other long-term investors fund vehicles that back these companies.\n\nIn June 2026, the third phase was announced: 13 billion euros from about forty institutional investors."
     },
     "photoUrl": "/portraits/philippe-tibi.webp",
-    "photoCredit": "Photo : École polytechnique",
+    "photoCredit": "École polytechnique",
     "links": [
       {
         "label": "Initiative Tibi III et extension européenne (École polytechnique)",
@@ -3376,7 +3381,7 @@
       "en": "He earned a PhD in mathematics from École polytechnique (2005) and joined CNRS in 2006. He now works in the Department of Mathematics and Applications at the École normale supérieure. He received the CNRS Silver Medal in 2021.\n\nHis specialty is optimal transport: the most economical way to move one set of points onto another. He applies it to imaging and machine learning.\n\nSince October 2024 he has led WOLF, a project funded until 2029 by a 2.5 million euro ERC grant, on the development of cells. On 20 April 2026, he spoke at the French National Assembly on AI in research."
     },
     "photoUrl": "/portraits/gabriel-peyre.webp",
-    "photoCredit": "Photo : CNRS",
+    "photoCredit": "CNRS",
     "links": [
       {
         "label": "Page personnelle",
@@ -3417,7 +3422,7 @@
       "en": "Of course, AI is a tool, and it will never be able to replace humans."
     },
     "photoUrl": "/portraits/joelle-barral.webp",
-    "photoCredit": "Photo : Académie des technologies",
+    "photoCredit": "Académie des technologies",
     "links": [
       {
         "label": "Académie des technologies",
@@ -3450,7 +3455,7 @@
       "en": "Born in California, Roxanne Varza studied at UCLA, Sciences Po Paris and the London School of Economics. She was French editor of TechCrunch in 2010-2011, then built Microsoft Ventures programs in Paris from 2012 to 2015.\n\nShe has directed Station F since October 2015. The campus, opened in 2017 in the Freyssinet hall in Paris, hosts more than 1,000 startups.\n\nIn January 2026, Station F launched F/ai, a program for AI startups. Its first cohort raised $34 million in pre-seed funding; the second starts in September 2026."
     },
     "photoUrl": "/portraits/roxanne-varza.webp",
-    "photoCredit": "Photo : jeanbaptisteparis, CC BY-SA 2.0, via Wikimedia Commons",
+    "photoCredit": "jeanbaptisteparis, CC BY-SA 2.0, via Wikimedia Commons",
     "links": [
       {
         "label": "Station F",
@@ -3483,7 +3488,7 @@
       "en": "A graduate of HEC, Marc Menasé starts at Kelkoo, a price-comparison site later sold to Yahoo. He then co-founds Nextedia, a digital marketing agency sold to Lagardère in 2007. A business angel since 2005, he has backed more than a hundred start-ups.\n\nIn 2012, he co-founds France Digitale with Marie Ekeland, an association bringing together start-ups and investors. In 2018, he launches Founders Future, based in Paris and San Francisco, which invests from pre-seed to growth stage.\n\nIn 2026, Founders Future's FF Growth US fund, aimed at AI leaders from Series B onward, is open for subscription."
     },
     "photoUrl": "/portraits/marc-menase.webp",
-    "photoCredit": "Photo : Founders Future",
+    "photoCredit": "Founders Future",
     "links": [
       {
         "label": "Founders Future",

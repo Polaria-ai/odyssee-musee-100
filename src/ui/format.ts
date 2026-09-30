@@ -60,6 +60,14 @@ export function safePhotoUrl(url: string | null | undefined): string | null {
 }
 
 /**
+ * Crédit photo sans préfixe « Photo : » : la fiche l'ajoute déjà (`portraitCredit`). Les crédits
+ * importés le 30/09 commençaient par « Photo : », d'où un « Photo : Photo : … » affiché en ligne.
+ */
+export function photoCreditLabel(credit: string): string {
+  return credit.trim().replace(/^photo\s*:\s*/i, '')
+}
+
+/**
  * Libellé d'organisation affiché (fiche, cartel…) : le module données vide `organization` pour
  * les fiches d'attente (`placeholder: true`) — la vraie liste n'est pas encore reçue. On affiche
  * alors un texte localisé plutôt qu'un champ vide. Une personne réelle a toujours une organisation.

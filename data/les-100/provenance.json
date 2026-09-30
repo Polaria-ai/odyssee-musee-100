@@ -196,7 +196,14 @@
   "aile": "infrastructures",
   "aile_justification": "Olix conçoit des puces et des systèmes de calcul à liens optiques pour les centres de données d'IA : fondations matérielles.",
   "verification": "corrige",
-  "photo": null,
+  "photo": {
+   "page_source": "https://sifted.eu/articles/james-dacombe-olix-comind",
+   "url_image": "https://images.sifted.eu/wp-content/uploads/2025/10/20154530/Screenshot-2025-10-20-at-15.38.58.png",
+   "licence": "Accord de la personne obtenu par Baptiste Jeauneau (30/09/2026) ; source de l'image : Sifted",
+   "credit": "Sifted",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Légende de l'image sur la page Sifted : « CoMind's Founder and CEO, James Dacombe » ; alt de l'image : « Image of James Dacombe looking… »"
+  },
   "citation_source": null,
   "role_controle_2026": "incertain",
   "sources": [
@@ -335,7 +342,14 @@
   "aile": "infrastructures",
   "aile_justification": "Eclairion construit et exploite des centres de données à très haute densité pour supercalculateurs d'IA : fondations physiques du calcul.",
   "verification": "corrige",
-  "photo": null,
+  "photo": {
+   "page_source": "https://www.solutions-numeriques.com/?p=238785",
+   "url_image": "https://solnum.b-cdn.net/wp-content/uploads/2025/06/arnaud-lepinois-portrait-scaled.jpg",
+   "licence": "Accord de la personne obtenu par Baptiste Jeauneau (30/09/2026) ; source de l'image : Solutions Numériques",
+   "credit": "Solutions Numériques",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Nom du fichier image (arnaud-lepinois-portrait) et légende « Arnaud Lépinois, portrait » dans l'article de Solutions Numériques (11 juin 2025) qui le présente comme président d'Eclairion. Image vue : homme seul, visage net, fond bleu marine, de trois quarts, aucun filigrane."
+  },
   "citation_source": null,
   "role_controle_2026": "incertain",
   "sources": [
@@ -621,7 +635,14 @@
   "aile": "industrialisation",
   "aile_justification": "IA appliquée à la défense : un logiciel de commandement déployé auprès d'unités, financé par un tour de série A.",
   "verification": "corrige",
-  "photo": null,
+  "photo": {
+   "page_source": "https://www.cfnews.net/Acces-libre/Comand-AI-valide-sa-projection-a-l-international-712398",
+   "url_image": "https://www.cfnews.net/var/cfnews/storage/images/_aliases/large/7/1/7/5/31195717-1-fre-FR/050ed1480c2e-Loic-Mougeolle-Comand-AI.jpg",
+   "licence": "Accord de la personne obtenu par Baptiste Jeauneau (30/09/2026) ; source de l'image : CFNews",
+   "credit": "CFNews",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Attributs alt et title de l'image sur la page CFNEWS : « Loïc Mougeolle, Comand AI » ; nom du fichier « Loic-Mougeolle-Comand-AI.jpg »"
+  },
   "citation_source": null,
   "role_controle_2026": "confirme",
   "sources": [
@@ -871,7 +892,14 @@
   "aile": "infrastructures",
   "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : modèles ou plateforme souveraine (l'agent proposait industrialisation : LightOn vend une plateforme d'IA générative appliquée aux entreprises (finance, industrie, santé, défense, secteur public) ; la mission de Baert est l'exécution commerciale, donc le passage à l'échelle.)",
   "verification": "valide",
-  "photo": null,
+  "photo": {
+   "page_source": "https://www.01net.it/splio-annuncia-un-nuovo-ceo-e-jean-philippe-baert/",
+   "url_image": "https://static.tecnichenuove.it/01net/2024/03/Jean-Philippe-Baert.jpg",
+   "licence": "Accord de la personne obtenu par Baptiste Jeauneau (30/09/2026) ; source de l'image : 01net.it",
+   "credit": "01net.it",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Article 01net.it sur la nomination de Jean-Philippe Baert comme CEO de Splio ; nom du fichier « Jean-Philippe-Baert.jpg » et alt « Jean-Philippe Baert Splio ». Même personne que sur le portrait Mention (2020), à lunettes et cheveux gris, visuellement cohérent."
+  },
   "citation_source": null,
   "role_controle_2026": "verifie_au_premier_passage",
   "sources": [
@@ -1528,7 +1556,14 @@
   "aile": "industrialisation",
   "aile_justification": "IA appliquée aux logiciels d'entreprise (SAP), vendue à de grands groupes industriels, financée par des fonds et par SAP pour passer à l'échelle.",
   "verification": "corrige",
-  "photo": null,
+  "photo": {
+   "page_source": "https://slush.org/2026-speakers/jp-haas",
+   "url_image": "https://cdn.prod.website-files.com/680cd45512772b4040d78def/6a82953119fc022c67dff61d_OPEN_261.jpg",
+   "licence": "Accord de la personne obtenu par Baptiste Jeauneau (30/09/2026) ; source de l'image : Slush",
+   "credit": "Slush",
+   "droits": "validés par Baptiste Jeauneau le 30/09/2026",
+   "identite_confirmee_par": "Page de profil individuelle Slush 2026 « JP Haas, Co-Founder & CEO at Conduct » (ancien de Palantir, fondateur de Conduct en 2024), dont l'image est l'unique portrait (sans attribut alt). Confirmation croisée par la page Index Ventures de Conduct (photo de groupe de l'équipe fondatrice, crédit Andrew Urwin, non retenue car groupe). Le photographe de l'image Slush n'est pas indiqué."
+  },
   "citation_source": null,
   "role_controle_2026": "verifie_au_premier_passage",
   "sources": [

@@ -6,7 +6,7 @@ import { useEffect, useRef, type CSSProperties, type TouchEvent as ReactTouchEve
 import { useGame } from '../state/gameStore'
 import { useT, usePick } from '../i18n'
 import { strings } from './strings'
-import { flagEmoji, organizationLabel, safePhotoUrl, safeUrl, splitParagraphs } from './format'
+import { flagEmoji, organizationLabel, photoCreditLabel, safePhotoUrl, safeUrl, splitParagraphs } from './format'
 import { wingThemes } from '../styles/tokens'
 import type { Person } from '../types'
 import { playSfx } from '../audio'
@@ -184,7 +184,7 @@ export function PortraitCard() {
           </ul>
         )}
 
-        {person.photoCredit && <p className="ui-portrait__credit">{t('portraitCredit', { credit: person.photoCredit })}</p>}
+        {person.photoCredit && <p className="ui-portrait__credit">{t('portraitCredit', { credit: photoCreditLabel(person.photoCredit) })}</p>}
 
         <div className="ui-portrait__nav">
           <button
