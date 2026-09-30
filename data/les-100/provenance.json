@@ -308,8 +308,8 @@
  {
   "id": "mati-staniszewski",
   "nom": "Mati Staniszewski",
-  "aile": "industrialisation",
-  "aile_justification": "ElevenLabs transforme des modèles audio en produits et agents pour les entreprises et les créateurs ; il s'agit d'IA appliquée passée à l'échelle, financée par des levées de fonds.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : ElevenLabs transforme des modèles audio en produits et agents pour les entreprises et les créateurs ; il s'agit d'IA appliquée passée à l'échelle, financée par des levées de fonds.)",
   "verification": "valide",
   "photo": {
    "page_source": "https://commons.wikimedia.org/wiki/File:Mati_Staniszewski_(2022).jpg",
@@ -419,8 +419,8 @@
  {
   "id": "fabian-hedin",
   "nom": "Fabian Hedin",
-  "aile": "industrialisation",
-  "aile_justification": "Lovable est un outil de création de logiciels par IA (outils de développement, IA appliquée) en forte croissance commerciale.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : Lovable est un outil de création de logiciels par IA (outils de développement, IA appliquée) en forte croissance commerciale.)",
   "verification": "corrige",
   "photo": {
    "page_source": "https://commons.wikimedia.org/wiki/File:Fabian_Hedin.png",
@@ -519,8 +519,8 @@
  {
   "id": "jaroslaw-kutylowski",
   "nom": "Jaroslaw Kutylowski",
-  "aile": "industrialisation",
-  "aile_justification": "DeepL est de l'IA appliquée vendue aux entreprises (traduction, écriture, voix, agents), pas un laboratoire de modèles de fondation ni un fournisseur de calcul.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : DeepL est de l'IA appliquée vendue aux entreprises (traduction, écriture, voix, agents), pas un laboratoire de modèles de fondation ni un fournisseur de calcul.)",
   "verification": "valide",
   "photo": {
    "page_source": "https://www.deepl.com/en/press.html",
@@ -662,8 +662,8 @@
  {
   "id": "victor-riparbelli",
   "nom": "Victor Riparbelli",
-  "aile": "industrialisation",
-  "aile_justification": "Synthesia est une IA appliquée (vidéo d'entreprise, formation) vendue à grande échelle : transformation de l'invention en produit.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : Synthesia est une IA appliquée (vidéo d'entreprise, formation) vendue à grande échelle : transformation de l'invention en produit.)",
   "verification": "valide",
   "photo": {
    "page_source": "https://commons.wikimedia.org/wiki/File:Victor_Riparbello_at_2025_SXSW_London.jpg",
@@ -762,8 +762,8 @@
  {
   "id": "olivier-dellenbach",
   "nom": "Olivier Dellenbach",
-  "aile": "industrialisation",
-  "aile_justification": "ChapsVision édite des logiciels d'entreprise et de défense (données, agents IA, recherche d'entreprise) et grandit par acquisitions : de l'IA appliquée passée à l'échelle industrielle.",
+  "aile": "infrastructures",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : modèles ou plateforme souveraine (l'agent proposait industrialisation : ChapsVision édite des logiciels d'entreprise et de défense (données, agents IA, recherche d'entreprise) et grandit par acquisitions : de l'IA appliquée passée à l'échelle industrielle.)",
   "verification": "corrige",
   "photo": null,
   "citation_source": null,
@@ -782,8 +782,8 @@
  {
   "id": "gautier-cloix",
   "nom": "Gautier Cloix",
-  "aile": "industrialisation",
-  "aile_justification": "H vend des agents d'IA appliqués aux processus d'entreprise ; le parcours de Cloix (Palantir) est celui du déploiement en industrie.",
+  "aile": "infrastructures",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : modèles ou plateforme souveraine (l'agent proposait industrialisation : H vend des agents d'IA appliqués aux processus d'entreprise ; le parcours de Cloix (Palantir) est celui du déploiement en industrie.)",
   "verification": "corrige",
   "photo": {
    "page_source": "https://humanx.co/europe/speakers/gautier-cloix",
@@ -868,8 +868,8 @@
  {
   "id": "jean-philippe-baert",
   "nom": "Jean-Philippe Baert",
-  "aile": "industrialisation",
-  "aile_justification": "LightOn vend une plateforme d'IA générative appliquée aux entreprises (finance, industrie, santé, défense, secteur public) ; la mission de Baert est l'exécution commerciale, donc le passage à l'échelle.",
+  "aile": "infrastructures",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : modèles ou plateforme souveraine (l'agent proposait industrialisation : LightOn vend une plateforme d'IA générative appliquée aux entreprises (finance, industrie, santé, défense, secteur public) ; la mission de Baert est l'exécution commerciale, donc le passage à l'échelle.)",
   "verification": "valide",
   "photo": null,
   "citation_source": null,
@@ -1183,8 +1183,8 @@
  {
   "id": "sasha-haco",
   "nom": "Sasha Haco",
-  "aile": "industrialisation",
-  "aile_justification": "Unitary vend aujourd'hui des agents d'IA d'entreprise (assurance, services financiers), donc de l'IA appliquée et industrialisée, plutôt que de l'infrastructure ou de la recherche.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : Unitary vend aujourd'hui des agents d'IA d'entreprise (assurance, services financiers), donc de l'IA appliquée et industrialisée, plutôt que de l'infrastructure ou de la recherche.)",
   "verification": "corrige",
   "photo": {
    "page_source": "https://www.unitary.ai/about-us",
@@ -1331,8 +1331,8 @@
  {
   "id": "matthieu-rouif",
   "nom": "Matthieu Rouif",
-  "aile": "industrialisation",
-  "aile_justification": "Photoroom est de l'IA appliquée au commerce en ligne (produit, API, agents pour catalogues d'entreprises), donc le passage à l'échelle industrielle.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : création et médias (l'agent proposait industrialisation : Photoroom est de l'IA appliquée au commerce en ligne (produit, API, agents pour catalogues d'entreprises), donc le passage à l'échelle industrielle.)",
   "verification": "corrige",
   "photo": {
    "page_source": "https://www.photoroom.com/inside-photoroom/brand-refresh",
@@ -1757,8 +1757,8 @@
  {
   "id": "fabian-theis",
   "nom": "Fabian Theis",
-  "aile": "industrialisation",
-  "aile_justification": "Son travail est de l'IA appliquée à la santé et à la biomédecine (génomique unicellulaire, modèles de fondation biomédicaux, Helmholtz.AI) ; la liste le classe « Penseur », donc l'aile culture est une alternative défendable si l'on privilégie la recherche fondamentale.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Son travail est de l'IA appliquée à la santé et à la biomédecine (génomique unicellulaire, modèles de fondation biomédicaux, Helmholtz.AI) ; la liste le classe « Penseur », donc l'aile culture est une alternative défendable si l'on privilégie la recherche fondamentale.)",
   "verification": "corrige",
   "photo": {
    "page_source": "https://www.helmholtz-munich.de/en/icb/fabian-theis",
@@ -2165,8 +2165,8 @@
  {
   "id": "philippe-tibi",
   "nom": "Philippe Tibi",
-  "aile": "industrialisation",
-  "aile_justification": "Il ne construit pas une technologie mais le financement de son passage à l'échelle : il oriente les investisseurs institutionnels vers les entreprises technologiques, ce qui relève des financeurs de l'industrialisation.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Il ne construit pas une technologie mais le financement de son passage à l'échelle : il oriente les investisseurs institutionnels vers les entreprises technologiques, ce qui relève des financeurs de l'industrialisation.)",
   "verification": "corrige",
   "photo": {
    "page_source": "https://www.polytechnique.edu/teaching-learning/en/our-teachers/tibi-philippe",
@@ -2216,8 +2216,8 @@
  {
   "id": "joelle-barral",
   "nom": "Joëlle Barral",
-  "aile": "industrialisation",
-  "aile_justification": "Son travail porte surtout sur l'IA appliquée à la santé et aux sciences de la vie (Verily, Verb Surgical, DeepMind santé). Alternative possible : culture, à cause du panel ONU.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Son travail porte surtout sur l'IA appliquée à la santé et aux sciences de la vie (Verily, Verb Surgical, DeepMind santé). Alternative possible : culture, à cause du panel ONU.)",
   "verification": "corrige",
   "photo": {
    "page_source": "https://www.academie-technologies.fr/academiciens/barral-joelle/",
@@ -2266,8 +2266,8 @@
  {
   "id": "roxanne-varza",
   "nom": "Roxanne Varza",
-  "aile": "industrialisation",
-  "aile_justification": "Station F accélère des startups d'IA et les aide à passer à l'échelle (programme F/ai, investisseurs, partenaires) : c'est un rôle d'accélérateur.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Station F accélère des startups d'IA et les aide à passer à l'échelle (programme F/ai, investisseurs, partenaires) : c'est un rôle d'accélérateur.)",
   "verification": "valide",
   "photo": {
    "page_source": "https://commons.wikimedia.org/wiki/File:Roxanne_Varza_(16028203325).jpg",
@@ -2339,8 +2339,8 @@
  {
   "id": "marc-menase",
   "nom": "Marc Menasé",
-  "aile": "industrialisation",
-  "aile_justification": "Investisseur qui finance le passage à l'échelle des start-up d'IA appliquée (défense, santé, logiciels), du pre-seed au growth.",
+  "aile": "culture",
+  "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : recherche, enseignement ou écosystème (l'agent proposait industrialisation : Investisseur qui finance le passage à l'échelle des start-up d'IA appliquée (défense, santé, logiciels), du pre-seed au growth.)",
   "verification": "corrige",
   "photo": {
    "page_source": "https://www.foundersfuture.com/team",

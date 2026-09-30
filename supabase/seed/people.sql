@@ -811,6 +811,84 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
+  'olivier-dellenbach', 33, 'Olivier Dellenbach', 'Président fondateur', 'Founder and Chairman',
+  'ChapsVision', 'FR', 'infrastructures',
+  'Fondateur d''eFront puis de ChapsVision, il bâtit un éditeur français de données et d''IA, dont la plateforme Argonos doit remplacer Palantir à la DGSI.', 'Founder of eFront, then of ChapsVision, he built a French data and AI software company whose Argonos platform is set to replace Palantir at the DGSI.', 'Polytechnicien, Olivier Dellenbach cofonde en 1987 l''éditeur de logiciels NAT Systèmes, revendu en 1998 au canadien Cognicase. En 1999, il fonde eFront (gestion de portefeuilles de capital-investissement), cédé en 2019 pour plus d''un milliard de dollars.
+
+Il lance ChapsVision en 2019, éditeur de traitement de données et d''IA, qui compte 29 acquisitions. Il en est le président fondateur ; Silvano Sansoni dirige le groupe depuis novembre 2025.
+
+Le 16 juin 2026, le Premier ministre annonce qu''Argonos, sa plateforme, remplacera progressivement Palantir à la DGSI.', 'A graduate of École Polytechnique, Olivier Dellenbach co-founded the software company NAT Systèmes in 1987, sold in 1998 to Canada''s Cognicase. In 1999 he founded eFront (private-equity portfolio management software), sold in 2019 for over one billion dollars.
+
+He launched ChapsVision in 2019, a data-processing and AI software company that counts 29 acquisitions. He is its founding chairman; Silvano Sansoni has run the group since November 2025.
+
+On 16 June 2026, the Prime Minister announced that Argonos, its platform, will progressively replace Palantir at the DGSI.',
+  NULL, NULL,
+  NULL, NULL, '[{"label":"ChapsVision, à propos","url":"https://www.chapsvision.com/fr/a-propos/"},{"label":"Wikipédia, Olivier Dellenbach","url":"https://fr.wikipedia.org/wiki/Olivier_Dellenbach"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'gautier-cloix', 34, 'Gautier Cloix', 'Directeur général', 'CEO',
+  'H Company', 'FR', 'infrastructures',
+  'Ancien de Palantir, il dirige H, société parisienne dont les agents d''IA utilisent un ordinateur comme un humain : cliquer, naviguer, remplir.', 'A Palantir alumnus, he leads H, a Paris company whose AI agents use a computer like a human would: clicking, browsing, filling in forms.', 'Diplômé de Centrale et du programme X-HEC Entrepreneurs, Gautier Cloix débute chez JPMorgan à Londres, puis se tourne vers l''entrepreneuriat social (On Purpose, Big Society Capital). En 2015, il rejoint Palantir, où il fonde et dirige le bureau français.
+
+Il devient directeur général de H en juin 2025, après le départ de Charles Kantor. H développe des agents d''IA : des programmes qui pilotent un écran comme une personne, avec les modèles Holo.
+
+En avril 2026, H propose Holo Tab, une extension Chrome gratuite pour les particuliers.', 'A graduate of Centrale and the X-HEC Entrepreneurs program, Gautier Cloix started at JPMorgan in London, then moved into social entrepreneurship (On Purpose, Big Society Capital). In 2015 he joined Palantir, where he founded and led the French office.
+
+He became CEO of H in June 2025, after Charles Kantor left. H builds AI agents: programs that operate a screen like a person, using the Holo models.
+
+In April 2026, H offers Holo Tab, a free Chrome extension for individuals.',
+  'C''est exactement ce que fait un humain sur sa machine', 'It''s exactly what a human does on their machine',
+  '/portraits/gautier-cloix.webp', 'Photo : HumanX', '[{"label":"H Company","url":"https://www.hcompany.ai/about"},{"label":"H (company) sur Wikipédia","url":"https://en.wikipedia.org/wiki/H_(company)"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
   'vaysh-kewada', 36, 'Vaysh Kewada', 'Cofondatrice et directrice générale', 'Co-founder and CEO',
   'Salience Labs', 'GB', 'infrastructures',
   'Cofondatrice de Salience Labs (Oxford), elle conçoit des commutateurs optiques qui relient les machines des centres de données d''IA avec de la lumière plutôt que de l''électricité.', 'Co-founder of Salience Labs (Oxford), she designs optical switches that connect the machines in AI data centres using light rather than electricity.', 'Vaysh Kewada étudie la physique à l''Imperial College London. Elle est analyste chez McKinsey, puis entrepreneure en résidence chez Oxford Sciences Innovation.
@@ -824,6 +902,45 @@ She co-founded Salience Labs, a spin-out of Oxford and the University of Münste
 In February 2025, she raised 30 million dollars in a Series A. In March 2026, Salience Labs launched a 32-port optical switch.',
   'La commutation optique fait passer les réseaux du routage électronique de paquets à une connectivité optique très prévisible et économe en énergie.', 'Optical switching is moving networks from electronic packet routing to highly predictable, energy-efficient optical connectivity.',
   '/portraits/vaysh-kewada.webp', 'Photo : Asians in Tech', '[{"label":"Lancement du commutateur 32 ports (DataCentreNews UK, mars 2026)","url":"https://datacentrenews.uk/story/salience-labs-debuts-all-optical-switch-for-ai-hubs"},{"label":"Levée de 30 M$ en série A (eeNews Europe, février 2025)","url":"https://www.eenewseurope.com/en/salience-labs-closes-funding-for-photonic-switches"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'jean-philippe-baert', 38, 'Jean-Philippe Baert', 'Directeur général', 'Chief Executive Officer',
+  'LightOn', 'FR', 'infrastructures',
+  'Ancien directeur général de Splio, il dirige depuis juillet 2026 LightOn, société cotée qui propose une plateforme d''IA générative aux entreprises et au secteur public.', 'Former CEO of Splio, he has led LightOn since July 2026, a listed company offering a generative AI platform to businesses and the public sector.', 'Plus de 30 ans dans le logiciel d''entreprise en abonnement (SaaS), avec des postes de direction chez ExactTarget, Salesforce, GE Digital, Mention Solution et Splio, dont il devient directeur général en mars 2024.
+
+Le 9 juillet 2026, LightOn le nomme directeur général après la démission d''Igor Carron, cofondateur qui cumulait présidence et direction générale. Marie de Lauzon préside désormais le conseil.
+
+Fondée en 2016 et cotée sur Euronext Growth Paris, LightOn propose une plateforme d''IA générative aux entreprises. Sa mission : accélérer le développement commercial.', 'Over 30 years in subscription-based enterprise software (SaaS), with leadership roles at ExactTarget, Salesforce, GE Digital, Mention Solution and Splio, where he became CEO in March 2024.
+
+On 9 July 2026, LightOn named him CEO after the resignation of Igor Carron, a co-founder who held both the chair and CEO roles. Marie de Lauzon now chairs the board.
+
+Founded in 2016 and listed on Euronext Growth Paris, LightOn offers a generative AI platform to businesses. His mission: speed up commercial growth.',
+  NULL, NULL,
+  NULL, NULL, '[{"label":"LightOn, relations investisseurs","url":"https://lighton.ai/investors"},{"label":"LightOn (site officiel)","url":"https://lighton.ai/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1084,45 +1201,6 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
-  'mati-staniszewski', 14, 'Mati Staniszewski', 'Cofondateur et directeur général', 'Co-founder and CEO',
-  'ElevenLabs', 'GB', 'industrialisation',
-  'Cofondateur et directeur général d''ElevenLabs, la société londonienne qui fait parler les machines : voix de synthèse, doublage et agents vocaux.', 'Co-founder and CEO of ElevenLabs, the London-based company that makes machines speak: synthetic voices, dubbing and voice agents.', 'Mati Staniszewski fait ses études secondaires à Varsovie, puis obtient un diplôme de mathématiques à l''Imperial College London. Il travaille chez Opera Software, chez BlackRock (plateforme Aladdin Wealth) et chez Palantir, comme stratège de déploiement.
-
-En 2022, il fonde ElevenLabs avec son ami de lycée Piotr Dabkowski. L''entreprise développe des modèles audio, des outils de création et des agents conversationnels.
-
-En février 2026, ElevenLabs lève 500 millions de dollars, pour une valorisation de 11 milliards, lors d''un tour mené par Sequoia.', 'Mati Staniszewski attends high school in Warsaw, then earns a mathematics degree at Imperial College London. He works at Opera Software, at BlackRock (Aladdin Wealth platform) and at Palantir, as a deployment strategist.
-
-In 2022, he founds ElevenLabs with his high school friend Piotr Dabkowski. The company builds audio models, creative tools and conversational agents.
-
-In February 2026, ElevenLabs raises 500 million dollars at an 11 billion valuation, in a round led by Sequoia.',
-  'Ce financement nous aide à aller au-delà de la seule voix pour transformer notre façon d''interagir avec la technologie.', 'This funding helps us go beyond voice alone to transform how we interact with technology altogether.',
-  '/portraits/mati-staniszewski.webp', 'Photo : Rafał Masłow, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"ElevenLabs","url":"https://elevenlabs.io/about"},{"label":"Wikipédia (en)","url":"https://en.wikipedia.org/wiki/Mati_Staniszewski"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
   'antoine-bordes', 16, 'Antoine Bordes', 'Directeur scientifique', 'Chief Scientist',
   'Helsing', 'FR', 'industrialisation',
   'Après neuf ans chez Meta, ce chercheur en IA dirige la science chez Helsing, entreprise européenne d''IA pour la défense, et plaide pour que l''humain garde la décision.', 'After nine years at Meta, this AI researcher leads science at Helsing, a European defence AI company, and argues that humans must keep the final decision.', 'Antoine Bordes est docteur en apprentissage statistique de l''université Pierre-et-Marie-Curie. Chercheur au CNRS, il reçoit en 2012 le prix de thèse de la Direction générale de l''armement (DGA).
@@ -1162,45 +1240,6 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
-  'fabian-hedin', 19, 'Fabian Hedin', 'Cofondateur et directeur technique', 'Co-founder and CTO',
-  'Lovable', 'SE', 'industrialisation',
-  'Cofondateur et directeur technique de Lovable, la start-up suédoise qui permet de créer une application en décrivant son idée en langage courant.', 'Co-founder and CTO of Lovable, the Swedish start-up that lets anyone build an app by describing their idea in plain language.', 'Fabian Hedin est un ancien étudiant du KTH, à Stockholm. Il a fondé Tentium, dont il a été directeur général, et TenFAST, dont il a été directeur technique. Il a aussi dirigé le développement de l''interface utilisateur (frontend) chez Depict. Il cofonde Lovable avec Anton Osika.
-
-Lovable permet de créer une application en décrivant son idée en langage courant, sans écrire de code. Fabian Hedin en est le directeur technique.
-
-En août 2026, Lovable lève 400 millions de dollars, pour une valorisation de 13,3 milliards de dollars.', 'Fabian Hedin is a former student of KTH in Stockholm. He founded Tentium, where he was chief executive, and TenFAST, where he was chief technology officer. He also led frontend (user interface) development at Depict. He co-founded Lovable with Anton Osika.
-
-Lovable lets people build an app by describing their idea in plain language, with no coding. Fabian Hedin is its chief technology officer.
-
-In August 2026, Lovable raised $400 million at a $13.3 billion valuation.',
-  'C''est formidable de voir le prix KTH Innovation et des initiatives similaires mettre en lumière les jeunes entrepreneurs suédois et inspirer plus de gens à concrétiser leurs idées.', 'It''s fantastic to see the KTH Innovation Award and similar initiatives shine a spotlight on young entrepreneurs in Sweden and inspire more people to pursue their ideas.',
-  '/portraits/fabian-hedin.webp', 'Photo : Marcusgarage, CC0, via Wikimedia Commons', '[{"label":"Lovable","url":"https://lovable.dev"},{"label":"Lovable (Wikipédia)","url":"https://en.wikipedia.org/wiki/Lovable_(company)"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
   'alex-kendall', 20, 'Alex Kendall', 'Cofondateur et directeur général', 'Co-founder and CEO',
   'Wayve', 'GB', 'industrialisation',
   'Cofondateur de Wayve, il fait conduire des voitures par une IA qui apprend des images, sans cartes détaillées, et la déploie depuis Londres.', 'Co-founder of Wayve, he has cars driven by an AI that learns from images, without detailed maps, and deploys it from London.', 'Né en Nouvelle-Zélande, Alex Kendall étudie l''ingénierie à Auckland, puis prépare à Cambridge un doctorat en apprentissage profond, vision par ordinateur et robotique. Il cofonde Wayve en 2017 et en devient directeur général en 2020.
@@ -1214,45 +1253,6 @@ His approach: a single AI learns to drive from images, without detailed maps of 
 On 25 February 2026, Wayve raised $1.2 billion. On 3 September 2026, with Uber, it launched supervised rides in London.',
   'Pour la première fois, nous verrons des machines intelligentes de confiance interagir physiquement avec notre monde, enrichir nos vies et nous libérer pour l''essentiel.', '',
   '/portraits/alex-kendall.webp', 'Photo : Wayve', '[{"label":"Profil sur Wayve","url":"https://wayve.ai/company/leadership-team/alex-kendall/"},{"label":"Wayve","url":"https://wayve.ai/press/"},{"label":"Article Wikipédia sur Wayve","url":"https://en.wikipedia.org/wiki/Wayve"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
-  'jaroslaw-kutylowski', 23, 'Jaroslaw Kutylowski', 'Cofondateur et directeur général', 'Co-founder and CEO',
-  'DeepL', 'DE', 'industrialisation',
-  'Il a fondé DeepL à Cologne en 2017, un traducteur par IA utilisé par des entreprises du monde entier, et le dirige aujourd''hui.', 'He founded DeepL in Cologne in 2017, an AI translator used by companies worldwide, and still leads it today.', 'Né en Pologne, Jarek Kutylowski grandit entre la Pologne et l''Allemagne. Il programme dès 10 ans, obtient un doctorat en informatique à l''université de Paderborn, passe par Vodafone, puis devient directeur technique de Linguee, un dictionnaire en ligne.
-
-En 2017, il fonde DeepL à Cologne : un traducteur fondé sur des réseaux de neurones, des programmes qui apprennent à partir d''exemples, entraînés notamment avec les données de Linguee.
-
-En novembre 2025, DeepL lance DeepL Agent, un assistant autonome pour l''entreprise. En avril 2026, sa traduction vocale passe à plus de 40 langues.', 'Born in Poland, Jarek Kutylowski grew up between Poland and Germany. He has coded since age 10, earned a PhD in computer science at the University of Paderborn, spent time at Vodafone, then became chief technology officer of Linguee, an online dictionary.
-
-In 2017, he founded DeepL in Cologne: a translator built on neural networks, programs that learn from examples, trained partly on Linguee''s data.
-
-In November 2025, DeepL launched DeepL Agent, an autonomous assistant for business. In April 2026, its voice translation expanded to more than 40 languages.',
-  'Nous avons vu que la prochaine grande avancée de la traduction viendrait de l''IA et de l''apprentissage profond.', 'We saw the next big breakthrough in translation would come through AI and deep learning.',
-  '/portraits/jaroslaw-kutylowski.webp', 'Photo : DeepL', '[{"label":"DeepL","url":"https://www.deepl.com"},{"label":"DeepL sur Wikipédia","url":"https://en.wikipedia.org/wiki/DeepL_SE"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1396,45 +1396,6 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
-  'victor-riparbelli', 29, 'Victor Riparbelli', 'Cofondateur et directeur général', 'Co-founder and CEO',
-  'Synthesia', 'GB', 'industrialisation',
-  'Cofondateur de Synthesia, il fait de la vidéo par avatars IA un outil de formation et de communication pour les entreprises.', 'Co-founder of Synthesia, he turns AI-avatar video into a training and communication tool for companies.', 'Danois, Victor Riparbelli étudie l''informatique à l''IT University de Copenhague et passe un semestre à Stanford. Installé à Londres, il rencontre le chercheur Matthias Niessner, auteur de travaux sur la génération vidéo par IA, et fonde Synthesia en 2017.
-
-Le studio travaille d''abord pour le cinéma et la publicité. Vers 2021, de grandes entreprises demandent des vidéos de formation avec avatars : Synthesia en fait son cœur de métier.
-
-En janvier 2026, elle lève 200 millions de dollars pour une valorisation de 4 milliards.', 'Danish-born Victor Riparbelli studies computer science at the IT University of Copenhagen and spends a semester at Stanford. Settled in London, he meets researcher Matthias Niessner, author of work on AI video generation, and founds Synthesia in 2017.
-
-The studio first works for film and advertising. Around 2021, large companies ask for training videos with avatars: Synthesia makes that its core business.
-
-In January 2026, it raises $200 million at a $4 billion valuation.',
-  NULL, NULL,
-  '/portraits/victor-riparbelli.webp', 'Photo : Duk3L1xon, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Synthesia - équipe et à propos","url":"https://www.synthesia.io/about"},{"label":"Synthesia - annonce de la série E (janvier 2026)","url":"https://www.synthesia.io/post/series-e-200-million-4-billion-valuation-future-work"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
   'stanislas-polu', 31, 'Stanislas Polu', 'Cofondateur et directeur technique', 'Co-founder and CTO',
   'Dust', 'FR', 'industrialisation',
   'Cofondateur et directeur technique de Dust, plateforme française qui permet aux entreprises de créer des agents IA reliés à leurs données. Ancien chercheur d''OpenAI.', 'Co-founder and CTO of Dust, a French platform that lets companies build AI agents connected to their own data. Former OpenAI researcher.', 'Stanislas Polu étudie à Polytechnique et à Stanford. Il cofonde avec Gabriel Hubert une première start-up, spécialisée dans l''analyse de données Instagram, rachetée par Stripe, où il travaille cinq ans comme ingénieur.
@@ -1448,84 +1409,6 @@ He then joined OpenAI''s research team and spent three years on the mathematical
 In January 2023 he launched Dust with Gabriel Hubert: AI assistants (agents) that employees build themselves, connected to Slack, Notion or GitHub. In May 2026, Dust announced a $40 million round led by Abstract and Sequoia.',
   NULL, NULL,
   '/portraits/stanislas-polu.webp', 'Photo : Sequoia Capital', '[{"label":"Dust, équipe","url":"https://dust.tt/home/about"},{"label":"Tech.eu, levée de série B de Dust","url":"https://tech.eu/2026/05/18/dust-raises-40m-series-b-to-build-the-multiplayer-operating-system-for-enterprise-ai/"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
-  'olivier-dellenbach', 33, 'Olivier Dellenbach', 'Président fondateur', 'Founder and Chairman',
-  'ChapsVision', 'FR', 'industrialisation',
-  'Fondateur d''eFront puis de ChapsVision, il bâtit un éditeur français de données et d''IA, dont la plateforme Argonos doit remplacer Palantir à la DGSI.', 'Founder of eFront, then of ChapsVision, he built a French data and AI software company whose Argonos platform is set to replace Palantir at the DGSI.', 'Polytechnicien, Olivier Dellenbach cofonde en 1987 l''éditeur de logiciels NAT Systèmes, revendu en 1998 au canadien Cognicase. En 1999, il fonde eFront (gestion de portefeuilles de capital-investissement), cédé en 2019 pour plus d''un milliard de dollars.
-
-Il lance ChapsVision en 2019, éditeur de traitement de données et d''IA, qui compte 29 acquisitions. Il en est le président fondateur ; Silvano Sansoni dirige le groupe depuis novembre 2025.
-
-Le 16 juin 2026, le Premier ministre annonce qu''Argonos, sa plateforme, remplacera progressivement Palantir à la DGSI.', 'A graduate of École Polytechnique, Olivier Dellenbach co-founded the software company NAT Systèmes in 1987, sold in 1998 to Canada''s Cognicase. In 1999 he founded eFront (private-equity portfolio management software), sold in 2019 for over one billion dollars.
-
-He launched ChapsVision in 2019, a data-processing and AI software company that counts 29 acquisitions. He is its founding chairman; Silvano Sansoni has run the group since November 2025.
-
-On 16 June 2026, the Prime Minister announced that Argonos, its platform, will progressively replace Palantir at the DGSI.',
-  NULL, NULL,
-  NULL, NULL, '[{"label":"ChapsVision, à propos","url":"https://www.chapsvision.com/fr/a-propos/"},{"label":"Wikipédia, Olivier Dellenbach","url":"https://fr.wikipedia.org/wiki/Olivier_Dellenbach"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
-  'gautier-cloix', 34, 'Gautier Cloix', 'Directeur général', 'CEO',
-  'H Company', 'FR', 'industrialisation',
-  'Ancien de Palantir, il dirige H, société parisienne dont les agents d''IA utilisent un ordinateur comme un humain : cliquer, naviguer, remplir.', 'A Palantir alumnus, he leads H, a Paris company whose AI agents use a computer like a human would: clicking, browsing, filling in forms.', 'Diplômé de Centrale et du programme X-HEC Entrepreneurs, Gautier Cloix débute chez JPMorgan à Londres, puis se tourne vers l''entrepreneuriat social (On Purpose, Big Society Capital). En 2015, il rejoint Palantir, où il fonde et dirige le bureau français.
-
-Il devient directeur général de H en juin 2025, après le départ de Charles Kantor. H développe des agents d''IA : des programmes qui pilotent un écran comme une personne, avec les modèles Holo.
-
-En avril 2026, H propose Holo Tab, une extension Chrome gratuite pour les particuliers.', 'A graduate of Centrale and the X-HEC Entrepreneurs program, Gautier Cloix started at JPMorgan in London, then moved into social entrepreneurship (On Purpose, Big Society Capital). In 2015 he joined Palantir, where he founded and led the French office.
-
-He became CEO of H in June 2025, after Charles Kantor left. H builds AI agents: programs that operate a screen like a person, using the Holo models.
-
-In April 2026, H offers Holo Tab, a free Chrome extension for individuals.',
-  'C''est exactement ce que fait un humain sur sa machine', 'It''s exactly what a human does on their machine',
-  '/portraits/gautier-cloix.webp', 'Photo : HumanX', '[{"label":"H Company","url":"https://www.hcompany.ai/about"},{"label":"H (company) sur Wikipédia","url":"https://en.wikipedia.org/wiki/H_(company)"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1604,45 +1487,6 @@ In April 2024, he founded Harmattan AI with five partners. The company builds au
 In January 2026, it raised 200 million dollars, with Dassault Aviation, at a valuation of 1.4 billion dollars. In June 2026, France ordered 5,000 more drones from it.',
   NULL, NULL,
   NULL, NULL, '[{"label":"Harmattan AI, site officiel","url":"https://www.harmattan.ai"},{"label":"Harmattan AI sur Wikipédia","url":"https://fr.wikipedia.org/wiki/Harmattan_AI"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
-  'jean-philippe-baert', 38, 'Jean-Philippe Baert', 'Directeur général', 'Chief Executive Officer',
-  'LightOn', 'FR', 'industrialisation',
-  'Ancien directeur général de Splio, il dirige depuis juillet 2026 LightOn, société cotée qui propose une plateforme d''IA générative aux entreprises et au secteur public.', 'Former CEO of Splio, he has led LightOn since July 2026, a listed company offering a generative AI platform to businesses and the public sector.', 'Plus de 30 ans dans le logiciel d''entreprise en abonnement (SaaS), avec des postes de direction chez ExactTarget, Salesforce, GE Digital, Mention Solution et Splio, dont il devient directeur général en mars 2024.
-
-Le 9 juillet 2026, LightOn le nomme directeur général après la démission d''Igor Carron, cofondateur qui cumulait présidence et direction générale. Marie de Lauzon préside désormais le conseil.
-
-Fondée en 2016 et cotée sur Euronext Growth Paris, LightOn propose une plateforme d''IA générative aux entreprises. Sa mission : accélérer le développement commercial.', 'Over 30 years in subscription-based enterprise software (SaaS), with leadership roles at ExactTarget, Salesforce, GE Digital, Mention Solution and Splio, where he became CEO in March 2024.
-
-On 9 July 2026, LightOn named him CEO after the resignation of Igor Carron, a co-founder who held both the chair and CEO roles. Marie de Lauzon now chairs the board.
-
-Founded in 2016 and listed on Euronext Growth Paris, LightOn offers a generative AI platform to businesses. His mission: speed up commercial growth.',
-  NULL, NULL,
-  NULL, NULL, '[{"label":"LightOn, relations investisseurs","url":"https://lighton.ai/investors"},{"label":"LightOn (site officiel)","url":"https://lighton.ai/"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2059,45 +1903,6 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
-  'sasha-haco', 51, 'Sasha Haco', 'Cofondatrice et directrice générale', 'Co-founder and CEO',
-  'Unitary', 'GB', 'industrialisation',
-  'Docteure en physique de Cambridge, elle dirige Unitary, qui déploie des agents d''IA dans les logiciels existants des entreprises, notamment des assureurs.', 'A Cambridge-trained doctor of physics, she runs Unitary, which deploys AI agents inside companies'' existing software, notably for insurers.', 'Sasha Haco fait un doctorat de physique théorique à Cambridge et travaille avec Stephen Hawking sur le paradoxe de l''information des trous noirs. En 2019, elle rejoint Entrepreneur First, y rencontre James Thewlis et cofonde Unitary à Londres.
-
-Unitary débute dans la modération de contenus en ligne. En octobre 2023, la société lève 15 millions de dollars en série A, menée par Creandum.
-
-En octobre 2025, elle lance des « agents virtuels » pour l''assurance : ils travaillent dans les logiciels existants, sans intégration technique ni changement de processus.', 'Sasha Haco did a PhD in theoretical physics at Cambridge, working with Stephen Hawking on the black hole information paradox. In 2019, she joined Entrepreneur First, met James Thewlis there and co-founded Unitary in London.
-
-Unitary started in online content moderation. In October 2023, the company raised $15 million in a Series A led by Creandum.
-
-In October 2025, it launched "virtual agents" for insurance: they work inside existing software, with no technical integration or change to processes.',
-  'Les agents virtuels ne demandent ni intégration technique ni changement des processus existants, et apportent très vite une vraie valeur.', 'Virtual Agents require no engineering integration or changes to existing processes while delivering real value, incredibly quickly.',
-  '/portraits/sasha-haco.webp', 'Photo : Unitary', '[{"label":"Unitary","url":"https://www.unitary.ai"},{"label":"Sasha Haco, page équipe Unitary","url":"https://www.unitary.ai/about-us"},{"label":"Sasha Haco sur Wikipédia","url":"https://en.wikipedia.org/wiki/Sasha_Haco"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
   'nicolas-do-huu', 53, 'Nicolas Do Huu', 'Cofondateur et directeur technique', 'Co-founder and Chief Technology Officer',
   'Iktos', 'FR', 'industrialisation',
   'Cofondateur d''Iktos, il dirige la technologie d''une entreprise parisienne qui associe IA générative et robots de laboratoire pour concevoir plus vite de nouveaux médicaments.', 'Co-founder of Iktos, he leads the technology of a Paris-based company that pairs generative AI with lab robots to design new medicines faster.', 'Docteur en chimie organique du MIT et titulaire d''un MBA de la Stern School of Business (New York University), Nicolas Do Huu a travaillé en recherche pharmaceutique, en investissement et en direction d''entreprise. Il a déposé plus de 20 brevets. Il cofonde Iktos en 2016.
@@ -2228,41 +2033,6 @@ In 2021, she co-founds Cradle in Amsterdam. A protein is a molecule whose sequen
 On 26 November 2024, Cradle announces a $73M Series B led by IVP, with more than 21 customers, including Novo Nordisk and Grifols.',
   NULL, NULL,
   '/portraits/elise-de-reus.webp', 'Photo : Techleap / Elise de Reus', '[{"label":"Cradle","url":"https://www.cradle.bio"},{"label":"Annonce de la série B","url":"https://www.cradle.bio/blog/series-b"},{"label":"Cradle (Wikipédia)","url":"https://en.wikipedia.org/wiki/Cradle_(company)"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
-  'matthieu-rouif', 57, 'Matthieu Rouif', 'Cofondateur et directeur général', 'Co-founder and CEO',
-  'Photoroom', 'FR', 'industrialisation',
-  'Il dirige Photoroom, l''application parisienne qui retouche et génère des images de produits par IA pour les commerçants en ligne.', 'He runs Photoroom, the Paris-based app that edits and generates product images with AI for online sellers.', 'Matthieu Rouif travaille dans les applications de photo et de vidéo dès 2014, chez Stupeflix, rachetée par GoPro en 2016. Il y est responsable des applications de retouche photo, puis fonde Photoroom en 2019 avec Eliot Andres.
-
-En mars 2024, l''entreprise lève 43 millions de dollars auprès de Balderton Capital et Aglaé Ventures, pour une valorisation de 500 millions. En juin 2026, elle indique traiter 7 milliards d''images par an pour plus d''un million d''entreprises.', 'Matthieu Rouif worked on photo and video apps from 2014 at Stupeflix, which GoPro acquired in 2016. There he was in charge of the photo editing apps, then founded Photoroom in 2019 with Eliot Andres.
-
-In March 2024, the company raised $43 million from Balderton Capital and Aglaé Ventures, at a $500 million valuation. In June 2026, it said it processes 7 billion images a year for over a million businesses.',
-  'L''idée de PhotoRoom est de rendre les photos de qualité studio accessibles à tous, partout dans le monde.', 'The idea of PhotoRoom is to make studio quality photos accessible to everyone in the world.',
-  '/portraits/matthieu-rouif.webp', 'Photo : Photoroom', '[{"label":"Photoroom","url":"https://www.photoroom.com/about"},{"label":"Article de Matthieu Rouif sur le blog Photoroom","url":"https://www.photoroom.com/inside-photoroom/brand-refresh"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -2593,45 +2363,6 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
-  'fabian-theis', 75, 'Fabian Theis', 'Directeur du Computational Health Center', 'Director of the Computational Health Center',
-  'Helmholtz Munich', 'DE', 'industrialisation',
-  'Il dirige le Computational Health Center de Helmholtz Munich, où l''IA sert à lire le fonctionnement des cellules une à une.', 'He heads the Computational Health Center at Helmholtz Munich, where AI is used to read how cells work, one at a time.', 'Fabian Theis étudie les mathématiques et la physique à Ratisbonne, puis obtient deux doctorats : physique (2002) et informatique (2003). Professeur à la TU Munich depuis 2013, il dirige l''Institut de biologie computationnelle de Helmholtz Munich.
-
-Depuis 2022, il dirige le Computational Health Center. Son équipe conçoit des modèles d''apprentissage automatique pour lire l''activité des gènes cellule par cellule, et publie des outils libres comme Scanpy.
-
-Il reçoit le prix Leibniz en 2023 et est élu à l''Académie Leopoldina en 2025.', 'Fabian Theis studied mathematics and physics in Regensburg, then earned two doctorates: physics (2002) and computer science (2003). A professor at TU Munich since 2013, he directs the Institute of Computational Biology at Helmholtz Munich.
-
-Since 2022, he has headed the Computational Health Center. His team builds machine-learning models that read gene activity cell by cell, and releases open-source tools such as Scanpy.
-
-He received the Leibniz Prize in 2023 and was elected to the Leopoldina Academy in 2025.',
-  NULL, NULL,
-  '/portraits/fabian-theis.webp', 'Photo : Helmholtz Munich / Matthias Tunger Photodesign', '[{"label":"Profil, Helmholtz Munich","url":"https://www.helmholtz-munich.de/en/icb/fabian-theis"},{"label":"Theis Lab","url":"https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab"},{"label":"Profil, TU Munich","url":"https://www.professoren.tum.de/en/theis-fabian"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
   'nicolas-dufourcq', 86, 'Nicolas Dufourcq', 'Directeur général', 'Chief Executive Officer',
   'Bpifrance', 'FR', 'industrialisation',
   'Il dirige Bpifrance, la banque publique d''investissement, qui a annoncé 10 milliards d''euros d''ici 2029 pour soutenir l''écosystème français de l''IA.', 'He leads Bpifrance, France''s public investment bank, which announced 10 billion euros through 2029 to support the French AI ecosystem.', 'Diplômé de HEC et de l''ENA, il passe par l''Inspection des finances, puis par France Télécom, où il dirige Wanadoo de 2000 à 2002, et par Capgemini.
@@ -2854,123 +2585,6 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
-  'philippe-tibi', 92, 'Philippe Tibi', 'Professeur de stratégie et finance', 'Professor of strategy and finance',
-  'École polytechnique', 'FR', 'industrialisation',
-  'Professeur à l''École polytechnique, auteur en 2019 du rapport à l''origine de l''initiative Tibi, qui oriente l''épargne des assureurs français vers les entreprises technologiques.', 'A professor at École polytechnique, he wrote the 2019 report behind the Tibi Initiative, which directs French insurers'' savings towards technology companies.', 'Polytechnicien (promotion 1977) et diplômé de Télécom Paris, il dirige les marchés actions et la banque d''investissement d''UBS en France jusqu''en 2012. Il préside l''Amafi, association des banques de marché, de 2007 à 2014 et fonde Pergamon Campus en 2013.
-
-En juillet 2019, il remet au gouvernement un rapport sur le financement des entreprises technologiques. L''initiative Tibi en découle : assureurs et autres investisseurs de long terme financent des fonds qui soutiennent ces entreprises.
-
-En juin 2026, la troisième phase est annoncée : 13 milliards d''euros auprès d''une quarantaine d''investisseurs institutionnels.', 'A graduate of École polytechnique (class of 1977) and Télécom Paris, he ran UBS''s equity markets and investment banking in France until 2012. He chaired Amafi, the association of market banks, from 2007 to 2014 and founded Pergamon Campus in 2013.
-
-In July 2019, he handed the government a report on financing technology companies. The Tibi Initiative followed: insurers and other long-term investors fund vehicles that back these companies.
-
-In June 2026, the third phase was announced: 13 billion euros from about forty institutional investors.',
-  NULL, NULL,
-  '/portraits/philippe-tibi.webp', 'Photo : École polytechnique', '[{"label":"Initiative Tibi III et extension européenne (École polytechnique)","url":"https://www.polytechnique.edu/en/news/tibi-initiative-launch-phase-3-and-expansion-european-level"},{"label":"Initiative Tibi, rapport d''activité (Direction générale du Trésor)","url":"https://www.tresor.economie.gouv.fr/Articles/2025/09/16/tiibi-initiative-a-target-raised-to-15-billion"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
-  'joelle-barral', 94, 'Joëlle Barral', 'Directrice de la recherche en IA', 'Director of AI Research',
-  'Google DeepMind', 'FR', 'industrialisation',
-  'Ingénieure polytechnicienne, elle dirige à Paris la recherche de Google DeepMind sur les modèles de pointe et l''IA pour les sciences du vivant. Elle siège au panel scientifique de l''ONU sur l''IA.', 'A Polytechnique-trained engineer, she leads Google DeepMind''s research in Paris on frontier models and AI for the life sciences. She sits on the UN scientific panel on AI.', 'Polytechnicienne, Joëlle Barral obtient un master et un doctorat en génie électrique à Stanford, en imagerie médicale (IRM). Chez Verily, filiale de Google, elle dirige le logiciel et participe à Verb Surgical, coentreprise de robotique chirurgicale avec Ethicon (Johnson & Johnson).
-
-Chez Google DeepMind, à Paris, elle dirige la recherche fondamentale sur les modèles de pointe et l''IA appliquée aux sciences du vivant.
-
-Élue à l''Académie des technologies le 10 décembre 2025, elle est nommée le 12 février 2026 parmi les 40 experts du panel scientifique de l''ONU sur l''IA.', 'Polytechnique graduate Joëlle Barral earned a master''s and a PhD in electrical engineering at Stanford, in medical imaging (MRI). At Verily, Google''s subsidiary, she led software and worked on Verb Surgical, a surgical robotics joint venture with Ethicon (Johnson & Johnson).
-
-At Google DeepMind in Paris, she leads foundational research on frontier models and AI applied to the life sciences.
-
-Elected to the Académie des technologies on 10 December 2025, she was named on 12 February 2026 among the 40 experts of the UN scientific panel on AI.',
-  'Bien sûr, l''IA est un outil, et ne pourra jamais remplacer l''humain.', 'Of course, AI is a tool, and it will never be able to replace humans.',
-  '/portraits/joelle-barral.webp', 'Photo : Académie des technologies', '[{"label":"Académie des technologies","url":"https://www.academie-technologies.fr/academiciens/barral-joelle/"},{"label":"Google, entretien avec Joëlle Barral","url":"https://blog.google/intl/fr-fr/nouvelles-de-lentreprise/azerty/barral-ia/"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
-  'roxanne-varza', 96, 'Roxanne Varza', 'Directrice', 'Director',
-  'Station F', 'FR', 'industrialisation',
-  'Elle dirige Station F depuis 2015, campus parisien qui accueille plus de 1 000 startups et lance en 2026 un programme dédié aux startups d''IA.', 'She has run Station F since 2015, a Paris campus hosting more than 1,000 startups, and launched a program for AI startups in 2026.', 'Née en Californie, Roxanne Varza étudie à UCLA, à Sciences Po Paris et à la London School of Economics. Elle est rédactrice de TechCrunch France en 2010-2011, puis développe les programmes de Microsoft Ventures à Paris de 2012 à 2015.
-
-Elle dirige Station F depuis octobre 2015. Le campus, ouvert en 2017 dans la halle Freyssinet à Paris, accueille plus de 1 000 startups.
-
-En janvier 2026, Station F lance F/ai, un programme pour startups d''IA. Sa première promotion a levé 34 millions de dollars en pré-amorçage ; la deuxième débute en septembre 2026.', 'Born in California, Roxanne Varza studied at UCLA, Sciences Po Paris and the London School of Economics. She was French editor of TechCrunch in 2010-2011, then built Microsoft Ventures programs in Paris from 2012 to 2015.
-
-She has directed Station F since October 2015. The campus, opened in 2017 in the Freyssinet hall in Paris, hosts more than 1,000 startups.
-
-In January 2026, Station F launched F/ai, a program for AI startups. Its first cohort raised $34 million in pre-seed funding; the second starts in September 2026.',
-  NULL, NULL,
-  '/portraits/roxanne-varza.webp', 'Photo : jeanbaptisteparis, CC BY-SA 2.0, via Wikimedia Commons', '[{"label":"Station F","url":"https://stationf.co/"},{"label":"Wikipédia : Roxanne Varza","url":"https://fr.wikipedia.org/wiki/Roxanne_Varza"}]'::jsonb, false, false
-)
-on conflict (id) do update set
-  ord = excluded.ord,
-  name = excluded.name,
-  role_fr = excluded.role_fr,
-  role_en = excluded.role_en,
-  organization = excluded.organization,
-  country = excluded.country,
-  wing = excluded.wing,
-  bio_fr = excluded.bio_fr,
-  bio_en = excluded.bio_en,
-  story_fr = excluded.story_fr,
-  story_en = excluded.story_en,
-  quote_fr = excluded.quote_fr,
-  quote_en = excluded.quote_en,
-  photo_url = excluded.photo_url,
-  photo_credit = excluded.photo_credit,
-  links = excluded.links,
-  placeholder = excluded.placeholder,
-  updated_at = now();
-
-insert into public.people (
-  id, ord, name, role_fr, role_en, organization, country, wing,
-  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
-  photo_url, photo_credit, links, placeholder, published
-) values (
   'xavier-lazarus', 97, 'Xavier Lazarus', 'Cofondateur et associé directeur', 'Co-founder and Managing Partner',
   'Elaia', 'FR', 'industrialisation',
   'Cofondateur d’Elaia, fonds européen de capital-risque, ce mathématicien de formation dirige un fonds qui compte les start-up d’IA Aqemia et H parmi ses participations.', 'Co-founder of Elaia, a European venture capital firm, this mathematician by training leads a fund whose portfolio includes the AI start-ups Aqemia and H.', 'Normalien, agrégé et docteur en mathématiques, Xavier Lazarus débute dans la recherche en théorie des groupes et géométrie arithmétique. Il fonde ensuite une start-up d’apprentissage en ligne, rachetée en 1999, puis crée l’activité de capital-risque de CPR, racheté par Crédit Agricole Indosuez.
@@ -3049,19 +2663,19 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
-  'marc-menase', 99, 'Marc Menasé', 'Associé fondateur et directeur des investissements', 'Founding Partner and Chief Investments Officer',
-  'Founders Future', 'FR', 'industrialisation',
-  'Fondateur de Founders Future et cofondateur de France Digitale, il finance depuis Paris des start-up d''IA, dont Harmattan AI, Raidium et Perplexity.', 'Founder of Founders Future and co-founder of France Digitale, he backs AI start-ups from Paris, including Harmattan AI, Raidium and Perplexity.', 'Diplômé d''HEC, Marc Menasé débute chez Kelkoo, comparateur de prix racheté par Yahoo. Il cofonde ensuite Nextedia, agence de marketing numérique cédée à Lagardère en 2007. Business angel depuis 2005, il a financé plus de cent start-up.
+  'philippe-botteri', 100, 'Philippe Botteri', 'Associé', 'Partner',
+  'Accel', 'GB', 'industrialisation',
+  'Associé chez Accel à Londres, il investit dans l''IA, le cloud et la cybersécurité en Europe : Doctolib, UiPath, Synthesia. Il cosigne le rapport Euroscape.', 'A partner at Accel in London, he invests in AI, cloud and security in Europe, including Doctolib, UiPath and Synthesia. He co-authors the Euroscape report.', 'Polytechnicien, diplômé de l''École des Mines, Philippe Botteri commence chez McKinsey, puis rejoint Bessemer Venture Partners, dans la Silicon Valley, où il investit dans le cloud. Il entre chez Accel en 2011.
 
-En 2012, il cofonde France Digitale avec Marie Ekeland, association qui réunit start-up et investisseurs. En 2018, il lance Founders Future, basé à Paris et San Francisco, qui investit de l''amorçage (pre-seed) à la croissance.
+Depuis Londres, il suit l''IA, les logiciels d''entreprise et la cybersécurité. Son portefeuille compte BlaBlaCar, Doctolib, UiPath, Snyk et Synthesia.
 
-En 2026, le fonds FF Growth US de Founders Future, dédié aux leaders de l''IA dès la série B, est ouvert à la souscription.', 'A graduate of HEC, Marc Menasé starts at Kelkoo, a price-comparison site later sold to Yahoo. He then co-founds Nextedia, a digital marketing agency sold to Lagardère in 2007. A business angel since 2005, he has backed more than a hundred start-ups.
+En octobre 2024, il cosigne Euroscape : sur 2023-2024, environ 80 % des quelque 56 milliards de dollars investis en IA sont allés à des entreprises américaines.', 'A graduate of École Polytechnique and École des Mines, Philippe Botteri starts at McKinsey, then joins Bessemer Venture Partners in Silicon Valley, where he invests in cloud software. He joins Accel in 2011.
 
-In 2012, he co-founds France Digitale with Marie Ekeland, an association bringing together start-ups and investors. In 2018, he launches Founders Future, based in Paris and San Francisco, which invests from pre-seed to growth stage.
+From London, he follows AI, enterprise software and cybersecurity. His portfolio includes BlaBlaCar, Doctolib, UiPath, Snyk and Synthesia.
 
-In 2026, Founders Future''s FF Growth US fund, aimed at AI leaders from Series B onward, is open for subscription.',
+In October 2024, he co-authors Euroscape: in 2023-2024, about 80% of the roughly $56 billion invested in AI went to US companies.',
   NULL, NULL,
-  '/portraits/marc-menase.webp', 'Photo : Founders Future', '[{"label":"Founders Future","url":"https://www.foundersfuture.com/"},{"label":"Profil sur Founders Future","url":"https://www.foundersfuture.com/teams/marc-menase"},{"label":"France Digitale (Wikipédia)","url":"https://fr.wikipedia.org/wiki/France_Digitale"}]'::jsonb, false, false
+  '/portraits/philippe-botteri.webp', 'Photo : Accel', '[{"label":"Profil Accel","url":"https://www.accel.com/people/philippe-botteri"},{"label":"Euroscape 2024 : AI eating software","url":"https://www.accel.com/noteworthies/euroscape-2024-ai-eating-software"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3088,19 +2702,210 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
-  'philippe-botteri', 100, 'Philippe Botteri', 'Associé', 'Partner',
-  'Accel', 'GB', 'industrialisation',
-  'Associé chez Accel à Londres, il investit dans l''IA, le cloud et la cybersécurité en Europe : Doctolib, UiPath, Synthesia. Il cosigne le rapport Euroscape.', 'A partner at Accel in London, he invests in AI, cloud and security in Europe, including Doctolib, UiPath and Synthesia. He co-authors the Euroscape report.', 'Polytechnicien, diplômé de l''École des Mines, Philippe Botteri commence chez McKinsey, puis rejoint Bessemer Venture Partners, dans la Silicon Valley, où il investit dans le cloud. Il entre chez Accel en 2011.
+  'mati-staniszewski', 14, 'Mati Staniszewski', 'Cofondateur et directeur général', 'Co-founder and CEO',
+  'ElevenLabs', 'GB', 'culture',
+  'Cofondateur et directeur général d''ElevenLabs, la société londonienne qui fait parler les machines : voix de synthèse, doublage et agents vocaux.', 'Co-founder and CEO of ElevenLabs, the London-based company that makes machines speak: synthetic voices, dubbing and voice agents.', 'Mati Staniszewski fait ses études secondaires à Varsovie, puis obtient un diplôme de mathématiques à l''Imperial College London. Il travaille chez Opera Software, chez BlackRock (plateforme Aladdin Wealth) et chez Palantir, comme stratège de déploiement.
 
-Depuis Londres, il suit l''IA, les logiciels d''entreprise et la cybersécurité. Son portefeuille compte BlaBlaCar, Doctolib, UiPath, Snyk et Synthesia.
+En 2022, il fonde ElevenLabs avec son ami de lycée Piotr Dabkowski. L''entreprise développe des modèles audio, des outils de création et des agents conversationnels.
 
-En octobre 2024, il cosigne Euroscape : sur 2023-2024, environ 80 % des quelque 56 milliards de dollars investis en IA sont allés à des entreprises américaines.', 'A graduate of École Polytechnique and École des Mines, Philippe Botteri starts at McKinsey, then joins Bessemer Venture Partners in Silicon Valley, where he invests in cloud software. He joins Accel in 2011.
+En février 2026, ElevenLabs lève 500 millions de dollars, pour une valorisation de 11 milliards, lors d''un tour mené par Sequoia.', 'Mati Staniszewski attends high school in Warsaw, then earns a mathematics degree at Imperial College London. He works at Opera Software, at BlackRock (Aladdin Wealth platform) and at Palantir, as a deployment strategist.
 
-From London, he follows AI, enterprise software and cybersecurity. His portfolio includes BlaBlaCar, Doctolib, UiPath, Snyk and Synthesia.
+In 2022, he founds ElevenLabs with his high school friend Piotr Dabkowski. The company builds audio models, creative tools and conversational agents.
 
-In October 2024, he co-authors Euroscape: in 2023-2024, about 80% of the roughly $56 billion invested in AI went to US companies.',
+In February 2026, ElevenLabs raises 500 million dollars at an 11 billion valuation, in a round led by Sequoia.',
+  'Ce financement nous aide à aller au-delà de la seule voix pour transformer notre façon d''interagir avec la technologie.', 'This funding helps us go beyond voice alone to transform how we interact with technology altogether.',
+  '/portraits/mati-staniszewski.webp', 'Photo : Rafał Masłow, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"ElevenLabs","url":"https://elevenlabs.io/about"},{"label":"Wikipédia (en)","url":"https://en.wikipedia.org/wiki/Mati_Staniszewski"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'fabian-hedin', 19, 'Fabian Hedin', 'Cofondateur et directeur technique', 'Co-founder and CTO',
+  'Lovable', 'SE', 'culture',
+  'Cofondateur et directeur technique de Lovable, la start-up suédoise qui permet de créer une application en décrivant son idée en langage courant.', 'Co-founder and CTO of Lovable, the Swedish start-up that lets anyone build an app by describing their idea in plain language.', 'Fabian Hedin est un ancien étudiant du KTH, à Stockholm. Il a fondé Tentium, dont il a été directeur général, et TenFAST, dont il a été directeur technique. Il a aussi dirigé le développement de l''interface utilisateur (frontend) chez Depict. Il cofonde Lovable avec Anton Osika.
+
+Lovable permet de créer une application en décrivant son idée en langage courant, sans écrire de code. Fabian Hedin en est le directeur technique.
+
+En août 2026, Lovable lève 400 millions de dollars, pour une valorisation de 13,3 milliards de dollars.', 'Fabian Hedin is a former student of KTH in Stockholm. He founded Tentium, where he was chief executive, and TenFAST, where he was chief technology officer. He also led frontend (user interface) development at Depict. He co-founded Lovable with Anton Osika.
+
+Lovable lets people build an app by describing their idea in plain language, with no coding. Fabian Hedin is its chief technology officer.
+
+In August 2026, Lovable raised $400 million at a $13.3 billion valuation.',
+  'C''est formidable de voir le prix KTH Innovation et des initiatives similaires mettre en lumière les jeunes entrepreneurs suédois et inspirer plus de gens à concrétiser leurs idées.', 'It''s fantastic to see the KTH Innovation Award and similar initiatives shine a spotlight on young entrepreneurs in Sweden and inspire more people to pursue their ideas.',
+  '/portraits/fabian-hedin.webp', 'Photo : Marcusgarage, CC0, via Wikimedia Commons', '[{"label":"Lovable","url":"https://lovable.dev"},{"label":"Lovable (Wikipédia)","url":"https://en.wikipedia.org/wiki/Lovable_(company)"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'jaroslaw-kutylowski', 23, 'Jaroslaw Kutylowski', 'Cofondateur et directeur général', 'Co-founder and CEO',
+  'DeepL', 'DE', 'culture',
+  'Il a fondé DeepL à Cologne en 2017, un traducteur par IA utilisé par des entreprises du monde entier, et le dirige aujourd''hui.', 'He founded DeepL in Cologne in 2017, an AI translator used by companies worldwide, and still leads it today.', 'Né en Pologne, Jarek Kutylowski grandit entre la Pologne et l''Allemagne. Il programme dès 10 ans, obtient un doctorat en informatique à l''université de Paderborn, passe par Vodafone, puis devient directeur technique de Linguee, un dictionnaire en ligne.
+
+En 2017, il fonde DeepL à Cologne : un traducteur fondé sur des réseaux de neurones, des programmes qui apprennent à partir d''exemples, entraînés notamment avec les données de Linguee.
+
+En novembre 2025, DeepL lance DeepL Agent, un assistant autonome pour l''entreprise. En avril 2026, sa traduction vocale passe à plus de 40 langues.', 'Born in Poland, Jarek Kutylowski grew up between Poland and Germany. He has coded since age 10, earned a PhD in computer science at the University of Paderborn, spent time at Vodafone, then became chief technology officer of Linguee, an online dictionary.
+
+In 2017, he founded DeepL in Cologne: a translator built on neural networks, programs that learn from examples, trained partly on Linguee''s data.
+
+In November 2025, DeepL launched DeepL Agent, an autonomous assistant for business. In April 2026, its voice translation expanded to more than 40 languages.',
+  'Nous avons vu que la prochaine grande avancée de la traduction viendrait de l''IA et de l''apprentissage profond.', 'We saw the next big breakthrough in translation would come through AI and deep learning.',
+  '/portraits/jaroslaw-kutylowski.webp', 'Photo : DeepL', '[{"label":"DeepL","url":"https://www.deepl.com"},{"label":"DeepL sur Wikipédia","url":"https://en.wikipedia.org/wiki/DeepL_SE"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'victor-riparbelli', 29, 'Victor Riparbelli', 'Cofondateur et directeur général', 'Co-founder and CEO',
+  'Synthesia', 'GB', 'culture',
+  'Cofondateur de Synthesia, il fait de la vidéo par avatars IA un outil de formation et de communication pour les entreprises.', 'Co-founder of Synthesia, he turns AI-avatar video into a training and communication tool for companies.', 'Danois, Victor Riparbelli étudie l''informatique à l''IT University de Copenhague et passe un semestre à Stanford. Installé à Londres, il rencontre le chercheur Matthias Niessner, auteur de travaux sur la génération vidéo par IA, et fonde Synthesia en 2017.
+
+Le studio travaille d''abord pour le cinéma et la publicité. Vers 2021, de grandes entreprises demandent des vidéos de formation avec avatars : Synthesia en fait son cœur de métier.
+
+En janvier 2026, elle lève 200 millions de dollars pour une valorisation de 4 milliards.', 'Danish-born Victor Riparbelli studies computer science at the IT University of Copenhagen and spends a semester at Stanford. Settled in London, he meets researcher Matthias Niessner, author of work on AI video generation, and founds Synthesia in 2017.
+
+The studio first works for film and advertising. Around 2021, large companies ask for training videos with avatars: Synthesia makes that its core business.
+
+In January 2026, it raises $200 million at a $4 billion valuation.',
   NULL, NULL,
-  '/portraits/philippe-botteri.webp', 'Photo : Accel', '[{"label":"Profil Accel","url":"https://www.accel.com/people/philippe-botteri"},{"label":"Euroscape 2024 : AI eating software","url":"https://www.accel.com/noteworthies/euroscape-2024-ai-eating-software"}]'::jsonb, false, false
+  '/portraits/victor-riparbelli.webp', 'Photo : Duk3L1xon, CC BY-SA 4.0, via Wikimedia Commons', '[{"label":"Synthesia - équipe et à propos","url":"https://www.synthesia.io/about"},{"label":"Synthesia - annonce de la série E (janvier 2026)","url":"https://www.synthesia.io/post/series-e-200-million-4-billion-valuation-future-work"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'sasha-haco', 51, 'Sasha Haco', 'Cofondatrice et directrice générale', 'Co-founder and CEO',
+  'Unitary', 'GB', 'culture',
+  'Docteure en physique de Cambridge, elle dirige Unitary, qui déploie des agents d''IA dans les logiciels existants des entreprises, notamment des assureurs.', 'A Cambridge-trained doctor of physics, she runs Unitary, which deploys AI agents inside companies'' existing software, notably for insurers.', 'Sasha Haco fait un doctorat de physique théorique à Cambridge et travaille avec Stephen Hawking sur le paradoxe de l''information des trous noirs. En 2019, elle rejoint Entrepreneur First, y rencontre James Thewlis et cofonde Unitary à Londres.
+
+Unitary débute dans la modération de contenus en ligne. En octobre 2023, la société lève 15 millions de dollars en série A, menée par Creandum.
+
+En octobre 2025, elle lance des « agents virtuels » pour l''assurance : ils travaillent dans les logiciels existants, sans intégration technique ni changement de processus.', 'Sasha Haco did a PhD in theoretical physics at Cambridge, working with Stephen Hawking on the black hole information paradox. In 2019, she joined Entrepreneur First, met James Thewlis there and co-founded Unitary in London.
+
+Unitary started in online content moderation. In October 2023, the company raised $15 million in a Series A led by Creandum.
+
+In October 2025, it launched "virtual agents" for insurance: they work inside existing software, with no technical integration or change to processes.',
+  'Les agents virtuels ne demandent ni intégration technique ni changement des processus existants, et apportent très vite une vraie valeur.', 'Virtual Agents require no engineering integration or changes to existing processes while delivering real value, incredibly quickly.',
+  '/portraits/sasha-haco.webp', 'Photo : Unitary', '[{"label":"Unitary","url":"https://www.unitary.ai"},{"label":"Sasha Haco, page équipe Unitary","url":"https://www.unitary.ai/about-us"},{"label":"Sasha Haco sur Wikipédia","url":"https://en.wikipedia.org/wiki/Sasha_Haco"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'matthieu-rouif', 57, 'Matthieu Rouif', 'Cofondateur et directeur général', 'Co-founder and CEO',
+  'Photoroom', 'FR', 'culture',
+  'Il dirige Photoroom, l''application parisienne qui retouche et génère des images de produits par IA pour les commerçants en ligne.', 'He runs Photoroom, the Paris-based app that edits and generates product images with AI for online sellers.', 'Matthieu Rouif travaille dans les applications de photo et de vidéo dès 2014, chez Stupeflix, rachetée par GoPro en 2016. Il y est responsable des applications de retouche photo, puis fonde Photoroom en 2019 avec Eliot Andres.
+
+En mars 2024, l''entreprise lève 43 millions de dollars auprès de Balderton Capital et Aglaé Ventures, pour une valorisation de 500 millions. En juin 2026, elle indique traiter 7 milliards d''images par an pour plus d''un million d''entreprises.', 'Matthieu Rouif worked on photo and video apps from 2014 at Stupeflix, which GoPro acquired in 2016. There he was in charge of the photo editing apps, then founded Photoroom in 2019 with Eliot Andres.
+
+In March 2024, the company raised $43 million from Balderton Capital and Aglaé Ventures, at a $500 million valuation. In June 2026, it said it processes 7 billion images a year for over a million businesses.',
+  'L''idée de PhotoRoom est de rendre les photos de qualité studio accessibles à tous, partout dans le monde.', 'The idea of PhotoRoom is to make studio quality photos accessible to everyone in the world.',
+  '/portraits/matthieu-rouif.webp', 'Photo : Photoroom', '[{"label":"Photoroom","url":"https://www.photoroom.com/about"},{"label":"Article de Matthieu Rouif sur le blog Photoroom","url":"https://www.photoroom.com/inside-photoroom/brand-refresh"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -3478,6 +3283,45 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
+  'fabian-theis', 75, 'Fabian Theis', 'Directeur du Computational Health Center', 'Director of the Computational Health Center',
+  'Helmholtz Munich', 'DE', 'culture',
+  'Il dirige le Computational Health Center de Helmholtz Munich, où l''IA sert à lire le fonctionnement des cellules une à une.', 'He heads the Computational Health Center at Helmholtz Munich, where AI is used to read how cells work, one at a time.', 'Fabian Theis étudie les mathématiques et la physique à Ratisbonne, puis obtient deux doctorats : physique (2002) et informatique (2003). Professeur à la TU Munich depuis 2013, il dirige l''Institut de biologie computationnelle de Helmholtz Munich.
+
+Depuis 2022, il dirige le Computational Health Center. Son équipe conçoit des modèles d''apprentissage automatique pour lire l''activité des gènes cellule par cellule, et publie des outils libres comme Scanpy.
+
+Il reçoit le prix Leibniz en 2023 et est élu à l''Académie Leopoldina en 2025.', 'Fabian Theis studied mathematics and physics in Regensburg, then earned two doctorates: physics (2002) and computer science (2003). A professor at TU Munich since 2013, he directs the Institute of Computational Biology at Helmholtz Munich.
+
+Since 2022, he has headed the Computational Health Center. His team builds machine-learning models that read gene activity cell by cell, and releases open-source tools such as Scanpy.
+
+He received the Leibniz Prize in 2023 and was elected to the Leopoldina Academy in 2025.',
+  NULL, NULL,
+  '/portraits/fabian-theis.webp', 'Photo : Helmholtz Munich / Matthias Tunger Photodesign', '[{"label":"Profil, Helmholtz Munich","url":"https://www.helmholtz-munich.de/en/icb/fabian-theis"},{"label":"Theis Lab","url":"https://www.helmholtz-munich.de/en/icb/research-groups/theis-lab"},{"label":"Profil, TU Munich","url":"https://www.professoren.tum.de/en/theis-fabian"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
   'michael-wooldridge', 76, 'Michael Wooldridge', 'Professeur, chaire Ashall de fondations de l''IA', 'Ashall Professor of Foundations of AI',
   'University of Oxford', 'GB', 'culture',
   'Professeur à Oxford, il étudie les systèmes multi-agents et explique l''IA au grand public, notamment lors des Christmas Lectures de la Royal Institution en 2023.', 'An Oxford professor, he studies multi-agent systems and explains AI to the public, notably in the Royal Institution Christmas Lectures in 2023.', 'Michael Wooldridge est titulaire de la chaire Ashall de fondations de l''intelligence artificielle à Oxford. Formé à Wolverhampton Polytechnic (licence, 1989) puis à l''UMIST (doctorat, 1991), il a dirigé le département d''informatique d''Oxford de 2014 à 2018.\n\nIl travaille sur les systèmes multi-agents : des programmes autonomes qui coopèrent ou négocient. Il a présidé l''IJCAI, grande conférence internationale d''IA (2015-2017), et l''association européenne d''IA, EurAI (2014-2016).\n\nEn 2025, il reçoit le prix Michael Faraday de la Royal Society ; en 2026, il en est élu membre.', 'Michael Wooldridge holds the Ashall Chair of the Foundations of Artificial Intelligence at Oxford. Trained at Wolverhampton Polytechnic (BSc, 1989) then UMIST (PhD, 1991), he chaired Oxford''s Department of Computer Science from 2014 to 2018.\n\nHe works on multi-agent systems: autonomous programs that cooperate or negotiate. He was president of IJCAI, a leading international AI conference (2015-2017), and of the European Association for AI, EurAI (2014-2016).\n\nIn 2025, he received the Royal Society''s Michael Faraday Prize; in 2026, he was elected a Fellow of the Society.',
@@ -3813,6 +3657,45 @@ insert into public.people (
   bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
   photo_url, photo_credit, links, placeholder, published
 ) values (
+  'philippe-tibi', 92, 'Philippe Tibi', 'Professeur de stratégie et finance', 'Professor of strategy and finance',
+  'École polytechnique', 'FR', 'culture',
+  'Professeur à l''École polytechnique, auteur en 2019 du rapport à l''origine de l''initiative Tibi, qui oriente l''épargne des assureurs français vers les entreprises technologiques.', 'A professor at École polytechnique, he wrote the 2019 report behind the Tibi Initiative, which directs French insurers'' savings towards technology companies.', 'Polytechnicien (promotion 1977) et diplômé de Télécom Paris, il dirige les marchés actions et la banque d''investissement d''UBS en France jusqu''en 2012. Il préside l''Amafi, association des banques de marché, de 2007 à 2014 et fonde Pergamon Campus en 2013.
+
+En juillet 2019, il remet au gouvernement un rapport sur le financement des entreprises technologiques. L''initiative Tibi en découle : assureurs et autres investisseurs de long terme financent des fonds qui soutiennent ces entreprises.
+
+En juin 2026, la troisième phase est annoncée : 13 milliards d''euros auprès d''une quarantaine d''investisseurs institutionnels.', 'A graduate of École polytechnique (class of 1977) and Télécom Paris, he ran UBS''s equity markets and investment banking in France until 2012. He chaired Amafi, the association of market banks, from 2007 to 2014 and founded Pergamon Campus in 2013.
+
+In July 2019, he handed the government a report on financing technology companies. The Tibi Initiative followed: insurers and other long-term investors fund vehicles that back these companies.
+
+In June 2026, the third phase was announced: 13 billion euros from about forty institutional investors.',
+  NULL, NULL,
+  '/portraits/philippe-tibi.webp', 'Photo : École polytechnique', '[{"label":"Initiative Tibi III et extension européenne (École polytechnique)","url":"https://www.polytechnique.edu/en/news/tibi-initiative-launch-phase-3-and-expansion-european-level"},{"label":"Initiative Tibi, rapport d''activité (Direction générale du Trésor)","url":"https://www.tresor.economie.gouv.fr/Articles/2025/09/16/tiibi-initiative-a-target-raised-to-15-billion"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
   'gabriel-peyre', 93, 'Gabriel Peyré', 'Directeur de recherche en intelligence artificielle', 'Research Director in Artificial Intelligence',
   'CNRS', 'FR', 'culture',
   'Mathématicien au CNRS et à l''ENS, il relie transport optimal et apprentissage profond, et dirige le centre ENS de science des données et l''unité ELLIS Paris.', 'A mathematician at CNRS and ENS, he links optimal transport and deep learning, and directs the ENS Center for Data Science and the ELLIS Paris unit.', 'Docteur en mathématiques de l''École polytechnique (2005), il rejoint le CNRS en 2006. Il travaille aujourd''hui au département de mathématiques et applications de l''École normale supérieure. Médaille d''argent du CNRS en 2021.
@@ -3826,6 +3709,123 @@ His specialty is optimal transport: the most economical way to move one set of p
 Since October 2024 he has led WOLF, a project funded until 2029 by a 2.5 million euro ERC grant, on the development of cells. On 20 April 2026, he spoke at the French National Assembly on AI in research.',
   NULL, NULL,
   '/portraits/gabriel-peyre.webp', 'Photo : CNRS', '[{"label":"Page personnelle","url":"https://www.gpeyre.com/"},{"label":"Profil CNRS","url":"https://www.cnrs.fr/fr/personne/gabriel-peyre"},{"label":"Wikipédia","url":"https://en.wikipedia.org/wiki/Gabriel_Peyré"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'joelle-barral', 94, 'Joëlle Barral', 'Directrice de la recherche en IA', 'Director of AI Research',
+  'Google DeepMind', 'FR', 'culture',
+  'Ingénieure polytechnicienne, elle dirige à Paris la recherche de Google DeepMind sur les modèles de pointe et l''IA pour les sciences du vivant. Elle siège au panel scientifique de l''ONU sur l''IA.', 'A Polytechnique-trained engineer, she leads Google DeepMind''s research in Paris on frontier models and AI for the life sciences. She sits on the UN scientific panel on AI.', 'Polytechnicienne, Joëlle Barral obtient un master et un doctorat en génie électrique à Stanford, en imagerie médicale (IRM). Chez Verily, filiale de Google, elle dirige le logiciel et participe à Verb Surgical, coentreprise de robotique chirurgicale avec Ethicon (Johnson & Johnson).
+
+Chez Google DeepMind, à Paris, elle dirige la recherche fondamentale sur les modèles de pointe et l''IA appliquée aux sciences du vivant.
+
+Élue à l''Académie des technologies le 10 décembre 2025, elle est nommée le 12 février 2026 parmi les 40 experts du panel scientifique de l''ONU sur l''IA.', 'Polytechnique graduate Joëlle Barral earned a master''s and a PhD in electrical engineering at Stanford, in medical imaging (MRI). At Verily, Google''s subsidiary, she led software and worked on Verb Surgical, a surgical robotics joint venture with Ethicon (Johnson & Johnson).
+
+At Google DeepMind in Paris, she leads foundational research on frontier models and AI applied to the life sciences.
+
+Elected to the Académie des technologies on 10 December 2025, she was named on 12 February 2026 among the 40 experts of the UN scientific panel on AI.',
+  'Bien sûr, l''IA est un outil, et ne pourra jamais remplacer l''humain.', 'Of course, AI is a tool, and it will never be able to replace humans.',
+  '/portraits/joelle-barral.webp', 'Photo : Académie des technologies', '[{"label":"Académie des technologies","url":"https://www.academie-technologies.fr/academiciens/barral-joelle/"},{"label":"Google, entretien avec Joëlle Barral","url":"https://blog.google/intl/fr-fr/nouvelles-de-lentreprise/azerty/barral-ia/"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'roxanne-varza', 96, 'Roxanne Varza', 'Directrice', 'Director',
+  'Station F', 'FR', 'culture',
+  'Elle dirige Station F depuis 2015, campus parisien qui accueille plus de 1 000 startups et lance en 2026 un programme dédié aux startups d''IA.', 'She has run Station F since 2015, a Paris campus hosting more than 1,000 startups, and launched a program for AI startups in 2026.', 'Née en Californie, Roxanne Varza étudie à UCLA, à Sciences Po Paris et à la London School of Economics. Elle est rédactrice de TechCrunch France en 2010-2011, puis développe les programmes de Microsoft Ventures à Paris de 2012 à 2015.
+
+Elle dirige Station F depuis octobre 2015. Le campus, ouvert en 2017 dans la halle Freyssinet à Paris, accueille plus de 1 000 startups.
+
+En janvier 2026, Station F lance F/ai, un programme pour startups d''IA. Sa première promotion a levé 34 millions de dollars en pré-amorçage ; la deuxième débute en septembre 2026.', 'Born in California, Roxanne Varza studied at UCLA, Sciences Po Paris and the London School of Economics. She was French editor of TechCrunch in 2010-2011, then built Microsoft Ventures programs in Paris from 2012 to 2015.
+
+She has directed Station F since October 2015. The campus, opened in 2017 in the Freyssinet hall in Paris, hosts more than 1,000 startups.
+
+In January 2026, Station F launched F/ai, a program for AI startups. Its first cohort raised $34 million in pre-seed funding; the second starts in September 2026.',
+  NULL, NULL,
+  '/portraits/roxanne-varza.webp', 'Photo : jeanbaptisteparis, CC BY-SA 2.0, via Wikimedia Commons', '[{"label":"Station F","url":"https://stationf.co/"},{"label":"Wikipédia : Roxanne Varza","url":"https://fr.wikipedia.org/wiki/Roxanne_Varza"}]'::jsonb, false, false
+)
+on conflict (id) do update set
+  ord = excluded.ord,
+  name = excluded.name,
+  role_fr = excluded.role_fr,
+  role_en = excluded.role_en,
+  organization = excluded.organization,
+  country = excluded.country,
+  wing = excluded.wing,
+  bio_fr = excluded.bio_fr,
+  bio_en = excluded.bio_en,
+  story_fr = excluded.story_fr,
+  story_en = excluded.story_en,
+  quote_fr = excluded.quote_fr,
+  quote_en = excluded.quote_en,
+  photo_url = excluded.photo_url,
+  photo_credit = excluded.photo_credit,
+  links = excluded.links,
+  placeholder = excluded.placeholder,
+  updated_at = now();
+
+insert into public.people (
+  id, ord, name, role_fr, role_en, organization, country, wing,
+  bio_fr, bio_en, story_fr, story_en, quote_fr, quote_en,
+  photo_url, photo_credit, links, placeholder, published
+) values (
+  'marc-menase', 99, 'Marc Menasé', 'Associé fondateur et directeur des investissements', 'Founding Partner and Chief Investments Officer',
+  'Founders Future', 'FR', 'culture',
+  'Fondateur de Founders Future et cofondateur de France Digitale, il finance depuis Paris des start-up d''IA, dont Harmattan AI, Raidium et Perplexity.', 'Founder of Founders Future and co-founder of France Digitale, he backs AI start-ups from Paris, including Harmattan AI, Raidium and Perplexity.', 'Diplômé d''HEC, Marc Menasé débute chez Kelkoo, comparateur de prix racheté par Yahoo. Il cofonde ensuite Nextedia, agence de marketing numérique cédée à Lagardère en 2007. Business angel depuis 2005, il a financé plus de cent start-up.
+
+En 2012, il cofonde France Digitale avec Marie Ekeland, association qui réunit start-up et investisseurs. En 2018, il lance Founders Future, basé à Paris et San Francisco, qui investit de l''amorçage (pre-seed) à la croissance.
+
+En 2026, le fonds FF Growth US de Founders Future, dédié aux leaders de l''IA dès la série B, est ouvert à la souscription.', 'A graduate of HEC, Marc Menasé starts at Kelkoo, a price-comparison site later sold to Yahoo. He then co-founds Nextedia, a digital marketing agency sold to Lagardère in 2007. A business angel since 2005, he has backed more than a hundred start-ups.
+
+In 2012, he co-founds France Digitale with Marie Ekeland, an association bringing together start-ups and investors. In 2018, he launches Founders Future, based in Paris and San Francisco, which invests from pre-seed to growth stage.
+
+In 2026, Founders Future''s FF Growth US fund, aimed at AI leaders from Series B onward, is open for subscription.',
+  NULL, NULL,
+  '/portraits/marc-menase.webp', 'Photo : Founders Future', '[{"label":"Founders Future","url":"https://www.foundersfuture.com/"},{"label":"Profil sur Founders Future","url":"https://www.foundersfuture.com/teams/marc-menase"},{"label":"France Digitale (Wikipédia)","url":"https://fr.wikipedia.org/wiki/France_Digitale"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
