@@ -238,13 +238,20 @@ export interface SendState {
 /**
  * Faut-il émettre notre position maintenant ? `state` = dernier envoi effectué, `null` avant le
  * tout premier. Publie immédiatement la position d'arrêt quand on vient de s'immobiliser (sinon
- * les autres nous verraient glisser jusqu'au prochain battement), puis retombe sur le battement.
+ * les autres nous verraient glisser jusqu'au prochain battement), puis retombe sur le battement. Les deux
+ * intervalles sont réglables (`PresenceConfig`) ; les constantes ci-dessus sont les valeurs par défaut.
  */
-export function shouldSendPosition(state: SendState | null, moving: boolean, now: number): boolean {
+export function shouldSendPosition(
+  state: SendState | null,
+  moving: boolean,
+  now: number,
+  moveIntervalMs: number = MOVE_SEND_INTERVAL_MS,
+  idleHeartbeatMs: number = IDLE_HEARTBEAT_MS,
+): boolean {
   if (!state) return true
-  if (moving) return now - state.lastSentAt >= MOVE_SEND_INTERVAL_MS
+  if (moving) return now - state.lastSentAt >= moveIntervalMs
   if (state.lastSentMoving) return true
-  return now - state.lastSentAt >= IDLE_HEARTBEAT_MS
+  return now - state.lastSentAt >= idleHeartbeatMs
 }
 
 /** Arrondi à 2 décimales — charge utile réseau minimale. */

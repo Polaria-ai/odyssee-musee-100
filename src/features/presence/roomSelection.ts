@@ -4,7 +4,7 @@
  * Le plan gratuit Supabase limite les connexions simultanées et les messages/s d'un projet.
  * On partitionne donc les visiteurs en petits canaux (« salles ») plutôt que d'utiliser un
  * canal unique : `musee:v1:room-1`, `room-2`, … `room-{MAX_ROOMS}`. Fonctions pures, aucune
- * dépendance réseau — le canal lui-même vit dans `realtimeClient.ts` / `usePresence.ts`.
+ * dépendance réseau — le canal lui-même vit dans `realtimeClient.ts` / `presenceSession.ts`.
  */
 
 export const ROOM_PREFIX = 'musee:v1:room-'
@@ -57,4 +57,18 @@ export function shouldStayInRoom(selfId: string, members: readonly RoomMember[],
 /** Prochaine salle à essayer, ou `null` si on a atteint `maxRooms` (mode solo silencieux). */
 export function nextRoomIndex(current: number, maxRooms: number = MAX_ROOMS): number | null {
   return current < maxRooms ? current + 1 : null
+}
+
+/**
+ * Salle cible d'un joueur selon son rang d'arrivée dans sa salle courante (`rank` = position 0-based
+ * dans l'ordre `sortByJoinOrder`, `0` = premier arrivé). Les `capacity` premiers restent ; les suivants
+ * sautent directement de `floor(rank / capacity)` salles plus loin (au lieu d'une salle à la fois :
+ * chaque salle traversée coûte une jointure et une salve de présence pour tout le monde). `null` si la
+ * cible dépasse `maxRooms` (musée plein : mode solo). Jamais de retour en arrière : la cible est
+ * toujours `>= currentRoom`.
+ */
+export function targetRoomForRank(currentRoom: number, rank: number, capacity: number, maxRooms: number): number | null {
+  if (rank < capacity) return currentRoom
+  const target = currentRoom + Math.floor(rank / capacity)
+  return target > maxRooms ? null : target
 }
