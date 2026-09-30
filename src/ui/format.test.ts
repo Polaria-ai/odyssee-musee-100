@@ -5,6 +5,7 @@ import {
   doorMarkers,
   flagEmoji,
   organizationLabel,
+  photoCreditLabel,
   pitchForSpeaker,
   safePhotoUrl,
   safeUrl,
@@ -58,6 +59,17 @@ describe('safeUrl', () => {
     expect(safeUrl('')).toBeNull()
     expect(safeUrl(undefined)).toBeNull()
     expect(safeUrl('not a url')).toBeNull()
+  })
+})
+
+describe('photoCreditLabel', () => {
+  it('retire le préfixe « Photo : » que la fiche ajoute déjà', () => {
+    expect(photoCreditLabel('Photo : Exemple, CC BY 4.0, via Wikimedia Commons')).toBe('Exemple, CC BY 4.0, via Wikimedia Commons')
+    expect(photoCreditLabel('photo: Exemple')).toBe('Exemple')
+  })
+  it('laisse intact un crédit sans préfixe', () => {
+    expect(photoCreditLabel('  Exemple Média ')).toBe('Exemple Média')
+    expect(photoCreditLabel('Photothèque Exemple')).toBe('Photothèque Exemple')
   })
 })
 
