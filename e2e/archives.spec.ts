@@ -275,7 +275,8 @@ test('vitrine : « Consulter l’archive » ouvre une fiche complète (programme
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
 
-  const session = state.sessions.find((s) => s.speakers.length > 0) ?? state.sessions[0]
+  // Une séquence encore provisoire (programme du 24/09 : intervenant·e en attente) et nommée.
+  const session = state.sessions.find((s) => s.provisional && s.speakers.length > 0) ?? state.sessions[0]
   const slot = archives.slots.find((s) => s.sessionId === session.id)
   expect(slot, `pas de vitrine trouvée pour la séquence ${session.id}`).toBeTruthy()
 
@@ -418,7 +419,9 @@ test('plan du musée : la salle des Archives est dans le plan, reliée au hall',
 test('FR/EN : bascule des textes des Archives (bouton d’action, fiche)', async ({ page }) => {
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
-  const firstSlot = archives.slots[0]
+  // Vitrine d'une séquence encore provisoire, pour vérifier la mention dans les deux langues.
+  const provisionalIds = new Set(state.sessions.filter((s) => s.provisional).map((s) => s.id))
+  const firstSlot = archives.slots.find((s) => provisionalIds.has(s.sessionId)) ?? archives.slots[0]
 
   await teleport(page, archives.archivist.position.x, archives.archivist.position.z)
   await page.waitForTimeout(500)
@@ -466,22 +469,26 @@ test('performance : ≤ 150 appels de dessin dans la salle des Archives', async 
 })
 
 // ---------------------------------------------------------------------------
-// Contenu : rien d'inventé, tout provisoire (règle absolue de ce chantier).
+// Contenu : rien d'inventé ; provisoire seulement ce que le programme du 24/09 laisse incomplet.
 // ---------------------------------------------------------------------------
 
 const FORBIDDEN_NAMES = ['Octave Klaba', 'Maya Noël', 'Anne Bouverot', 'Xavier Boilaud']
 
-test('contenu : plan des Archives = une vitrine par séquence (18) ; programme entièrement provisoire ; aucune attribution interdite', async ({
+test('contenu : plan des Archives = une vitrine par séquence (19) ; seules les séquences incomplètes au 24/09 sont provisoires ; aucune attribution interdite', async ({
   page,
 }) => {
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
 
   expect(archives.slots.length, 'une vitrine par séquence du programme').toBe(state.sessions.length)
-  expect(state.sessions.length, 'programme de la soirée : 18 séquences (docs/EVENING-AGENT.md)').toBe(18)
+  expect(state.sessions.length, 'programme de la soirée du 24/09 : 19 séquences').toBe(19)
+  expect(state.sessions.filter((s) => s.provisional).map((s) => s.id), 'séquences encore incomplètes au 24/09').toEqual([
+    'table-ronde-1',
+    'table-ronde-2',
+    'face-a-face-2',
+  ])
 
   for (const session of state.sessions) {
-    expect(session.provisional, `la séquence ${session.id} devrait être provisoire`).toBe(true)
     for (const speaker of session.speakers) {
       expect(
         FORBIDDEN_NAMES,
