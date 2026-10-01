@@ -7,6 +7,7 @@
  * côté application, ces tests échoueront à l'exécution — voir docs/TESTS.md.
  */
 import { expect, type Page } from '@playwright/test'
+import { stubRemiDefault } from './remiApi'
 import { stubSupabase } from './supabaseStub'
 
 export type Lang = 'fr' | 'en'
@@ -61,11 +62,15 @@ export interface MuseeGameState {
   dialogueIndex: number
   stampCardOpen: boolean
   mapOpen: boolean
+  /** Chat avec Rémi · IA ouvert (accueil à la première entrée, « Parler à Rémi » ensuite). */
+  remiChatOpen: boolean
   peersCount: number
   layout: MuseeLayout | null
   openPerson: (personId: string) => void
   closePerson: () => void
   closeDialogue: () => void
+  openRemiChat: () => void
+  closeRemiChat: () => void
   setLang: (lang: Lang) => void
 }
 
@@ -117,6 +122,9 @@ export interface MuseeDebugApi {
 export async function gotoMusee(page: Page, extraQuery = ''): Promise<void> {
   // Dans le build E2E de la CI, Supabase est un faux projet (`supabaseStub.ts`) : à répondre avant toute requête.
   await stubSupabase(page.context())
+  // Le chat avec Rémi poste sur `/api/remi` : aucun test n'appelle jamais le vrai réseau (`remiApi.ts`).
+  // Les routes d'une page (`stubRemiApi`) restent prioritaires sur cette réponse par défaut.
+  await stubRemiDefault(page.context())
   const room = extraQuery.includes('presenceRoom=') ? '' : `&presenceRoom=e2e-${crypto.randomUUID().slice(0, 12)}`
   await page.goto(`/?e2e=1${room}${extraQuery}`)
 }
@@ -299,8 +307,8 @@ export async function closePersonViaState(page: Page): Promise<void> {
 
 /**
  * Amène le joueur de l'écran titre à l'écran de jeu : clique « Entrer » (on entre directement
- * au musée, en Cyril : plus d'écran de personnalisation) et attend le canvas. Le dialogue
- * d'accueil de Rémi peut ensuite s'afficher (voir `dismissWelcomeDialogue`) : on ne le ferme
+ * au musée, en Cyril : plus d'écran de personnalisation) et attend le canvas. L'accueil de Rémi
+ * (le chat, depuis la V5) peut ensuite s'afficher (voir `dismissWelcomeDialogue`) : on ne le ferme
  * pas ici, chaque test décide s'il veut l'observer ou le fermer.
  */
 export async function enterMuseum(page: Page): Promise<void> {
@@ -311,10 +319,17 @@ export async function enterMuseum(page: Page): Promise<void> {
 }
 
 /**
- * Ferme le dialogue d'accueil de Rémi s'il est affiché, en cliquant jusqu'à sa fermeture
- * (borné, pour ne jamais boucler indéfiniment si l'app ne répond pas).
+ * Ferme l'accueil de Rémi s'il est affiché. Depuis la V5, c'est le chat avec Rémi · IA (bouton fermer,
+ * comme un visiteur) ; un dialogue scripté encore affiché (tampons, Archiviste) l'est en cliquant
+ * jusqu'à sa fermeture (borné, pour ne jamais boucler indéfiniment si l'app ne répond pas).
+ * Le nom est resté `dismissWelcomeDialogue` : une quarantaine d'appels en dépendent.
  */
 export async function dismissWelcomeDialogue(page: Page): Promise<void> {
+  const chat = page.getByTestId('remi-chat')
+  if (await chat.isVisible().catch(() => false)) {
+    await page.getByTestId('remi-chat-close').click()
+    await expect(chat).toBeHidden()
+  }
   const box = page.getByTestId('dialogue-box')
   if (!(await box.isVisible().catch(() => false))) return
   for (let i = 0; i < 20 && (await box.isVisible().catch(() => false)); i++) {
