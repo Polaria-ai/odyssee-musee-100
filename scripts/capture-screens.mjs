@@ -2,13 +2,20 @@
 /* global window -- code évalué dans la page via page.evaluate */
 /**
  * Captures d'écran de vérification visuelle (téléphone portrait, paysage).
- * Prérequis : `pnpm build && pnpm preview` sur 127.0.0.1:4173.
- * Usage : PW_CHROMIUM_PATH=… node scripts/capture-screens.mjs [dossier=screens]
+ * Prérequis : `pnpm build && pnpm preview` sur 127.0.0.1:4173 (ou E2E_BASE_URL).
+ * Usage : PW_CHROMIUM_PATH=… node scripts/capture-screens.mjs [dossier=screens] [--chat]
+ *
+ * `--chat` : ne capture que le chat avec Rémi · IA (V5), sur PC 1440×900, iPhone 390×844 et paysage 844×390, avec
+ * deux échanges simulés. `/api/remi` est intercepté (réponses SSE au format de `src/features/remiChat/contract.ts`) :
+ * aucun appel réseau réel. Les réponses n'apparaissent que si `client.ts` est le vrai client (le bouchon répond
+ * sans réseau) ; le buste de Rémi est celui de `RemiBust.tsx` (un `div` vide tant que l'agent remi-bust n'a pas livré).
  */
 import { mkdirSync } from 'node:fs'
 import { chromium, devices } from '@playwright/test'
 
-const out = process.argv[2] || 'screens'
+const args = process.argv.slice(2)
+const chatOnly = args.includes('--chat')
+const out = args.find((a) => !a.startsWith('--')) || 'screens'
 const base = process.env.E2E_BASE_URL || 'http://127.0.0.1:4173'
 mkdirSync(out, { recursive: true })
 
@@ -31,8 +38,9 @@ async function session(name, contextOptions) {
   await shot('01-titre', 2500)
   // Plus d'écran de personnalisation : on entre directement en Cyril (décision du 29/09).
   await page.getByTestId('enter-button').click()
+  // Depuis la V5, l'accueil de Rémi est le chat (message d'accueil déjà affiché), plus un dialogue scripté.
   await shot('03-accueil-remi', 3500)
-  await page.evaluate(() => window.__musee.state().closeDialogue())
+  await page.evaluate(() => window.__musee.state().closeRemiChat())
   await shot('04-hall-spawn')
   const rooms = await page.evaluate(() => window.__musee.state().layout.rooms.map((r) => ({ id: r.id, b: r.bounds })))
   for (const r of rooms.filter((x) => x.id !== 'hall')) {
@@ -100,6 +108,52 @@ async function session(name, contextOptions) {
   await ctx.close()
 }
 
-await session('iphone', { ...devices['iPhone 13'] })
-await session('paysage', { ...devices['iPhone 13 landscape'] })
+/** Corps d'un flux SSE au format du contrat : un `delta` par morceau, puis `done`. */
+function sse(chunks) {
+  return [...chunks.map((text) => ({ type: 'delta', text })), { type: 'done' }].map((e) => `data: ${JSON.stringify(e)}\n\n`).join('')
+}
+
+/** Chat avec Rémi · IA : accueil, puis deux échanges simulés (réponses interceptées sur `/api/remi`). */
+async function chatSession(name, contextOptions) {
+  const ctx = await browser.newContext({ locale: 'fr-FR', ...contextOptions })
+  const page = await ctx.newPage()
+  const errors = []
+  page.on('pageerror', (e) => errors.push(e.message))
+  const replies = [
+    ['Les Archives de 2040 sont au sud du hall. ', 'Chaque séquence de la soirée y a sa vitrine : vous pouvez les consulter une à une.'],
+    ['Je vous suggère l\'aile Infrastructures, à l\'ouest. ', 'Devant un portrait, touchez « Regarder » pour ouvrir sa fiche.'],
+  ]
+  let asked = 0
+  await page.route('**/api/remi', (route) =>
+    route.fulfill({ status: 200, headers: { 'content-type': 'text/event-stream; charset=utf-8' }, body: sse(replies[Math.min(asked++, replies.length - 1)]) }),
+  )
+  const shot = async (label, wait = 600) => {
+    await page.waitForTimeout(wait)
+    await page.screenshot({ path: `${out}/${name}-${label}.png` })
+  }
+  await page.goto(`${base}/?e2e=1`)
+  await page.getByTestId('title-screen').waitFor()
+  await page.getByTestId('enter-button').click()
+  await page.getByTestId('remi-chat').waitFor()
+  await shot('chat-01-accueil', 2500)
+  await page.getByTestId('remi-chat-suggestion').nth(2).click()
+  await page.getByTestId('remi-chat-message').nth(2).waitFor()
+  await page.getByTestId('remi-chat-input').fill('Par où commencer ?')
+  await shot('chat-02-saisie', 400)
+  await page.getByTestId('remi-chat-send').click()
+  await page.getByTestId('remi-chat-message').nth(4).waitFor()
+  await page.getByTestId('remi-chat-typing').waitFor({ state: 'detached' })
+  await shot('chat-03-deux-echanges', 800)
+  console.log(name, errors.length ? `erreurs : ${errors.join(' | ')}` : 'aucune erreur de page')
+  await ctx.close()
+}
+
+if (chatOnly) {
+  await chatSession('pc-1440x900', { viewport: { width: 1440, height: 900 } })
+  await chatSession('iphone-390x844', { ...devices['iPhone 13'], viewport: { width: 390, height: 844 } })
+  await chatSession('paysage-844x390', { ...devices['iPhone 13 landscape'], viewport: { width: 844, height: 390 } })
+} else {
+  await session('iphone', { ...devices['iPhone 13'] })
+  await session('paysage', { ...devices['iPhone 13 landscape'] })
+}
 await browser.close()

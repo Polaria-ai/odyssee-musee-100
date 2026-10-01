@@ -6,7 +6,7 @@
 
 Le Musée des 100 est le jeu mobile 3D de la soirée « 2026 : l'Odyssée de l'IA » (6 octobre 2026). Décision du 29/09 : Rémi Godeau, directeur de la rédaction de L'Opinion et co-organisateur de la soirée, accueille les visiteurs au comptoir du hall. Il apparaît sous la forme d'un personnage 3D qui salue le visiteur quand celui-ci s'approche du comptoir.
 
-Il ne parle pas à voix haute : les répliques ci-dessous s'affichent dans une boîte de dialogue, sous son nom « Rémi Godeau ». Elles apparaissent à l'entrée dans le musée (accueil, tant qu'aucun portrait n'a été ouvert), puis chaque fois que le visiteur touche « Parler à Rémi » près du comptoir, et quand il obtient un tampon.
+Il ne parle pas à voix haute. Depuis la V5, l'accueil et la conversation du comptoir passent par un **chat textuel avec « Rémi · IA »** (V5, WEL-920) : à l'entrée dans le musée (tant qu'aucun portrait n'a été ouvert) le chat s'ouvre avec le texte d'accueil de la section 1 déjà affiché (il compose son premier message, mot pour mot), puis le visiteur peut lui écrire ; chaque fois qu'il touche « Parler à Rémi » près du comptoir, le chat se rouvre. Les réponses libres de ce chat sont **générées par une IA** (la mention « Réponses générées par une IA » reste affichée en haut du chat) et ne figurent pas dans ce document : seuls les textes écrits d'avance sont listés ici, y compris les répliques de la section 2, qui servent de **réponse de repli** quand le service de l'IA ne répond pas (section 5). Les répliques des sections 3 et 4 (tampon obtenu, carnet complet) s'affichent toujours dans une boîte de dialogue, sous son nom « Rémi Godeau ».
 
 ## Ce qu'il est demandé à Rémi Godeau / L'Opinion
 
@@ -136,6 +136,53 @@ Affiché juste après l'obtention du tampon d'une aile (et de son toast).
 |---|---|---|---|
 | 1 | Votre carnet est complet. Merci d'avoir parcouru le musée. | Your stamp card is complete. Thank you for exploring the museum. | |
 | 2 | Vous pouvez le partager si vous le souhaitez, et continuer à flâner ici aussi longtemps que vous le voudrez. | You can share it if you wish, and keep wandering here for as long as you like. | |
+
+## 5. Chat avec Rémi · IA : phrases écrites d'avance
+
+Ces phrases sont prononcées au nom de Rémi par l'interface du chat, quand le service de l'IA ne répond pas normalement. Elles suivent les mêmes règles que les sections précédentes (vouvoiement, sobriété, ni opinion ni promesse).
+
+### 5.1 Réponse de repli (service indisponible)
+
+*Quand l'IA est injoignable ou ne répond pas à temps : le chat répond avec cette phrase, suivie des répliques de la section 2 qui correspondent à la progression du visiteur (une seule fois par réponse, les variantes alternent).*
+
+| # | Français | English | Validation Rémi |
+|---|---|---|---|
+| 1 | Je vous réponds brièvement : | Let me answer briefly: | |
+
+### 5.2 Trop de visiteurs en même temps
+
+*Le visiteur peut alors toucher « Réessayer » pour renvoyer sa question.*
+
+| # | Français | English | Validation Rémi |
+|---|---|---|---|
+| 1 | Un instant, beaucoup de visiteurs me parlent en même temps… | One moment, a lot of visitors are talking to me at the same time… | |
+
+### 5.3 Fin de la discussion
+
+*Quand le visiteur a envoyé le nombre maximal de messages de la soirée : la saisie se ferme.*
+
+| # | Français | English | Validation Rémi |
+|---|---|---|---|
+| 1 | Nous avons beaucoup échangé, merci pour votre curiosité. Je laisse la place aux autres visiteurs : bonne visite ! | We have talked a lot, thank you for your curiosity. I will make room for the other visitors: enjoy your visit! | |
+
+### 5.4 Message illisible
+
+*Quand le serveur ne peut pas lire le message du visiteur.*
+
+| # | Français | English | Validation Rémi |
+|---|---|---|---|
+| 1 | Je n'ai pas pu lire ce message. Pouvez-vous le reformuler ? | I couldn't read that message. Could you rephrase it? | |
+
+### 5.5 Questions suggérées au visiteur
+
+*Ce sont les mots du visiteur, pas ceux de Rémi : quatre puces affichées avant le premier message, qui envoient la question telle quelle. Pour information.*
+
+| # | Français | English |
+|---|---|---|
+| 1 | Comment ça marche ? | How does it work? |
+| 2 | Qui sont les 100 ? | Who are the 100? |
+| 3 | Que sont les Archives de 2040 ? | What are the 2040 Archives? |
+| 4 | Le programme du 6 octobre | The October 6 program |
 
 ## Réponse
 
