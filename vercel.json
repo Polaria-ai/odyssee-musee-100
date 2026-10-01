@@ -3,6 +3,11 @@
   "framework": "vite",
   "buildCommand": "pnpm build",
   "outputDirectory": "dist",
+  "functions": {
+    "api/remi.ts": {
+      "supportsCancellation": true
+    }
+  },
   "rewrites": [
     {
       "source": "/((?!api/|assets/|data/|portraits/|favicon|manifest).*)",

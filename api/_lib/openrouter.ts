@@ -33,6 +33,9 @@ export function buildUpstreamBody(system: string, messages: ChatMessage[]): stri
     stream: true,
     max_tokens: MAX_OUTPUT_TOKENS,
     temperature: TEMPERATURE,
+    // DeepSeek V4.1 Flash accepte le paramètre `reasoning` d'OpenRouter : sans raisonnement caché, les
+    // 350 jetons vont tous à la réponse et le premier mot arrive plus vite (vérifié sur /api/v1/models).
+    reasoning: { enabled: false },
     messages: [{ role: 'system', content: system }, ...messages],
   })
 }
