@@ -93,3 +93,16 @@ ci-dessous (Cyril et Rémi, depuis le 29/09 ; l'avatar et Minerve sculptés en t
 - Texture en ligne : three.js lit les textures intégrées aux GLB par `fetch(blob:…)` (Chrome, Android, Safari ≥ 17). La CSP de `vercel.json` doit donc garder `blob:` dans `connect-src`, sinon les modèles s'affichent en blanc (constaté en production le 29/09). `pnpm verify:security` le vérifie ; `vite preview` sert les en-têtes de Vercel, les E2E locaux tournent sous la même CSP que la production.
 - Pas de licence CC0 ici : ce sont les images de deux personnes réelles, utilisées avec leur accord pour ce jeu uniquement.
 
+
+## Textures de sol (WEL-923)
+
+Quatre matières, une par famille de salle (marbre : hall et Archives ; terrazzo : Infrastructures ; microciment : Industrialisation ; moquette : Culture). Le détail du rendu (UV monde, multiplication de la couleur de la charte, gain, échelles) est dans `docs/CHARTE-3D.md` §4.1.
+
+| Élément | Emplacement |
+|---|---|
+| Sources Magnific (albédo 1024², normales et rugosité 1000²), neutres et claires | `~/Dev/odyssee-musee-100-assets/sols-v5/magnific/` (hors Git). Copie de travail : `assets-src/floors/` (ignoré par Git, comme `assets-src/`). Fichiers utilisés : `marbre-2`, `terrazzo-2`, `microciment-2`, `moquette-1` (`.png`, `.normal.png`) ; les cartes de rugosité ne servent pas (le sol reste en Lambert). |
+| Cartes produites (versionnées) | `public/textures/floors/<matière>-detail.webp` et `<matière>-normal.webp`, 8 fichiers ≤ 512 px, 383 Ko au total |
+| Script | `node scripts/build-floor-textures.mjs [--debug dossier]` — lit `assets-src/floors/` (ou `FLOORS_SRC=…`, ou le dossier d'origine), écrit les 8 fichiers, vérifie le budget (450 Ko). `--debug` écrit les mosaïques 2×2 de contrôle du raccord. Sorties déterministes (octet pour octet). |
+| Tests | `scripts/build-floor-textures.test.ts` (fichiers, dimensions, moyenne du détail, tuilage, budget, déterminisme si les sources sont présentes), `src/world/floorTextures.test.ts` (cache, repli, libération), `src/world/roomGeometry.test.ts` et `src/archives/room/geometry.test.ts` (UV monde) |
+
+Fabrication : luminance linéaire de l'albédo → raccord tuilable si besoin (marbre) → réduction à 512 px → aplanissement partiel des grandes taches → normalisation par percentiles → profondeur réglée par matière (`FLOORS` dans le script) → webp qualité 82 ; normales recentrées (moyenne et ondulations larges retirées, sinon tout le sol serait éclairé de travers), qualité 92. Si un réglage change, recopier la moyenne affichée dans `detailMean` de `src/world/floorSpec.ts` (le test échoue sinon).
