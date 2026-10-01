@@ -50,6 +50,11 @@ async function capture({ name, query }) {
   page.on('pageerror', (e) => problems.push(`[${name}] pageerror: ${e.message}`))
   await page.goto(`${base}/dev/bust-demo.html?${query}&controls=0`)
   await page.locator('[data-testid="remi-bust"][data-state="ready"]').waitFor({ timeout: 90000 })
+  // La silhouette de chargement s'efface en 0,35 s : on attend qu'elle soit transparente (machine chargée = fondu plus long).
+  await page.waitForFunction(() => {
+    const el = document.querySelector('[data-testid="remi-bust-silhouette"]')
+    return !el || getComputedStyle(el).opacity === '0'
+  }, undefined, { timeout: 90000 })
   await page.waitForTimeout(1800)
   const path = `${outDir}/${name}.png`
   await page.getByTestId('frame').screenshot({ path })

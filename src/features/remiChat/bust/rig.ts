@@ -77,17 +77,94 @@ export function measureBust(root: Object3D, height: number): BustMetrics {
   }
 }
 
+/** Résolution de la soudure des positions : 1e-4 unité de géométrie, très en deçà de la taille d'une face du maillage. */
+const WELD_SCALE = 1e4
+
 /**
- * Normales lissées sur la copie de la géométrie. Celles du fichier (entiers 8 bits normalisés, héritées de
- * la génération Meshy) laissent voir les facettes du maillage dès que le visage remplit l'écran. Le tampon
- * est créé en flottants AVANT `computeVertexNormals` : sur l'attribut entier d'origine, les produits
- * vectoriels des faces (~1e-4, positions normalisées) s'arrondiraient à 0 et le modèle deviendrait noir.
+ * Normales lissées PAR POSITION sur la copie de la géométrie.
+ *
+ * Celles du fichier (entiers 8 bits normalisés, héritées de la génération Meshy) laissent voir les facettes
+ * du maillage dès que le visage remplit l'écran. Et `computeVertexNormals` ne suffit pas : le maillage est
+ * éclaté par îlots UV (13 519 sommets pour 6 208 positions distinctes), donc il ne lisse qu'à l'intérieur de
+ * chaque îlot et laisse une rupture de normale à chaque couture, que le terme de Fresnel du matériau
+ * souligne en filets cyan sur le front et les joues. On soude donc par position : les sommets confondus
+ * (même position quantifiée, UV différentes) reçoivent la MÊME normale, somme des normales de face de tous
+ * leurs triangles pondérées par l'aire (produit vectoriel non normalisé), normalisée.
+ *
+ * Les sommes se font en double précision puis s'écrivent dans un NOUVEAU tampon Float32 : les produits
+ * vectoriels des faces (~1e-4, positions entières normalisées) s'arrondiraient à 0 dans l'attribut entier
+ * d'origine et le modèle deviendrait noir. Le fichier GLB n'est jamais modifié ; l'attribut `normal`
+ * remplacé est celui de la copie.
  */
 export function smoothNormals(geometry: BufferGeometry): void {
   const position = geometry.getAttribute('position')
   if (!position) return
-  geometry.setAttribute('normal', new BufferAttribute(new Float32Array(position.count * 3), 3))
-  geometry.computeVertexNormals()
+  const count = position.count
+  const index = geometry.getIndex()
+
+  // Groupe de sommets confondus : un indice de groupe par sommet.
+  const groupOf = new Uint32Array(count)
+  const groupByKey = new Map<string, number>()
+  for (let i = 0; i < count; i++) {
+    const key = `${Math.round(position.getX(i) * WELD_SCALE)},${Math.round(position.getY(i) * WELD_SCALE)},${Math.round(position.getZ(i) * WELD_SCALE)}`
+    let group = groupByKey.get(key)
+    if (group === undefined) {
+      group = groupByKey.size
+      groupByKey.set(key, group)
+    }
+    groupOf[i] = group
+  }
+
+  // Somme, par groupe, des normales de face non normalisées (donc pondérées par l'aire).
+  const sums = new Float64Array(groupByKey.size * 3)
+  const triangleCount = Math.floor((index ? index.count : count) / 3)
+  for (let t = 0; t < triangleCount; t++) {
+    const a = index ? index.getX(t * 3) : t * 3
+    const b = index ? index.getX(t * 3 + 1) : t * 3 + 1
+    const c = index ? index.getX(t * 3 + 2) : t * 3 + 2
+    const ax = position.getX(a)
+    const ay = position.getY(a)
+    const az = position.getZ(a)
+    const e1x = position.getX(b) - ax
+    const e1y = position.getY(b) - ay
+    const e1z = position.getZ(b) - az
+    const e2x = position.getX(c) - ax
+    const e2y = position.getY(c) - ay
+    const e2z = position.getZ(c) - az
+    const nx = e1y * e2z - e1z * e2y
+    const ny = e1z * e2x - e1x * e2z
+    const nz = e1x * e2y - e1y * e2x
+    const ga = groupOf[a] * 3
+    const gb = groupOf[b] * 3
+    const gc = groupOf[c] * 3
+    sums[ga] += nx
+    sums[ga + 1] += ny
+    sums[ga + 2] += nz
+    sums[gb] += nx
+    sums[gb + 1] += ny
+    sums[gb + 2] += nz
+    sums[gc] += nx
+    sums[gc + 1] += ny
+    sums[gc + 2] += nz
+  }
+
+  // Normalisation par groupe, puis écriture identique sur chacun des sommets du groupe.
+  const normals = new Float32Array(count * 3)
+  for (let i = 0; i < count; i++) {
+    const base = groupOf[i] * 3
+    const x = sums[base]
+    const y = sums[base + 1]
+    const z = sums[base + 2]
+    const length = Math.hypot(x, y, z)
+    if (length > 0) {
+      normals[i * 3] = x / length
+      normals[i * 3 + 1] = y / length
+      normals[i * 3 + 2] = z / length
+    } else {
+      normals[i * 3 + 2] = 1 // sommet sans triangle (ou faces dégénérées) : une normale valide, jamais NaN
+    }
+  }
+  geometry.setAttribute('normal', new BufferAttribute(normals, 3))
 }
 
 export function createBustRig(scene: Object3D, animations: AnimationClip[]): BustRig {
