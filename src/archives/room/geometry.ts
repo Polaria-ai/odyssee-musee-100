@@ -10,11 +10,12 @@
  *  - la COURONNE (boîtes de hauteur 1, idem) : liseré d'accent sur le mur coupé, corniche sur le mur haut.
  * Aucun `three` de rendu ici : ces fonctions ne touchent ni WebGL ni le DOM (testables en Node).
  */
-import { BoxGeometry, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute } from 'three'
+import { BoxGeometry, BufferGeometry, Color, CylinderGeometry, Float32BufferAttribute, PlaneGeometry } from 'three'
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import type { AABB, ArchivesLayout } from '../../types'
 import { charter3d } from '../../styles/tokens'
 import { CAP_HEIGHT, LISTEL_HEIGHT, TRIM_PROTRUSION, WAINSCOT_HEIGHT } from '../../world/constants'
+import { FLOOR_SPECS, ROOM_FLOOR_KIND, worldUv } from '../../world/floorSpec'
 import { ENTRANCE_LECTERN } from '../layout'
 import { DOOR_HEIGHT, WALL_HEIGHT, WALL_THICKNESS } from './constants'
 import { WALL_LOW } from './wallRise'
@@ -286,3 +287,24 @@ export const BANNER_HEIGHT = 0.6
 /** Bas du bandeau : juste au-dessus de la porte (le haut reste sous la corniche, qui commence à 3,94 m). */
 const BANNER_BOTTOM = DOOR_HEIGHT + 0.08
 export const BANNER_CENTER_Y = BANNER_BOTTOM + BANNER_HEIGHT / 2
+
+/**
+ * Sol de la galerie (WEL-923) : plan horizontal de l'emprise de la salle (y = 0), sans couleur de sommet (la
+ * frise peinte est sa texture), avec des UV en coordonnées monde à l'échelle du marbre du hall
+ * (`FLOOR_SPECS`) : les cartes de matière les lisent telles quelles, comme dans le reste du musée.
+ */
+export function buildFloorGeometry(b: AABB): PlaneGeometry {
+  const geo = new PlaneGeometry(b.maxX - b.minX, b.maxZ - b.minZ)
+  geo.rotateX(-Math.PI / 2)
+  geo.translate((b.minX + b.maxX) / 2, 0, (b.minZ + b.maxZ) / 2)
+  const tile = FLOOR_SPECS[ROOM_FLOOR_KIND.archives].tileMeters
+  const pos = geo.attributes.position
+  const uv = new Float32Array(pos.count * 2)
+  for (let i = 0; i < pos.count; i++) {
+    const [u, v] = worldUv(pos.getX(i), pos.getZ(i), tile)
+    uv[i * 2] = u
+    uv[i * 2 + 1] = v
+  }
+  geo.setAttribute('uv', new Float32BufferAttribute(uv, 2))
+  return geo
+}

@@ -26,6 +26,8 @@ Le modèle (lumières et ACES d'avant, formule ci-dessus puis ACES) reproduit à
 
 Les ombres tirent vers le bleu (gain bleu plus haut) au lieu de griser : c'est voulu, le musée est « de nuit ».
 
+**Sols texturés (WEL-923).** Les sols portent une matière (§4.1) : la carte de détail MULTIPLIE la couleur de sommet, donc `affiché = sRGB( linéaire(albédo) × détail × gain × E / π )`. Le gain du matériau vaut `1 / moyenne du détail` : la couleur MOYENNE d'un sol reste exactement celle de la charte (les gains du tableau ci-dessus restent vrais), seul le motif s'en écarte, vers le haut (≤ + 21 %) et vers le bas. Le sol reste en `MeshLambertMaterial` à couleurs de sommet, avec une carte de normales en plus.
+
 ## 2. Jetons de base
 
 | Jeton (`charter3d.base.*`) | Valeur | Origine | Rôle |
@@ -80,6 +82,25 @@ Les chemins sont relatifs à `charter3d`. « Rendu » = valeur affichée sous le
 | Câbles, aile Infrastructures | `cables.main` (r = 0,05), `cables.thin` (r = 0,04) | `#6de4e5`, `#ffffff` | lignes de données sur le sol bleu ; l'ancien brun `inkSoft` disparaît |
 
 `SOFTEN_CHECKER` passe à 0 : les tons A/B sont déjà rapprochés, le lissage supplémentaire effacerait le motif.
+
+#### Matières des sols (WEL-923)
+
+**Règle : la texture multiplie la couleur de la charte, elle ne la remplace jamais.** Les couleurs de sommet du tableau ci-dessus (chevrons, damiers, moquette et bordure) restent les couleurs de référence, au même endroit et au même ton franc ; la matière (veines, éclats, grain, fibres) vient d'une carte de détail en niveaux de gris, de moyenne ramenée à 1 par le gain du matériau (§1), et d'une carte de normales. Aucune couleur n'est peinte dans une texture de sol. Sources neutres et claires (Magnific), fabriquées par `scripts/build-floor-textures.mjs` (voir `docs/ASSETS.md`).
+
+| Salle | Matière | Motif (UV monde) | Détail : valeurs, moyenne, gain | `normalScale` | Fichiers |
+|---|---|---|---|---|---|
+| Hall | marbre blanc à fines veines (sur les chevrons `floor` / `floorAlt`) | 2,5 m | 0,53 à 1, moyenne 0,906, × 1,10 | 0,35 | `marble-*.webp`, 45 Ko |
+| Archives | marbre (même carte que le hall), la frise peinte reste en `map` | 2,5 m | idem | 0,35 | idem |
+| Infrastructures | terrazzo à éclats (sur le damier 1,4 m) | 3,0 m | 0,46 à 1, moyenne 0,861, × 1,16 | 0,8 | `terrazzo-*.webp`, 129 Ko |
+| Industrialisation | microciment (sur le damier 1,6 m) | 4,0 m | 0,56 à 1, moyenne 0,877, × 1,14 | 0,5 | `microcement-*.webp`, 81 Ko |
+| Culture | moquette bouclée (sur la moquette et sa bordure) | 2,8 m | 0,55 à 1, moyenne 0,826, × 1,21 | 0,8 | `carpet-*.webp`, 128 Ko |
+
+- **Pourquoi des tailles de motif plus grandes que la matière réelle.** La caméra plonge à 48° et montre 11 m de sol sur un téléphone : 35 à 80 px par mètre. Un éclat de terrazzo de 1 cm ou un point de moquette de 8 mm tombent sous le pixel et les mipmaps les effacent. À ces échelles, éclats de ≈ 2,5 cm et mailles de ≈ 3 cm : visibles sans être grossiers, sans moiré (mipmaps trilinéaires + anisotropie).
+- **Pourquoi des creux plus profonds que `[0,82 ; 1]`.** Vérifié sur capture : à 0,82 le marbre du hall et le terrazzo redeviennent des aplats à la distance du jeu. Le garde-fou n'est plus la profondeur mais la lisibilité : les creux les plus sombres restent à ≥ 1,15:1 du ciel (test `scripts/build-floor-textures.test.ts`), et la couleur moyenne ne bouge pas (< 1 %).
+- **UV en coordonnées monde** (`x / motif`, `z / motif`, `src/world/floorSpec.ts`) pour toutes les géométries de sol (parquet du hall, damiers, moquette, plan des Archives) : deux quads voisins, ou deux salles de même matière, lisent la matière au même endroit, sans raccord. `RepeatWrapping`, mipmaps, anisotropie 4 sur écran tactile (8 ailleurs, plafonnée au matériel).
+- **Reste net, sans matière** : disque-logo du hall, chemins colorés et leurs liserés blancs. Ils restent dans la géométrie de la salle (matériau uni, arêtes franches) et se posent sur le marbre.
+- **Reflet du marbre : essayé, écarté.** Un `MeshPhongMaterial` (brillance 14, spéculaire `#6a7090`) sur le marbre du hall ne se distingue pas du Lambert sur les captures (la lumière directionnelle est fixe et la caméra ne voit jamais son reflet) ; on garde Lambert, qui porte le modèle de couleur de la charte.
+- **Chargement.** Cartes chargées une fois par matière (cache compté), sans bloquer l'entrée : le sol est d'abord uni (l'ancien rendu), la matière apparaît quand les cartes sont là (pendant l'écran-titre, le musée est déjà monté). Une carte qui échoue laisse le sol uni, sans erreur. Libération au démontage.
 
 ### 4.2 Murs et architecture (identiques dans toutes les salles, l'accent change)
 
@@ -310,14 +331,15 @@ Répartition retenue (à réaffecter si l'orchestrateur découpe autrement) : **
 ## 8. Prérequis transverses
 
 - **Polices dans les canvas.** Poppins et JetBrains Mono viennent de Google Fonts (`index.html`). Un canvas peint avec une police pas encore chargée retombe sur `system-ui` et la texture reste en cache avec ce repli. Avant le premier dessin de texture, attendre `document.fonts.load('600 16px Poppins')` et `document.fonts.load('500 16px "JetBrains Mono"')` (avec un délai maximum, ~1,5 s), par exemple avant de monter `<Museum>`.
-- **Budget mobile.** Tout est fusionné : disque du hall, chemins, listel, bandes de dessus = quelques dizaines de boîtes ajoutées à la géométrie de la salle (aucun appel de dessin en plus) ; les cadres restent un maillage par portrait (trois géométries, un matériau partagé) ; aucune ombre temps réel ; textures ≤ 512 px.
+- **Budget mobile.** Tout est fusionné : disque du hall, chemins, listel, bandes de dessus = quelques dizaines de boîtes ajoutées à la géométrie de la salle (aucun appel de dessin en plus) ; les cadres restent un maillage par portrait (trois géométries, un matériau partagé) ; aucune ombre temps réel ; textures ≤ 512 px. Exception voulue (WEL-923) : le sol de fond de chaque salle est un maillage à part (une matière = un matériau texturé) : **un appel de dessin de plus par salle visible**, au lieu de zéro. Les Archives gardent leur sol en un seul maillage. Cartes de sol : 8 fichiers webp ≤ 512 px, 383 Ko au total (budget 450 Ko). Mesuré le 01/10 (SwiftShader, `e2e/performance.spec.ts`, projet desktop) : au plus 92 appels de dessin au spawn et au milieu de chaque aile (budget 150), contre ≈ 1 à 3 de moins avant ; la mesure de `renderer.info` varie de ± 15 appels d'une image à l'autre, le surcoût réel est le sol de chaque salle dans le champ.
 
 ## 9. Vérifications
 
 - `pnpm exec tsc -b --noEmit` et `pnpm exec vitest run src/styles src/world src/archives src/features/stamps`.
 - Plus aucune couleur héritée dans les décors (doit ne rien renvoyer) :
   `grep -rnE "palette\.(cream|ink|wood|woodDark|gold|shadow|leaf|leafDark|paper|inkSoft)|#(c9a24a|3b2a10|8a6a2c|5a441c|e8c872|8c6a4a|c8a27a|fff8e7|fdf1d6|7a2f3f|a97b3d|f6e3ab|fff3c4|fff6d8|7fd6e8)" src/world src/scene src/archives src/features/stamps --include='*.ts' --include='*.tsx' | grep -v '\.test\.'`
-- À l'œil, sur les captures e2e (`docs/TESTS.md`) : plus de bois, de beige, d'or ni de brun ; le bleu du sol et des murs reste bleu (pas gris) ; le numéro d'un portrait se lit à la distance de jeu ; le magenta n'apparaît qu'à la barrière d'une aile fermée.
+- Sols : `pnpm exec vitest run scripts/build-floor-textures.test.ts src/world/floorTextures.test.ts src/world/roomGeometry.test.ts` (fichiers, moyenne du détail, tuilage, budget, UV monde, cache de chargement) ; `node scripts/build-floor-textures.mjs --debug <dossier>` écrit les mosaïques 2×2 de contrôle du raccord.
+- À l'œil, sur les captures e2e (`docs/TESTS.md`) : plus de bois, de beige, d'or ni de brun ; le bleu du sol et des murs reste bleu (pas gris, même sous la matière) ; le numéro d'un portrait se lit à la distance de jeu ; le magenta n'apparaît qu'à la barrière d'une aile fermée.
 
 ## 10. Hors périmètre de cette charte
 

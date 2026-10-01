@@ -15,6 +15,7 @@ import { DOOR_HEIGHT, WALL_HEIGHT, WALL_THICKNESS } from './constants'
 import {
   archivesWalls,
   buildCrownGeometry,
+  buildFloorGeometry,
   buildFurnitureGeometry,
   buildPanelGeometry,
   buildPillarGeometry,
@@ -24,6 +25,7 @@ import {
   panelZs,
 } from './geometry'
 import { LOW_TOP, WALL_LOW, riseFrame } from './wallRise'
+import { FLOOR_SPECS, ROOM_FLOOR_KIND } from '../../world/floorSpec'
 
 const sessions: EveningSession[] = Array.from({ length: 12 }, (_, i) => ({
   id: `s${i}`,
@@ -211,3 +213,30 @@ describe('mobilier fixe, panneaux, piliers', () => {
     expect(shell.attributes.color.count).toBe(shell.attributes.position.count)
   })
 })
+
+describe('sol de la galerie (WEL-923) : UV en coordonnées monde', () => {
+  const b = room
+  const tile = FLOOR_SPECS[ROOM_FLOOR_KIND.archives].tileMeters
+
+  it('couvre toute l’emprise de la salle, à plat', () => {
+    const geo = buildFloorGeometry(b)
+    geo.computeBoundingBox()
+    expect(geo.boundingBox!.min.x).toBeCloseTo(b.minX, 5)
+    expect(geo.boundingBox!.max.x).toBeCloseTo(b.maxX, 5)
+    expect(geo.boundingBox!.min.z).toBeCloseTo(b.minZ, 5)
+    expect(geo.boundingBox!.max.z).toBeCloseTo(b.maxZ, 5)
+    expect(geo.boundingBox!.max.y).toBeCloseTo(0, 6)
+  })
+
+  it('UV = (x, z) / taille du motif du marbre : la même échelle que le sol du hall', () => {
+    expect(ROOM_FLOOR_KIND.archives).toBe(ROOM_FLOOR_KIND.hall)
+    const geo = buildFloorGeometry(b)
+    const pos = geo.attributes.position
+    const uv = geo.attributes.uv
+    for (let i = 0; i < pos.count; i++) {
+      expect(uv.getX(i)).toBeCloseTo(pos.getX(i) / tile, 4)
+      expect(uv.getY(i)).toBeCloseTo(pos.getZ(i) / tile, 4)
+    }
+  })
+})
+

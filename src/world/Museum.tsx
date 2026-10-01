@@ -12,7 +12,9 @@ import { EXHIBIT_WINGS } from '../types'
 import { useGame } from '../state/gameStore'
 import { player } from '../state/runtime'
 import { buildMuseumArchitecture } from './layout'
-import { buildComingSoonBarrierGeometry, buildDoorArchesGeometry, buildLightRaysGeometry, buildOccluderGeometry, buildRoomGeometry } from './roomGeometry'
+import { buildComingSoonBarrierGeometry, buildDoorArchesGeometry, buildFloorGeometry, buildLightRaysGeometry, buildOccluderGeometry, buildRoomGeometry } from './roomGeometry'
+import { ROOM_FLOOR_KIND } from './floorSpec'
+import { useFloorMaterials } from './useFloorMaterial'
 import { occludesPlayer, approach } from './occlusion'
 import { PortraitFrame, type FrameFade } from './PortraitFrame'
 import { RoomProps } from './props/RoomProps'
@@ -33,6 +35,17 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
   const architecture = useMemo(() => buildMuseumArchitecture(people), [people])
   const roomMeshes = useMemo(
     () => architecture.rooms.map(({ room, walls }) => ({ id: room.id, geometry: buildRoomGeometry(room, walls, room.id === 'hall' ? architecture.decor : undefined) })),
+    [architecture],
+  )
+  // Sols texturés (WEL-923) : une géométrie de sol par salle, un matériau par matière (marbre, terrazzo…),
+  // chargé sans bloquer l'entrée (sol uni d'abord, matière dès que les cartes sont là).
+  const floorMaterials = useFloorMaterials()
+  const floorMeshes = useMemo(
+    () =>
+      architecture.rooms.flatMap(({ room }) => {
+        const geometry = buildFloorGeometry(room)
+        return geometry ? [{ id: room.id, kind: ROOM_FLOOR_KIND[room.id], geometry }] : []
+      }),
     [architecture],
   )
   const lightRaysGeometry = useMemo(() => buildLightRaysGeometry({ x: 0, z: -1 }), [])
@@ -106,6 +119,10 @@ export function Museum({ layout, people }: { layout: MuseumLayout; people: Perso
 
   return (
     <group>
+      {floorMeshes.map((f) => (
+        <mesh key={`sol-${f.id}`} geometry={f.geometry} material={floorMaterials[f.kind]} receiveShadow={false} castShadow={false} />
+      ))}
+
       {roomMeshes.map((r) => (
         <mesh key={r.id} geometry={r.geometry} receiveShadow={false} castShadow={false}>
           <meshLambertMaterial vertexColors flatShading />
