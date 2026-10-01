@@ -1,7 +1,9 @@
 // @vitest-environment node
+import { readdirSync } from 'node:fs'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import * as remi from './remi.js'
-import { jsonRequest, validPayload } from './_lib/test-utils.js'
+import * as remi from '../remi.js'
+import { OPENROUTER_TITLE, UPSTREAM_TIMEOUT_MS } from './config.js'
+import { jsonRequest, validPayload } from './test-utils.js'
 
 afterEach(() => {
   vi.unstubAllEnvs()
@@ -21,6 +23,17 @@ describe('api/remi.ts', () => {
       expect(response.headers.get('allow'), method).toBe('POST')
       expect(await response.json(), method).toEqual({ type: 'error', code: 'bad_request' })
     }
+  })
+
+  it('n’expose qu’une seule route : api/remi.ts (Vercel déploie tout autre fichier de api/ hors chemins _ et .)', () => {
+    const entries = readdirSync(new URL('../', import.meta.url), { withFileTypes: true })
+    const routes = entries.filter((entry) => !entry.name.startsWith('_') && !entry.name.startsWith('.'))
+    expect(routes.map((entry) => entry.name)).toEqual(['remi.ts'])
+  })
+
+  it('accorde 20 s à OpenRouter et envoie un titre d’application en ASCII', () => {
+    expect(UPSTREAM_TIMEOUT_MS).toBe(20_000)
+    expect(OPENROUTER_TITLE).toMatch(/^[\x20-\x7e]+$/)
   })
 
   it('plafonne la durée de la fonction sous le défaut de la plateforme et au-dessus du délai accordé à OpenRouter', () => {

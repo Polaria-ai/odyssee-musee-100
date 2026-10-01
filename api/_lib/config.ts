@@ -17,7 +17,8 @@ export { MAX_HISTORY_MESSAGES, MAX_MESSAGES_PER_VISITOR, MAX_USER_MESSAGE_CHARS,
 export const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 /** Identifient l'application auprès d'OpenRouter (classement et tableau de bord). */
 export const OPENROUTER_REFERER = 'https://www.odyssee-musee-100.com'
-export const OPENROUTER_TITLE = 'Le Musée des 100'
+/** ASCII volontaire : un « é » partirait en Latin-1 (octet 0xE9), invalide en UTF-8 côté OpenRouter. */
+export const OPENROUTER_TITLE = 'Le Musee des 100'
 
 /** Réponse courte attendue (2 à 4 phrases) : 350 jetons laissent de la marge sans laisser dériver le coût. */
 export const MAX_OUTPUT_TOKENS = 350
