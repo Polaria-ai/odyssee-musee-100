@@ -4,6 +4,7 @@
  */
 import { useGame } from '../state/gameStore'
 import { input, placePlayer, player } from '../state/runtime'
+import type { PresenceStats } from '../features/presence/presenceSession'
 
 export interface MuseeDebugApi {
   state: () => ReturnType<typeof useGame.getState>
@@ -24,6 +25,8 @@ export interface MuseeDebugApi {
   cameraPosition?: () => { x: number; y: number; z: number }
   /** Projette un point du monde en coordonnées écran (clientX/Y), pour viser un point de sol précis. */
   worldToScreen?: (x: number, y: number, z: number) => { clientX: number; clientY: number }
+  /** Compteurs de la session de présence (état, salle, sauts, erreurs…), posée par `usePresence` tant qu'elle tourne. */
+  presence?: () => PresenceStats
 }
 
 declare global {

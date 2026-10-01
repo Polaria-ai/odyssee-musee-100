@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest'
-import { MAX_ROOMS, ROOM_CAPACITY, nextRoomIndex, roomName, sanitizeNamespace, shouldStayInRoom, sortByJoinOrder } from './roomSelection'
+import {
+  MAX_ROOMS,
+  ROOM_CAPACITY,
+  nextRoomIndex,
+  roomName,
+  sanitizeNamespace,
+  shouldStayInRoom,
+  sortByJoinOrder,
+  targetRoomForRank,
+} from './roomSelection'
 
 function members(...pairs: Array<[string, number]>) {
   return pairs.map(([id, joinTs]) => ({ id, joinTs }))
@@ -89,5 +98,38 @@ describe('espaces de salles (tests E2E)', () => {
     expect(sanitizeNamespace('')).toBeNull()
     expect(sanitizeNamespace('###')).toBeNull()
     expect(sanitizeNamespace('a'.repeat(50))).toHaveLength(32)
+  })
+})
+
+describe('targetRoomForRank', () => {
+  it('les `capacity` premiers (rang 0..capacity-1) restent dans la salle courante', () => {
+    for (let rank = 0; rank < 8; rank++) expect(targetRoomForRank(3, rank, 8, 12)).toBe(3)
+  })
+
+  it('les suivants sautent directement de floor(rank / capacity) salles', () => {
+    expect(targetRoomForRank(1, 8, 8, 12)).toBe(2)
+    expect(targetRoomForRank(1, 15, 8, 12)).toBe(2)
+    expect(targetRoomForRank(1, 16, 8, 12)).toBe(3)
+    expect(targetRoomForRank(2, 24, 8, 12)).toBe(5)
+  })
+
+  it('null quand la cible dépasse la dernière salle (musée plein)', () => {
+    expect(targetRoomForRank(12, 8, 8, 12)).toBeNull()
+    expect(targetRoomForRank(11, 16, 8, 12)).toBeNull()
+    expect(targetRoomForRank(11, 8, 8, 12)).toBe(12) // la dernière salle reste atteignable
+  })
+
+  it('ne recule jamais : la cible est toujours >= la salle courante', () => {
+    for (let room = 1; room <= 12; room++) {
+      for (let rank = 0; rank < 100; rank++) {
+        const target = targetRoomForRank(room, rank, 8, 12)
+        expect(target === null || target >= room).toBe(true)
+      }
+    }
+  })
+
+  it('respecte une capacité et un nombre de salles réglés', () => {
+    expect(targetRoomForRank(1, 2, 2, 3)).toBe(2)
+    expect(targetRoomForRank(1, 6, 2, 3)).toBeNull()
   })
 })
