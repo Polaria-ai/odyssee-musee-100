@@ -13,11 +13,18 @@
  */
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createPeerStore, getPeer, selectVisiblePeers, type PeerStore } from './peers'
-import { createPresenceSession, type PresenceConfig, type PresenceSession, type PresenceStats, type PresenceTimers } from './presenceSession'
+import { MAX_PEER_RECORDS, createPeerStore, getPeer, selectVisiblePeers, type PeerStore } from './peers'
+import { DEFAULT_PRESENCE_CONFIG, createPresenceSession, type PresenceConfig, type PresenceSession, type PresenceStats, type PresenceTimers } from './presenceSession'
 import { adaptSupabaseClient } from './realtimeClient'
 import { roomName } from './roomSelection'
-import { FakeRealtimeServer } from './testing/fakePhoenixServer'
+import { MAX_ROOMS, ROOM_CAPACITY } from './roomSelection'
+import {
+  FakeRealtimeServer,
+  SERVER_MESSAGE_TOO_MANY_MESSAGES,
+  SERVER_MESSAGE_TOO_MANY_PRESENCE,
+  SERVER_REASON_TOO_MANY_CONNECTIONS,
+  SERVER_REASON_TOO_MANY_JOINS,
+} from './testing/fakePhoenixServer'
 
 // ---------------------------------------------------------------------------------------------
 // Banc
@@ -107,6 +114,8 @@ interface RigOptions {
   timeout?: number
   moving?: boolean
   hidden?: boolean
+  /** Vrai : configuration de production (`DEFAULT_PRESENCE_CONFIG`) au lieu de la config accélérée `FAST` (bancs de charge). */
+  prod?: boolean
   /** Défaut : room-1 (déterministe) ; `undefined` explicite = tirage aléatoire par défaut de la session. */
   pickStartRoom?: (() => number) | null
 }
@@ -123,12 +132,12 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
   const run = (ms: number) => vi.advanceTimersByTimeAsync(ms)
 
   /** Fait avancer l'horloge simulée par pas de 25 ms jusqu'à ce que `pred` soit vrai (échoue après `maxMs`). */
-  async function until(pred: () => boolean, what: string, maxMs = 60_000): Promise<void> {
+  async function until(pred: () => boolean, what: string, maxMs = 60_000, stepMs = 25): Promise<void> {
     let waited = 0
     while (!pred()) {
       if (waited >= maxMs) throw new Error(`délai dépassé (${maxMs} ms simulées) : ${what}`)
-      await run(25)
-      waited += 25
+      await run(stepMs)
+      waited += stepMs
     }
   }
 
@@ -153,7 +162,7 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
       now: () => Date.now(),
       random: seeded(opts.seed ?? 1000 + index),
       timers: timers.timers,
-      config: { ...FAST, ...opts.config },
+      config: { ...(opts.prod ? DEFAULT_PRESENCE_CONFIG : FAST), ...opts.config },
       hidden: opts.hidden,
       pickStartRoom: opts.pickStartRoom === null ? undefined : (opts.pickStartRoom ?? (() => 1)),
     })
@@ -190,7 +199,7 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
   // -------------------------------------------------------------------------------------------
 
   it('(a) join refusé 2 fois puis accepté : subscribed, track reçu, un seul canal pour le topic, aucune exception', async () => {
-    server.rejectJoins(topicOf(1), 2, 'too_many_joins')
+    server.rejectJoins(topicOf(1), 2, 'db_unavailable') // une erreur ordinaire (« too_many_joins » serait un quota : solo tout de suite)
     const r = makeRig()
     r.session.start()
 
@@ -201,8 +210,8 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
     expect(stats.room).toBe(1)
     expect(stats.joins).toBe(3) // 2 refusés + 1 accepté
     expect(stats.reconnects).toBe(2)
-    expect(stats.errors).toEqual({ too_many_joins: 2 })
-    expect(stats.lastError).toBe('too_many_joins')
+    expect(stats.errors).toEqual({ db_unavailable: 2 })
+    expect(stats.lastError).toBe('db_unavailable')
     expect(stats.soloReason).toBeNull()
 
     // Le serveur n'a reçu que nos 3 joins : pas de re-jointure automatique de phoenix en plus.
@@ -241,15 +250,15 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
     expect(r.sb.getChannels()).toHaveLength(1)
   })
 
-  it("(c) message système + phx_close du serveur : closedByServer=1, ZÉRO POST REST, reprise dans la même salle", async () => {
+  it("(c) phx_close du serveur sans cause : closedByServer=1, ZÉRO POST REST, reprise dans la même salle", async () => {
     const r = makeRig()
     r.session.start()
     await until(() => state(r) === 'subscribed', 'subscribed')
     await until(() => server.broadcastCount(topicOf(1)) >= 2, 'quelques envois de position par WebSocket')
     expect(r.session.stats().sent).toBeGreaterThan(0)
 
-    // Le serveur coupe le canal (rate limit) : message 'system' d'erreur puis phx_close.
-    expect(server.rateLimitChannel(topicOf(1), r.label)).toBe(1)
+    // Le serveur ferme le canal sans en donner la raison (un message système de quota, lui, mène au solo : voir (m) et (n)).
+    expect(server.closeChannel(topicOf(1), r.label)).toBe(1)
     const broadcastsAtClose = server.broadcastCount(topicOf(1))
     await run(0)
 
@@ -306,14 +315,14 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
   })
 
   it('(e) refus persistant : solo après reconnectMaxAttempts, plus aucun join ensuite, plus aucun canal', async () => {
-    server.rejectJoins(topicOf(1), Infinity, 'quota')
+    server.rejectJoins(topicOf(1), Infinity, 'db_unavailable')
     const r = makeRig({ config: { reconnectMaxAttempts: 3, soloRetryMs: 0 } })
     r.session.start()
 
     await until(() => state(r) === 'solo', 'solo après échecs répétés')
     const stats = r.session.stats()
-    expect(stats.soloReason).toMatch(/quota/)
-    expect(stats.errors).toEqual({ quota: 4 })
+    expect(stats.soloReason).toMatch(/connexion impossible/)
+    expect(stats.errors).toEqual({ db_unavailable: 4 })
     expect(stats.joins).toBe(4) // 1 + reconnectMaxAttempts
     expect(stats.reconnects).toBe(3)
     expect(server.joinCount(topicOf(1))).toBe(4)
@@ -400,7 +409,7 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
       const st = r.session.stats()
       if (st.state === 'subscribed' && st.joins !== lastSeenJoins) {
         lastSeenJoins = st.joins
-        server.rateLimitChannel(topicOf(1), r.label) // le serveur referme le canal aussitôt accepté
+        server.closeChannel(topicOf(1), r.label) // le serveur referme le canal aussitôt accepté
       }
       return st.state === 'solo'
     }, 'solo malgré des SUBSCRIBED successifs', 120_000)
@@ -414,7 +423,7 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
   })
 
   it('(k) solo : la WebSocket est fermée tout de suite (pas 50 s plus tard) et rouverte à la nouvelle tentative', async () => {
-    server.rejectJoins(topicOf(1), 4, 'quota')
+    server.rejectJoins(topicOf(1), 4, 'db_unavailable')
     const r = makeRig({ config: { reconnectMaxAttempts: 3, soloRetryMs: 5000, maxRooms: 1 } })
     r.session.start()
     await until(() => state(r) === 'solo', 'solo')
@@ -512,4 +521,241 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
     await until(() => !b.store.peers.has('alice'), 'départ d\'alice vu par bob', 5000)
     expect(b.peerCounts.at(-1)).toBe(0)
   })
+
+  // -------------------------------------------------------------------------------------------
+  // Quotas : solo immédiat (décision du 01/10), puis bancs de 200 et 260 joueurs
+
+  it.each([
+    ['« Too many connected users » (too_many_connections)', SERVER_REASON_TOO_MANY_CONNECTIONS, 'too_many_connections'],
+    ['« ClientJoinRateLimitReached… » (too_many_joins)', SERVER_REASON_TOO_MANY_JOINS, 'too_many_joins'],
+    ['« ChannelRateLimitReached… » (too_many_channels)', 'ChannelRateLimitReached: Too many channels', 'too_many_channels'],
+  ])('(m) jointure refusée pour quota, %s : solo immédiat, WebSocket fermée, aucune jointure avant le délai long', async (_label, reason, kind) => {
+    server.rejectJoins(topicOf(1), Infinity, reason)
+    const r = makeRig({ prod: true, config: { initialJoinJitterMs: 100 } })
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    r.session.start()
+
+    await until(() => state(r) === 'solo', 'solo dès le premier refus', 5000)
+    let stats = r.session.stats()
+    expect(stats.soloReason).toBe('quota')
+    expect(stats.quota).toBe(kind)
+    expect(stats.joins).toBe(1) // pas une des 4 reconnexions
+    expect(stats.reconnects).toBe(0)
+    expect(stats.errors).toEqual({ [reason]: 1 })
+    expect(server.joinCount()).toBe(1)
+    await run(50) // laisse la fermeture de la socket se propager
+    expect(server.openConnections(r.label)).toHaveLength(0)
+    expect(r.sb.getChannels()).toHaveLength(0)
+
+    // Le délai long est de 300 s × [0,75 ; 1,25[ : rien avant 225 s, la sonde d'une seule salle avant 375 s.
+    await run(220_000)
+    expect(server.joinCount()).toBe(1)
+    expect(state(r)).toBe('solo')
+    await until(() => server.joinCount() === 2, 'sondage unique après le délai long', 160_000, 500)
+    expect(server.joinCount()).toBe(2)
+
+    // Refusé de nouveau : retour en solo, avec un nouveau délai long.
+    await until(() => state(r) === 'solo' && r.session.stats().soloReason === 'quota', 'solo de nouveau', 5000)
+    await run(220_000)
+    expect(server.joinCount()).toBe(2)
+    expect(r.session.stats().reconnects).toBe(0)
+    expect(consoleError).not.toHaveBeenCalled() // aucune erreur visible
+    stats = r.session.stats()
+    expect(stats.joins).toBe(2)
+    consoleError.mockRestore()
+  })
+
+  it.each([
+    ['« Too many messages per second » puis fermeture', 'too_many_messages', SERVER_MESSAGE_TOO_MANY_MESSAGES, (rig: Rig) => server.rateLimitChannel(topicOf(1), rig.label)],
+    ['« Too many presence messages per second » puis fermeture', 'presence_limit', SERVER_MESSAGE_TOO_MANY_PRESENCE, (rig: Rig) => server.presenceLimitChannel(topicOf(1), rig.label)],
+  ])('(n) %s, canal abonné en mouvement : solo tout de suite, plus aucun envoi, aucun POST REST, aucune jointure avant le délai long', async (_label, kind, message, inject) => {
+    const r = makeRig({ prod: true, moving: true, config: { initialJoinJitterMs: 100 } })
+    r.session.start()
+    await until(() => state(r) === 'subscribed', 'subscribed')
+    await run(3500)
+    expect(server.broadcastCount(topicOf(1))).toBeGreaterThanOrEqual(3) // 1 envoi/s en mouvement
+    const joinsBefore = server.joinCount()
+    expect(joinsBefore).toBe(1)
+
+    expect(inject(r)).toBe(1)
+    await run(0)
+    const stats = r.session.stats()
+    expect(stats.state).toBe('solo')
+    expect(stats.soloReason).toBe('quota')
+    expect(stats.quota).toBe(kind)
+    expect(stats.errors).toEqual({ [message]: 1 })
+    expect(stats.reconnects).toBe(0)
+    expect(stats.closedByServer).toBe(0) // le message système a précédé le phx_close : la cause est connue, le CLOSED est ignoré
+    const broadcastsAtClose = server.broadcastCount(topicOf(1))
+    await run(50)
+    expect(server.openConnections(r.label)).toHaveLength(0)
+    expect(r.sb.getChannels()).toHaveLength(0)
+    expect(server.memberCount(topicOf(1))).toBe(0)
+
+    await run(220_000)
+    expect(server.joinCount()).toBe(joinsBefore) // aucune des 4 reconnexions, aucune sonde avant 225 s
+    expect(server.broadcastCount(topicOf(1))).toBe(broadcastsAtClose)
+    expect(server.restBroadcasts).toHaveLength(0)
+    expect(restWarnings()).toBe(0)
+    await until(() => server.joinCount() === joinsBefore + 1, 'sondage unique', 160_000, 500)
+  })
+
+  it('(m bis) un message système d’erreur qui n’est pas un quota ne change rien', async () => {
+    const r = makeRig({ prod: true, config: { initialJoinJitterMs: 100 } })
+    r.session.start()
+    await until(() => state(r) === 'subscribed', 'subscribed')
+    server.sendSystem(topicOf(1), { message: 'Unable to subscribe to changes with given parameters' }, r.label)
+    await run(5000)
+    expect(state(r)).toBe('subscribed')
+    expect(r.session.stats().soloReason).toBeNull()
+    expect(server.joinCount()).toBe(1)
+  })
+
+  it('(q) limite de jointures par seconde (100 sur le plan gratuit) : les refusés jouent seuls sans réessayer, les autres sont placés', async () => {
+    server = new FakeRealtimeServer({ maxJoinsPerSecond: 10 })
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    for (let i = 1; i <= 40; i++) makeRig({ prod: true, moving: false, seed: 300 + i * 11, config: { initialJoinJitterMs: 200, quotaSoloRetryMs: 0 } }).session.start()
+    await until(() => rigs.every((r) => state(r) === 'subscribed' || state(r) === 'solo'), 'toutes les sessions posées', 20_000)
+    await run(5000)
+
+    const placed = rigs.filter((r) => state(r) === 'subscribed')
+    const solo = rigs.filter((r) => state(r) === 'solo')
+    expect(placed).toHaveLength(10)
+    expect(solo).toHaveLength(30)
+    for (const r of solo) {
+      expect(r.session.stats().soloReason).toBe('quota')
+      expect(r.session.stats().quota).toBe('too_many_joins')
+      expect(r.session.stats().joins).toBe(1) // un seul essai chacun : pas de tempête de reconnexions
+    }
+    expect(server.joinCount()).toBe(40)
+    expect(server.quotaRefusals.joins).toBe(30)
+    expect(consoleError).not.toHaveBeenCalled()
+    consoleError.mockRestore()
+  })
+
+  /**
+   * Arrivée groupée : les joueurs scannent le QR code de fin de soirée sur ~60 s. La gigue d'arrivée de la session
+   * (`initialJoinJitterMs`) la simule ; sa valeur de production (2,5 s) n'est que le lissage d'une rafale.
+   */
+  const ARRIVAL_SPREAD_MS = 60_000
+
+  /** Nombre maximal d'événements dans une fenêtre glissante d'une seconde. */
+  function peakPerSecond(times: number[]): number {
+    let peak = 0
+    for (let i = 0, j = 0; i < times.length; i++) {
+      while (times[i] - times[j] >= 1000) j++
+      peak = Math.max(peak, i - j + 1)
+    }
+    return peak
+  }
+
+  it('(o) banc : 200 joueurs arrivés sur 60 s, salles de 30 × 8, quotas du plan gratuit simulés — aucune salle au-dessus de 30, une seule salle chacun, 7 salles au plus', async () => {
+    server = new FakeRealtimeServer({ maxConnections: 200, maxJoinsPerSecond: 100 })
+    const N = 200
+    for (let i = 1; i <= N; i++) makeRig({ prod: true, moving: false, seed: 4000 + i * 7, config: { initialJoinJitterMs: ARRIVAL_SPREAD_MS, soloRetryMs: 0, quotaSoloRetryMs: 0 } }).session.start()
+
+    let maxOccupied = 0
+    let maxStore = 0
+    let duplicateSamples = 0
+    const sample = () => {
+      let occupied = 0
+      for (let i = 1; i <= MAX_ROOMS; i++) if (server.memberCount(topicOf(i)) > 0) occupied++
+      maxOccupied = Math.max(maxOccupied, occupied)
+      const ids = server.trackedPayloads().map((p) => p.id)
+      if (new Set(ids).size !== ids.length) duplicateSamples++
+      for (const r of rigs) maxStore = Math.max(maxStore, r.store.peers.size)
+    }
+    for (let t = 0; t < 100_000; t += 500) {
+      await run(500)
+      sample()
+    }
+    await run(20_000) // régime établi : plus aucune jointure
+    sample()
+
+    // Tous placés, aucun en solo, aucun quota atteint.
+    expect(rigs.filter((r) => state(r) === 'subscribed')).toHaveLength(N)
+    expect(rigs.filter((r) => state(r) === 'solo')).toHaveLength(0)
+    expect(server.quotaRefusals).toEqual({ connections: 0, joins: 0 })
+
+    // Aucune salle au-dessus de 30 (en régime établi), chacun dans une seule salle, 7 salles au plus.
+    const finalCounts = Array.from({ length: MAX_ROOMS }, (_, i) => server.memberCount(topicOf(i + 1)))
+    expect(Math.max(...finalCounts)).toBeLessThanOrEqual(ROOM_CAPACITY)
+    expect(finalCounts.reduce((a, b) => a + b, 0)).toBe(N)
+    expect(finalCounts.filter((n) => n > 0).length).toBeLessThanOrEqual(7)
+    expect(maxOccupied).toBeLessThanOrEqual(7)
+    expect(duplicateSamples).toBe(0)
+    const ids = server.trackedPayloads().map((p) => p.id)
+    expect(new Set(ids).size).toBe(N)
+    // Pic transitoire : une salle déborde un instant (les derniers arrivés la traversent, puis la quittent), de quelques places.
+    const peaks = Array.from({ length: MAX_ROOMS }, (_, i) => server.peakMemberCount(topicOf(i + 1)))
+    expect(Math.max(...peaks)).toBeLessThanOrEqual(ROOM_CAPACITY + 12)
+
+    // Trafic de jointures borné, sous le plafond de 100 jointures/s du plan gratuit.
+    const joins = server.joinCount()
+    expect(joins).toBeLessThanOrEqual(900)
+    expect(server.peakJoinsPerSecond()).toBeLessThanOrEqual(100)
+    expect(Math.max(...rigs.map((r) => r.session.stats().joins))).toBeLessThanOrEqual(MAX_ROOMS)
+    expect(Math.max(...rigs.map((r) => r.session.stats().reconnects))).toBe(0)
+    expect(server.peakConnectedUsers()).toBeLessThanOrEqual(200)
+    // Registre des pairs borné : une salle de 30, jamais plus de 29 autres (+ quelques retardataires).
+    expect(maxStore).toBeLessThanOrEqual(ROOM_CAPACITY + 6)
+    expect(maxStore).toBeLessThanOrEqual(MAX_PEER_RECORDS)
+    expect(server.restBroadcasts).toHaveLength(0)
+
+    // Arrêt général : plus aucune présence, aucun canal, aucun minuteur de session.
+    for (const r of rigs) r.session.stop()
+    await run(1000)
+    expect(server.trackedPayloads()).toEqual([])
+    expect(rigs.every((r) => r.timers.live.size === 0)).toBe(true)
+    expect(rigs.every((r) => r.store.peers.size === 0)).toBe(true)
+
+    // Les chiffres mesurés (reproductibles : PRNG et horloge simulés) sont consignés dans le README.
+    const presenceFrames = server.frames.filter((f) => f.event === 'presence').map((f) => f.t)
+    console.info(
+      `[banc 200] jointures=${joins} pic jointures/s=${server.peakJoinsPerSecond()} track=${server.trackCount()} untrack=${server.untrackCount()} ` +
+        `pic présence/s=${peakPerSecond(presenceFrames)} pic membres par salle=${peaks.join('/')} salles finales=${finalCounts.join('/')} ` +
+        `max jointures par joueur=${Math.max(...rigs.map((r) => r.session.stats().joins))} pic connexions=${server.peakConnectedUsers()}`,
+    )
+  }, 300_000)
+
+  it('(p) banc : 260 joueurs, serveur refusant au-delà de 200 connexions — les 60 suivants jouent seuls, sans erreur, sans réessayer avant le délai long', async () => {
+    server = new FakeRealtimeServer({ maxConnections: 200, maxJoinsPerSecond: 100 })
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const N = 260
+    for (let i = 1; i <= N; i++) makeRig({ prod: true, moving: false, seed: 8000 + i * 7, config: { initialJoinJitterMs: ARRIVAL_SPREAD_MS } }).session.start()
+
+    for (let t = 0; t < 100_000; t += 500) await run(500)
+
+    const placed = rigs.filter((r) => state(r) === 'subscribed')
+    const solo = rigs.filter((r) => state(r) === 'solo')
+    expect(placed).toHaveLength(200)
+    expect(solo).toHaveLength(60)
+    expect(server.peakConnectedUsers()).toBe(200) // jamais au-delà
+    expect(server.quotaRefusals.connections).toBe(60)
+    for (const r of solo) {
+      const stats = r.session.stats()
+      expect(stats.soloReason).toBe('quota')
+      expect(stats.quota).toBe('too_many_connections')
+      expect(stats.joins).toBe(1) // refusé à la première jointure : aucune reconnexion
+      expect(stats.reconnects).toBe(0)
+      expect(server.openConnections(r.label)).toHaveLength(0) // WebSocket fermée : ils ne pèsent plus sur le serveur
+    }
+    // Les 200 placés ne sont pas dérangés : tous dans une salle de 30 au plus.
+    const finalCounts = Array.from({ length: MAX_ROOMS }, (_, i) => server.memberCount(topicOf(i + 1)))
+    expect(Math.max(...finalCounts)).toBeLessThanOrEqual(ROOM_CAPACITY)
+    expect(finalCounts.reduce((a, b) => a + b, 0)).toBe(200)
+    // Aucune erreur visible : ni console.error, ni repli REST.
+    expect(consoleError).not.toHaveBeenCalled()
+    expect(server.restBroadcasts).toHaveLength(0)
+    expect(restWarnings()).toBe(0)
+
+    // Les 60 en solo ne réessaient pas : le délai long est de 225 à 375 s (la sonde elle-même est vérifiée en (m)).
+    const joinsAtSolo = server.joinCount()
+    await run(60_000)
+    expect(server.joinCount()).toBe(joinsAtSolo)
+    for (const r of solo) expect(r.session.stats().joins).toBe(1)
+    expect(solo.every((r) => state(r) === 'solo')).toBe(true) // toujours seuls, toujours silencieux
+    expect(consoleError).not.toHaveBeenCalled()
+    consoleError.mockRestore()
+  }, 300_000)
 })

@@ -20,6 +20,10 @@ import type { ChannelStatus, RealtimeChannelLike, RealtimeClientLike } from './r
 // ---------------------------------------------------------------------------------------------
 // Outils de test
 
+/** Capacité d'une salle et nombre de salles par défaut (décision du 01/10 : 30 × 8). Les tests suivent la config. */
+const CAP = DEFAULT_PRESENCE_CONFIG.roomCapacity
+const ROOMS = DEFAULT_PRESENCE_CONFIG.maxRooms
+
 async function flush(): Promise<void> {
   for (let i = 0; i < 12; i++) await Promise.resolve()
 }
@@ -72,6 +76,7 @@ class FakeChannel implements RealtimeChannelLike {
   state: Record<string, unknown[]> = {}
   statusCb: ((status: ChannelStatus, err?: Error) => void) | null = null
   syncCb: (() => void) | null = null
+  systemCb: ((payload: unknown) => void) | null = null
   broadcastCbs = new Map<string, (payload: unknown) => void>()
   sendCalls: Array<{ event: string; payload: unknown }> = []
   /** Envois faits alors que le canal n'était pas rejoint : le SDK les transformerait en POST REST. */
@@ -95,6 +100,10 @@ class FakeChannel implements RealtimeChannelLike {
   onPresenceSync(cb: () => void) {
     if (this.subscribeCalled) throw new Error(`cannot add \`presence\` callbacks for ${this.name} after \`subscribe()\`.`)
     this.syncCb = cb
+  }
+  onSystem(cb: (payload: unknown) => void) {
+    if (this.subscribeCalled) throw new Error(`cannot add \`system\` callbacks for ${this.name} after \`subscribe()\`.`)
+    this.systemCb = cb
   }
   presenceState() {
     return this.state
@@ -141,6 +150,9 @@ class FakeChannel implements RealtimeChannelLike {
   }
   emitBroadcast(event: string, payload: unknown) {
     this.broadcastCbs.get(event)?.(payload)
+  }
+  emitSystem(payload: unknown) {
+    this.systemCb?.(payload)
   }
 }
 
@@ -223,9 +235,9 @@ function others(n: number, prefix = 'p'): Record<string, unknown[]> {
 describe('configuration par défaut', () => {
   it('reprend les valeurs du contrat', () => {
     expect(DEFAULT_PRESENCE_CONFIG).toEqual({
-      roomCapacity: 8,
-      maxRooms: 12,
-      moveSendIntervalMs: 500,
+      roomCapacity: 30,
+      maxRooms: 8,
+      moveSendIntervalMs: 1000,
       idleHeartbeatMs: 10000,
       initialJoinJitterMs: 2500,
       hopDelayMinMs: 150,
@@ -234,9 +246,11 @@ describe('configuration par défaut', () => {
       reconnectBaseMs: 1000,
       reconnectMaxMs: 15000,
       soloRetryMs: 180000,
+      quotaSoloRetryMs: 300000,
       hiddenLeaveMs: 30000,
       peerTimeoutMs: EFFECTIVE_PEER_TIMEOUT_MS,
     })
+    expect(CAP * ROOMS).toBe(240) // 240 places pour ~200 joueurs
     expect(EFFECTIVE_PEER_TIMEOUT_MS).toBe(16000)
   })
 })
@@ -298,10 +312,11 @@ describe('1 bis. salle d’entrée : tirage aléatoire dans 1..maxRooms (P1-c)',
       seen.add(ctx.client.created[0].name)
       ctx.session.stop()
     }
-    expect([...seen].sort()).toEqual(['musee:v1:room-1', 'musee:v1:room-10', 'musee:v1:room-12', 'musee:v1:room-4', 'musee:v1:room-7'].sort())
+    // 1 + floor(v × 8) : 0 → 1, 0,3 → 3, 0,5 → 5, 0,75 → 7, 0,999 → 8.
+    expect([...seen].sort()).toEqual(['musee:v1:room-1', 'musee:v1:room-3', 'musee:v1:room-5', 'musee:v1:room-7', 'musee:v1:room-8'].sort())
   })
 
-  it('respecte maxRooms (jamais au-delà) et le défaut reste dans 1..12', async () => {
+  it('respecte maxRooms (jamais au-delà) et le défaut reste dans 1..8', async () => {
     const ctx = setup({ pickStartRoom: undefined, config: { maxRooms: 3 } })
     ctx.rng.v = 0.999
     ctx.session.start()
@@ -321,17 +336,17 @@ describe('1 bis. salle d’entrée : tirage aléatoire dans 1..maxRooms (P1-c)',
   })
 
   it('depuis une salle de départ tirée au hasard, le saut par rang reste vers l’avant et borné par maxRooms', async () => {
-    const ctx = setup({ pickStartRoom: () => 10 })
+    const ctx = setup({ pickStartRoom: () => ROOMS - 2 })
     const ch = await boot(ctx)
     ch.accept()
     await flush()
-    ch.emitSync(others(16)) // 10 + floor(16/8) = 12
+    ch.emitSync(others(2 * CAP)) // 6 + floor(60 / 30) = 8
     await ctx.clock.advance(600)
-    expect(ctx.client.created.map((c) => c.name)).toEqual(['musee:v1:room-10', 'musee:v1:room-12'])
+    expect(ctx.client.created.map((c) => c.name)).toEqual(['musee:v1:room-6', 'musee:v1:room-8'])
     const ch2 = ctx.client.created[1]
     ch2.accept()
     await flush()
-    ch2.emitSync(others(8)) // 12 + 1 > 12 : musée plein
+    ch2.emitSync(others(CAP)) // 8 + 1 > 8 : musée plein
     await ctx.clock.advance(600)
     expect(ctx.session.stats().state).toBe('solo')
     expect(ctx.session.stats().soloReason).toBe('musée plein')
@@ -342,7 +357,7 @@ describe('2. retrait de l’ancien canal avant d’en recréer un (P0-a)', () =>
   it('un join refusé puis accepté finit SUBSCRIBED, avec un seul canal vivant, sans exception', async () => {
     const ctx = setup()
     const ch1 = await boot(ctx)
-    ch1.fail('CHANNEL_ERROR', new Error('join refused: too many connections'))
+    ch1.fail('CHANNEL_ERROR', new Error('join refused: server busy'))
     await flush()
     expect(ctx.session.stats().state).toBe('backoff')
     expect(ch1.unsubscribed).toBe(true) // le canal jamais abonné est retiré quand même
@@ -359,8 +374,8 @@ describe('2. retrait de l’ancien canal avant d’en recréer un (P0-a)', () =>
     expect(ctx.session.stats().state).toBe('subscribed')
     expect(ctx.client.live.size).toBe(1)
     expect(ch2.trackCalls).toHaveLength(1)
-    expect(ctx.session.stats().errors).toEqual({ 'join refused: too many connections': 1 })
-    expect(ctx.session.stats().lastError).toBe('join refused: too many connections')
+    expect(ctx.session.stats().errors).toEqual({ 'join refused: server busy': 1 })
+    expect(ctx.session.stats().lastError).toBe('join refused: server busy')
     expect(ctx.session.stats().reconnects).toBe(1)
   })
 
@@ -538,7 +553,7 @@ describe('3. erreurs de canal : recul, même salle, solo', () => {
       ch.accept()
       await flush() // track accepté
       await ctx.clock.advance(100)
-      ch.fail('CLOSED', new Error('Too many messages per second'))
+      ch.fail('CLOSED', new Error('channel closed by server'))
       await ctx.clock.advance(20_000)
     }
     expect(ctx.session.stats().state).toBe('solo')
@@ -554,7 +569,7 @@ describe('3. erreurs de canal : recul, même salle, solo', () => {
     const ch2 = ctx.client.created[1]
     ch2.accept()
     await flush()
-    ch2.emitSync(others(8))
+    ch2.emitSync(others(CAP))
     await ctx.clock.advance(375) // saut vers room-2
     const ch3 = ctx.client.created[2]
     expect(ch3.name).toBe('musee:v1:room-2')
@@ -573,12 +588,12 @@ describe('3. erreurs de canal : recul, même salle, solo', () => {
     const sentBefore = ch.sendCalls.length
     expect(sentBefore).toBeGreaterThan(0)
 
-    ch.fail('CLOSED', new Error('Too many messages per second'))
+    ch.fail('CLOSED', new Error('channel closed by server'))
     await flush()
     const stats = ctx.session.stats()
     expect(stats.closedByServer).toBe(1)
     expect(stats.state).toBe('backoff')
-    expect(stats.errors['Too many messages per second']).toBe(1)
+    expect(stats.errors['channel closed by server']).toBe(1)
 
     await ctx.clock.advance(900) // avant la relance : plus aucun envoi
     expect(ch.sendCalls).toHaveLength(sentBefore)
@@ -600,7 +615,7 @@ describe('3. erreurs de canal : recul, même salle, solo', () => {
 })
 
 describe('4. boucle d’envoi', () => {
-  it('en mouvement : ~2 envois/s, uniquement sur un canal abonné et rejoint', async () => {
+  it('en mouvement : 1 envoi/s, uniquement sur un canal abonné et rejoint', async () => {
     const ctx = setup()
     const ch = await boot(ctx)
     ctx.player.moving = true
@@ -608,11 +623,25 @@ describe('4. boucle d’envoi', () => {
     expect(ch.sendCalls).toHaveLength(0)
 
     ch.accept()
-    await ctx.clock.advance(2000)
-    // premier envoi au premier tick (100 ms), puis toutes les 500 ms : 100, 600, 1100, 1600.
-    expect(ch.sendCalls).toHaveLength(4)
+    await ctx.clock.advance(3000)
+    // premier envoi au premier tick (100 ms), puis toutes les 1 000 ms : 100, 1100, 2100.
+    expect(ch.sendCalls).toHaveLength(3)
     expect(ch.sendCalls.every((c) => c.event === POSITION_EVENT)).toBe(true)
-    expect(ctx.session.stats().sent).toBe(4)
+    expect(ctx.session.stats().sent).toBe(3)
+  })
+
+  it('jamais plus de 1 envoi/s en mouvement par défaut, et un battement toutes les 10 s à l’arrêt', async () => {
+    const ctx = setup()
+    const ch = await bootSubscribed(ctx)
+    ctx.player.moving = true
+    await ctx.clock.advance(60_000)
+    expect(ch.sendCalls.length).toBeLessThanOrEqual(61) // 1 par seconde, plus le premier
+    expect(ch.sendCalls.length).toBeGreaterThanOrEqual(55)
+    ctx.player.moving = false
+    await ctx.clock.advance(100) // position d'arrêt, tout de suite
+    ch.sendCalls = []
+    await ctx.clock.advance(60_000)
+    expect(ch.sendCalls).toHaveLength(6) // un battement toutes les 10 s
   })
 
   it('jamais de repli REST : pas d’envoi tant que isJoined() est faux', async () => {
@@ -704,17 +733,17 @@ describe('6. rang et saut direct de salle', () => {
   it('rang < capacité : on reste', async () => {
     const ctx = setup()
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(7))
+    ch.emitSync(others(CAP - 1))
     await ctx.clock.advance(5000)
     expect(ctx.client.created).toHaveLength(1)
     expect(ctx.session.stats().hops).toBe(0)
-    expect(ctx.counts.at(-1)).toBe(7)
+    expect(ctx.counts.at(-1)).toBe(CAP - 1)
   })
 
-  it('rang 8 (9e arrivé) : saut vers room-2 après une gigue [150, 600[, avec untrack puis départ', async () => {
+  it('rang 30 (31e arrivé) : saut vers room-2 après une gigue [150, 600[, avec untrack puis départ', async () => {
     const ctx = setup()
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(374) // random 0,5 → 150 + 0,5 × 450 = 375
     expect(ctx.client.created).toHaveLength(1)
     await ctx.clock.advance(1)
@@ -726,10 +755,10 @@ describe('6. rang et saut direct de salle', () => {
     expect(ctx.store.peers.size).toBe(0) // l'ancien roster est vidé
   })
 
-  it('rang 16 : saute directement à room-3, sans passer par room-2', async () => {
+  it('rang 60 : saute directement à room-3, sans passer par room-2', async () => {
     const ctx = setup()
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(16))
+    ch.emitSync(others(2 * CAP))
     await ctx.clock.advance(600)
     expect(ctx.client.created.map((c) => c.name)).toEqual(['musee:v1:room-1', 'musee:v1:room-3'])
   })
@@ -737,9 +766,9 @@ describe('6. rang et saut direct de salle', () => {
   it('la décision est relue à l’échéance : si elle ne tient plus au dernier sync, pas de saut', async () => {
     const ctx = setup()
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(200)
-    ch.emitSync(others(7)) // quelqu'un est parti devant nous
+    ch.emitSync(others(CAP - 1)) // quelqu'un est parti devant nous
     await ctx.clock.advance(2000)
     expect(ctx.client.created).toHaveLength(1)
     expect(ctx.session.stats().hops).toBe(0)
@@ -748,9 +777,9 @@ describe('6. rang et saut direct de salle', () => {
   it('si la cible change entre deux syncs, on va à la dernière cible', async () => {
     const ctx = setup()
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(100)
-    ch.emitSync(others(16))
+    ch.emitSync(others(2 * CAP))
     await ctx.clock.advance(1000)
     expect(ctx.client.created.map((c) => c.name)).toEqual(['musee:v1:room-1', 'musee:v1:room-3'])
     expect(ctx.session.stats().hops).toBe(1)
@@ -806,7 +835,7 @@ describe('6. rang et saut direct de salle', () => {
   it('ne recule jamais : le rang fait seulement avancer', async () => {
     const ctx = setup()
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(600)
     const ch2 = ctx.client.created[1]
     ch2.accept()
@@ -820,7 +849,7 @@ describe('6. rang et saut direct de salle', () => {
 describe('7. solo : nouvelle tentative', () => {
   async function toSolo(ctx: Ctx) {
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(375) // gigue de saut (random 0,5) : le solo commence exactement ici
     return ch
   }
@@ -839,7 +868,7 @@ describe('7. solo : nouvelle tentative', () => {
     ctx.client.created[1].accept()
     await flush()
     ctx.rng.v = 0 // nouvelle tentative × 0,75
-    ctx.client.created[1].emitSync(others(8))
+    ctx.client.created[1].emitSync(others(CAP))
     await flush()
     expect(ctx.session.stats().state).toBe('solo') // tout de suite, sans gigue de saut
     expect(ctx.client.created[1].sendCalls).toHaveLength(0)
@@ -851,25 +880,25 @@ describe('7. solo : nouvelle tentative', () => {
 
   it('le sondage ne traverse pas les salles : une seule salle tirée au hasard, abandonnée si elle est pleine', async () => {
     const ctx = setup({ pickStartRoom: undefined, config: { soloRetryMs: 10_000 } })
-    ctx.rng.v = 0.5 // arrivée en room-7 (1 + floor(0,5 × 12))
+    ctx.rng.v = 0.5 // arrivée en room-5 (1 + floor(0,5 × 8))
     ctx.session.start()
     await ctx.clock.advance(1250)
     const first = ctx.client.created[0]
-    expect(first.name).toBe('musee:v1:room-7')
+    expect(first.name).toBe('musee:v1:room-5')
     first.accept()
     await flush()
-    // room-7 et toutes les suivantes pleines : 12 - 7 = 5 sauts au plus, ici directement solo (rang 40 → cible 12).
-    first.emitSync(others(40))
+    // room-5 pleine et les suivantes aussi : saut direct jusqu'à la dernière salle (rang 90 → 5 + 3 = room-8), pleine elle aussi.
+    first.emitSync(others(3 * CAP))
     await ctx.clock.advance(600)
     const last = ctx.client.created[ctx.client.created.length - 1]
     last.accept()
     await flush()
-    last.emitSync(others(8))
+    last.emitSync(others(CAP))
     await ctx.clock.advance(600)
     expect(ctx.session.stats().state).toBe('solo')
 
     const createdAtSolo = ctx.client.created.length
-    ctx.rng.v = 0.1 // à l'échéance (10 000 ms, gigue tirée au passage en solo) : room-2 (1 + floor(0,1 × 12))
+    ctx.rng.v = 0.2 // à l'échéance (10 000 ms, gigue tirée au passage en solo) : room-2 (1 + floor(0,2 × 8))
     await ctx.clock.advance(10_000)
     expect(ctx.client.created).toHaveLength(createdAtSolo + 1)
     const probe = ctx.client.created[createdAtSolo]
@@ -879,7 +908,7 @@ describe('7. solo : nouvelle tentative', () => {
     ctx.player.moving = true
     await ctx.clock.advance(1000) // aucune position tant que le sondage n'a pas conclu
     expect(probe.sendCalls).toHaveLength(0)
-    probe.emitSync(others(8))
+    probe.emitSync(others(CAP))
     await flush()
     // pleine : retour en solo AU LIEU de sauter en room-3, et jamais de position publiée
     expect(ctx.session.stats().state).toBe('solo')
@@ -1012,7 +1041,7 @@ describe('8 bis. retour d’un onglet caché et fermeture de la socket (P2-d)', 
   it('revient dans sa dernière salle (celle où un saut l’avait mené), pas dans room-1', async () => {
     const ctx = setup()
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(600)
     const ch2 = ctx.client.created[1]
     ch2.accept()
@@ -1035,7 +1064,7 @@ describe('8 bis. retour d’un onglet caché et fermeture de la socket (P2-d)', 
     expect(back.name).toBe('musee:v1:room-5')
     back.accept()
     await flush()
-    back.emitSync(others(8))
+    back.emitSync(others(CAP))
     await ctx.clock.advance(600)
     expect(ctx.client.created[2].name).toBe('musee:v1:room-6')
     expect(ch.unsubscribed).toBe(true)
@@ -1048,7 +1077,7 @@ describe('8 bis. retour d’un onglet caché et fermeture de la socket (P2-d)', 
     const ch = ctx.client.created[0]
     ch.accept()
     await flush()
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(600)
     expect(ctx.session.stats().state).toBe('solo')
     await hideLong(ctx)
@@ -1057,7 +1086,7 @@ describe('8 bis. retour d’un onglet caché et fermeture de la socket (P2-d)', 
     const probe = ctx.client.created[1]
     probe.accept()
     await flush()
-    probe.emitSync(others(8))
+    probe.emitSync(others(CAP))
     await flush()
     expect(ctx.session.stats().state).toBe('solo')
     expect(probe.sendCalls).toHaveLength(0)
@@ -1075,7 +1104,7 @@ describe('8 bis. retour d’un onglet caché et fermeture de la socket (P2-d)', 
   it('ferme la WebSocket au passage en solo, une fois le dernier canal parti', async () => {
     const ctx = setup({ config: { maxRooms: 1, soloRetryMs: 0 } })
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(600)
     expect(ctx.session.stats().state).toBe('solo')
     expect(ctx.client.disconnects).toBe(1)
@@ -1094,7 +1123,7 @@ describe('8 bis. retour d’un onglet caché et fermeture de la socket (P2-d)', 
     let release!: () => void
     const ch = await bootSubscribed(ctx)
     ctx.client.gate = new Promise<void>((r) => (release = r))
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(600)
     expect(ctx.session.stats().state).toBe('solo')
     expect(ctx.client.disconnects).toBe(0) // l'ancien canal n'a pas fini de partir
@@ -1106,7 +1135,7 @@ describe('8 bis. retour d’un onglet caché et fermeture de la socket (P2-d)', 
   it('pas de fermeture entre deux canaux : ni saut de salle ni reconnexion ne touchent la socket', async () => {
     const ctx = setup()
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(600)
     const ch2 = ctx.client.created[1]
     ch2.fail('CHANNEL_ERROR')
@@ -1119,7 +1148,7 @@ describe('8 bis. retour d’un onglet caché et fermeture de la socket (P2-d)', 
     const ctx = setup({ config: { maxRooms: 1, soloRetryMs: 0 } })
     ;(ctx.client as { disconnect?: () => void }).disconnect = undefined
     const ch = await bootSubscribed(ctx)
-    ch.emitSync(others(8))
+    ch.emitSync(others(CAP))
     await ctx.clock.advance(600)
     expect(ctx.session.stats().state).toBe('solo')
   })
@@ -1262,5 +1291,270 @@ describe('10. messages reçus et observabilité', () => {
     await ctx.clock.advance(1000)
     expect(ctx.client.created).toHaveLength(2)
     expect(ctx.client.created[1]).not.toBe(stale)
+  })
+})
+
+describe('11. quota dépassé : solo immédiat, sans reconnexion', () => {
+  const REFUSALS: Array<[string, string]> = [
+    ['Too many connected users', 'too_many_connections'], // too_many_connections : 200 connexions du plan gratuit
+    ['too_many_connections', 'too_many_connections'],
+    ['ChannelRateLimitReached: Too many channels', 'too_many_channels'],
+    ['ClientJoinRateLimitReached: Too many joins per second', 'too_many_joins'],
+    ['too_many_joins', 'too_many_joins'],
+  ]
+
+  it.each(REFUSALS)('jointure refusée (« %s ») : solo tout de suite, motif quota, aucune des reconnexions, WebSocket fermée', async (text, kind) => {
+    const ctx = setup()
+    const ch = await boot(ctx)
+    ch.fail('CHANNEL_ERROR', new Error(text))
+    await flush()
+
+    const stats = ctx.session.stats()
+    expect(stats.state).toBe('solo')
+    expect(stats.soloReason).toBe('quota')
+    expect(stats.quota).toBe(kind)
+    expect(stats.reconnects).toBe(0)
+    expect(stats.room).toBeNull()
+    expect(stats.errors).toEqual({ [text]: 1 })
+    expect(ctx.logs).toEqual([`[presence] mode solo : quota (${kind})`]) // un seul message, jamais d'erreur visible
+    expect(ch.unsubscribed).toBe(true)
+    expect(ctx.client.live.size).toBe(0)
+    expect(ctx.client.disconnects).toBe(1) // WebSocket fermée
+    expect(ctx.counts.at(-1)).toBe(0)
+    await ctx.clock.advance(200_000) // aucun recul de 1, 2, 4, 8 s : rien ne repart avant le délai long
+    expect(ctx.client.created).toHaveLength(1)
+  })
+
+  it('la raison est lue aussi dans la cause de l’Error (réponse brute du serveur)', async () => {
+    const ctx = setup()
+    const ch = await boot(ctx)
+    ch.fail('CHANNEL_ERROR', new Error('error', { cause: { reason: 'Too many connected users' } }))
+    await flush()
+    expect(ctx.session.stats().soloReason).toBe('quota')
+    expect(ctx.session.stats().quota).toBe('too_many_connections')
+  })
+
+  it('message système « Too many messages per second » : solo avant même le CLOSED, sans untrack, le CLOSED suivant est ignoré', async () => {
+    const ctx = setup()
+    const ch = await bootSubscribed(ctx)
+    ctx.player.moving = true
+    await ctx.clock.advance(1500)
+    const sentBefore = ch.sendCalls.length
+    expect(sentBefore).toBeGreaterThan(0)
+
+    ch.emitSystem({ extension: 'system', status: 'error', message: 'Too many messages per second', channel: 'room-1' })
+    await flush()
+    let stats = ctx.session.stats()
+    expect(stats.state).toBe('solo')
+    expect(stats.soloReason).toBe('quota')
+    expect(stats.quota).toBe('too_many_messages')
+    expect(stats.reconnects).toBe(0)
+    expect(ch.untrackCalls).toBe(0) // le serveur ferme le canal : inutile d'annoncer le départ
+    expect(ch.unsubscribed).toBe(true)
+    expect(ctx.client.disconnects).toBe(1)
+    expect(ctx.logs).toEqual(['[presence] mode solo : quota (too_many_messages)'])
+
+    ch.fail('CLOSED') // le phx_close qui suit, sans Error
+    await ctx.clock.advance(60_000)
+    stats = ctx.session.stats()
+    expect(stats.state).toBe('solo')
+    expect(stats.closedByServer).toBe(0) // c'était un canal déjà abandonné
+    expect(ctx.client.created).toHaveLength(1)
+    expect(ch.sendCalls).toHaveLength(sentBefore) // plus aucun envoi
+    expect(ch.restFallbacks).toBe(0)
+  })
+
+  it('limite de présence signalée par le serveur : même chemin', async () => {
+    const ctx = setup()
+    const ch = await bootSubscribed(ctx)
+    ch.emitSystem({ extension: 'system', status: 'error', message: 'Too many presence messages per second', channel: 'room-1' })
+    await flush()
+    expect(ctx.session.stats().soloReason).toBe('quota')
+    expect(ctx.session.stats().quota).toBe('presence_limit')
+  })
+
+  it('un CLOSED qui porte lui-même le texte du quota (sans message système avant) mène aussi au solo', async () => {
+    const ctx = setup()
+    const ch = await bootSubscribed(ctx)
+    ch.fail('CLOSED', new Error('Too many messages per second'))
+    await flush()
+    expect(ctx.session.stats().state).toBe('solo')
+    expect(ctx.session.stats().soloReason).toBe('quota')
+    expect(ctx.session.stats().closedByServer).toBe(1)
+    expect(ctx.session.stats().reconnects).toBe(0)
+  })
+
+  it('les messages système ordinaires ne déclenchent rien (succès, ou erreur qui n’est pas un quota)', async () => {
+    const ctx = setup()
+    const ch = await bootSubscribed(ctx)
+    ch.emitSystem({ extension: 'postgres_changes', status: 'ok', message: 'Subscribed to PostgreSQL', channel: 'room-1' })
+    ch.emitSystem({ extension: 'system', status: 'ok', message: 'Too many messages per second', channel: 'room-1' }) // jamais sans status error
+    ch.emitSystem({ extension: 'system', status: 'error', message: 'Unable to subscribe to changes with given parameters', channel: 'room-1' })
+    ch.emitSystem(null)
+    ch.emitSystem('Too many messages per second')
+    await ctx.clock.advance(5000)
+    expect(ctx.session.stats().state).toBe('subscribed')
+    expect(ctx.session.stats().soloReason).toBeNull()
+  })
+
+  it('un message système d’un canal abandonné est ignoré (génération)', async () => {
+    const ctx = setup()
+    const ch1 = await boot(ctx)
+    ch1.fail('CHANNEL_ERROR', new Error('server busy'))
+    await flush()
+    ch1.emitSystem({ status: 'error', message: 'Too many messages per second' })
+    await flush()
+    expect(ctx.session.stats().state).toBe('backoff')
+    expect(ctx.session.stats().soloReason).toBeNull()
+  })
+
+  it('les erreurs ordinaires gardent le chemin actuel : recul, même salle, reconnexions', async () => {
+    const ctx = setup({ config: { soloRetryMs: 0 } })
+    const ch = await boot(ctx)
+    ch.fail('CHANNEL_ERROR', new Error('socket closed: 1006'))
+    await flush()
+    expect(ctx.session.stats().state).toBe('backoff')
+    expect(ctx.session.stats().quota).toBeNull()
+    await ctx.clock.advance(1000)
+    expect(ctx.client.created).toHaveLength(2)
+    expect(ctx.session.stats().reconnects).toBe(1)
+  })
+
+  it('aucune nouvelle jointure avant le délai long (5 min × gigue 0,75–1,25), puis UNE seule salle sondée', async () => {
+    const ctx = setup({ pickStartRoom: undefined })
+    ctx.rng.v = 0.5 // arrivée en room-5 ; gigue du délai × 1,0
+    ctx.session.start()
+    await ctx.clock.advance(1250)
+    const ch = ctx.client.created[0]
+    ch.fail('CHANNEL_ERROR', new Error('Too many connected users'))
+    await flush()
+    expect(ctx.session.stats().state).toBe('solo')
+
+    await ctx.clock.advance(299_999)
+    expect(ctx.client.created).toHaveLength(1)
+    ctx.rng.v = 0.9 // la salle sondée est tirée à l'échéance : 1 + floor(0,9 × 8) = room-8
+    await ctx.clock.advance(1)
+    expect(ctx.client.created.map((c) => c.name)).toEqual(['musee:v1:room-5', 'musee:v1:room-8'])
+    expect(ctx.session.stats().soloReason).toBeNull()
+    expect(ctx.session.stats().quota).toBeNull()
+    expect(ctx.session.stats().state).toBe('joining')
+  })
+
+  it('la gigue du délai long va de ×0,75 (225 s) à ×1,25 (375 s)', async () => {
+    for (const [rng, expectedMs] of [[0, 225_000], [0.5, 300_000], [0.999, 374_850]] as const) {
+      const ctx = setup()
+      const ch = await boot(ctx)
+      ctx.rng.v = rng
+      ch.fail('CHANNEL_ERROR', new Error('Too many connected users'))
+      await flush()
+      await ctx.clock.advance(expectedMs - 1)
+      expect(ctx.client.created, `rng ${rng}`).toHaveLength(1)
+      await ctx.clock.advance(1)
+      expect(ctx.client.created, `rng ${rng}`).toHaveLength(2)
+    }
+  })
+
+  it('un sondage qui retombe sur le quota repart pour un délai long : le nombre de jointures reste borné', async () => {
+    const ctx = setup()
+    ctx.rng.v = 0 // gigue minimale : délai de 225 s
+    const first = await boot(ctx)
+    first.fail('CHANNEL_ERROR', new Error('Too many connected users'))
+    await flush()
+    // Une demi-heure d'un serveur saturé : chaque sondage est refusé.
+    for (let elapsed = 0; elapsed < 1_800_000; elapsed += 1000) {
+      await ctx.clock.advance(1000)
+      const last = ctx.client.created[ctx.client.created.length - 1]
+      if (ctx.session.stats().state === 'joining') last.fail('CHANNEL_ERROR', new Error('Too many connected users'))
+    }
+    // 1 jointure initiale + au plus une toutes les 225 s : 1 800 / 225 = 8.
+    expect(ctx.client.created.length).toBeLessThanOrEqual(1 + 8)
+    expect(ctx.client.created.length).toBeGreaterThanOrEqual(1 + 7)
+    expect(ctx.session.stats().reconnects).toBe(0) // pas une seule des 4 reconnexions
+    expect(ctx.session.stats().state).toBe('solo')
+    expect(ctx.client.disconnects).toBeGreaterThanOrEqual(ctx.client.created.length - 1) // la socket est refermée après chaque refus
+  })
+
+  it('quotaSoloRetryMs = 0 : reste solo', async () => {
+    const ctx = setup({ config: { quotaSoloRetryMs: 0 } })
+    const ch = await boot(ctx)
+    ch.fail('CHANNEL_ERROR', new Error('Too many connected users'))
+    await ctx.clock.advance(24 * 3_600_000)
+    expect(ctx.client.created).toHaveLength(1)
+    expect(ctx.session.stats().state).toBe('solo')
+  })
+
+  it('un onglet caché puis rouvert pendant le délai ne le raccourcit pas', async () => {
+    const ctx = setup()
+    const ch = await boot(ctx) // t = 1 250
+    ch.fail('CHANNEL_ERROR', new Error('Too many connected users'))
+    await flush() // prochaine tentative à 1 250 + 300 000
+    ctx.session.setHidden(true)
+    await ctx.clock.advance(30_000)
+    expect(ctx.session.stats().state).toBe('hidden')
+    ctx.rng.v = 0
+    await ctx.clock.advance(30_000)
+    ctx.session.setHidden(false) // t = 61 250 : bien avant l'échéance
+    expect(ctx.session.stats().state).toBe('solo')
+    expect(ctx.session.stats().soloReason).toBe('quota')
+    await ctx.clock.advance(200_000)
+    expect(ctx.client.created).toHaveLength(1) // pas de jointure sur un serveur saturé
+    await ctx.clock.advance(39_000) // t = 300 250 : l'échéance (301 250) approche
+    expect(ctx.client.created).toHaveLength(1)
+    await ctx.clock.advance(1_000)
+    expect(ctx.client.created).toHaveLength(2) // exactement à l'échéance d'origine
+    expect(ctx.session.stats().state).toBe('joining')
+  })
+
+  it('un onglet resté caché au-delà du délai sonde une salle au retour, comme d’habitude', async () => {
+    const ctx = setup()
+    const ch = await boot(ctx)
+    ch.fail('CHANNEL_ERROR', new Error('Too many connected users'))
+    await flush()
+    ctx.session.setHidden(true)
+    await ctx.clock.advance(400_000)
+    expect(ctx.session.stats().state).toBe('hidden')
+    expect(ctx.client.created).toHaveLength(1)
+    ctx.session.setHidden(false)
+    await ctx.clock.advance(600)
+    expect(ctx.client.created).toHaveLength(2)
+    expect(ctx.session.stats().soloReason).toBeNull()
+  })
+
+  it('stop() pendant le délai long annule tout', async () => {
+    const ctx = setup()
+    const ch = await boot(ctx)
+    ch.fail('CHANNEL_ERROR', new Error('Too many connected users'))
+    await flush()
+    ctx.session.stop()
+    await ctx.clock.advance(3_600_000)
+    expect(ctx.client.created).toHaveLength(1)
+    expect(ctx.clock.live).toBe(0)
+  })
+})
+
+describe('12. 1 envoi/s : une position part toutes les secondes, une salle de 30 ne coûte pas de saut ni de reconnexion', () => {
+  it('30 membres : on reste, 29 pairs au registre, un seul canal', async () => {
+    const ctx = setup()
+    const ch = await bootSubscribed(ctx)
+    ch.emitSync(others(CAP - 1))
+    await ctx.clock.advance(5000)
+    expect(ctx.client.created).toHaveLength(1)
+    expect(ctx.store.peers.size).toBe(CAP - 1)
+    expect(ctx.counts.at(-1)).toBe(CAP - 1)
+  })
+
+  it('les pairs d’une salle de 30 qui parlent à 1 Hz ne sont jamais retirés ; un pair qui se tait l’est à EFFECTIVE_PEER_TIMEOUT_MS', async () => {
+    const ctx = setup()
+    const ch = await bootSubscribed(ctx)
+    ch.emitSync({ a: [entry('walker', -2)], b: [entry('mute', -1)] })
+    ch.emitBroadcast(POSITION_EVENT, { i: 'mute', x: 0, z: 0, r: 0, m: 0 })
+    for (let s = 0; s < 40; s++) {
+      ch.emitBroadcast(POSITION_EVENT, { i: 'walker', x: s * 3, z: 0, r: 0, m: 1 })
+      await ctx.clock.advance(1000)
+      if (s < 15) expect(ctx.store.peers.has('mute')).toBe(true) // 16 s de silence au plus
+    }
+    expect(ctx.store.peers.has('walker')).toBe(true)
+    expect(ctx.store.peers.has('mute')).toBe(false)
+    expect(ctx.session.stats().received).toBe(41)
   })
 })

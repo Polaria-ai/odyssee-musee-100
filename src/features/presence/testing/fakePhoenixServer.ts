@@ -19,6 +19,13 @@
  * Et on peut le scripter : refuser / ne pas répondre aux N prochains joins d'un topic, refuser les connexions
  * WebSocket, couper les sockets, envoyer un message `system` d'erreur puis `phx_close` sur un canal, etc.
  *
+ * Quotas du plan gratuit (supabase/realtime, `realtime_channel.ex`), simulables par les options du constructeur :
+ *  - `maxConnections` : au-delà de N utilisateurs connectés (sockets ouvertes qui ont déjà joint un canal, comptées jusqu'à
+ *    leur fermeture, même sans canal), le `phx_join` d'une NOUVELLE socket est refusé (`phx_reply` en `error`, raison
+ *    « Too many connected users », `too_many_connections`) ; une socket déjà comptée garde le droit de changer de canal ;
+ *  - `maxJoinsPerSecond` : au-delà de N `phx_join` dans la dernière seconde, le join est refusé
+ *    (« ClientJoinRateLimitReached: Too many joins per second », `too_many_joins`).
+ *
  * Il ne dépend d'aucun timer tant que `latencyMs` vaut 0 (livraison par micro-tâche) : les tests à horloge
  * simulée (`vi.useFakeTimers`) avancent sans qu'il faille « pousser » le réseau.
  *
@@ -103,7 +110,17 @@ export interface FakeRealtimeServerOptions {
   latencyMs?: number
   /** Statut HTTP renvoyé par le faux `fetch` pour `POST /realtime/v1/api/broadcast` (défaut 202). */
   restBroadcastStatus?: number
+  /** Utilisateurs connectés simultanés au plus (plan gratuit : 200). Défaut : illimité. */
+  maxConnections?: number
+  /** Jointures par seconde au plus (plan gratuit : 100). Défaut : illimité. */
+  maxJoinsPerSecond?: number
 }
+
+/** Libellés exacts du serveur Realtime pour les refus de jointure (voir `quota.ts`). */
+export const SERVER_REASON_TOO_MANY_CONNECTIONS = 'Too many connected users'
+export const SERVER_REASON_TOO_MANY_JOINS = 'ClientJoinRateLimitReached: Too many joins per second'
+export const SERVER_MESSAGE_TOO_MANY_MESSAGES = 'Too many messages per second'
+export const SERVER_MESSAGE_TOO_MANY_PRESENCE = 'Too many presence messages per second'
 
 // ---------------------------------------------------------------------------------------------
 // Utilitaires
@@ -209,6 +226,8 @@ interface Member {
 interface Conn extends ConnInfo {
   ws: FakeSocketImpl
   members: Map<string, Member>
+  /** Vrai dès le premier canal joint, jusqu'à la fermeture de la socket (comme le compteur d'utilisateurs du serveur). */
+  counted: boolean
 }
 
 interface JoinRule {
@@ -248,7 +267,7 @@ class FakeSocketImpl implements FakeWebSocket {
     label: string,
     readonly url: string,
   ) {
-    this.conn = { id: server._nextConnId(), label, url, readyState: READY.connecting, ws: this, members: new Map() }
+    this.conn = { id: server._nextConnId(), label, url, readyState: READY.connecting, ws: this, members: new Map(), counted: false }
     server._registerConn(this.conn)
     server._onNewSocket(this)
   }
@@ -314,6 +333,12 @@ export class FakeRealtimeServer {
   latencyMs: number
   /** Si faux, les `heartbeat` restent sans réponse (connexion « morte »). */
   heartbeatReplies = true
+  /** Mutable : utilisateurs connectés simultanés au plus ; `Infinity` = pas de limite. */
+  maxConnections: number
+  /** Mutable : jointures par seconde au plus ; `Infinity` = pas de limite. */
+  maxJoinsPerSecond: number
+  /** Nombre de jointures refusées pour cause de quota (connexions ou jointures/s). */
+  quotaRefusals = { connections: 0, joins: 0 }
 
   /** Toutes les trames reçues des clients, dans l'ordre. */
   readonly frames: ServerFrame[] = []
@@ -331,10 +356,15 @@ export class FakeRealtimeServer {
   private connCounter = 0
   private refCounter = 0
   private keyCounter = 0
+  private recentJoinTimes: number[] = []
+  private peakUsers = 0
+  private memberPeaks = new Map<string, number>()
 
   constructor(opts: FakeRealtimeServerOptions = {}) {
     this.latencyMs = opts.latencyMs ?? 0
     this.restBroadcastStatus = opts.restBroadcastStatus ?? 202
+    this.maxConnections = opts.maxConnections ?? Infinity
+    this.maxJoinsPerSecond = opts.maxJoinsPerSecond ?? Infinity
   }
 
   // ------------------------------------------------------------------------ injection dans le SDK
@@ -404,6 +434,36 @@ export class FakeRealtimeServer {
   /** Connexions WebSocket ouvertes (éventuellement filtrées). */
   openConnections(sel?: ConnSelector): ConnInfo[] {
     return this.conns.filter((c) => c.readyState === READY.open && this.selects(sel, c))
+  }
+
+  /**
+   * Utilisateurs connectés au sens du serveur Realtime : sockets ouvertes qui ont joint au moins un canal. Une socket
+   * reste comptée jusqu'à sa fermeture, même après le départ de son dernier canal (le SDK la garde ouverte ~50 s) ;
+   * une socket ouverte qui n'a encore rien joint, ou dont la jointure a été refusée, ne compte pas.
+   */
+  connectedUsers(): number {
+    return this.conns.filter((c) => c.readyState === READY.open && c.counted).length
+  }
+
+  /** Plus grand nombre d'utilisateurs connectés simultanément observé depuis le début. */
+  peakConnectedUsers(): number {
+    return this.peakUsers
+  }
+
+  /** Plus grand nombre de membres joints en même temps à ce topic depuis le début. */
+  peakMemberCount(topic: string): number {
+    return this.memberPeaks.get(fullTopic(topic)) ?? 0
+  }
+
+  /** Plus grand nombre de `phx_join` reçus dans une fenêtre glissante d'une seconde (horloge simulée comprise). */
+  peakJoinsPerSecond(): number {
+    const times = this.frames.filter((f) => f.event === 'phx_join').map((f) => f.t)
+    let peak = 0
+    for (let i = 0, j = 0; i < times.length; i++) {
+      while (times[i] - times[j] >= 1000) j++
+      peak = Math.max(peak, i - j + 1)
+    }
+    return peak
   }
 
   /** Nombre de WebSocket créées depuis le début (connexions tentées, refusées comprises). */
@@ -529,7 +589,7 @@ export class FakeRealtimeServer {
     for (const m of this.membersOf(topic, sel)) {
       const sub = m.topic.slice(TOPIC_PREFIX.length)
       this.pushJson(m.conn, m.joinRef, null, m.topic, 'system', {
-        message: 'Too many messages per second',
+        message: SERVER_MESSAGE_TOO_MANY_MESSAGES,
         status: 'error',
         extension: 'system',
         channel: sub,
@@ -554,6 +614,12 @@ export class FakeRealtimeServer {
   /** Scénario du 30/09 : message système « Too many messages per second » puis `phx_close`. */
   rateLimitChannel(topic: string, sel?: ConnSelector, payload?: Record<string, unknown>): number {
     this.sendSystem(topic, payload, sel)
+    return this.closeChannel(topic, sel)
+  }
+
+  /** Quota de présence : message `system` « Too many presence messages per second » puis `phx_close`. */
+  presenceLimitChannel(topic: string, sel?: ConnSelector): number {
+    this.sendSystem(topic, { message: SERVER_MESSAGE_TOO_MANY_PRESENCE }, sel)
     return this.closeChannel(topic, sel)
   }
 
@@ -582,6 +648,10 @@ export class FakeRealtimeServer {
     this.restBroadcasts.length = 0
     this.fetchCalls.length = 0
     this.heartbeatReplies = true
+    this.recentJoinTimes.length = 0
+    this.peakUsers = 0
+    this.memberPeaks.clear()
+    this.quotaRefusals = { connections: 0, joins: 0 }
   }
 
   // ------------------------------------------------------------------------ interne (appelé par la socket)
@@ -726,7 +796,29 @@ export class FakeRealtimeServer {
     return rule.behavior
   }
 
+  /** Refus de quota du serveur à la jointure, ou `null` : jointures/s d'abord, puis connexions (comme `realtime_channel.ex`). */
+  private quotaRefusal(conn: Conn): string | null {
+    const now = Date.now()
+    this.recentJoinTimes = this.recentJoinTimes.filter((t) => now - t < 1000)
+    if (this.recentJoinTimes.length >= this.maxJoinsPerSecond) {
+      this.quotaRefusals.joins += 1
+      return SERVER_REASON_TOO_MANY_JOINS
+    }
+    this.recentJoinTimes.push(now)
+    // Une socket déjà comptée change de canal sans être recomptée.
+    if (!conn.counted && this.connectedUsers() >= this.maxConnections) {
+      this.quotaRefusals.connections += 1
+      return SERVER_REASON_TOO_MANY_CONNECTIONS
+    }
+    return null
+  }
+
   private handleJoin(conn: Conn, joinRef: string | null, ref: string | null, topic: string, payload: Record<string, unknown>): void {
+    const refusal = this.quotaRefusal(conn)
+    if (refusal) {
+      this.reply(conn, joinRef, ref, topic, 'error', { reason: refusal })
+      return
+    }
     const behavior = this.nextJoinBehavior(topic, conn)
     if (behavior === 'silence') return
     if (typeof behavior === 'object' && 'error' in behavior) {
@@ -757,6 +849,9 @@ export class FakeRealtimeServer {
       if (!set) this.topics.set(topic, (set = new Set()))
       set.add(member)
       conn.members.set(topic, member)
+      conn.counted = true
+      this.peakUsers = Math.max(this.peakUsers, this.connectedUsers())
+      this.memberPeaks.set(topic, Math.max(this.memberPeaks.get(topic) ?? 0, set.size))
 
       this.reply(conn, member.joinRef, ref, topic, 'ok', { postgres_changes: [] })
       this.pushJson(conn, member.joinRef, null, topic, 'system', {

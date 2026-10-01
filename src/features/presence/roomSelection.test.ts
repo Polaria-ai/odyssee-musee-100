@@ -133,3 +133,24 @@ describe('targetRoomForRank', () => {
     expect(targetRoomForRank(1, 6, 2, 3)).toBeNull()
   })
 })
+
+describe('capacité retenue le 01/10 : 8 salles de 30 visiteurs', () => {
+  it('240 places pour ~200 joueurs : au-delà de 200 connexions, c’est le serveur qui refuse (voir quota.ts)', () => {
+    expect(ROOM_CAPACITY).toBe(30)
+    expect(MAX_ROOMS).toBe(8)
+    expect(ROOM_CAPACITY * MAX_ROOMS).toBe(240)
+  })
+
+  it('les 30 premiers restent, le rang 30 passe en salle suivante, le rang 60 deux salles plus loin', () => {
+    for (let rank = 0; rank < ROOM_CAPACITY; rank++) expect(targetRoomForRank(1, rank, ROOM_CAPACITY, MAX_ROOMS)).toBe(1)
+    expect(targetRoomForRank(1, 30, ROOM_CAPACITY, MAX_ROOMS)).toBe(2)
+    expect(targetRoomForRank(1, 59, ROOM_CAPACITY, MAX_ROOMS)).toBe(2)
+    expect(targetRoomForRank(1, 60, ROOM_CAPACITY, MAX_ROOMS)).toBe(3)
+  })
+
+  it('la huitième salle est la dernière : un rang qui la dépasse mène au solo', () => {
+    expect(targetRoomForRank(7, 30, ROOM_CAPACITY, MAX_ROOMS)).toBe(8)
+    expect(targetRoomForRank(8, 30, ROOM_CAPACITY, MAX_ROOMS)).toBeNull()
+    expect(targetRoomForRank(1, 8 * ROOM_CAPACITY, ROOM_CAPACITY, MAX_ROOMS)).toBeNull()
+  })
+})
