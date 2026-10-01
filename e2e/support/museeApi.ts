@@ -326,7 +326,11 @@ export async function enterMuseum(page: Page): Promise<void> {
  */
 export async function dismissWelcomeDialogue(page: Page): Promise<void> {
   const chat = page.getByTestId('remi-chat')
-  if (await chat.isVisible().catch(() => false)) {
+  // Le chat est chargé à la demande (`src/App.tsx`) : l'état peut déjà le dire ouvert alors que son code
+  // arrive encore. On se fie donc à l'état, puis on attend le chat avant de le fermer par son bouton.
+  const chatOpen = (await museeState(page).catch(() => null))?.remiChatOpen === true
+  if (chatOpen || (await chat.isVisible().catch(() => false))) {
+    await expect(chat).toBeVisible({ timeout: 15_000 })
     await page.getByTestId('remi-chat-close').click()
     await expect(chat).toBeHidden()
   }
