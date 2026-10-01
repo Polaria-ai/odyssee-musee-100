@@ -4,6 +4,7 @@ import { useGame } from '../../state/gameStore'
 import { player } from '../../state/runtime'
 import type { MuseeDebugApi } from '../../scene/debugApi'
 import { IDLE_HEARTBEAT_MS, clearPeers, peerStore } from './peers'
+import { MAX_ROOMS, ROOM_CAPACITY } from './roomSelection'
 import { EFFECTIVE_PEER_TIMEOUT_MS, presenceConfigFromEnv, usePresence } from './usePresence'
 import type { ChannelStatus, RealtimeChannelLike, RealtimeClientLike } from './realtimeClient'
 
@@ -120,6 +121,14 @@ async function tick(ms: number) {
   })
 }
 
+/** SUBSCRIBED, puis la liste (vide) de la salle que le serveur envoie juste après la jointure : la session s'annonce alors. */
+async function subscribed(room: FakeChannel, state: Record<string, unknown[]> = {}) {
+  await act(async () => {
+    room.emitStatus('SUBSCRIBED')
+    room.emitSync(state)
+  })
+}
+
 /** Gigue d'arrivée avec `Math.random() = 0,5` : 0,5 × 2 500 ms. */
 const JOIN_JITTER_MS = 1250
 /** Gigue avant un saut de salle avec `Math.random() = 0,5` : 150 + 0,5 × 450 ms. */
@@ -199,7 +208,7 @@ describe('usePresence — rejoindre une salle', () => {
     const room1 = client.channels[0]
     expect(room1.name).toBe('musee:v1:room-1')
 
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
     expect(room1.trackCalls).toHaveLength(1)
     // Identité et date d'arrivée seulement : plus d'avatar sur le réseau (tous les visiteurs sont Cyril).
     expect(Object.keys(room1.trackCalls[0] as object).sort()).toEqual(['id', 'joinTs'])
@@ -214,7 +223,7 @@ describe('usePresence — rejoindre une salle', () => {
   it('compte et affiche aussi un visiteur d’une version précédente (avatar ignoré à la lecture)', async () => {
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
 
     act(() => room1.emitSync({ a: [legacyPresenceEntry('old', 10)], b: [presenceEntry('new', 20)] }))
 
@@ -226,7 +235,7 @@ describe('usePresence — rejoindre une salle', () => {
   it('ne republie pas sa présence quand le profil du visiteur change (plus de suivi d’avatar)', async () => {
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
     expect(room1.trackCalls).toHaveLength(1)
 
     act(() => useGame.setState({ lang: useGame.getState().lang === 'fr' ? 'en' : 'fr' }))
@@ -245,13 +254,13 @@ describe('usePresence — rejoindre une salle', () => {
     const onError = (e: ErrorEvent) => errors.push(e.error)
     window.addEventListener('error', onError)
 
-    await act(async () => room1.emitStatus('CHANNEL_ERROR', new Error('too many connections')))
+    await act(async () => room1.emitStatus('CHANNEL_ERROR', new Error('server busy')))
     await tick(1000) // premier recul (×1,0)
     expect(client.channels).toHaveLength(2)
     const retry = client.channels[1]
     expect(retry).not.toBe(room1)
     expect(retry.name).toBe('musee:v1:room-1')
-    await act(async () => retry.emitStatus('SUBSCRIBED'))
+    await subscribed(retry)
 
     window.removeEventListener('error', onError)
     expect(errors).toEqual([])
@@ -265,10 +274,10 @@ describe('usePresence — dépassement de salle', () => {
     vi.setSystemTime(1_000_000) // horodatage d'arrivée du joueur dans room-1
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
 
-    // 8 autres arrivés avant nous : avec nous, la salle a 9 membres, nous sommes au rang 8 → room-2.
-    act(() => room1.emitSync(earlier(8)))
+    // 30 autres arrivés avant nous : avec nous, la salle a 31 membres, nous sommes au rang 30 → room-2.
+    act(() => room1.emitSync(earlier(ROOM_CAPACITY)))
     await tick(HOP_MS)
 
     expect(room1.unsubscribed).toBe(true)
@@ -277,13 +286,13 @@ describe('usePresence — dépassement de salle', () => {
     expect(client.channels[1].name).toBe('musee:v1:room-2')
   })
 
-  it('reste dans la salle quand on est parmi les 8 premiers arrivés', async () => {
+  it('reste dans la salle quand on est parmi les 30 premiers arrivés', async () => {
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
 
-    // 7 autres, tous arrivés après nous : nous sommes au rang 0.
-    const later = Object.fromEntries(Array.from({ length: 7 }, (_, i) => [`p${i}`, [presenceEntry(`p${i}`, Date.now() + 1000 + i)]]))
+    // 29 autres, tous arrivés après nous : nous sommes au rang 0, la salle est pleine (30) sans déborder.
+    const later = Object.fromEntries(Array.from({ length: ROOM_CAPACITY - 1 }, (_, i) => [`p${i}`, [presenceEntry(`p${i}`, Date.now() + 1000 + i)]]))
     act(() => room1.emitSync(later))
     await tick(5000)
 
@@ -291,11 +300,11 @@ describe('usePresence — dépassement de salle', () => {
     expect(client.channels).toHaveLength(1)
   })
 
-  it('respecte VITE_PRESENCE_ROOM_CAPACITY (borné, repli sur 8 si invalide)', async () => {
+  it('respecte VITE_PRESENCE_ROOM_CAPACITY (borné, repli sur 30 si invalide)', async () => {
     vi.stubEnv('VITE_PRESENCE_ROOM_CAPACITY', '2')
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
     act(() => room1.emitSync(earlier(2)))
     await tick(HOP_MS)
     expect(client.channels.map((c) => c.name)).toEqual(['musee:v1:room-1', 'musee:v1:room-2'])
@@ -324,33 +333,63 @@ describe('usePresence — erreurs de canal', () => {
   })
 })
 
+describe('usePresence — quota dépassé', () => {
+  it('« Too many connected users » à la jointure : solo tout de suite, un seul console.info, aucune erreur visible, pas de reconnexion', async () => {
+    const info = vi.spyOn(console, 'info').mockImplementation(() => {})
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const api = {} as MuseeDebugApi
+    window.__musee = api
+    try {
+      const client = new FakeClient()
+      const { room1 } = await mountAndJoin(client)
+      await act(async () => room1.emitStatus('CHANNEL_ERROR', new Error('Too many connected users')))
+      await tick(60_000)
+
+      expect(client.channels).toHaveLength(1) // ni 1, ni 2, ni 4, ni 8 s : plus rien avant le délai long
+      expect(api.presence?.().state).toBe('solo')
+      expect(api.presence?.().soloReason).toBe('quota')
+      expect(useGame.getState().peersCount).toBe(0)
+      expect(info).toHaveBeenCalledTimes(1)
+      expect(String(info.mock.calls[0][0])).toContain('quota')
+      expect(error).not.toHaveBeenCalled()
+      expect(warn).not.toHaveBeenCalled()
+
+      await tick(400_000) // le délai long (5 min × 0,75–1,25) est passé : une seule salle sondée
+      expect(client.channels).toHaveLength(2)
+    } finally {
+      delete window.__musee
+    }
+  })
+})
+
 describe('usePresence — throttle des envois de position', () => {
-  it('en mouvement, au plus ~2 envois/s', async () => {
+  it('en mouvement, au plus 1 envoi/s par défaut', async () => {
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
 
     player.moving = true
-    await tick(2000)
-    // t≈100 (premier envoi immédiat) puis toutes les 500ms : 100, 600, 1100, 1600.
-    expect(room1.sendCalls).toHaveLength(4)
+    await tick(3000)
+    // t≈100 (premier envoi immédiat) puis toutes les 1 000 ms : 100, 1100, 2100.
+    expect(room1.sendCalls).toHaveLength(3)
     expect(room1.sendCalls.every((c) => c.event === 'pos')).toBe(true)
   })
 
   it('respecte VITE_PRESENCE_SEND_HZ', async () => {
-    vi.stubEnv('VITE_PRESENCE_SEND_HZ', '1')
+    vi.stubEnv('VITE_PRESENCE_SEND_HZ', '2')
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
     player.moving = true
-    await tick(2000) // 100, 1100
-    expect(room1.sendCalls).toHaveLength(2)
+    await tick(2000) // 100, 600, 1100, 1600
+    expect(room1.sendCalls).toHaveLength(4)
   })
 
   it('à l’arrêt, pas d’envoi hors du battement périodique', async () => {
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
     await tick(150) // laisse partir l'annonce de position initiale
     room1.sendCalls = []
 
@@ -363,7 +402,7 @@ describe('usePresence — pause onglet caché', () => {
   it('ne publie rien tant que l’onglet est caché, puis reprend au retour', async () => {
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
     await tick(200)
     room1.sendCalls = []
 
@@ -382,7 +421,7 @@ describe('usePresence — visiteurs fantômes (onglet caché longtemps)', () => 
   it('quitte le canal après 30 s caché (untrack + unsubscribe), et le rejoint au retour au premier plan', async () => {
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
     act(() => room1.emitSync({ a: [presenceEntry('p1', 1)] }))
     expect(useGame.getState().peersCount).toBe(1)
 
@@ -401,7 +440,7 @@ describe('usePresence — visiteurs fantômes (onglet caché longtemps)', () => 
     expect(client.channels).toHaveLength(2) // rejoint une salle fraîche au retour au premier plan
     const room2 = client.channels[1]
     expect(room2.name).toBe('musee:v1:room-1')
-    await act(async () => room2.emitStatus('SUBSCRIBED'))
+    await subscribed(room2)
     expect(room2.trackCalls).toHaveLength(1)
   })
 
@@ -421,7 +460,7 @@ describe('usePresence — visiteurs fantômes (onglet caché longtemps)', () => 
   it('ne quitte pas le canal si l’onglet redevient visible avant les 30 s', async () => {
     const client = new FakeClient()
     const { room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
 
     await act(async () => setVisibility('hidden'))
     await tick(29_000)
@@ -440,15 +479,15 @@ describe('usePresence — dépassement au-delà de la dernière salle', () => {
     const client = new FakeClient()
     await mountAndJoin(client)
 
-    // Chaque salle déborde (8 autres arrivés avant nous) : saut direct d'une salle, jusqu'à la dernière.
-    for (let i = 1; i <= 12; i++) {
+    // Chaque salle déborde (30 autres arrivés avant nous) : saut direct d'une salle, jusqu'à la dernière.
+    for (let i = 1; i <= MAX_ROOMS; i++) {
       const room = client.channels[client.channels.length - 1]
       await act(async () => room.emitStatus('SUBSCRIBED'))
-      act(() => room.emitSync(earlier(8, `p${i}-`)))
+      act(() => room.emitSync(earlier(ROOM_CAPACITY, `p${i}-`)))
       await tick(HOP_MS)
     }
 
-    expect(client.channels).toHaveLength(12) // jamais de salle au-delà de 12
+    expect(client.channels).toHaveLength(MAX_ROOMS) // jamais de salle au-delà de la huitième
     expect(useGame.getState().peersCount).toBe(0) // mode solo silencieux, pas d'erreur visible
   })
 })
@@ -486,7 +525,7 @@ describe('usePresence — nettoyage au démontage', () => {
   it('quitte le canal et remet le compteur à zéro', async () => {
     const client = new FakeClient()
     const { hook, room1 } = await mountAndJoin(client)
-    await act(async () => room1.emitStatus('SUBSCRIBED'))
+    await subscribed(room1)
     act(() => room1.emitSync({ a: [presenceEntry('p1', 1)] }))
     expect(useGame.getState().peersCount).toBe(1)
 
@@ -522,13 +561,13 @@ describe('usePresence — salle d’entrée', () => {
     unmount()
   })
 
-  it('avec VITE_PRESENCE_START=random, entre dans une salle tirée au hasard (Math.random 0,5 → room-7)', async () => {
+  it('avec VITE_PRESENCE_START=random, entre dans une salle tirée au hasard (Math.random 0,5 → room-5)', async () => {
     vi.stubEnv('VITE_PRESENCE_START', 'random')
     try {
       const client = new FakeClient()
       const { unmount } = unpinned(client)
       await tick(JOIN_JITTER_MS)
-      expect(client.channels.map((c) => c.name)).toEqual(['musee:v1:room-7'])
+      expect(client.channels.map((c) => c.name)).toEqual(['musee:v1:room-5'])
       unmount()
     } finally {
       vi.unstubAllEnvs()
@@ -556,7 +595,7 @@ describe('usePresence — stats de debug', () => {
     try {
       const client = new FakeClient()
       const { hook, room1 } = await mountAndJoin(client)
-      await act(async () => room1.emitStatus('SUBSCRIBED'))
+      await subscribed(room1)
       expect(api.presence?.().state).toBe('subscribed')
       expect(api.presence?.().room).toBe(1)
       hook.unmount()
@@ -581,9 +620,10 @@ describe('presenceConfigFromEnv — réglages Vite bornés', () => {
 
   it('bornes incluses, tout le reste est ignoré', () => {
     expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: '2' })).toEqual({ roomCapacity: 2 })
-    expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: '20' })).toEqual({ roomCapacity: 20 })
+    expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: '40' })).toEqual({ roomCapacity: 40 })
+    expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: '30' })).toEqual({ roomCapacity: 30 })
     expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: '1' })).toEqual({})
-    expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: '21' })).toEqual({})
+    expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: '41' })).toEqual({})
     expect(presenceConfigFromEnv({ VITE_PRESENCE_MAX_ROOMS: '0' })).toEqual({})
     expect(presenceConfigFromEnv({ VITE_PRESENCE_MAX_ROOMS: '51' })).toEqual({})
     expect(presenceConfigFromEnv({ VITE_PRESENCE_SEND_HZ: '0.4' })).toEqual({})
@@ -599,7 +639,7 @@ describe('presenceConfigFromEnv — réglages Vite bornés', () => {
       }),
     ).toEqual({})
     expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: '7.5' })).toEqual({})
-    expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: 8 })).toEqual({})
+    expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: 30 })).toEqual({})
     expect(presenceConfigFromEnv({ VITE_PRESENCE_ROOM_CAPACITY: 'Infinity' })).toEqual({})
   })
 })

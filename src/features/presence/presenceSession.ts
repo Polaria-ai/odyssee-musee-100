@@ -7,11 +7,15 @@
  * Cycle de vie d'un joueur :
  *   idle → waiting (gigue d'arrivée) → joining → subscribed ⇄ (saut direct de salle : joining → subscribed)
  *   subscribed → backoff → joining (canal en erreur/fermé) … → solo (échecs répétés, musée plein)
+ *   joining | subscribed → solo DIRECTEMENT quand le serveur signale un quota dépassé (voir `quota.ts` : 200 connexions,
+ *     jointures/s, messages/s, présence…) : ni reconnexion, WebSocket fermée, nouvelle tentative seulement après
+ *     `quotaSoloRetryMs` (5 min environ) sur une seule salle sondée.
  *   tout état → hidden (onglet caché trop longtemps) → waiting → joining → … ; tout état → stopped.
  *
- * Où l'on entre : une salle tirée au hasard dans 1..maxRooms à l'arrivée (et non toujours room-1, que tout le
- * monde traversait en cascade), la dernière salle connue au retour d'un onglet caché, et pour une nouvelle
- * tentative depuis le solo une seule salle « sondée » (pas de traversée, pas de position publiée si elle est pleine).
+ * Où l'on entre : room-1 par défaut en production (les arrivées se remplissent salle après salle : 7 salles pour ~200
+ * joueurs, voir README) ou une salle tirée au hasard dans 1..maxRooms (`VITE_PRESENCE_START=random`), la dernière
+ * salle connue au retour d'un onglet caché, et pour une nouvelle tentative depuis le solo une seule salle « sondée »
+ * (pas de traversée, pas de position publiée si elle est pleine).
  *
  * Invariants (chacun répond à un bug confirmé par l'audit du SDK, voir README) :
  * - Un ancien canal, même jamais abonné, est TOUJOURS retiré (`unsubscribe`) et sa résolution attendue avant
@@ -21,6 +25,9 @@
  *   laisse remonter d'exception.
  * - Aucun envoi hors canal SUBSCRIBED et rejoint (sinon le SDK bascule chaque `send` en POST REST).
  * - Aucune synchronisation des clients : gigue à l'arrivée, avant chaque saut, sur chaque reconnexion.
+ * - On ne s'annonce (`track`) qu'après avoir reçu la liste de la salle (premier sync, au plus `FIRST_SYNC_WAIT_MS`) et
+ *   seulement si on y a sa place : l'arrivée puis le départ d'un visiteur d'une salle pleine ne coûtent ni `track`, ni
+ *   `untrack`, ni les deux diffusions de présence à ses 30 membres (quota de 20 messages de présence/s du plan gratuit).
  */
 import {
   peerStore,
@@ -31,12 +38,14 @@ import {
   clearPeers,
   shouldSendPosition,
   IDLE_HEARTBEAT_MS,
+  MOVE_SEND_INTERVAL_MS,
   PEER_SILENCE_TIMEOUT_MS,
   type PeerStore,
   type SendState,
 } from './peers'
-import { roomName, sortByJoinOrder, targetRoomForRank, type RoomMember } from './roomSelection'
+import { MAX_ROOMS, ROOM_CAPACITY, roomName, sortByJoinOrder, targetRoomForRank, type RoomMember } from './roomSelection'
 import { POSITION_EVENT, encodePosition, encodePresence, decodePosition, decodePresence } from './protocol'
+import { classifyQuota, errorTexts, quotaFromSystemPayload, type QuotaKind } from './quota'
 import type { ChannelStatus, RealtimeChannelLike, RealtimeClientLike } from './realtimeClient'
 
 export interface PresenceConfig {
@@ -55,8 +64,13 @@ export interface PresenceConfig {
   reconnectMaxAttempts: number
   reconnectBaseMs: number
   reconnectMaxMs: number
-  /** Nouvelle tentative depuis room-1 après cette durée (× gigue 0,75–1,25) ; 0 = rester solo. */
+  /** Nouvelle tentative (une seule salle sondée) après cette durée (× gigue 0,75–1,25) ; 0 = rester solo. */
   soloRetryMs: number
+  /**
+   * Idem après un quota dépassé (serveur saturé : retenter aussitôt l'aggraverait), 5 min environ ; 0 = rester solo.
+   * Un retour d'onglet caché pendant ce délai ne le raccourcit pas.
+   */
+  quotaSoloRetryMs: number
   /** Onglet caché depuis plus longtemps que ça : on quitte la présence (pas de fantôme). */
   hiddenLeaveMs: number
   /** Silence après lequel un pair est retiré du rendu (filet de sécurité). */
@@ -81,9 +95,10 @@ const PEER_TIMEOUT_SAFETY_FACTOR = 1.6
 export const EFFECTIVE_PEER_TIMEOUT_MS = Math.max(PEER_SILENCE_TIMEOUT_MS, Math.round(IDLE_HEARTBEAT_MS * PEER_TIMEOUT_SAFETY_FACTOR))
 
 export const DEFAULT_PRESENCE_CONFIG: PresenceConfig = {
-  roomCapacity: 8,
-  maxRooms: 12,
-  moveSendIntervalMs: 500,
+  // Décision du 01/10 : 8 salles de 30 (240 places pour ~200 joueurs), 1 envoi/s en mouvement.
+  roomCapacity: ROOM_CAPACITY,
+  maxRooms: MAX_ROOMS,
+  moveSendIntervalMs: MOVE_SEND_INTERVAL_MS,
   idleHeartbeatMs: 10000,
   initialJoinJitterMs: 2500,
   hopDelayMinMs: 150,
@@ -92,6 +107,7 @@ export const DEFAULT_PRESENCE_CONFIG: PresenceConfig = {
   reconnectBaseMs: 1000,
   reconnectMaxMs: 15000,
   soloRetryMs: 180000,
+  quotaSoloRetryMs: 300000,
   hiddenLeaveMs: 30000,
   peerTimeoutMs: EFFECTIVE_PEER_TIMEOUT_MS,
 }
@@ -112,7 +128,10 @@ export interface PresenceStats {
   /** Erreurs par clé (début du message de l'Error du SDK, ou statut). */
   errors: Record<string, number>
   lastError: string | null
+  /** `'quota'` quand le serveur a signalé un quota dépassé ; sinon le motif en clair (« musée plein », « connexion impossible… »). */
   soloReason: string | null
+  /** Type du quota signalé par le serveur (voir `quota.ts`), tant que ce quota est la raison du solo ; sinon `null`. */
+  quota: QuotaKind | null
   sent: number
   received: number
 }
@@ -164,8 +183,12 @@ const TRACK_RETRY_MAX_MS = 2000
  * relancer le recul à 1 s à chaque cycle (boucle sans fin qui entretient la surcharge).
  */
 const STABLE_CHANNEL_MS = 30000
-/** Un sondage depuis le solo qui n'a reçu aucun sync dans ce délai (après `track` accepté) publie sa position. */
-const PROBE_MAX_MS = 5000
+/**
+ * On n'annonce sa présence (`track`) qu'une fois connue la liste des visiteurs de la salle (premier `presence_state` du
+ * serveur, juste après la jointure) : une salle pleine n'a pas à recevoir notre arrivée puis notre départ. Si ce premier
+ * état n'arrive pas dans ce délai, on s'annonce quand même (et un sondage depuis le solo est tenu pour concluant).
+ */
+const FIRST_SYNC_WAIT_MS = 1500
 /** Garde-fou : `unsubscribe` qui ne se résoudrait jamais ne doit pas bloquer la session. */
 const UNSUBSCRIBE_SAFETY_MS = 15000
 
@@ -234,8 +257,10 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
   let lastRoom: number | null = null
   /** Sondage depuis le solo : tant que vrai, aucune position n'est publiée et une salle pleine ramène en solo. */
   let probing = false
-  /** `track` accepté sur le canal courant. */
-  let trackedOk = false
+  /** `track` lancé sur le canal courant : seul un canal annoncé a un `untrack` à faire au départ. */
+  let tracking = false
+  /** Un sync du canal courant a conclu que nous avons notre place dans cette salle (nous pouvons nous y annoncer). */
+  let stayDecided = false
 
   let joins = 0
   let hops = 0
@@ -245,6 +270,10 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
   let received = 0
   let lastError: string | null = null
   let soloReason: string | null = null
+  /** Quota signalé par le serveur, tant que son délai de nouvelle tentative court (joueur en solo, ou onglet caché entre-temps). */
+  let quotaKind: QuotaKind | null = null
+  /** Instant (horloge `now`) avant lequel aucune nouvelle jointure n'est tentée après un quota ; `null` sinon. */
+  let quotaUntil: number | null = null
   const errors: Record<string, number> = {}
 
   // -------------------------------------------------------------------------------------------
@@ -295,7 +324,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
   const hopSlot = slot('timeout') // gigue avant un saut de salle
   const trackRetry = slot('timeout')
   const stableSlot = slot('timeout') // canal resté sain assez longtemps : le compteur d'échecs repart de zéro
-  const probeSlot = slot('timeout') // filet d'un sondage qui ne reçoit jamais de sync
+  const syncWaitSlot = slot('timeout') // premier état de présence attendu avant de s'annoncer
   const hiddenSlot = slot('timeout')
   const sendSlot = slot('interval')
   const pruneSlot = slot('interval')
@@ -309,7 +338,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
   }
 
   function snapshot(): PresenceStats {
-    return { state, room, joins, hops, reconnects, closedByServer, errors: { ...errors }, lastError, soloReason, sent, received }
+    return { state, room, joins, hops, reconnects, closedByServer, errors: { ...errors }, lastError, soloReason, quota: quotaKind, sent, received }
   }
 
   function emitStats(): void {
@@ -352,14 +381,16 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
    */
   function detach(withUntrack: boolean): void {
     generation += 1
+    const wasTracking = tracking
     sendSlot.clear()
     hopSlot.clear()
     trackRetry.clear()
     stableSlot.clear()
-    probeSlot.clear()
+    syncWaitSlot.clear()
     hopWanted = false
     sendState = null
-    trackedOk = false
+    tracking = false
+    stayDecided = false
     probing = false
     const ch = channel
     const wasSubscribed = channelSubscribed
@@ -367,8 +398,9 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     channelSubscribed = false
     if (!ch) return
 
-    // `untrack` sur un canal jamais rejoint lèverait dans le SDK (« before joining ») : seulement si abonné.
-    if (withUntrack && wasSubscribed) {
+    // `untrack` sur un canal jamais rejoint lèverait dans le SDK (« before joining ») : seulement si abonné ; et inutile (un
+    // message de présence de plus, compté dans le quota) si nous ne nous y étions pas annoncés.
+    if (withUntrack && wasSubscribed && wasTracking) {
       try {
         void Promise.resolve(ch.untrack()).catch(() => {})
       } catch {
@@ -447,6 +479,9 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     try {
       ch.onPresenceSync(() => guard(() => onSync(ch, gen)))
       ch.onBroadcast(POSITION_EVENT, (payload) => guard(() => onBroadcast(gen, payload)))
+      // Le `phx_close` qui suit un quota ne porte aucune erreur côté SDK (`CLOSED` seul) : la cause n'est que dans le
+      // message `system` qui le précède.
+      ch.onSystem?.((payload) => guard(() => onSystem(ch, gen, payload)))
       ch.subscribe((status, err) => guard(() => onStatus(ch, gen, status, err)))
     } catch (e) {
       onFailure(gen, 'subscribe', e)
@@ -460,8 +495,10 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
       channelSubscribed = true
       sendState = null
       setState('subscribed')
-      tryTrack(ch, gen, 0)
-      if (!probing) sendSlot.set(sendTick, SEND_TICK_MS)
+      // On ne s'annonce pas encore : on attend la liste des visiteurs de la salle (premier sync), pour ne pas arriver puis
+      // repartir d'une salle pleine devant ses 30 membres. Si elle l'a déjà donnée (stayDecided), on s'annonce tout de suite.
+      if (stayDecided) startTracking(ch, gen)
+      else syncWaitSlot.set(() => firstSyncTimeout(ch, gen), FIRST_SYNC_WAIT_MS)
     } else if (status === 'CLOSED') {
       // Nous retirons nous-mêmes nos canaux en invalidant d'abord la génération : un CLOSED qui arrive
       // ici n'est donc jamais le nôtre, c'est le serveur (message système, limite de débit…).
@@ -470,6 +507,25 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     } else {
       onFailure(gen, status, err)
     }
+  }
+
+  /** S'annonce (`track`) sur le canal courant, et commence à publier la position, sauf pendant un sondage non conclu. */
+  function startTracking(ch: RealtimeChannelLike, gen: number): void {
+    if (tracking || !channelSubscribed || stopped || gen !== generation || ch !== channel) return
+    tracking = true
+    syncWaitSlot.clear()
+    tryTrack(ch, gen, 0)
+    if (!probing) {
+      sendState = null
+      sendSlot.set(sendTick, SEND_TICK_MS)
+    }
+  }
+
+  /** Aucun état de présence reçu à temps : on s'annonce quand même, et un sondage depuis le solo est tenu pour concluant. */
+  function firstSyncTimeout(ch: RealtimeChannelLike, gen: number): void {
+    if (stopped || gen !== generation || ch !== channel) return
+    endProbe()
+    startTracking(ch, gen)
   }
 
   /** `track` avec une seule nouvelle tentative (1–2 s) avant de traiter l'échec comme une erreur de canal. */
@@ -501,19 +557,16 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
 
   /** `track` accepté : le canal devient « sain » s'il n'échoue pas pendant `STABLE_CHANNEL_MS`. */
   function onTracked(): void {
-    trackedOk = true
     stableSlot.set(() => {
       attempts = 0
     }, STABLE_CHANNEL_MS)
-    if (probing) probeSlot.set(() => endProbe(), PROBE_MAX_MS)
   }
 
-  /** Le sondage est concluant (ou sans réponse) : on reste dans la salle et on publie notre position. */
+  /** Le sondage est concluant (ou sans réponse) : on reste dans la salle ; la position se publie dès qu'on s'est annoncé. */
   function endProbe(): void {
     if (!probing) return
     probing = false
-    probeSlot.clear()
-    if (channel && channelSubscribed && !sendSlot.active) {
+    if (tracking && channel && channelSubscribed && !sendSlot.active) {
       sendState = null
       sendSlot.set(sendTick, SEND_TICK_MS)
     }
@@ -526,6 +579,13 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     if (stopped || gen !== generation) return
     const message = err instanceof Error ? err.message : err ? String(err) : ''
     noteError(message ? message.slice(0, 60) : status, message || status)
+    // Quota dépassé (jointure refusée : 200 connexions, jointures/s… ; ou canal fermé pour le même motif) : solo tout de
+    // suite, sans les reconnexions qui aggraveraient la saturation.
+    const quota = classifyQuota(...errorTexts(err))
+    if (quota) {
+      goSolo(quota, quota)
+      return
+    }
     const wasProbing = probing // un sondage qui échoue reste un sondage à la reconnexion.
     detach(false) // pas d'`untrack` : le canal est déjà mort ou refusé.
     attempts += 1
@@ -542,24 +602,46 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     }, delay)
   }
 
-  function goSolo(reason: string): void {
-    detach(true)
+  /** Message `system` du serveur : seule une erreur de quota (« Too many messages per second »…) nous intéresse. */
+  function onSystem(ch: RealtimeChannelLike, gen: number, payload: unknown): void {
+    if (stopped || gen !== generation || ch !== channel) return
+    const quota = quotaFromSystemPayload(payload)
+    if (!quota) return
+    noteError(quota.message.slice(0, 60) || quota.kind, quota.message || quota.kind)
+    goSolo(quota.kind, quota.kind)
+  }
+
+  /**
+   * Passe en solo. `quota` : le serveur a signalé un quota dépassé. Le motif devient `'quota'`, le canal est retiré
+   * sans `untrack` (il est refusé ou déjà fermé par le serveur), la WebSocket est fermée, et la prochaine tentative
+   * (une seule salle sondée) attend `quotaSoloRetryMs` au lieu de `soloRetryMs`.
+   */
+  function goSolo(reason: string, quota: QuotaKind | null = null): void {
+    detach(quota === null)
     transition.clear()
     resetRoomView()
     room = null
     lastRoom = null
     attempts = 0
-    soloReason = reason
+    quotaKind = quota
+    soloReason = quota ? 'quota' : reason
+    const retryMs = quota ? cfg.quotaSoloRetryMs : cfg.soloRetryMs
+    const delay = retryMs > 0 ? retryMs * (0.75 + random() * 0.5) : 0
+    quotaUntil = quota && delay > 0 ? now() + delay : null
     setState('solo')
-    log(`[presence] mode solo : ${reason}`)
+    log(quota ? `[presence] mode solo : quota (${quota})` : `[presence] mode solo : ${reason}`)
     closeSocketWhenIdle()
-    if (cfg.soloRetryMs > 0) {
-      transition.set(() => {
-        soloReason = null
-        // Une seule salle sondée, tirée au hasard quelle que soit la salle d'entrée : pas de traversée depuis room-1.
-        joinRoom(randomRoom(), true)
-      }, cfg.soloRetryMs * (0.75 + random() * 0.5))
-    }
+    if (delay > 0) scheduleSoloProbe(delay)
+  }
+
+  /** Une seule salle sondée, tirée au hasard quelle que soit la salle d'entrée : pas de traversée depuis room-1. */
+  function scheduleSoloProbe(delayMs: number): void {
+    transition.set(() => {
+      soloReason = null
+      quotaKind = null
+      quotaUntil = null
+      joinRoom(randomRoom(), true)
+    }, delayMs)
   }
 
   /**
@@ -603,11 +685,15 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     setPeers(others.length)
 
     if (target === room) {
-      // La décision de partir ne tient plus (quelqu'un est parti devant nous) : on annule le saut annoncé.
+      // La décision de partir ne tient plus (quelqu'un est parti devant nous) : on annule le saut annoncé, et on s'annonce
+      // (sans effet si c'est déjà fait ; si le canal n'est pas encore abonné, SUBSCRIBED s'en chargera).
       hopSlot.clear()
       hopWanted = false
+      stayDecided = true
+      startTracking(ch, gen)
       return
     }
+    stayDecided = false // salle pleine pour nous : on ne s'y annonce pas, on la quitte directement.
     hopTarget = target
     if (hopWanted) return // un saut est déjà annoncé ; il relira la dernière décision à l'échéance.
     hopWanted = true
@@ -621,7 +707,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
         return
       }
       hops += 1
-      if (trackedOk) attempts = 0 // un canal qui a accepté notre présence et donné un sync n'est pas en échec.
+      attempts = 0 // un canal qui a répondu (il nous a donné la liste de la salle) n'est pas en échec ; les sauts ne vont qu'en avant.
       joinRoom(hopTarget)
     }, delay)
   }
@@ -671,6 +757,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     room = null
     attempts = 0
     soloReason = null
+    // `quotaKind` et `quotaUntil` survivent : le délai d'un quota est relu au retour au premier plan.
     setState('hidden')
     closeSocketWhenIdle()
   }
@@ -679,6 +766,17 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     leftForHidden = false
     attempts = 0
     soloReason = null
+    // Quota signalé il y a moins de `quotaSoloRetryMs` : le retour au premier plan ne raccourcit pas le délai (un
+    // téléphone qu'on déverrouille ne doit pas rouvrir une jointure sur un serveur saturé). On reste solo jusqu'au bout.
+    const quotaWaitMs = quotaUntil !== null ? quotaUntil - now() : 0
+    if (quotaWaitMs > 0) {
+      soloReason = 'quota'
+      setState('solo')
+      scheduleSoloProbe(quotaWaitMs)
+      return
+    }
+    quotaKind = null
+    quotaUntil = null
     setState('waiting')
     // Dernière salle connue (on y reprend sa place, en ne sautant que vers l'avant) ; sinon on revient du solo :
     // un sondage sur une salle tirée au hasard ; sinon (jamais rejoint) une salle tirée au hasard.
@@ -716,7 +814,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
       hopSlot.clear()
       trackRetry.clear()
       stableSlot.clear()
-      probeSlot.clear()
+      syncWaitSlot.clear()
       hiddenSlot.clear()
       sendSlot.clear()
       pruneSlot.clear()

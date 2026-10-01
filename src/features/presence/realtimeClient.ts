@@ -19,7 +19,16 @@ export interface RealtimeChannelLike {
   onBroadcast(event: string, cb: (payload: unknown) => void): void
   onPresenceSync(cb: () => void): void
   presenceState(): Record<string, unknown[]>
-  /** `err` : l'Error du SDK quand il en donne une (CHANNEL_ERROR, TIMED_OUT, parfois CLOSED). */
+  /**
+   * Messages `system` du serveur (`{ extension, status, message, channel }`) : le seul endroit où figure la cause d'une
+   * fermeture pour quota (« Too many messages per second »), le `CLOSED` qui suit n'ayant pas d'Error. Optionnel : un
+   * faux client de test peut l'ignorer. À poser avant `subscribe()`.
+   */
+  onSystem?(cb: (payload: unknown) => void): void
+  /**
+   * `err` : l'Error du SDK quand il en donne une. Jointure refusée par le serveur : CHANNEL_ERROR avec le texte du
+   * serveur (« Too many connected users »…) ; jointure sans réponse : TIMED_OUT sans Error ; `phx_close` : CLOSED sans Error.
+   */
   subscribe(cb: (status: ChannelStatus, err?: Error) => void): void
   /** Ne doit être appelé que si `isJoined()` : hors canal rejoint, le SDK bascule en POST REST. */
   send(event: string, payload: unknown): void
@@ -53,6 +62,9 @@ function adaptChannel(sb: SupabaseClient, ch: RealtimeChannel): RealtimeChannelL
     },
     onPresenceSync(cb) {
       ch.on('presence', { event: 'sync' }, cb)
+    },
+    onSystem(cb) {
+      ch.on('system', {}, (payload) => cb(payload))
     },
     presenceState() {
       return ch.presenceState()

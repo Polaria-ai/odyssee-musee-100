@@ -11,7 +11,16 @@ import { useFrame } from '@react-three/fiber'
 import type * as THREE from 'three'
 import { AvatarMesh } from '../../player/AvatarMesh'
 import { remoteSpeed } from '../../player/cyrilLocomotion'
-import { getPeer, getRenderTransform, peerStore, selectVisiblePeers, subscribeRoster } from './peers'
+import {
+  MAX_VISIBLE_PEERS,
+  getPeer,
+  getRenderTransform,
+  peerStore,
+  selectVisiblePeers,
+  stepToward,
+  subscribeRoster,
+  type RenderTransform,
+} from './peers'
 import { player } from '../../state/runtime'
 
 export const POP_MS = 250
@@ -67,13 +76,24 @@ function RemotePeerAvatar({ id }: { id: string }) {
   const groupRef = useRef<THREE.Group>(null)
   const initial = getRenderTransform(getPeer(peerStore, id), Date.now())
   const [moving, setMoving] = useState(initial?.moving ?? false)
+  // Un seul objet réutilisé à chaque image : pas d'allocation par pair dans `useFrame`.
+  const transformRef = useRef<RenderTransform>({ x: 0, z: 0, rotY: 0, moving: false })
+  const placedRef = useRef(false)
   usePopIn(groupRef)
 
-  useFrame(() => {
-    const transform = getRenderTransform(getPeer(peerStore, id), Date.now())
+  useFrame((_, delta) => {
+    const transform = getRenderTransform(getPeer(peerStore, id), Date.now(), transformRef.current)
     const group = groupRef.current
     if (!transform || !group) return
-    group.position.set(transform.x, 0, transform.z)
+    if (placedRef.current) {
+      // À 1 envoi/s, un blocage réseau livre parfois plusieurs positions d'un coup : on rattrape la cible en courant
+      // (vitesse bornée) plutôt que de téléporter le pair. Marche ordinaire : suivi exact.
+      stepToward(group.position, transform.x, transform.z, delta)
+    } else {
+      group.position.x = transform.x
+      group.position.z = transform.z
+      placedRef.current = true
+    }
     group.rotation.y = transform.rotY
     if (transform.moving !== moving) setMoving(transform.moving)
   })
@@ -87,26 +107,68 @@ function RemotePeerAvatar({ id }: { id: string }) {
   )
 }
 
+/** Même ensemble d'ids, quel que soit l'ordre : l'ordre ne change rien au rendu (les clés React sont les ids). */
+function sameIds(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false
+  for (const id of b) if (!a.includes(id)) return false
+  return true
+}
+
+/**
+ * Pairs à monter : les `MAX_VISIBLE_PEERS` plus proches du joueur, avec hystérésis sur ceux déjà montés. Renvoie
+ * `previous` lui-même si l'ensemble est inchangé (référence stable pour `useSyncExternalStore`).
+ */
+function pickVisibleIds(previous: string[]): string[] {
+  const next = selectVisiblePeers(peerStore, player.x, player.z, MAX_VISIBLE_PEERS, new Set(previous)).map((p) => p.id)
+  return sameIds(previous, next) ? previous : next
+}
+
+/**
+ * Le joueur se déplace : dans une salle de 30, les 8 plus proches changent sans qu'aucun visiteur n'arrive ni ne
+ * parte. Le choix est donc réévalué toutes les 0,5 s, et seulement s'il y a plus de pairs que de places (jusqu'à 8
+ * visiteurs, tous sont montés et seul le roster peut changer le résultat).
+ */
+const RESELECT_INTERVAL_S = 0.5
+
 export function RemoteVisitors() {
   const cacheRef = useRef<{ dirty: boolean; ids: string[] }>({ dirty: true, ids: [] })
+  const notifyRef = useRef<(() => void) | null>(null)
+  const sinceReselectRef = useRef(0)
 
   const subscribe = useCallback((onStoreChange: () => void) => {
-    return subscribeRoster(peerStore, () => {
+    notifyRef.current = onStoreChange
+    const unsubscribe = subscribeRoster(peerStore, () => {
       cacheRef.current.dirty = true
       onStoreChange()
     })
+    return () => {
+      if (notifyRef.current === onStoreChange) notifyRef.current = null
+      unsubscribe()
+    }
   }, [])
 
   const getSnapshot = useCallback(() => {
     const cache = cacheRef.current
     if (cache.dirty) {
-      cache.ids = selectVisiblePeers(peerStore, player.x, player.z).map((p) => p.id)
+      cache.ids = pickVisibleIds(cache.ids)
       cache.dirty = false
     }
     return cache.ids
   }, [])
 
   const visibleIds = useSyncExternalStore(subscribe, getSnapshot)
+
+  useFrame((_, delta) => {
+    sinceReselectRef.current += delta
+    if (sinceReselectRef.current < RESELECT_INTERVAL_S) return
+    sinceReselectRef.current = 0
+    const cache = cacheRef.current
+    if (cache.dirty || peerStore.peers.size <= MAX_VISIBLE_PEERS) return // le prochain rendu recalcule, ou rien à départager
+    const next = pickVisibleIds(cache.ids)
+    if (next === cache.ids) return
+    cache.ids = next
+    notifyRef.current?.()
+  })
 
   return (
     <group>
