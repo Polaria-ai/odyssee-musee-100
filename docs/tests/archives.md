@@ -7,9 +7,12 @@ page ne documente que la suite dédiée à la salle des Archives de 2040. Propri
 ## Lancer la suite
 
 ```
-pnpm build && pnpm exec vite preview --host 127.0.0.1 --port 4373 --strictPort &
+VITE_SUPABASE_URL=https://e2e-stub.supabase.co VITE_SUPABASE_ANON_KEY=e2e-stub-anon-key pnpm build \
+  && pnpm exec vite preview --host 127.0.0.1 --port 4373 --strictPort &
 E2E_BASE_URL=http://127.0.0.1:4373 pnpm exec playwright test e2e/archives.spec.ts
 ```
+
+Les deux variables du build sont le faux projet Supabase de la CI (voir « Supabase en E2E » plus bas) ; avec un vrai `.env.local` on peut s'en passer. Sans l'un ni l'autre, « archive publiée pendant la visite » échoue d'emblée sur « le jeu doit lire session_archives au chargement ».
 
 En local sans navigateur Playwright téléchargé :
 
@@ -23,7 +26,13 @@ pnpm exec playwright test e2e/archives.spec.ts --workers=2
 
 | Fichier | Couvre |
 |---|---|
-| `e2e/archives.spec.ts` | Porte sud du hall franchie **à pied** au clavier (`walkUntilRoom`, `currentRoom === 'archives'`, aucun `portal-fade`) ; accueil de l'Archiviste à la première arrivée seulement (`archivesDiscovered`, jamais rejoué) ; retour au hall à pied par la même porte ; vitrine → « Consulter l'archive » → fiche (titre, heure, intervenant·es si annoncé·es, mention « Programme provisoire », encart « Archive en cours de rédaction » tant qu'aucune archive publiée) ; navigation précédente/suivante (bornée aux extrémités du programme trié par `order`) ; Échap ferme la fiche ; Archiviste → « Parler à l'Archiviste » → dialogue ; carnet (`stamps-button` « n/4 », 4e tampon Archives obtenu après 3 archives consultées, `stamp-card` « Obtenu ») ; plan du musée (5 salles dans le même plan, légende `map-archives` avec `map-archives-count`, plus de `map-portal-marker`) ; bascule FR/EN du bouton d'action et de la fiche ; performance (`renderInfo().calls` ≤ 150 à l'arrivée dans la salle) ; contenu (`archivesLayout.slots.length === sessions.length`, 18 séquences, toutes `provisional`, aucune attribution à Octave Klaba/Maya Noël/Anne Bouverot/Xavier Boilaud, y compris dans d'éventuelles citations déjà publiées) ; accessibilité (`@axe-core/playwright` sur la fiche d'archive, `reducedMotion: 'reduce'`, comme `e2e/accessibility.spec.ts`) ; absence d'erreur console sur le parcours complet. |
+| `e2e/archives.spec.ts` | Porte sud du hall franchie **à pied** au clavier (`walkUntilRoom`, `currentRoom === 'archives'`, aucun `portal-fade`) ; accueil de l'Archiviste à la première arrivée seulement (`archivesDiscovered`, jamais rejoué) ; retour au hall à pied par la même porte ; vitrine → « Consulter l'archive » → fiche (titre, heure, intervenant·es si annoncé·es, mention « Programme provisoire », encart « Archive en cours de rédaction » tant qu'aucune archive publiée) ; navigation précédente/suivante (bornée aux extrémités du programme trié par `order`) ; Échap ferme la fiche ; Archiviste → « Parler à l'Archiviste » → dialogue ; carnet (`stamps-button` « n/4 », 4e tampon Archives obtenu après 3 archives consultées, `stamp-card` « Obtenu ») ; plan du musée (5 salles dans le même plan, légende `map-archives` avec `map-archives-count`, plus de `map-portal-marker`) ; bascule FR/EN du bouton d'action et de la fiche ; performance (`renderInfo().calls` ≤ 150 à l'arrivée dans la salle) ; contenu (`archivesLayout.slots.length === sessions.length`, 18 séquences, toutes `provisional`, aucune attribution à Octave Klaba/Maya Noël/Anne Bouverot/Xavier Boilaud, y compris dans d'éventuelles citations déjà publiées) ; accessibilité (`@axe-core/playwright` sur la fiche d'archive, `reducedMotion: 'reduce'`, comme `e2e/accessibility.spec.ts`) ; absence d'erreur console sur le parcours complet ; archive publiée **pendant** la visite (lecture `session_archives` interceptée : vide au chargement, puis une archive « publiée » — entrer dans la salle relance la lecture, `archives` se remplit, le toast « Nouvelles archives » s'affiche et la fiche montre la synthèse, sans recharger la page). |
+
+### Supabase en E2E
+
+Le jeu ne lit Supabase que si le build contient `VITE_SUPABASE_URL` et `VITE_SUPABASE_ANON_KEY` (`getSupabase()`, `src/data/supabaseClient.ts`, sinon `null` et aucune requête). En CI il n'y a ni `.env.local` ni secret : `playwright.config.ts` passe donc au build E2E un faux projet (`https://e2e-stub.supabase.co`, compatible avec la CSP `connect-src https://*.supabase.co` de `vercel.json`), et `gotoMusee` appelle `stubSupabase` (`e2e/support/supabaseStub.ts`) qui répond à sa place : tables vides en REST (repli sur `/data/people.json` et le programme embarqué, comme avec un projet vide), websocket Realtime fermé (présence en solo), 404 pour tout le reste. Aucun réseau, aucun secret, aucun code applicatif touché.
+
+Les routes d'une page (`page.route`) passent avant celles du contexte : « archive publiée pendant la visite » surcharge `session_archives` seule. Il vérifie en plus que cette route a bien été sollicitée au chargement, pour échouer avec un message clair si le build n'a pas les variables (avant la correction, le jeu ne lisait jamais Supabase en CI et l'archive n'apparaissait jamais : `archives` restait vide après 10 s).
 
 ### Locale
 
