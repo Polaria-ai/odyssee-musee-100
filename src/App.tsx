@@ -94,7 +94,7 @@ export function App() {
           <ArchiveCard />
           <StampCard />
           <DialogueBox />
-<Signature />
+          <Signature />
           <RemiChat />
         </>
       )}
