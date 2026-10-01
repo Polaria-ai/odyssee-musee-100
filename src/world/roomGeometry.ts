@@ -1,6 +1,9 @@
 /**
- * Géométrie statique fusionnée par salle (sol, murs, décor) : un seul appel de dessin par salle,
- * couleurs par sommet, matériau `MeshLambertMaterial` partagé (pas de texture). Toutes les couleurs
+ * Géométrie statique fusionnée par salle (murs, décor, tapis et chemins du hall) : un seul appel de dessin
+ * par salle, couleurs par sommet, matériau `MeshLambertMaterial` partagé (pas de texture). Le sol de fond
+ * (parquet du hall, damiers, moquette) est une géométrie à part (`buildFloorGeometry`, WEL-923) : il porte une
+ * matière (marbre, terrazzo, microciment, moquette) par UV en coordonnées monde, donc son propre matériau —
+ * un appel de dessin de plus par salle, en échange de sols texturés. Toutes les couleurs
  * viennent de `charter3d` (`src/styles/tokens.ts`, table dans `docs/CHARTE-3D.md`) : aucune couleur en
  * dur ici, aucune matière chaude. Les cimaises (cloisons
  * occultantes) sont volontairement EXCLUES d'ici : `buildOccluderGeometry` les construit à part, en
@@ -19,6 +22,7 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { charter3d, type RoomCharter } from '../styles/tokens'
 import { discBars } from '../ui/OdysseeLogo'
 import { archBoxHeight, farWallX, type ArchBox, type DoorArch, type HallDecor } from './layout'
+import { FLOOR_SPECS, ROOM_FLOOR_KIND, worldUv } from './floorSpec'
 // Ré-exportée pour compatibilité : `farWallX` vit maintenant dans `layout.ts` (source de vérité des
 // positions de décor, WEL-874) mais restait importée d'ici par d'autres modules en cours d'écriture
 // dans ce worktree (ex. `src/world/props/placements.ts`, agent concurrent — voir le rapport final).
@@ -188,6 +192,19 @@ function floorBase(room: RoomLayout, segments: number): { geo: PlaneGeometry; cx
   return { geo, cx, cz, w, d }
 }
 
+/** Remplace les UV d'une géométrie de sol par des UV en coordonnées monde (`x / tile`, `z / tile`). */
+function setWorldUv(geo: BufferGeometry, tileMeters: number): BufferGeometry {
+  const pos = geo.attributes.position
+  const uv = new Float32Array(pos.count * 2)
+  for (let i = 0; i < pos.count; i++) {
+    const [u, v] = worldUv(pos.getX(i), pos.getZ(i), tileMeters)
+    uv[i * 2] = u
+    uv[i * 2 + 1] = v
+  }
+  geo.setAttribute('uv', new Float32BufferAttribute(uv, 2))
+  return geo
+}
+
 /** Peint chaque sommet d'une géométrie de sol via `colorAt(xLocal, zLocal)` (coordonnées relatives au centre de la salle). */
 function paintFloor(geo: PlaneGeometry, cx: number, cz: number, colorAt: (lx: number, lz: number) => Color): BufferGeometry {
   const pos = geo.attributes.position
@@ -234,9 +251,10 @@ interface FloorQuad {
 /**
  * Rectangles horizontaux à couleur unie, en géométrie non indexée (normale +Y). Les motifs de sol de la
  * charte (damier, moquette et bordure, chemins, barres du logo) ont des arêtes franches : la coloration par
- * sommet d'un plan subdivisé les faisait baver d'une cellule sur l'autre (lu sur les captures).
+ * sommet d'un plan subdivisé les faisait baver d'une cellule sur l'autre (lu sur les captures). Avec
+ * `tileMeters`, les UV sont les coordonnées monde divisées par la taille du motif de la matière (sols texturés).
  */
-function flatQuads(quads: FloorQuad[]): BufferGeometry {
+function flatQuads(quads: FloorQuad[], tileMeters?: number): BufferGeometry {
   const position = new Float32Array(quads.length * 18)
   const normal = new Float32Array(quads.length * 18)
   const uv = new Float32Array(quads.length * 12)
@@ -253,8 +271,15 @@ function flatQuads(quads: FloorQuad[]): BufferGeometry {
       color[o] = q.color.r
       color[o + 1] = q.color.g
       color[o + 2] = q.color.b
-      uv[i * 12 + v * 2] = corners[v * 2] === q.x0 ? 0 : 1
-      uv[i * 12 + v * 2 + 1] = corners[v * 2 + 1] === q.z0 ? 0 : 1
+      if (tileMeters === undefined) {
+        uv[i * 12 + v * 2] = corners[v * 2] === q.x0 ? 0 : 1
+        uv[i * 12 + v * 2 + 1] = corners[v * 2 + 1] === q.z0 ? 0 : 1
+      } else {
+        // Sol texturé : UV en coordonnées monde, la matière continue d'un quad au suivant.
+        const [u, w] = worldUv(corners[v * 2], corners[v * 2 + 1], tileMeters)
+        uv[i * 12 + v * 2] = u
+        uv[i * 12 + v * 2 + 1] = w
+      }
     }
   })
   const geo = new BufferGeometry()
@@ -270,16 +295,23 @@ function flatQuads(quads: FloorQuad[]): BufferGeometry {
  * Hongrie », voir `chevronBand`), disque central en scanlines (le logo de l'Odyssée, voir `hallRug`) et
  * chemins de tapis à la couleur de chaque aile menant à chaque porte (ouverte ou non — un chemin vers une
  * aile « Bientôt » reste visible, comme une promesse), y compris la porte sud des Archives (voir `hallPaths`).
- * Le parquet est peint par sommet (les deux tons sont voisins : le flou n'y nuit pas) ; disque et chemins
- * sont des quads francs posés dessus.
+ * Le parquet (`hallParquet`, marbre, UV monde) est une géométrie à part ; disque et chemins sont des quads
+ * francs, sans matière (nets et lisibles), qui restent dans la géométrie de la salle et se posent dessus.
  */
 function hallFloor(room: RoomLayout): BufferGeometry[] {
+  const cx = (room.bounds.minX + room.bounds.maxX) / 2
+  const cz = (room.bounds.minZ + room.bounds.maxZ) / 2
+  return [...hallPaths(room), ...hallRug(cx, cz)]
+}
+
+/** Parquet à chevrons du hall, peint par sommet (deux tons voisins : le flou n'y nuit pas), UV monde. */
+function hallParquet(room: RoomLayout): BufferGeometry {
   const { geo, cx, cz } = floorBase(room, 64)
   const { floor, floorAlt } = charter3d.rooms.hall
   const plankA = new Color(floor)
   const plankB = new Color(floorAlt)
-  const parquet = paintFloor(geo, cx, cz, (lx, lz) => (chevronBand(lx, lz) % 2 === 0 ? plankA : plankB))
-  return [parquet, ...hallPaths(room), ...hallRug(cx, cz)]
+  paintFloor(geo, cx, cz, (lx, lz) => (chevronBand(lx, lz) % 2 === 0 ? plankA : plankB))
+  return setWorldUv(geo, FLOOR_SPECS[ROOM_FLOOR_KIND.hall].tileMeters)
 }
 
 /** Les quatre chemins du hall : un par porte, couleur de l'aile (`hallFloor.path`), liseré blanc de chaque côté. */
@@ -373,7 +405,7 @@ function chevronBand(lx: number, lz: number): number {
  * `cell` mètres, centrées sur la salle, deux tons voisins de la charte (`floor` / `floorAlt`). Les cellules du
  * bord sont rognées à l'emprise de la salle. Jamais d'« effet zèbre » : les tons sont rapprochés.
  */
-function checkerFloor(room: RoomLayout, colorA: string, colorB: string, cell: number): BufferGeometry {
+function checkerFloor(room: RoomLayout, colorA: string, colorB: string, cell: number, tileMeters: number): BufferGeometry {
   const { minX, maxX, minZ, maxZ } = room.bounds
   const cx = (minX + maxX) / 2
   const cz = (minZ + maxZ) / 2
@@ -391,11 +423,11 @@ function checkerFloor(room: RoomLayout, colorA: string, colorB: string, cell: nu
       quads.push({ x0, x1, z0, z1, y: 0, color: (((ix + iz) % 2) + 2) % 2 === 0 ? a : b })
     }
   }
-  return flatQuads(quads)
+  return flatQuads(quads, tileMeters)
 }
 
 /** Moquette unie avec bordure (aile Culture : galerie d'art) : un rectangle central et quatre bandes de bordure, sans recouvrement. */
-function moquetteFloor(room: RoomLayout, base: string, border: string, borderWidth: number): BufferGeometry {
+function moquetteFloor(room: RoomLayout, base: string, border: string, borderWidth: number, tileMeters: number): BufferGeometry {
   const { minX, maxX, minZ, maxZ } = room.bounds
   const b = new Color(base)
   const bd = new Color(border)
@@ -409,24 +441,27 @@ function moquetteFloor(room: RoomLayout, base: string, border: string, borderWid
     { x0: minX, x1: maxX, z0: iz1, z1: maxZ, y: 0, color: bd }, // sud
     { x0: minX, x1: ix0, z0: iz0, z1: iz1, y: 0, color: bd }, // ouest
     { x0: ix1, x1: maxX, z0: iz0, z1: iz1, y: 0, color: bd }, // est
-  ])
+  ], tileMeters)
 }
 
-function wingFloor(room: RoomLayout): BufferGeometry {
+/**
+ * Sol de fond d'une salle texturée (WEL-923), en géométrie à part : parquet du hall (marbre), damier des
+ * Infrastructures (terrazzo), damier de l'Industrialisation (microciment), moquette et bordure de la Culture.
+ * Les couleurs de sommet sont celles de la charte (inchangées) ; les UV sont en coordonnées monde, à l'échelle
+ * de la matière (`FLOOR_SPECS`). `null` pour une salle qui peint son sol elle-même (les Archives).
+ */
+export function buildFloorGeometry(room: RoomLayout): BufferGeometry | null {
+  if (room.id === 'hall') return hallParquet(room)
+  if (room.id === 'archives') return null
   const { floor, floorAlt } = charter3d.rooms[room.id]
+  const tile = FLOOR_SPECS[ROOM_FLOOR_KIND[room.id]].tileMeters
   switch (room.id) {
     case 'infrastructures':
-      return checkerFloor(room, floor, floorAlt, 1.4)
+      return checkerFloor(room, floor, floorAlt, 1.4, tile)
     case 'industrialisation':
-      return checkerFloor(room, floor, floorAlt, 1.6)
+      return checkerFloor(room, floor, floorAlt, 1.6, tile)
     case 'culture':
-      return moquetteFloor(room, floor, floorAlt, 1.0)
-    default: {
-      // N'arrive jamais en pratique (le hall a son propre `hallFloor`, appelé avant celui-ci) : sol
-      // uni de secours, pour rester exhaustif sur `WingId`.
-      const { minX, maxX, minZ, maxZ } = room.bounds
-      return flatQuads([{ x0: minX, x1: maxX, z0: minZ, z1: maxZ, y: 0, color: new Color(floor) }])
-    }
+      return moquetteFloor(room, floor, floorAlt, 1.0, tile)
   }
 }
 
@@ -486,9 +521,12 @@ function wingSignatureDecor(room: RoomLayout): BufferGeometry[] {
   return parts
 }
 
-/** Fusionne le sol, les murs (coupés côté caméra) et le décor d'une salle en une seule géométrie. */
+/**
+ * Fusionne les murs (coupés côté caméra), le décor, et pour le hall les tapis et chemins posés sur le sol,
+ * en une seule géométrie. Le sol de fond est à part (`buildFloorGeometry`).
+ */
 export function buildRoomGeometry(room: RoomLayout, walls: ArchBox[], decor?: HallDecor): BufferGeometry {
-  const parts: BufferGeometry[] = decor ? hallFloor(room) : [wingFloor(room)]
+  const parts: BufferGeometry[] = decor ? hallFloor(room) : []
   const c = charter3d.rooms[room.id]
 
   for (const w of walls) {

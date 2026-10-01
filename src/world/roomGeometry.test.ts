@@ -9,7 +9,8 @@
 import { describe, expect, it } from 'vitest'
 import { Color, type BufferGeometry } from 'three'
 import type { RoomLayout } from '../types'
-import { RUG_RADIUS, buildComingSoonBarrierGeometry, buildDoorArchesGeometry, buildLightRaysGeometry, buildOccluderGeometry, buildRoomGeometry } from './roomGeometry'
+import { RUG_RADIUS, buildComingSoonBarrierGeometry, buildDoorArchesGeometry, buildFloorGeometry, buildLightRaysGeometry, buildOccluderGeometry, buildRoomGeometry } from './roomGeometry'
+import { FLOOR_SPECS, ROOM_FLOOR_KIND, worldUv } from './floorSpec'
 import { buildMuseumArchitecture, farWallX } from './layout'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import { CAMERA_CUT_HEIGHT, CAP_HEIGHT, DOOR_WIDTH, HALL_HALF_DEPTH, HALL_HALF_WIDTH, LISTEL_HEIGHT, SOFTEN_CHECKER, WAINSCOT_HEIGHT, dims } from './constants'
@@ -132,6 +133,7 @@ describe('charte 3D — l’architecture ne peint qu’avec charter3d', () => {
     const entry = architecture.rooms.find((r) => r.room.id === id)!
     return buildRoomGeometry(entry.room, entry.walls, entry.room.id === 'hall' ? architecture.decor : undefined)
   }
+  const floorOf = (id: string): BufferGeometry => buildFloorGeometry(architecture.rooms.find((r) => r.room.id === id)!.room)!
 
   it('la charte contient bien des couleurs (sanity du contrôle)', () => {
     expect(palette.length).toBeGreaterThan(15)
@@ -140,8 +142,12 @@ describe('charte 3D — l’architecture ne peint qu’avec charter3d', () => {
 
   it('chaque sommet de chaque salle (sol, murs, tapis, mobilier) est une couleur de la charte : ni bois, ni beige, ni or', () => {
     for (const { room } of architecture.rooms) {
-      const off = vertices(geometryOf(room.id)).filter((v) => !isCharterColor(v, palette))
-      expect(off.length, `salle ${room.id} : ${off.length} sommets hors charte, p. ex. ${JSON.stringify(off[0])}`).toBe(0)
+      // Le sol de fond est une géométrie à part (WEL-923) : mêmes couleurs de sommet, la matière est une texture.
+      const geos = [geometryOf(room.id), buildFloorGeometry(room)].filter((g): g is BufferGeometry => g !== null)
+      for (const geo of geos) {
+        const off = vertices(geo).filter((v) => !isCharterColor(v, palette))
+        expect(off.length, `salle ${room.id} : ${off.length} sommets hors charte, p. ex. ${JSON.stringify(off[0])}`).toBe(0)
+      }
     }
   })
 
@@ -199,7 +205,7 @@ describe('charte 3D — l’architecture ne peint qu’avec charter3d', () => {
   it('les ailes ont un sol à deux tons francs (damier) ou moquette + bordure, aux couleurs de charte', () => {
     for (const id of ['infrastructures', 'industrialisation', 'culture'] as const) {
       const c = charter3d.rooms[id]
-      const ground = vertices(geometryOf(id)).filter((v) => v.y === 0)
+      const ground = vertices(floorOf(id)).filter((v) => v.y === 0)
       expect(ground.some((v) => isColor(v, c.floor)), `${id} : sol`).toBe(true)
       expect(ground.some((v) => isColor(v, c.floorAlt)), `${id} : second ton`).toBe(true)
     }
@@ -247,3 +253,87 @@ describe('charte 3D — l’architecture ne peint qu’avec charter3d', () => {
     expect(Math.max(...northPath.map((v) => Math.abs(v.x)))).toBeLessThan(DOOR_WIDTH / 2)
   })
 })
+
+// --- Sols texturés (WEL-923) : UV en coordonnées monde, une échelle par matière ----------------------------------
+
+describe('sols texturés — UV monde', () => {
+  const architecture = buildMuseumArchitecture(generatePlaceholderPeople(100))
+  const rooms = architecture.rooms.map((r) => r.room)
+  const floorOf = (id: string): BufferGeometry => buildFloorGeometry(rooms.find((r) => r.id === id)!)!
+
+  it('chaque salle (sauf les Archives, qui peignent leur sol) a une géométrie de sol ; le fond du sol n’est plus dans la géométrie de salle', () => {
+    for (const room of rooms) {
+      const floor = buildFloorGeometry(room)
+      if (room.id === 'archives') expect(floor).toBeNull()
+      else {
+        expect(floor, `sol de ${room.id}`).toBeTruthy()
+        floor!.computeBoundingBox()
+        expect(floor!.boundingBox!.min.x).toBeCloseTo(room.bounds.minX, 5)
+        expect(floor!.boundingBox!.max.x).toBeCloseTo(room.bounds.maxX, 5)
+        expect(floor!.boundingBox!.min.z).toBeCloseTo(room.bounds.minZ, 5)
+        expect(floor!.boundingBox!.max.z).toBeCloseTo(room.bounds.maxZ, 5)
+        expect(floor!.boundingBox!.max.y, `sol de ${room.id} : à plat, y = 0`).toBeCloseTo(0, 6)
+      }
+    }
+  })
+
+  it('chaque sommet porte UV = (x, z) / taille du motif de sa matière : un quad voisin, ou le damier, lit la matière au même endroit', () => {
+    for (const room of rooms) {
+      const floor = buildFloorGeometry(room)
+      if (!floor) continue
+      const tile = FLOOR_SPECS[ROOM_FLOOR_KIND[room.id]].tileMeters
+      const pos = floor.attributes.position
+      const uv = floor.attributes.uv
+      expect(uv.count).toBe(pos.count)
+      for (let i = 0; i < pos.count; i++) {
+        const [u, v] = worldUv(pos.getX(i), pos.getZ(i), tile)
+        expect(uv.getX(i), `u de ${room.id}`).toBeCloseTo(u, 4)
+        expect(uv.getY(i), `v de ${room.id}`).toBeCloseTo(v, 4)
+      }
+    }
+  })
+
+  it('continuité : la différence d’UV entre deux sommets est la différence de position divisée par la taille du motif (aucun saut entre cellules)', () => {
+    for (const room of rooms) {
+      const floor = buildFloorGeometry(room)
+      if (!floor) continue
+      const tile = FLOOR_SPECS[ROOM_FLOOR_KIND[room.id]].tileMeters
+      const pos = floor.attributes.position
+      const uv = floor.attributes.uv
+      for (let i = 1; i < pos.count; i += 7) {
+        expect(uv.getX(i) - uv.getX(0)).toBeCloseTo((pos.getX(i) - pos.getX(0)) / tile, 3)
+        expect(uv.getY(i) - uv.getY(0)).toBeCloseTo((pos.getZ(i) - pos.getZ(0)) / tile, 3)
+      }
+    }
+  })
+
+  it('échelle par matière : le marbre (veines fines) a le plus petit motif, les matières à grain fin sont agrandies pour rester lisibles à l\'écran, aucune ne dépasse 8 m ni ne descend sous 0,5 m', () => {
+    expect(ROOM_FLOOR_KIND).toEqual({ hall: 'marble', archives: 'marble', infrastructures: 'terrazzo', industrialisation: 'microcement', culture: 'carpet' })
+    const t = (k: keyof typeof FLOOR_SPECS) => FLOOR_SPECS[k].tileMeters
+    // Une maille de moquette de 4 cm ou un éclat de terrazzo de 1 cm tombent sous le pixel à 60-80 px/m (mipmaps : le sol
+    // redevient un aplat). Ces matières sont donc posées à une échelle de jeu (WEL-923, docs/CHARTE-3D.md §4.1).
+    expect(t('marble')).toBeLessThan(t('microcement'))
+    expect(t('microcement')).toBeLessThan(t('terrazzo'))
+    expect(t('terrazzo')).toBeLessThan(t('carpet'))
+    for (const k of Object.keys(FLOOR_SPECS) as Array<keyof typeof FLOOR_SPECS>) {
+      expect(t(k)).toBeGreaterThanOrEqual(0.5)
+      expect(t(k)).toBeLessThanOrEqual(8)
+    }
+  })
+
+  it('le damier et la moquette gardent leurs couleurs franches (les UV ne touchent pas aux couleurs de sommet)', () => {
+    const colors = (id: string) => new Set(vertices(floorOf(id)).map((v) => `${v.r.toFixed(4)},${v.g.toFixed(4)},${v.b.toFixed(4)}`))
+    expect(colors('infrastructures').size).toBe(2)
+    expect(colors('industrialisation').size).toBe(2)
+    expect(colors('culture').size).toBe(2)
+    expect(colors('hall').size).toBeGreaterThanOrEqual(2) // chevrons : deux planches, et leur fondu aux jonctions
+  })
+
+  it('les chemins et le tapis du hall restent dans la géométrie de la salle : nets, sans matière', () => {
+    const hall = architecture.rooms.find((r) => r.room.id === 'hall')!
+    const geo = buildRoomGeometry(hall.room, hall.walls, architecture.decor)
+    const raised = vertices(geo).filter((v) => v.y > 0.003 && v.y < 0.02)
+    expect(raised.length).toBeGreaterThan(0)
+  })
+})
+
