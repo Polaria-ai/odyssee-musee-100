@@ -307,15 +307,17 @@ describe('sols texturés — UV monde', () => {
     }
   })
 
-  it('échelle par matière : marbre (hall) > microciment > terrazzo > moquette, aucune matière ne dépasse 5 m ni ne descend sous 0,5 m', () => {
+  it('échelle par matière : le marbre (veines fines) a le plus petit motif, les matières à grain fin sont agrandies pour rester lisibles à l\'écran, aucune ne dépasse 8 m ni ne descend sous 0,5 m', () => {
     expect(ROOM_FLOOR_KIND).toEqual({ hall: 'marble', archives: 'marble', infrastructures: 'terrazzo', industrialisation: 'microcement', culture: 'carpet' })
     const t = (k: keyof typeof FLOOR_SPECS) => FLOOR_SPECS[k].tileMeters
-    expect(t('microcement')).toBeGreaterThan(t('marble'))
+    // Une maille de moquette de 4 cm ou un éclat de terrazzo de 1 cm tombent sous le pixel à 60-80 px/m (mipmaps : le sol
+    // redevient un aplat). Ces matières sont donc posées à une échelle de jeu (WEL-923, docs/CHARTE-3D.md §4.1).
     expect(t('marble')).toBeLessThan(t('microcement'))
-    expect(t('terrazzo')).toBeGreaterThan(1)
+    expect(t('microcement')).toBeLessThan(t('terrazzo'))
+    expect(t('terrazzo')).toBeLessThan(t('carpet'))
     for (const k of Object.keys(FLOOR_SPECS) as Array<keyof typeof FLOOR_SPECS>) {
       expect(t(k)).toBeGreaterThanOrEqual(0.5)
-      expect(t(k)).toBeLessThanOrEqual(5)
+      expect(t(k)).toBeLessThanOrEqual(8)
     }
   })
 

@@ -11,10 +11,16 @@
  *    matière. Le blanc (1) laisse la couleur de la charte intacte ;
  *  - une carte de NORMALES (convention OpenGL, la même que celle de three) pour le relief sous la lumière.
  *
- * Pipeline : luminance linéaire de l'albédo → raccord tuilable si besoin → réduction à 512 px (règle mobile,
- * AGENTS.md) → aplanissement partiel des grandes taches (un motif de 1 m qui se répète en 3 m ne doit pas
- * faire apparaître un quadrillage de grosses plages claires/sombres) → normalisation par percentiles →
- * profondeur réglable par matière → webp. Sorties déterministes (mêmes sources, mêmes réglages, mêmes octets).
+ * Pipeline : luminance linéaire de l'albédo → raccord tuilable si besoin (fondu avec une copie décalée, ou retrait
+ * de la dérive lente de la source) → réduction à 512 px (règle mobile, AGENTS.md) → grossissement des marques trop
+ * fines pour l'écran (flou léger, renfort des marques moyennes) → aplanissement partiel des grandes taches (un motif
+ * de 1 m qui se répète en 6 m ne doit pas faire apparaître un quadrillage de plages claires/sombres) → normalisation
+ * par percentiles → profondeur réglable par matière → webp. Sorties déterministes (mêmes sources, mêmes réglages,
+ * mêmes octets).
+ *
+ * Lisibilité à l'écran (docs/CHARTE-3D.md §4.1) : la caméra montre le sol à 60-80 px par mètre, le motif doit donc
+ * être posé à une taille de jeu (`tileMeters` de `src/world/floorSpec.ts`) et garder du contraste une fois moyenné :
+ * `screenContrast` le mesure, et le test l'exige.
  *
  * Sources : `assets-src/floors/` (hors Git, voir docs/ASSETS.md), ou `FLOORS_SRC=…`, ou à défaut le dossier
  * d'origine `~/Dev/odyssee-musee-100-assets/sols-v5/magnific/`.
@@ -37,17 +43,20 @@ export const BUDGET_BYTES = 450 * 1024
  * Réglages par sol. Clés = identifiants de matière de `src/world/floorTextures.ts`.
  *  - `src` : préfixe des fichiers sources ;
  *  - `seamless` : largeur de la bande de fondu (fraction de la tuile) si la source n'est pas déjà tuilable ;
- *  - `flatten` : part (0-1) des grandes variations de luminance retirée (σ = `flattenSigma` px à 512) ;
+ *  - `flatten` : part (0-1) des grandes variations de luminance retirée (σ = `flattenSigma` px à 512) ; `flattenOpen` :
+ *    estimer ces variations sans bouclage (source dont le haut et le bas ne se raccordent pas) ;
+ *  - `boostMid` : renfort (facteur) des marques de 3 à 30 px, avant la normalisation ;
+ *  - `blur` : flou (σ en px à 512) appliqué avant la normalisation, pour grossir les marques trop fines pour l'écran ;
  *  - `lo` / `hi` : percentiles de la luminance qui deviennent respectivement « le plus marqué » et « la matière » ;
  *  - `depth` : profondeur du motif ; les valeurs de la carte sont dans [1 − depth ; 1] ;
  *  - `gamma` : > 1 resserre les marques vers la matière (peu de marques fortes), < 1 les étale ;
  *  - `normalSize` / `normalStrength` : taille de la carte de normales (≤ 512) et gain de relief.
  */
 export const FLOORS = {
-  marble: { src: 'marbre-2', seamless: 0.25, flatten: 0.65, flattenSigma: 48, lo: 0.002, hi: 0.97, depth: 0.42, gamma: 0.8, normalSize: 512, normalStrength: 1 },
-  terrazzo: { src: 'terrazzo-2', seamless: 0, flatten: 0.5, flattenSigma: 32, lo: 0.003, hi: 0.96, depth: 0.5, gamma: 0.6, normalSize: 512, normalStrength: 1 },
-  microcement: { src: 'microciment-2', seamless: 0, flatten: 0, flattenSigma: 64, lo: 0.003, hi: 0.985, depth: 0.4, gamma: 1, normalSize: 512, normalStrength: 1 },
-  carpet: { src: 'moquette-1', seamless: 0, flatten: 0.5, flattenSigma: 24, lo: 0.01, hi: 0.985, depth: 0.4, gamma: 1, normalSize: 256, normalStrength: 1 },
+  marble: { src: 'marbre-2', seamless: 0.25, flatten: 0.65, flattenSigma: 48, blur: 0, lo: 0.002, hi: 0.97, depth: 0.42, gamma: 0.8, normalSize: 512, normalStrength: 1 },
+  terrazzo: { src: 'terrazzo-2', seamless: 0, flatten: 1, flattenSigma: 32, flattenOpen: true, blur: 1.2, lo: 0.003, hi: 0.96, depth: 0.55, gamma: 0.6, normalSize: 512, normalStrength: 1, quality: 70 },
+  microcement: { src: 'microciment-2', seamless: 0.2, flatten: 0.8, flattenSigma: 40, blur: 0, lo: 0.003, hi: 0.99, depth: 0.6, gamma: 0.85, boostMid: 1.5, normalSize: 512, normalStrength: 1.5, quality: 70 },
+  carpet: { src: 'moquette-1', seamless: 0, flatten: 0.3, flattenSigma: 40, blur: 0.7, lo: 0.01, hi: 0.985, depth: 0.55, gamma: 1, normalSize: 256, normalStrength: 1, quality: 70 },
 }
 
 const WEBP_DETAIL = { quality: 82, effort: 6 }
@@ -125,8 +134,8 @@ function makeSeamless(planes, n, band) {
   })
 }
 
-/** Flou gaussien séparable, avec bouclage (le résultat reste tuilable). */
-function blurWrap(plane, n, sigma) {
+/** Flou gaussien exact, séparable : pour les petits σ (le noyau est court, le coût négligeable). */
+function blurExact(plane, n, sigma, wrap) {
   const radius = Math.ceil(sigma * 3)
   const kernel = new Float32Array(2 * radius + 1)
   let sum = 0
@@ -135,23 +144,63 @@ function blurWrap(plane, n, sigma) {
     sum += kernel[k + radius]
   }
   for (let k = 0; k < kernel.length; k++) kernel[k] /= sum
+  const at = wrap ? (i) => ((i % n) + n) % n : (i) => Math.min(n - 1, Math.max(0, i))
   const tmp = new Float32Array(n * n)
   const out = new Float32Array(n * n)
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
       let acc = 0
-      for (let k = -radius; k <= radius; k++) acc += plane[y * n + ((x + k + n * 4) % n)] * kernel[k + radius]
+      for (let k = -radius; k <= radius; k++) acc += plane[y * n + at(x + k)] * kernel[k + radius]
       tmp[y * n + x] = acc
     }
   }
   for (let y = 0; y < n; y++) {
     for (let x = 0; x < n; x++) {
       let acc = 0
-      for (let k = -radius; k <= radius; k++) acc += tmp[((y + k + n * 4) % n) * n + x] * kernel[k + radius]
+      for (let k = -radius; k <= radius; k++) acc += tmp[at(y + k) * n + x] * kernel[k + radius]
       out[y * n + x] = acc
     }
   }
   return out
+}
+
+/**
+ * Flou gaussien approché par trois passes de moyenne glissante (Kovesi), pour les grands σ : coût O(n²) quel que
+ * soit σ (le flou exact de σ = 96 px coûtait des secondes et rendait les tests fragiles sous charge).
+ * Avec `wrap` (défaut), le plan est bouclé : le résultat reste tuilable. Sans `wrap`, les bords sont prolongés : à
+ * utiliser pour estimer une variation lente NON périodique (une source dont le haut est plus clair que le bas :
+ * un flou bouclé la confondrait avec une marque et creuserait un raccord).
+ */
+function blurWrap(plane, n, sigma, wrap = true) {
+  if (sigma < 4) return blurExact(plane, n, sigma, wrap)
+  const passes = 3
+  const ideal = Math.sqrt((12 * sigma * sigma) / passes + 1)
+  let wl = Math.floor(ideal)
+  if (wl % 2 === 0) wl--
+  const wu = wl + 2
+  const m = Math.round((12 * sigma * sigma - passes * wl * wl - 4 * passes * wl - 3 * passes) / (-4 * wl - 4))
+  const at = wrap ? (i) => ((i % n) + n) % n : (i) => Math.min(n - 1, Math.max(0, i))
+  let src = Float32Array.from(plane)
+  let dst = new Float32Array(n * n)
+  const pass = (width, stride, lineStride) => {
+    const r = (width - 1) / 2
+    for (let line = 0; line < n; line++) {
+      const base = line * lineStride
+      let acc = 0
+      for (let k = -r; k <= r; k++) acc += src[base + at(k) * stride]
+      for (let x = 0; x < n; x++) {
+        dst[base + x * stride] = acc / width
+        acc += src[base + at(x + r + 1) * stride] - src[base + at(x - r) * stride]
+      }
+    }
+    ;[src, dst] = [dst, src]
+  }
+  for (let i = 0; i < passes; i++) {
+    const width = i < m ? wl : wu
+    pass(width, 1, n) // horizontale
+    pass(width, n, 1) // verticale
+  }
+  return src
 }
 
 function percentile(plane, q) {
@@ -175,17 +224,70 @@ export function seamRatio(values, n) {
   return seam / (inner / 2)
 }
 
+/**
+ * Contraste de la carte de détail TEL QUE LE JOUEUR LE VOIT : coefficient de variation (écart-type / moyenne) de la
+ * carte rééchantillonnée à la densité d'écran du jeu. Sur téléphone la caméra montre ≈ 11 m de sol dans 680 px de
+ * rendu (dpr 1,75 sur 390 px) : 60 à 80 px par mètre. Un motif plus fin que le pixel s'y moyenne (les mipmaps) et
+ * le sol redevient un aplat, quelle que soit la profondeur de la carte (c'était le défaut de la première
+ * version : moquette 0,047, éclats de terrazzo 0,052). `ppm` = pixels d'écran par mètre ; moyenne par blocs.
+ */
+export function screenContrast(values, n, tileMeters, ppm = 80) {
+  const screenPx = Math.max(1, Math.round(tileMeters * ppm))
+  if (screenPx >= n) {
+    // plus de pixels d'écran que de texels : la carte est vue à pleine résolution (agrandie), rien ne se moyenne
+    let sum = 0
+    let sum2 = 0
+    for (let i = 0; i < values.length; i++) {
+      sum += values[i]
+      sum2 += values[i] * values[i]
+    }
+    const mean = sum / values.length
+    return Math.sqrt(Math.max(0, sum2 / values.length - mean * mean)) / mean
+  }
+  const out = new Float64Array(screenPx * screenPx)
+  for (let y = 0; y < screenPx; y++) {
+    const y0 = Math.floor((y * n) / screenPx)
+    const y1 = Math.max(y0 + 1, Math.floor(((y + 1) * n) / screenPx))
+    for (let x = 0; x < screenPx; x++) {
+      const x0 = Math.floor((x * n) / screenPx)
+      const x1 = Math.max(x0 + 1, Math.floor(((x + 1) * n) / screenPx))
+      let acc = 0
+      for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) acc += values[yy * n + xx]
+      out[y * screenPx + x] = acc / ((y1 - y0) * (x1 - x0))
+    }
+  }
+  let sum = 0
+  let sum2 = 0
+  for (const v of out) {
+    sum += v
+    sum2 += v * v
+  }
+  const mean = sum / out.length
+  return Math.sqrt(Math.max(0, sum2 / out.length - mean * mean)) / mean
+}
+
 // --- Cartes -----------------------------------------------------------------------------------------------
 
 function buildDetailPlane(lum1024, cfg) {
   let planes = [lum1024]
   const full = 1024
   if (cfg.seamless > 0) planes = makeSeamless(planes, full, cfg.seamless)
-  const { plane: lum, size: n } = resizeTo(planes[0], full, OUT_SIZE)
+  const { plane: reduced, size: n } = resizeTo(planes[0], full, OUT_SIZE)
+  // Grossissement des marques : un éclat de 3 px ou une maille de 2 px tombent sous le pixel à la distance du jeu
+  // (≈ 80 px par mètre, caméra à 48°). Un léger flou (bouclé, donc tuilable), suivi de la renormalisation par
+  // percentiles ci-dessous, les épaissit sans perdre leur contraste.
+  const lum = cfg.blur > 0 ? blurWrap(reduced, n, cfg.blur) : reduced
   let mean = 0
   for (const v of lum) mean += v
   mean /= lum.length
-  const low = cfg.flatten > 0 ? blurWrap(lum, n, cfg.flattenSigma) : null
+  // Renfort des marques de taille moyenne (3 à 30 px, soit 6 à 60 cm au motif de 5 m) : ce sont celles que l'écran
+  // restitue (le grain plus fin se moyenne, les très grandes taches sont aplanies) ; le microciment n'en a que de douces.
+  if (cfg.boostMid > 0) {
+    const fine = blurWrap(lum, n, 3)
+    const coarse = blurWrap(lum, n, 30)
+    for (let i = 0; i < lum.length; i++) lum[i] += cfg.boostMid * (fine[i] - coarse[i])
+  }
+  const low = cfg.flatten > 0 ? blurWrap(lum, n, cfg.flattenSigma, !cfg.flattenOpen) : null
   const flat = new Float32Array(lum.length)
   for (let i = 0; i < lum.length; i++) flat[i] = low ? lum[i] - cfg.flatten * (low[i] - mean) : lum[i]
   const lo = percentile(flat, cfg.lo)
@@ -271,12 +373,12 @@ export async function buildFloor(kind, srcDir = sourceDir()) {
   const detail = buildDetailPlane(luminanceLinear(albedo), cfg)
   const bytes = Buffer.alloc(detail.n * detail.n)
   for (let i = 0; i < bytes.length; i++) bytes[i] = Math.round(detail.values[i] * 255)
-  const detailWebp = await sharp(bytes, { raw: { width: detail.n, height: detail.n, channels: 1 } }).webp(WEBP_DETAIL).toBuffer()
+  const detailWebp = await sharp(bytes, { raw: { width: detail.n, height: detail.n, channels: 1 } }).webp({ ...WEBP_DETAIL, quality: cfg.quality ?? WEBP_DETAIL.quality }).toBuffer()
   // Les statistiques sont lues sur le FICHIER (webp avec perte), pas sur les valeurs avant encodage : c'est
   // ce que le jeu décode, et la moyenne qui sert de gain au matériau (`detailMean`, floorSpec.ts).
   const decoded = await readDetailFile(detailWebp)
   const normal = await buildNormalPlanes(join(srcDir, `${cfg.src}.normal.png`), cfg)
-  const normalWebp = await sharp(normal.raw, { raw: { width: normal.n, height: normal.n, channels: 3 } }).webp(WEBP_NORMAL).toBuffer()
+  const normalWebp = await sharp(normal.raw, { raw: { width: normal.n, height: normal.n, channels: 3 } }).webp({ ...WEBP_NORMAL, quality: cfg.normalQuality ?? WEBP_NORMAL.quality }).toBuffer()
   return { detailWebp, normalWebp, detailBytes: bytes, detailSize: detail.n, stats: { mean: decoded.mean, min: decoded.min, seam: seamRatio(decoded.values, decoded.size) } }
 }
 

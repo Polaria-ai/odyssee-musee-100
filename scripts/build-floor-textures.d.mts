@@ -8,6 +8,11 @@ export interface FloorBuildConfig {
   seamless: number
   flatten: number
   flattenSigma: number
+  flattenOpen?: boolean
+  blur?: number
+  boostMid?: number
+  quality?: number
+  normalQuality?: number
   lo: number
   hi: number
   depth: number
@@ -18,6 +23,7 @@ export interface FloorBuildConfig {
 
 export const FLOORS: Record<'marble' | 'terrazzo' | 'microcement' | 'carpet', FloorBuildConfig>
 
+export function screenContrast(values: ArrayLike<number>, n: number, tileMeters: number, ppm?: number): number
 export function seamRatio(values: ArrayLike<number>, n: number): number
 export function readDetailFile(input: string | Uint8Array): Promise<{ mean: number; min: number; max: number; size: number; values: Uint8Array }>
 export function sourceDir(): string | undefined

@@ -38,9 +38,9 @@ const spec = (kind: FloorKind, tileMeters: number, normalScale: number, detailMe
 
 export const FLOOR_SPECS: Record<FloorKind, FloorSpec> = {
   marble: spec('marble', 2.5, 0.35, 0.906),
-  terrazzo: spec('terrazzo', 3, 0.8, 0.861),
-  microcement: spec('microcement', 4, 0.5, 0.877),
-  carpet: spec('carpet', 2.8, 0.8, 0.826),
+  terrazzo: spec('terrazzo', 6, 0.8, 0.817),
+  microcement: spec('microcement', 5, 0.6, 0.740),
+  carpet: spec('carpet', 7, 0.8, 0.741),
 }
 
 export const FLOOR_KINDS = Object.keys(FLOOR_SPECS) as FloorKind[]
