@@ -1,0 +1,260 @@
+/**
+ * Styles de la signature Polaria : mention de l'écran titre, badge du jeu, carte de crédits.
+ * Jetons de `src/styles/global.css`. Les règles de l'écran titre vivent ici (et non dans `src/ui/ui.css`)
+ * pour que la signature reste un module autonome ; elles passent par un conteneur de pied qui prend la
+ * place du `.ui-title__footer` absolu d'origine.
+ */
+
+/* ---------- Écran titre : pied + signature ---------- */
+
+.ui-title__bottom {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: calc(8px + var(--safe-bottom));
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+/* Le pied d'origine (absolu, collé en bas) entre dans le flux du conteneur, au-dessus de la signature. */
+.ui-title__bottom .ui-title__footer {
+  position: static;
+}
+
+/* Voile nuit sous le pied : le canvas 3D tourne derrière, et du texte blanc de 11 px perd sa lisibilité sur
+   le sol cyan ou les murs bleus clairs. Dégradé vers la nuit profonde (`--on-accent`), jamais un aplat. */
+.ui-title__bottom::before {
+  content: '';
+  position: absolute;
+  inset: -28px -16px calc(-8px - var(--safe-bottom)) -16px;
+  z-index: -1;
+  background: linear-gradient(to top, rgba(5, 11, 30, 0.62), rgba(5, 11, 30, 0));
+  pointer-events: none;
+}
+
+.ui-title__signature {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.ui-title__signature-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 36px;
+  padding: 4px 12px;
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.ui-title__signature-label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-shadow: 0 1px 3px rgba(5, 11, 30, 0.7);
+}
+
+.ui-title__signature-logo {
+  display: block;
+  height: 22px;
+  width: auto;
+  /* Le canvas 3D passe derrière : un voile nuit léger garde le logo lisible sur les murs bleus. */
+  filter: drop-shadow(0 1px 3px rgba(5, 11, 30, 0.7));
+}
+
+.ui-title__copyright {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-shadow: 0 1px 3px rgba(5, 11, 30, 0.7);
+}
+
+/* Paysage de téléphone (hauteur ≤ 500 px) : tout sur une ligne — « Une création [logo] · © 2026 Polaria » —
+   pour que le bloc de pied reste sous le panneau central (cf. `ui.css`, même seuil). */
+@media (max-height: 500px) {
+  .ui-title__bottom {
+    bottom: calc(4px + var(--safe-bottom));
+    gap: 0;
+  }
+  .ui-title__signature {
+    flex-direction: row;
+    gap: 6px;
+  }
+  .ui-title__signature-link {
+    min-height: 28px;
+    padding: 2px 6px;
+  }
+  .ui-title__signature-logo {
+    height: 20px;
+  }
+}
+
+/* ---------- Badge en jeu ---------- */
+
+.sig-badge {
+  position: fixed;
+  left: calc(8px + var(--safe-left));
+  bottom: calc(6px + var(--safe-bottom));
+  /* Sous le HUD (15), au-dessus du joystick (10). */
+  z-index: 14;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Zone de toucher serrée : ≈ 93 × 32 px, au ras du coin, pour ne pas voler le départ d'un joystick. */
+  padding: 8px 10px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  opacity: 0.7;
+  transition: opacity 120ms ease;
+}
+
+.sig-badge:hover,
+.sig-badge:active,
+.sig-badge:focus-visible {
+  opacity: 1;
+}
+
+.sig-badge img {
+  display: block;
+  height: 16px;
+  width: auto;
+  pointer-events: none;
+}
+
+/* ---------- Carte de crédits ---------- */
+
+.sig-card-backdrop {
+  position: fixed;
+  inset: 0;
+  /* Au-dessus du toast (40) et du carnet (40). */
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+  padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right)) calc(16px + var(--safe-bottom)) calc(16px + var(--safe-left));
+}
+
+.sig-card {
+  position: relative;
+  width: min(440px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 32px 24px 26px;
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid rgba(77, 140, 255, 0.28);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-soft);
+  outline: none;
+  animation: sig-card-in 220ms ease-out both;
+}
+
+@keyframes sig-card-in {
+  from {
+    transform: translateY(14px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sig-card__close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--ink);
+  font-size: 18px;
+}
+
+.sig-card__logo {
+  display: block;
+  height: 34px;
+  width: auto;
+}
+
+.sig-card__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1.25;
+  letter-spacing: 0.005em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.sig-card__credit {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  text-wrap: balance;
+}
+
+.sig-card__rights {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.sig-card__link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 28px;
+  border-radius: var(--radius-pill);
+  background: var(--leaf);
+  /* Texte encre plutôt que blanc : blanc sur corail échoue le contraste AA. */
+  color: var(--on-accent);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: none;
+  box-shadow: 0 6px 0 var(--leaf-dark);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.sig-card__link:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 var(--leaf-dark);
+}
+
+/* Paysage de téléphone : carte plus tassée, le défilement reste le filet de sécurité. */
+@media (max-height: 500px) {
+  .sig-card {
+    gap: 10px;
+    padding: 20px 24px 18px;
+  }
+  .sig-card__title {
+    font-size: 17px;
+    /* Laisse la place du ✕ à droite du titre. */
+    margin: 0 36px;
+  }
+  .sig-card__link {
+    min-height: 44px;
+  }
+}

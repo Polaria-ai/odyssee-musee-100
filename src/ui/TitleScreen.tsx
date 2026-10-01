@@ -5,6 +5,7 @@ import { useT } from '../i18n'
 import { strings } from './strings'
 import { playSfx, unlockAudio } from '../audio'
 import { SoundToggle } from '../audio/SoundToggle'
+import { TitleSignature } from '../features/signature/TitleSignature'
 import './ui.css'
 
 export function TitleScreen() {
@@ -50,7 +51,11 @@ export function TitleScreen() {
         {dataSource === 'placeholder' && <p className="ui-title__banner">{t('titlePlaceholderBanner')}</p>}
       </div>
 
-      <p className="ui-title__footer">{t('titleFooter')}</p>
+      {/* Pied : la mention existante, puis la signature Polaria juste dessous (module signature). */}
+      <div className="ui-title__bottom">
+        <p className="ui-title__footer">{t('titleFooter')}</p>
+        <TitleSignature />
+      </div>
     </div>
   )
 }

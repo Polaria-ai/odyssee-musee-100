@@ -23,6 +23,7 @@ import { TouchJoystick } from './player/TouchJoystick'
 import { useKeyboardControls } from './player/useKeyboardControls'
 import { remiDialogue } from './npc/remiScript'
 import { useAudioDirector } from './audio'
+import { Signature } from './features/signature/Signature'
 
 export function App() {
   const screen = useGame((s) => s.screen)
@@ -92,6 +93,7 @@ export function App() {
           <ArchiveCard />
           <StampCard />
           <DialogueBox />
+          <Signature />
         </>
       )}
       <Toast />
