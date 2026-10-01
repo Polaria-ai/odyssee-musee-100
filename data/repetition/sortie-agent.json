@@ -4,7 +4,7 @@
   "generatedAt": "2026-09-27T21:00:00+02:00",
   "archives": [
     {
-      "sessionId": "ouverture-agentique",
+      "sessionId": "introduction",
       "summary": {
         "fr": "[RÉPÉTITION] Ouverture pilotée par un agent, en écho au thème de la soirée. L'Archiviste souhaite la bienvenue et annonce le début de la soirée ; l'animateur·rice rappelle que dix-huit séquences sont au programme, entre keynotes, tables rondes et temps courts.",
         "en": "[REHEARSAL] The opening is led by an agent, echoing the evening's theme. L'Archiviste welcomes the audience and announces the start of the evening; the host notes that eighteen sequences are on the programme, between keynotes, panels and short segments."
@@ -187,7 +187,7 @@
       "quotes": []
     },
     {
-      "sessionId": "au-revoir",
+      "sessionId": "conclusion",
       "summary": {
         "fr": "[RÉPÉTITION] Clôture de la soirée : remerciements à l'ensemble du public et des intervenant·es, et souhait d'une bonne fin de soirée.",
         "en": "[REHEARSAL] Closing of the evening: thanks to the audience and to all speakers, with wishes for a good end to the evening."

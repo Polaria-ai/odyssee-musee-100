@@ -4,7 +4,7 @@
 
 ---
 
-## 1. ouverture-agentique — 18:30 — Lancement par IA agentique
+## 1. introduction — 18:37 — Introduction (identifiant renommé le 30/09, programme du 24/09)
 
 [RÉPÉTITION] L'Archiviste : Bonsoir à toutes et à tous. Ce lancement est piloté par un agent, en écho au thème de la soirée.
 
@@ -180,7 +180,7 @@
 
 [RÉPÉTITION] Animateur·rice : Merci pour ce moment, qui clôt la partie expérimentale de la soirée.
 
-## 18. au-revoir — 20:40 — Au revoir
+## 18. conclusion — 20:40 — Conclusion (identifiant renommé le 30/09, programme du 24/09)
 
 [RÉPÉTITION] Animateur·rice : Merci à toutes et à tous d'être venus, et merci à l'ensemble des intervenant·es de la soirée.
 

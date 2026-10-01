@@ -1,11 +1,15 @@
 /**
- * Programme (provisoire) de la soirée « L'Odyssée de l'IA » et liste générale des intervenant·es.
- * Construit STRICTEMENT depuis deux sources écrites, sans rien ajouter :
- *  A. Programme Drive « Programme l'Odyssée de l'IA.docx » (modifié le 15/09/2026, pré-programme).
- *  B. Annonce officielle de L'Opinion aux inscrits (22/09/2026).
- * Une personne n'est attribuée à une séquence que si elle apparaît dans A (pour cette séquence)
- * ET dans B (liste des intervenant·es annoncé·es). `provisional: true` partout : le programme du
- * 24/09 existe mais n'a pas pu être lu au moment de ce chantier.
+ * Programme de la soirée « L'Odyssée de l'IA » et liste générale des intervenant·es.
+ * Sources écrites, sans rien ajouter :
+ *  A. Programme Drive « Programme l'Odyssée de l'IA.docx » (15/09/2026, pré-programme) : thèmes des
+ *     trois tables rondes.
+ *  B. Annonce officielle de L'Opinion aux inscrits (22/09/2026) : liste générale des intervenant·es.
+ *  C. « PROGRAMME ODYSSEE DE L'IA au 24.09.docx », envoyé par Ségolène Pintaud le 24/09/2026 :
+ *     déroulé, horaires et intervenant·es de chaque séquence. C'est la source de référence.
+ * Une personne n'est attribuée à une séquence que si C l'y nomme ET qu'elle figure dans B. Les
+ * personnes marquées « en attente de confirmation » dans C ne sont pas attribuées ; leur séquence
+ * reste `provisional: true`, comme toute séquence que C signale incomplète. Les indications de
+ * régie de C (« Grégoire annonce… », « Muriel monte sur scène… ») ne sont pas reprises.
  * Propriétaire : workflow « Archives de 2040 ».
  */
 import type { EveningSession, Localized, SessionSpeaker } from '../types'
@@ -75,70 +79,83 @@ function speaker(name: string, moderator = false): SessionSpeaker {
 
 export const EVENING_PROGRAM: EveningSession[] = [
   {
-    id: 'ouverture-agentique',
+    id: 'film',
     order: 1,
     startTime: '18:30',
-    durationMin: 1,
-    kind: 'ouverture',
-    title: { fr: 'Lancement par IA agentique', en: 'Launch by agentic AI' },
-    speakers: [],
-    provisional: true,
-  },
-  {
-    id: 'film',
-    order: 2,
-    startTime: '18:31',
-    durationMin: 9,
+    durationMin: 7,
     kind: 'film',
     title: { fr: "Film Polaria × L'Opinion", en: "Polaria × L'Opinion film" },
     speakers: [],
-    provisional: true,
+    provisional: false,
+  },
+  {
+    id: 'introduction',
+    order: 2,
+    startTime: '18:37',
+    durationMin: 1,
+    kind: 'ouverture',
+    title: { fr: 'Introduction', en: 'Introduction' },
+    speakers: [speaker('Rémi Godeau')],
+    provisional: false,
+  },
+  {
+    id: 'generique',
+    order: 3,
+    startTime: '18:38',
+    durationMin: 1,
+    kind: 'film',
+    title: { fr: 'Générique', en: 'Opening titles' },
+    speakers: [],
+    provisional: false,
   },
   {
     id: 'presentation',
-    order: 3,
-    startTime: '18:40',
-    durationMin: 5,
+    order: 4,
+    startTime: '18:39',
+    durationMin: 6,
     kind: 'presentation',
     title: { fr: 'Présentation', en: 'Presentation' },
     theme: { fr: 'Souveraineté et IA agentique', en: 'Sovereignty and agentic AI' },
     speakers: [speaker('Cyril de Sousa Cardoso'), speaker('Rémi Godeau')],
-    provisional: true,
+    provisional: false,
   },
   {
     id: 'keynote-ouverture',
-    order: 4,
+    order: 5,
     startTime: '18:45',
     durationMin: 10,
     kind: 'keynote',
     title: { fr: "Keynote d'ouverture", en: 'Opening keynote' },
-    speakers: [speaker('Catherine Vautrin')],
-    provisional: true,
+    speakers: [speaker('Catherine Vautrin'), speaker('Rémi Godeau', true)],
+    provisional: false,
   },
   {
     id: 'les100-presentation',
-    order: 5,
+    order: 6,
     startTime: '18:55',
     durationMin: 5,
     kind: 'les100',
-    title: { fr: 'Les 100 / Présentation', en: 'The 100 / Introduction' },
-    speakers: [speaker('Grégoire Arnould'), speaker('Zineb El Honsali-Abridi')],
-    provisional: true,
+    title: {
+      fr: "Présentation exclusive des 100 qui font l'IA en Europe",
+      en: 'Exclusive presentation of the 100 shaping AI in Europe',
+    },
+    speakers: [speaker('Zineb El Honsali-Abridi'), speaker('Grégoire Arnould')],
+    provisional: false,
   },
   {
     id: 'magneto-1',
-    order: 6,
+    order: 7,
     startTime: '19:00',
     durationMin: 1,
     kind: 'magneto',
-    title: { fr: 'Magnéto 1 / Agent IA', en: 'Video reel 1 / AI agent' },
+    title: { fr: 'Magnéto 1', en: 'Video reel 1' },
     theme: { fr: 'Dataviz — Infrastructures', en: 'Data visualisation — Infrastructure' },
     speakers: [],
-    provisional: true,
+    provisional: false,
   },
   {
     id: 'table-ronde-1',
-    order: 7,
+    order: 8,
     startTime: '19:01',
     durationMin: 14,
     kind: 'table-ronde',
@@ -151,35 +168,34 @@ export const EVENING_PROGRAM: EveningSession[] = [
         'AI is no longer a promise. It has become a strategic infrastructure for growth, competitiveness ' +
         'and sovereignty. Positive signals and concerns in Europe',
     },
-    speakers: [speaker('Muriel Motte', true)],
+    // Deux intervenants « en attente de confirmation » dans C (OVHcloud, Station F) : non attribués.
+    speakers: [speaker('Raphaël Doan'), speaker('Muriel Motte', true)],
     provisional: true,
   },
   {
     id: 'face-a-face-1',
-    order: 8,
+    order: 9,
     startTime: '19:15',
     durationMin: 10,
     kind: 'face-a-face',
     title: { fr: 'Face à face : étude de cas I', en: 'Face to face: case study I' },
-    // Intervenant·e à annoncer : la seule personne citée en source A pour cette séquence
-    // (Xavier Boilaud) n'apparaît pas dans l'annonce officielle B.
-    speakers: [],
-    provisional: true,
+    speakers: [speaker('Jessyn Katchera'), speaker('Sébastien Rozanes'), speaker('Rémi Godeau', true)],
+    provisional: false,
   },
   {
     id: 'magneto-2',
-    order: 9,
+    order: 10,
     startTime: '19:25',
     durationMin: 1,
     kind: 'magneto',
-    title: { fr: 'Magnéto 2 / Agent IA', en: 'Video reel 2 / AI agent' },
+    title: { fr: 'Magnéto 2', en: 'Video reel 2' },
     theme: { fr: 'Dataviz — Industrialisation', en: 'Data visualisation — Industrialisation' },
     speakers: [],
-    provisional: true,
+    provisional: false,
   },
   {
     id: 'table-ronde-2',
-    order: 10,
+    order: 11,
     startTime: '19:26',
     durationMin: 14,
     kind: 'table-ronde',
@@ -192,54 +208,58 @@ export const EVENING_PROGRAM: EveningSession[] = [
         'Global competition is now less about research than about the ability to move quickly from ' +
         'invention to industrialisation',
     },
+    // C : « avec un journaliste ou autre intervenant en cours ».
     speakers: [speaker('Gautier Cloix'), speaker('Catherine Laurent', true)],
     provisional: true,
   },
   {
     id: 'les100-portraits',
-    order: 11,
+    order: 12,
     startTime: '19:40',
     durationMin: 5,
     kind: 'les100',
-    title: { fr: 'Les 100 / 4 portraits', en: 'The 100 / 4 portraits' },
+    title: {
+      fr: "Quatre portraits des 100 qui font l'IA en Europe",
+      en: 'Four portraits of the 100 shaping AI in Europe',
+    },
     speakers: [speaker('Grégoire Arnould'), speaker('Rémi Godeau')],
-    provisional: true,
+    provisional: false,
   },
   {
     id: 'keynote-middle',
-    order: 12,
+    order: 13,
     startTime: '19:45',
     durationMin: 10,
     kind: 'keynote',
     title: { fr: 'Keynote du milieu de soirée', en: 'Midpoint keynote' },
-    speakers: [speaker('Charles Gorintin')],
-    provisional: true,
+    speakers: [speaker('Charles Gorintin'), speaker('Rémi Godeau', true)],
+    provisional: false,
   },
   {
     id: 'face-a-face-2',
-    order: 13,
+    order: 14,
     startTime: '19:55',
     durationMin: 10,
     kind: 'face-a-face',
     title: { fr: 'Face à face : étude de cas II', en: 'Face to face: case study II' },
-    // Intervenant·e à annoncer (source A : « ??? »).
+    // C : « en attente de validation », sans intervenant·e.
     speakers: [],
     provisional: true,
   },
   {
     id: 'magneto-3',
-    order: 14,
+    order: 15,
     startTime: '20:05',
     durationMin: 1,
     kind: 'magneto',
-    title: { fr: 'Magnéto 3 / Agent IA', en: 'Video reel 3 / AI agent' },
-    theme: { fr: 'Dataviz — Europe / Chine / États-Unis', en: 'Data visualisation — Europe / China / United States' },
+    title: { fr: 'Magnéto 3', en: 'Video reel 3' },
+    theme: { fr: 'Dataviz — Culture', en: 'Data visualisation — Culture' },
     speakers: [],
-    provisional: true,
+    provisional: false,
   },
   {
     id: 'table-ronde-3',
-    order: 15,
+    order: 16,
     startTime: '20:06',
     durationMin: 14,
     kind: 'table-ronde',
@@ -252,40 +272,38 @@ export const EVENING_PROGRAM: EveningSession[] = [
         'Reconciling protection with speed of execution, financing breakthrough innovations, treating ' +
         'innovation as a strategic priority: the challenge is as cultural as it is economic',
     },
-    // Modérateur annoncé « ??? » en source A : non inclus tant qu'il n'est pas connu.
-    speakers: [speaker('Samuel Fitoussi'), speaker('Louise Boucher'), speaker('Marc Menasé')],
-    provisional: true,
+    speakers: [speaker('Louise Boucher'), speaker('Samuel Fitoussi'), speaker('Marc Menasé'), speaker('David Lacombled', true)],
+    provisional: false,
   },
   {
     id: 'keynote-cloture',
-    order: 16,
+    order: 17,
     startTime: '20:20',
     durationMin: 10,
     kind: 'cloture',
     title: { fr: 'Keynote de clôture', en: 'Closing keynote' },
-    // Intervenant·e à annoncer (source A : « Mistral, Ali Las ou ChapsVision ??? »).
-    speakers: [],
-    provisional: true,
+    speakers: [speaker('Laurent Solly'), speaker('Rémi Godeau', true)],
+    provisional: false,
   },
   {
     id: 'final',
-    order: 17,
+    order: 18,
     startTime: '20:30',
     durationMin: 10,
     kind: 'final',
     title: { fr: 'Final expérimental avec IA agentique', en: 'Experimental finale with agentic AI' },
-    speakers: [speaker('Rémi Godeau'), speaker('Cyril de Sousa Cardoso')],
-    provisional: true,
+    speakers: [speaker('Cyril de Sousa Cardoso'), speaker('Rémi Godeau')],
+    provisional: false,
   },
   {
-    id: 'au-revoir',
-    order: 18,
+    id: 'conclusion',
+    order: 19,
     startTime: '20:40',
     durationMin: 2,
     kind: 'cloture',
-    title: { fr: 'Au revoir', en: 'Farewell' },
+    title: { fr: 'Conclusion', en: 'Conclusion' },
     speakers: [speaker('Rémi Godeau')],
-    provisional: true,
+    provisional: false,
   },
 ]
 
@@ -300,8 +318,8 @@ export interface EveningMeta {
   startTime: string
   venue: Localized
   address: string
-  /** Toujours vrai tant que le programme du 24/09 n'a pas été relu et intégré. */
-  provisional: true
+  /** Vrai tant qu'une séquence reste incomplète (intervenant·e en attente dans la source C). */
+  provisional: boolean
   provisionalNotice: Localized
   /** Sources autorisées, pour audit (jamais affichées comme des citations). */
   sources: string[]
@@ -316,12 +334,13 @@ export const EVENING_META: EveningMeta = {
   address: '4 square Rapp, 75007 Paris',
   provisional: true,
   provisionalNotice: {
-    fr: 'Programme provisoire, susceptible d’évoluer.',
-    en: 'Provisional programme, subject to change.',
+    fr: 'Programme au 24 septembre, susceptible d’évoluer.',
+    en: 'Programme as of 24 September, subject to change.',
   },
   sources: [
     "Programme Drive « Programme l'Odyssée de l'IA.docx » (modifié le 15/09/2026, pré-programme)",
     "Annonce officielle de L'Opinion aux inscrits (22/09/2026)",
+    "« PROGRAMME ODYSSEE DE L'IA au 24.09.docx » (Ségolène Pintaud, 24/09/2026)",
     'Compte rendu du point du 24/09/2026 (déroulé de la soirée, Archiviste, QR code)',
   ],
 }
