@@ -786,7 +786,14 @@
   "aile": "infrastructures",
   "aile_justification": "Déplacée pour l'équilibre, choix validé par Baptiste le 30/09 : modèles ou plateforme souveraine (l'agent proposait industrialisation : ChapsVision édite des logiciels d'entreprise et de défense (données, agents IA, recherche d'entreprise) et grandit par acquisitions : de l'IA appliquée passée à l'échelle industrielle.)",
   "verification": "corrige",
-  "photo": null,
+  "photo": {
+   "page_source": "https://sifted.eu (portrait d'article, novembre 2024)",
+   "url_image": null,
+   "licence": "Photo fournie par Baptiste Jeauneau le 01/10/2026 ; même image que REA10425249 (agence REA), contrôlée par comparaison au fichier REA conservé hors Git (écart moyen 2,6/255)",
+   "credit": "REA",
+   "droits": "intégration demandée par Baptiste Jeauneau le 01/10/2026 ; licence de l'agence REA non vérifiée",
+   "identite_confirmee_par": "Baptiste Jeauneau (« 2e photo : Olivier Dellenbach », 01/10/2026) ; alt de Sifted « A photo of ChapsVision's founder Olivier Dellenbach »"
+  },
   "citation_source": null,
   "role_controle_2026": "verifie_au_premier_passage",
   "sources": [
@@ -875,7 +882,14 @@
   "aile": "industrialisation",
   "aile_justification": "IA appliquée à la défense (drones, autonomie) et passage à l'échelle industriel : usine, commandes publiques, levée de fonds.",
   "verification": "valide",
-  "photo": null,
+  "photo": {
+   "page_source": null,
+   "url_image": null,
+   "licence": "Photo fournie par Baptiste Jeauneau le 01/10/2026 ; auteur et source d'origine non indiqués",
+   "credit": "DR",
+   "droits": "intégration demandée par Baptiste Jeauneau le 01/10/2026",
+   "identite_confirmee_par": "Baptiste Jeauneau (« 1re photo : Mouad M'Ghari », 01/10/2026)"
+  },
   "citation_source": null,
   "role_controle_2026": "confirme",
   "sources": [
