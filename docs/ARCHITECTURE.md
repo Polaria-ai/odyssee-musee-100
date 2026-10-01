@@ -60,6 +60,10 @@ En local sans navigateur Playwright : `PW_CHROMIUM_PATH="$HOME/.agent-browser/br
 
 La CI GitHub (`.github/workflows/ci.yml`) enchaîne tout sur chaque PR.
 
+## Rémi · IA (V5)
+
+Le chat avec Rémi passe par une fonction Vercel, `api/remi.ts` : le navigateur poste sur `/api/remi`, la fonction appelle OpenRouter (`deepseek/deepseek-v4.1-flash`) avec `OPENROUTER_API_KEY`, qui ne quitte jamais le serveur. Contrat partagé : `src/features/remiChat/contract.ts`. Interface et buste 3D : `src/features/remiChat/` (chargés à la demande, hors du paquet d'entrée). Détails, garde-fous et coût : `docs/REMI-IA.md`.
+
 ## Supabase
 
 Projet `odyssee-musee-100` (`snqwuvqhxaysaygwqkdq`, eu-west-3). Table `people` en lecture publique (lignes publiées), photos dans `public/portraits/` (statique) ou bucket `portraits`. Présence via Realtime (canaux partitionnés, quotas du plan gratuit : voir `src/features/presence/`).

@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test'
-import { enterMuseum, gotoMusee, museeState } from './support/museeApi'
+import { dismissWelcomeDialogue, enterMuseum, gotoMusee, museeState } from './support/museeApi'
 
 // Sans langue persistée, l'app retombe sur `navigator.language` (voir src/state/gameStore.ts,
 // `initialLang`) : la locale du navigateur de test (souvent `en-US` par défaut) déciderait alors de
@@ -22,6 +22,8 @@ test('bascule FR/EN sur l’écran titre', async ({ page }) => {
 test('bascule FR/EN dans le HUD une fois en jeu', async ({ page }) => {
   await gotoMusee(page)
   await enterMuseum(page)
+  // L'accueil de Rémi (le chat, depuis la V5) recouvre le HUD : on le ferme avant de toucher à ses boutons.
+  await dismissWelcomeDialogue(page)
   await expect(page.getByTestId('hud')).toBeVisible()
 
   const stampsButton = page.getByTestId('stamps-button')

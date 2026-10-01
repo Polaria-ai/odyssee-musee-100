@@ -6,7 +6,13 @@
  */
 import { createClient, type RealtimeChannel, type SupabaseClient } from '@supabase/supabase-js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { FakeRealtimeServer } from './fakePhoenixServer'
+import {
+  FakeRealtimeServer,
+  SERVER_MESSAGE_TOO_MANY_MESSAGES,
+  SERVER_MESSAGE_TOO_MANY_PRESENCE,
+  SERVER_REASON_TOO_MANY_CONNECTIONS,
+  SERVER_REASON_TOO_MANY_JOINS,
+} from './fakePhoenixServer'
 
 type Status = string
 
@@ -231,5 +237,97 @@ describe('fakePhoenixServer (banc vérifié avec le SDK seul)', () => {
     await settle(25_000) // envoi du prochain battement
     await settle(25_000) // pas de réponse : heartbeat timeout
     expect(ja.statuses).toContain('CHANNEL_ERROR')
+  })
+
+  it('maxConnections : la jointure d’une nouvelle socket au-delà du plafond est refusée (CHANNEL_ERROR « Too many connected users »)', async () => {
+    server = new FakeRealtimeServer({ maxConnections: 2 })
+    const a = makeSb(server, 'a')
+    const b = makeSb(server, 'b')
+    const c = makeSb(server, 'c')
+    const ja = joinChannel(a, 'room-1')
+    const jb = joinChannel(b, 'room-1')
+    await settle()
+    const jc = joinChannel(c, 'room-1')
+    await settle()
+
+    expect(ja.statuses).toEqual(['SUBSCRIBED'])
+    expect(jb.statuses).toEqual(['SUBSCRIBED'])
+    expect(jc.statuses[0]).toBe('CHANNEL_ERROR')
+    expect(jc.errors[0]?.message).toBe(SERVER_REASON_TOO_MANY_CONNECTIONS) // le texte du serveur est le message de l'Error du SDK
+    expect(jc.errors[0]?.cause).toEqual({ reason: SERVER_REASON_TOO_MANY_CONNECTIONS }) // et la réponse brute est dans sa cause
+    expect(server.connectedUsers()).toBe(2)
+    expect(server.peakConnectedUsers()).toBe(2)
+    expect(server.quotaRefusals.connections).toBeGreaterThanOrEqual(1)
+
+    // Une socket déjà comptée change de canal sans être recomptée.
+    const jaOther = joinChannel(a, 'room-2')
+    await settle()
+    expect(jaOther.statuses).toEqual(['SUBSCRIBED'])
+    expect(server.connectedUsers()).toBe(2)
+
+    // Quand un utilisateur part, une place se libère : à la fermeture de sa socket, pas au départ de son dernier canal
+    // (le SDK garde la socket ouverte ~50 s ; le serveur la compte tant qu'elle est ouverte).
+    // Le canal en erreur de `c` est retiré : phoenix ne le rejoindrait pas seul.
+    await c.removeChannel(jc.ch)
+    await a.removeChannel(ja.ch)
+    await a.removeChannel(jaOther.ch)
+    await settle()
+    expect(server.connectedUsers()).toBe(2)
+    void a.realtime.disconnect()
+    await settle(100)
+    expect(server.connectedUsers()).toBe(1)
+    const jc2 = joinChannel(c, 'room-1')
+    await settle()
+    expect(jc2.statuses).toEqual(['SUBSCRIBED'])
+    expect(server.connectedUsers()).toBe(2)
+    expect(unhandled).toEqual([])
+  })
+
+  it('maxJoinsPerSecond : le dépassement est refusé (« ClientJoinRateLimitReached ») puis la fenêtre glisse', async () => {
+    server = new FakeRealtimeServer({ maxJoinsPerSecond: 3 })
+    const joined: Joined[] = []
+    for (let i = 0; i < 5; i++) joined.push(joinChannel(makeSb(server, `c${i}`), `room-${i}`))
+    await settle()
+    expect(joined.filter((j) => j.statuses[0] === 'SUBSCRIBED')).toHaveLength(3)
+    const refused = joined.filter((j) => j.statuses[0] === 'CHANNEL_ERROR')
+    expect(refused).toHaveLength(2)
+    expect(refused[0].errors[0]?.message).toBe(SERVER_REASON_TOO_MANY_JOINS)
+    expect(server.peakJoinsPerSecond()).toBeGreaterThanOrEqual(3)
+
+    await settle(1000)
+    const later = joinChannel(makeSb(server, 'later'), 'room-9')
+    await settle()
+    expect(later.statuses).toEqual(['SUBSCRIBED'])
+  })
+
+  it('système « Too many messages per second » : le SDK livre la charge utile à channel.on("system"), puis CLOSED sans Error', async () => {
+    const a = makeSb(server, 'a')
+    const ja = joinChannel(a, 'room-1')
+    const systems: unknown[] = []
+    ja.ch.on('system', {}, (payload) => systems.push(payload))
+    await settle()
+    expect(systems).toEqual([expect.objectContaining({ status: 'ok', extension: 'postgres_changes' })]) // « Subscribed to PostgreSQL » à la jointure
+    systems.length = 0
+
+    expect(server.rateLimitChannel('room-1', 'a')).toBe(1)
+    await settle()
+    expect(systems).toEqual([
+      { message: SERVER_MESSAGE_TOO_MANY_MESSAGES, status: 'error', extension: 'system', channel: 'room-1' },
+    ])
+    expect(ja.statuses.at(-1)).toBe('CLOSED')
+    expect(ja.errors.at(-1)).toBeUndefined() // le CLOSED du SDK ne porte aucune cause : seul le message système la donne
+  })
+
+  it('présence : « Too many presence messages per second » puis fermeture', async () => {
+    const a = makeSb(server, 'a')
+    const ja = joinChannel(a, 'room-1')
+    const systems: Array<{ message?: string }> = []
+    ja.ch.on('system', {}, (payload) => systems.push(payload as { message?: string }))
+    await settle()
+    systems.length = 0
+    expect(server.presenceLimitChannel('room-1', 'a')).toBe(1)
+    await settle()
+    expect(systems.map((x) => x.message)).toEqual([SERVER_MESSAGE_TOO_MANY_PRESENCE])
+    expect(ja.statuses.at(-1)).toBe('CLOSED')
   })
 })

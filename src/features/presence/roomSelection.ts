@@ -8,8 +8,13 @@
  */
 
 export const ROOM_PREFIX = 'musee:v1:room-'
-export const ROOM_CAPACITY = 8
-export const MAX_ROOMS = 12
+/**
+ * Décision du 01/10 : des « clusters » de 30 joueurs au plus. 8 salles × 30 = 240 places pour ~200 joueurs
+ * attendus : au-delà de 200 connexions simultanées (plan gratuit) le serveur refuse la jointure, ce qui mène le
+ * joueur en solo (voir `quota.ts`), jamais dans une neuvième salle.
+ */
+export const ROOM_CAPACITY = 30
+export const MAX_ROOMS = 8
 
 /**
  * Nom du canal Realtime pour la salle `index` (1..MAX_ROOMS).

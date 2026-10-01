@@ -63,3 +63,17 @@ describe('RemoteVisitors — tous les visiteurs sont Cyril, sans pseudo (par con
     expect(source).not.toContain('<sprite')
   })
 })
+
+describe('RemoteVisitors — salle de 30 : coût de rendu indépendant du nombre de visiteurs (par conception)', () => {
+  it('ne monte jamais plus de MAX_VISIBLE_PEERS pairs et réévalue les plus proches pendant que le joueur bouge', () => {
+    expect(source).toContain('selectVisiblePeers(peerStore, player.x, player.z, MAX_VISIBLE_PEERS')
+    expect(source).toContain('RESELECT_INTERVAL_S')
+  })
+
+  it('n’alloue aucun objet three dans useFrame : transformation réutilisée, position rattrapée en place', () => {
+    expect(source).not.toContain('new THREE.')
+    expect(source).not.toContain('new Vector')
+    expect(source).toContain('getRenderTransform(getPeer(peerStore, id), Date.now(), transformRef.current)')
+    expect(source).toContain('stepToward(group.position, transform.x, transform.z, delta)')
+  })
+})

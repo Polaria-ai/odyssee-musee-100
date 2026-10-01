@@ -26,6 +26,8 @@ Le modèle (lumières et ACES d'avant, formule ci-dessus puis ACES) reproduit à
 
 Les ombres tirent vers le bleu (gain bleu plus haut) au lieu de griser : c'est voulu, le musée est « de nuit ».
 
+**Sols texturés (WEL-923).** Les sols portent une matière (§4.1) : la carte de détail MULTIPLIE la couleur de sommet, donc `affiché = sRGB( linéaire(albédo) × détail × gain × E / π )`. Le gain du matériau vaut `1 / moyenne du détail` : la couleur MOYENNE d'un sol reste exactement celle de la charte (les gains du tableau ci-dessus restent vrais), seul le motif s'en écarte, vers le haut (≤ + 35 % pour la moquette, le sommet de ses boucles) et vers le bas. Le sol reste en `MeshLambertMaterial` à couleurs de sommet, avec une carte de normales en plus.
+
 ## 2. Jetons de base
 
 | Jeton (`charter3d.base.*`) | Valeur | Origine | Rôle |
@@ -80,6 +82,31 @@ Les chemins sont relatifs à `charter3d`. « Rendu » = valeur affichée sous le
 | Câbles, aile Infrastructures | `cables.main` (r = 0,05), `cables.thin` (r = 0,04) | `#6de4e5`, `#ffffff` | lignes de données sur le sol bleu ; l'ancien brun `inkSoft` disparaît |
 
 `SOFTEN_CHECKER` passe à 0 : les tons A/B sont déjà rapprochés, le lissage supplémentaire effacerait le motif.
+
+#### Matières des sols (WEL-923)
+
+**Règle : la texture multiplie la couleur de la charte, elle ne la remplace jamais.** Les couleurs de sommet du tableau ci-dessus (chevrons, damiers, moquette et bordure) restent les couleurs de référence, au même endroit et au même ton franc ; la matière (veines, éclats, grain, fibres) vient d'une carte de détail en niveaux de gris, de moyenne ramenée à 1 par le gain du matériau (§1), et d'une carte de normales. Aucune couleur n'est peinte dans une texture de sol. Sources neutres et claires (Magnific), fabriquées par `scripts/build-floor-textures.mjs` (voir `docs/ASSETS.md`).
+
+| Salle | Matière | Motif (UV monde) | Détail : valeurs, moyenne, gain | `normalScale` | Fichiers |
+|---|---|---|---|---|---|
+| Hall | marbre blanc à fines veines (sur les chevrons `floor` / `floorAlt`) | 2,5 m | 0,52 à 1, moyenne 0,906, × 1,10 | 0,35 | `marble-*.webp`, 45 Ko |
+| Archives | marbre (même carte que le hall), la frise peinte reste en `map` | 2,5 m | idem | 0,35 | idem |
+| Infrastructures | terrazzo à éclats (sur le damier 1,4 m) | 6,0 m | 0,38 à 1, moyenne 0,817, × 1,22 | 0,8 | `terrazzo-*.webp`, 72 Ko |
+| Industrialisation | microciment taloché (sur le damier 1,6 m) | 5,0 m | 0,34 à 1, moyenne 0,740, × 1,35 | 0,6 (relief de la source × 1,5) | `microcement-*.webp`, 71 Ko |
+| Culture | moquette bouclée (sur la moquette et sa bordure) | 7,0 m | 0,38 à 1, moyenne 0,741, × 1,35 | 0,8 | `carpet-*.webp`, 98 Ko |
+
+Total des 8 fichiers : 286 Ko (budget 450 Ko). « Motif » = côté, en mètres, de la carte de 512 px répétée.
+
+- **Règle de l'échelle : la carte se lit à la densité d'écran du jeu, pas à celle de la matière réelle.** La caméra plonge à 48° et montre ≈ 11 m de sol sur un téléphone, rendu à dpr 1,75 : 60 à 80 px par mètre (50 en haut de l'image). Une maille de moquette de 4 cm, un éclat de terrazzo de 1 cm ou un grain de 2 cm tombent alors sous le pixel : les mipmaps les moyennent et le sol redevient un aplat, quelle que soit la profondeur de la carte. La première version de ces sols (motifs de 2,8 à 4 m pour la moquette, le terrazzo et le microciment) était exactement dans ce cas : coefficient de variation de la luminance de la moquette mesuré sur capture 0,070 → 0,075, soit indiscernable de l'aplat. Les motifs sont donc posés à une taille de jeu : une maille de moquette de ≈ 10 cm (7 m pour 72 mailles), des éclats de terrazzo de ≈ 6 cm (la source est grossie par un flou de 1,2 px suivi d'une renormalisation, qui épaissit les éclats sans perdre leur contraste), des nuages et des coups de platoir de microciment de 20 à 80 cm (les marques de 6 à 60 cm sont renforcées dans la carte, `boostMid`, car ce sont celles que l'écran restitue ; les taches de plus d'un mètre sont aplanies à 80 %, sans quoi la luminance moyenne d'un coin de sol s'écarte de la charte de plus de 1,5 % selon l'endroit où l'on regarde). Le texel de la carte (512 px sur 5 à 7 m = 73 à 100 texels par mètre) est ainsi voisin du pixel d'écran : pas de moiré, pas de flou.
+- **Contraste : vérifiable sur capture et sur fichier.** Mesuré sur des crops de sol pur d'iPhone 13 (Chrome for Testing, SwiftShader), au même cadrage avec et sans textures : moquette, `phone-culture-centre`, coefficient de variation de la luminance 0,070 → 0,124 (0,069 → 0,123 sur un autre crop), contraste local (passe-haut de 8 px) 0,010 → 0,091, luminance moyenne − 0,5 % ; terrazzo, contraste local 0,029 → 0,077 (× 2,6), moyenne + 0,3 / − 0,1 % ; microciment, 0,021 → 0,047 (× 2,3), moyenne − 0,8 / − 0,6 %. Côté fichier, `screenContrast` (script de fabrication) rééchantillonne la carte à 80 et 55 px/m : les tests exigent au moins 0,05 (marbre, dont les veines fines sont des lignes isolées), 0,09 (terrazzo), 0,11 (microciment) et 0,11 (moquette) à 80 px/m ; les valeurs réelles sont 0,062 (marbre), 0,114 (terrazzo), 0,132 (microciment) et 0,169 (moquette) ; avant ce réglage : 0,058 / 0,052 / 0,052 / 0,047.
+- **Profondeur des creux.** Les valeurs de la carte vont de 0,34-0,52 à 1 (au lieu de 0,82 à 1 envisagé au départ : à 0,82 le marbre et le terrazzo redevenaient des aplats à la distance du jeu). Le garde-fou n'est plus la profondeur mais la lisibilité : les creux les plus sombres restent à ≥ 1,15:1 du ciel (test `scripts/build-floor-textures.test.ts`), jamais un trou noir (carte > 0,3), et la couleur moyenne ne bouge pas (< 1 % sur la couleur de la charte, pour chaque sol).
+- **Cartes tuilables, sans marche.** Les sources ne sont pas toutes parfaitement tuilables : le marbre et le microciment sont raccordés par un fondu avec une copie décalée d'une demi-tuile (`seamless`), le terrazzo par le retrait de sa dérive lente (le haut de la source est plus clair que le bas : `flattenOpen`, sans bouclage). Un test compare la moyenne de bandes de 24 px aux bords opposés (< 4 %) en plus du rapport de raccord, et `--debug` écrit les mosaïques 2×2 de contrôle. Le motif de microciment reste reconnaissable d'une répétition à l'autre (coups de platoir), sans couture.
+- **Le marbre du hall remplace la lecture des chevrons, par choix.** Les couleurs de sommet gardent les deux planches des chevrons (`floor` / `floorAlt`, §4.1) : la charte les cite toujours, et leurs tons restent ceux du tableau. Mais les veines du marbre, plus contrastées que l'écart entre les deux planches, prennent le dessus à l'œil ; les chevrons ne se devinent plus qu'en rehaussant le contraste d'une capture. Assumé : le hall gagne une matière lisible, sans quitter les deux bleus de la charte.
+- **UV en coordonnées monde** (`x / motif`, `z / motif`, `src/world/floorSpec.ts`) pour toutes les géométries de sol (parquet du hall, damiers, moquette, plan des Archives) : deux quads voisins, ou deux salles de même matière, lisent la matière au même endroit, sans raccord. `RepeatWrapping`, mipmaps, anisotropie 4 sur écran tactile (8 ailleurs, plafonnée au matériel).
+- **Reste net, sans matière** : disque-logo du hall, chemins colorés et leurs liserés blancs. Ils restent dans la géométrie de la salle (matériau uni, arêtes franches) et se posent sur le marbre.
+- **Reflet du marbre : essayé, écarté.** Un `MeshPhongMaterial` (brillance 14, spéculaire `#6a7090`) sur le marbre du hall ne se distingue pas du Lambert sur les captures (la lumière directionnelle est fixe et la caméra ne voit jamais son reflet) ; on garde Lambert, qui porte le modèle de couleur de la charte.
+- **Coût de rendu** (mesuré aux mêmes lieux, avant / après, `renderer.info`) : même nombre de triangles ; + 1 à + 3 appels de dessin (le sol de chaque salle visible est une géométrie à part : hall 115 → 117, aile Infrastructures 55 → 57, Industrialisation 111 → 112, Culture 55 → 57 sur iPhone 13) ; + 8 textures de 512 px (4 matières × 2 cartes). Le maximum reste très en dessous du budget de 150 appels. Le test E2E `performance.spec.ts` passe.
+- **Chargement.** Cartes chargées une fois par matière (cache compté), sans bloquer l'entrée : le sol est d'abord uni (l'ancien rendu), la matière apparaît quand les cartes sont là (pendant l'écran-titre, le musée est déjà monté). Une carte qui échoue laisse le sol uni, sans erreur. Libération au démontage.
 
 ### 4.2 Murs et architecture (identiques dans toutes les salles, l'accent change)
 
@@ -310,14 +337,15 @@ Répartition retenue (à réaffecter si l'orchestrateur découpe autrement) : **
 ## 8. Prérequis transverses
 
 - **Polices dans les canvas.** Poppins et JetBrains Mono viennent de Google Fonts (`index.html`). Un canvas peint avec une police pas encore chargée retombe sur `system-ui` et la texture reste en cache avec ce repli. Avant le premier dessin de texture, attendre `document.fonts.load('600 16px Poppins')` et `document.fonts.load('500 16px "JetBrains Mono"')` (avec un délai maximum, ~1,5 s), par exemple avant de monter `<Museum>`.
-- **Budget mobile.** Tout est fusionné : disque du hall, chemins, listel, bandes de dessus = quelques dizaines de boîtes ajoutées à la géométrie de la salle (aucun appel de dessin en plus) ; les cadres restent un maillage par portrait (trois géométries, un matériau partagé) ; aucune ombre temps réel ; textures ≤ 512 px.
+- **Budget mobile.** Tout est fusionné : disque du hall, chemins, listel, bandes de dessus = quelques dizaines de boîtes ajoutées à la géométrie de la salle (aucun appel de dessin en plus) ; les cadres restent un maillage par portrait (trois géométries, un matériau partagé) ; aucune ombre temps réel ; textures ≤ 512 px. Exception voulue (WEL-923) : le sol de fond de chaque salle est un maillage à part (une matière = un matériau texturé) : **un appel de dessin de plus par salle visible**, au lieu de zéro. Les Archives gardent leur sol en un seul maillage. Cartes de sol : 8 fichiers webp ≤ 512 px, 287 Ko au total (budget 450 Ko). Mesuré le 01/10 (SwiftShader, `e2e/performance.spec.ts`, projet desktop) : au plus 92 à 117 appels de dessin selon la mesure, au spawn et au milieu de chaque aile (budget 150, voir §4.1), contre ≈ 1 à 3 de moins avant ; la mesure de `renderer.info` varie de ± 15 appels d'une image à l'autre, le surcoût réel est le sol de chaque salle dans le champ.
 
 ## 9. Vérifications
 
 - `pnpm exec tsc -b --noEmit` et `pnpm exec vitest run src/styles src/world src/archives src/features/stamps`.
 - Plus aucune couleur héritée dans les décors (doit ne rien renvoyer) :
   `grep -rnE "palette\.(cream|ink|wood|woodDark|gold|shadow|leaf|leafDark|paper|inkSoft)|#(c9a24a|3b2a10|8a6a2c|5a441c|e8c872|8c6a4a|c8a27a|fff8e7|fdf1d6|7a2f3f|a97b3d|f6e3ab|fff3c4|fff6d8|7fd6e8)" src/world src/scene src/archives src/features/stamps --include='*.ts' --include='*.tsx' | grep -v '\.test\.'`
-- À l'œil, sur les captures e2e (`docs/TESTS.md`) : plus de bois, de beige, d'or ni de brun ; le bleu du sol et des murs reste bleu (pas gris) ; le numéro d'un portrait se lit à la distance de jeu ; le magenta n'apparaît qu'à la barrière d'une aile fermée.
+- Sols : `pnpm exec vitest run scripts/build-floor-textures.test.ts src/world/floorTextures.test.ts src/world/roomGeometry.test.ts` (fichiers, moyenne du détail, tuilage, budget, UV monde, cache de chargement) ; `node scripts/build-floor-textures.mjs --debug <dossier>` écrit les mosaïques 2×2 de contrôle du raccord.
+- À l'œil, sur les captures e2e (`docs/TESTS.md`) : plus de bois, de beige, d'or ni de brun ; le bleu du sol et des murs reste bleu (pas gris, même sous la matière) ; le numéro d'un portrait se lit à la distance de jeu ; le magenta n'apparaît qu'à la barrière d'une aile fermée.
 
 ## 10. Hors périmètre de cette charte
 

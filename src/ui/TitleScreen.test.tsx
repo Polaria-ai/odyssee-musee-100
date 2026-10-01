@@ -70,4 +70,58 @@ describe('TitleScreen', () => {
     rerender(<TitleScreen />)
     expect(screen.queryByText(/Aperçu/)).not.toBeInTheDocument()
   })
+
+  describe('signature Polaria', () => {
+    it('affiche « Une création » + le logo Polaria sous le pied existant', () => {
+      render(<TitleScreen />)
+      const footer = screen.getByText(/L'Opinion × Polaria/)
+      const signature = screen.getByTestId('title-signature')
+      expect(signature).toHaveTextContent('Une création')
+      const logo = screen.getByAltText('Polaria')
+      expect(logo).toBeInTheDocument()
+      expect(logo).toHaveAttribute('src', '/brand/polaria-logo.webp')
+      // Sous le pied : dans le même conteneur, après lui dans l'ordre du document.
+      expect(footer.compareDocumentPosition(signature) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(footer.parentElement).toBe(signature.parentElement)
+    })
+
+    it('le logo fait 20 à 24 px de haut et garde ses proportions', () => {
+      render(<TitleScreen />)
+      const logo = screen.getByAltText('Polaria')
+      const height = Number(logo.getAttribute('height'))
+      expect(height).toBeGreaterThanOrEqual(20)
+      expect(height).toBeLessThanOrEqual(24)
+      expect(Number(logo.getAttribute('width')) / height).toBeCloseTo(480 / 105, 1)
+    })
+
+    it('le lien va sur polaria.ai dans un nouvel onglet, sans window.opener', () => {
+      render(<TitleScreen />)
+      const link = screen.getByTestId('title-signature-link')
+      expect(link).toHaveAttribute('href', 'https://www.polaria.ai')
+      expect(link).toHaveAttribute('target', '_blank')
+      expect(link.getAttribute('rel')).toContain('noopener')
+      expect(link).toHaveAccessibleName('Une création Polaria (nouvel onglet)')
+    })
+
+    it('affiche « © 2026 Polaria » discret', () => {
+      render(<TitleScreen />)
+      expect(screen.getByText('© 2026 Polaria')).toBeInTheDocument()
+    })
+
+    it('suit la langue : « Created by » en anglais, le logo et la mention de droits restent', () => {
+      render(<TitleScreen />)
+      fireEvent.click(screen.getByTestId('lang-toggle'))
+      expect(screen.getByTestId('title-signature')).toHaveTextContent('Created by')
+      expect(screen.getByTestId('title-signature-link')).toHaveAccessibleName('Created by Polaria (opens in a new tab)')
+      expect(screen.getByAltText('Polaria')).toBeInTheDocument()
+      expect(screen.getByText('© 2026 Polaria')).toBeInTheDocument()
+    })
+
+    it('n’ajoute aucun bouton : entrer et changer de langue restent les seules actions', () => {
+      render(<TitleScreen />)
+      expect(screen.getByTestId('enter-button')).toBeInTheDocument()
+      expect(screen.getByTestId('lang-toggle')).toBeInTheDocument()
+      expect(screen.getByTestId('title-signature').querySelector('button')).toBeNull()
+    })
+  })
 })

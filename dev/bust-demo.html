@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Buste de Rémi · démonstration (dev)</title>
+    <!--
+      Page de mise au point du buste de Rémi · IA (WEL-919). Servie par `pnpm dev` seulement :
+      Vite ne construit que index.html, cette page n'entre donc jamais dans dist/.
+      Exemples : ?variant=fullscreen&mood=speaking · ?variant=split&mood=speaking&at=8.2&speed=0
+      Paramètres : variant (split|fullscreen), mood (idle|listening|thinking|speaking), seed, at (secondes
+      de chorégraphie avancées avant la première image), speed (multiplicateur de temps, 0 = figé),
+      gesture (openPalms|enumerate|heart|openArms|point|weigh), mirrored=1, model (chemin GLB, test du repli),
+      controls=0 (sans panneau), strict=0 (sans StrictMode, comme en production), zoomOut=N (recule la caméra),
+      cycles=N (ouvre/ferme N fois et mesure les ressources).
+    -->
+    <style>
+      html, body { margin: 0; background: #0b1020; color: #eaf1ff; font: 13px/1.4 system-ui, sans-serif; }
+      body { display: flex; gap: 24px; padding: 16px; align-items: flex-start; flex-wrap: wrap; }
+      #root { display: contents; }
+      #frame { position: relative; flex: none; overflow: hidden; background: radial-gradient(120% 90% at 50% 20%, #0f2154 0%, #071336 62%, #050b1e 100%); outline: 1px solid #2d4fb0; }
+      #panel { display: flex; flex-direction: column; gap: 10px; max-width: 360px; }
+      #panel label { display: flex; gap: 8px; align-items: center; }
+      #panel select, #panel button { font: inherit; padding: 4px 8px; }
+      #panel pre { white-space: pre-wrap; background: #050b1e; padding: 8px; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./bust-demo.tsx"></script>
+  </body>
+</html>

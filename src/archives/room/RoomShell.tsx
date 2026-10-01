@@ -26,6 +26,8 @@ import { useGame } from '../../state/gameStore'
 import { player } from '../../state/runtime'
 import { charter3d } from '../../styles/tokens'
 import { approach, occludesPlayer, type OcclusionObstacle } from '../../world/occlusion'
+import { FLOOR_SPECS, ROOM_FLOOR_KIND } from '../../world/floorSpec'
+import { useFloorMaterialOver } from '../../world/useFloorMaterial'
 import { ENTRANCE_LECTERN } from '../layout'
 import { drawArchivesBanner, drawArchivesFloor, drawEntranceSign } from './textures'
 import { ARCHIVES_MODELS } from './models'
@@ -38,6 +40,7 @@ import {
   LECTERN_HEIGHT,
   archivesWalls,
   buildCrownGeometry,
+  buildFloorGeometry,
   buildPanelGeometry,
   buildPillarGeometry,
   buildShellGeometry,
@@ -60,16 +63,26 @@ const SIGN_HEIGHT = SIGN_WIDTH * (176 / 512)
 /** Inclinaison du panneau : 60° vers l'arrière, presque face à la caméra plongeante (48°). */
 const SIGN_TILT = -Math.PI / 3
 
-/** Sol de la galerie : une seule texture (frise + repères), un seul mesh. */
+/**
+ * Sol de la galerie : la frise peinte (une seule texture, un seul mesh) sur une matière de marbre (WEL-923).
+ * La géométrie porte des UV en coordonnées monde, à l'échelle du marbre du hall (`FLOOR_SPECS`) : la carte
+ * de détail et celle des normales les lisent telles quelles, et la frise, peinte sur 0..1 pour toute la salle,
+ * est ramenée à ces UV par la transformation de sa texture (`repeat`/`offset`).
+ */
 function Floor({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
   const b = archives.room.bounds
   const tex = useMemo(() => drawArchivesFloor(b, archives.slots, lang), [b, archives.slots, lang])
-  return (
-    <mesh rotation-x={-Math.PI / 2} position={[(b.minX + b.maxX) / 2, 0, (b.minZ + b.maxZ) / 2]}>
-      <planeGeometry args={[b.maxX - b.minX, b.maxZ - b.minZ]} />
-      <meshLambertMaterial map={tex} />
-    </mesh>
-  )
+  const material = useFloorMaterialOver(ROOM_FLOOR_KIND.archives, tex)
+  const geometry = useMemo(() => buildFloorGeometry(b), [b])
+  useLayoutEffect(() => {
+    const tile = FLOOR_SPECS[ROOM_FLOOR_KIND.archives].tileMeters
+    const w = b.maxX - b.minX
+    const d = b.maxZ - b.minZ
+    // u_frise = (x − minX) / w ; v_frise = 1 − (z − minZ) / d (la rangée 0 de la frise est au nord, `paintArchivesFloor`).
+    tex.repeat.set(tile / w, -tile / d)
+    tex.offset.set(-b.minX / w, 1 + b.minZ / d)
+  }, [tex, b])
+  return <mesh geometry={geometry} material={material} />
 }
 
 /**

@@ -31,6 +31,9 @@ const defaultDeps: PresenceDeps = {
   now: () => Date.now(),
 }
 
+/** Capacité maximale d'une salle réglable par `VITE_PRESENCE_ROOM_CAPACITY` (le défaut est de 30). */
+const MAX_CONFIGURABLE_CAPACITY = 40
+
 /** Nombre lu dans une variable Vite, borné ; `undefined` si absent, illisible ou hors bornes. */
 function readBounded(raw: unknown, min: number, max: number, integer: boolean): number | undefined {
   if (typeof raw !== 'string' || raw.trim() === '') return undefined
@@ -43,12 +46,12 @@ function readBounded(raw: unknown, min: number, max: number, integer: boolean): 
 /**
  * Réglages optionnels par variables Vite, chacun borné, avec repli sur `DEFAULT_PRESENCE_CONFIG` si absent ou
  * invalide (une faute de frappe en production ne doit jamais casser la présence) :
- * `VITE_PRESENCE_ROOM_CAPACITY` (2..20), `VITE_PRESENCE_MAX_ROOMS` (1..50), `VITE_PRESENCE_SEND_HZ`
+ * `VITE_PRESENCE_ROOM_CAPACITY` (2..40), `VITE_PRESENCE_MAX_ROOMS` (1..50), `VITE_PRESENCE_SEND_HZ`
  * (0.5..4, envois de position par seconde en mouvement).
  */
 export function presenceConfigFromEnv(env: Record<string, unknown>): Partial<PresenceConfig> {
   const config: Partial<PresenceConfig> = {}
-  const capacity = readBounded(env.VITE_PRESENCE_ROOM_CAPACITY, 2, 20, true)
+  const capacity = readBounded(env.VITE_PRESENCE_ROOM_CAPACITY, 2, MAX_CONFIGURABLE_CAPACITY, true)
   if (capacity !== undefined) config.roomCapacity = capacity
   const maxRooms = readBounded(env.VITE_PRESENCE_MAX_ROOMS, 1, 50, true)
   if (maxRooms !== undefined) config.maxRooms = maxRooms

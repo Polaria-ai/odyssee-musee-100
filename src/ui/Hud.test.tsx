@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { act, render, screen, fireEvent } from '@testing-library/react'
 import { isOverlayOpen, useGame } from '../state/gameStore'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import { buildMuseumLayout } from '../world/layout'
@@ -37,6 +37,7 @@ describe('Hud', () => {
       stampCardOpen: false,
       visited: {},
       mapOpen: false,
+      remiChatOpen: false,
     })
   })
 
@@ -57,7 +58,7 @@ describe('Hud', () => {
     expect(useGame.getState().openPersonId).toBe(target.id)
   })
 
-  it('montre « Parler à Rémi » et démarre un dialogue quand le comptoir est à portée', () => {
+  it('montre « Parler à Rémi » et ouvre le chat avec lui quand le comptoir est à portée', () => {
     useGame.setState({ nearbyPersonId: null, nearCurator: true })
     render(<Hud />)
 
@@ -65,7 +66,18 @@ describe('Hud', () => {
     expect(button.textContent).toMatch(/Rémi/)
 
     fireEvent.click(button)
-    expect(useGame.getState().dialogue).not.toBeNull()
+    expect(useGame.getState().remiChatOpen).toBe(true)
+    expect(useGame.getState().dialogue).toBeNull()
+  })
+
+  it('masque le bouton d’action pendant le chat avec Rémi (il le recouvrirait)', () => {
+    useGame.setState({ nearbyPersonId: null, nearCurator: true })
+    render(<Hud />)
+    expect(screen.getByTestId('action-button')).toBeInTheDocument()
+    act(() => useGame.getState().openRemiChat())
+    expect(screen.queryByTestId('action-button')).not.toBeInTheDocument()
+    act(() => useGame.getState().closeRemiChat())
+    expect(screen.getByTestId('action-button')).toBeInTheDocument()
   })
 
   it('affiche le carnet de tampons et masque les visiteurs à zéro', () => {
