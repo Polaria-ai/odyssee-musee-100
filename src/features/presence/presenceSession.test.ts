@@ -214,9 +214,11 @@ async function boot(ctx: Ctx): Promise<FakeChannel> {
   return ctx.client.created[0]
 }
 
+/** Abonné, avec la liste (vide) de la salle que le serveur envoie juste après la jointure : la session s'annonce alors. */
 async function bootSubscribed(ctx: Ctx): Promise<FakeChannel> {
   const ch = await boot(ctx)
   ch.accept()
+  ch.emitSync({})
   await flush()
   return ch
 }
@@ -369,6 +371,7 @@ describe('2. retrait de l’ancien canal avant d’en recréer un (P0-a)', () =>
     expect(ch2).not.toBe(ch1) // jamais l'instance périmée
     expect(ch2.name).toBe('musee:v1:room-1') // la MÊME salle
     ch2.accept()
+    ch2.emitSync({})
     await flush()
 
     expect(ctx.session.stats().state).toBe('subscribed')
@@ -501,6 +504,7 @@ describe('3. erreurs de canal : recul, même salle, solo', () => {
     ctx.client.created[1].fail('CHANNEL_ERROR')
     await ctx.clock.advance(2000) // second échec : 2 s
     ctx.client.created[2].accept()
+    ctx.client.created[2].emitSync({})
     await flush() // track accepté, mais le canal tombe aussitôt
     await ctx.clock.advance(29_999)
     ctx.client.created[2].fail('CHANNEL_ERROR')
@@ -518,6 +522,7 @@ describe('3. erreurs de canal : recul, même salle, solo', () => {
     ctx.client.created[1].fail('CHANNEL_ERROR')
     await ctx.clock.advance(2000)
     ctx.client.created[2].accept()
+    ctx.client.created[2].emitSync({})
     await flush()
     await ctx.clock.advance(30_000) // stable
     ctx.client.created[2].fail('CHANNEL_ERROR')
@@ -623,6 +628,7 @@ describe('4. boucle d’envoi', () => {
     expect(ch.sendCalls).toHaveLength(0)
 
     ch.accept()
+    ch.emitSync({}) // la liste (vide) de la salle : on s'annonce et la position part
     await ctx.clock.advance(3000)
     // premier envoi au premier tick (100 ms), puis toutes les 1 000 ms : 100, 1100, 2100.
     expect(ch.sendCalls).toHaveLength(3)
@@ -681,14 +687,74 @@ describe('4. boucle d’envoi', () => {
   })
 })
 
-describe('5. track à l’abonnement', () => {
-  it('track({ id, joinTs }) avec joinTs = l’instant d’entrée dans la salle', async () => {
+describe('5. track à l’abonnement : après la liste de la salle, et seulement si on y a sa place', () => {
+  it('track({ id, joinTs }) avec joinTs = l’instant d’entrée dans la salle, dès le premier sync', async () => {
     const ctx = setup()
     const ch = await boot(ctx) // t = 1250
     await ctx.clock.advance(300)
     ch.accept()
     await flush()
+    expect(ch.trackCalls).toEqual([]) // pas avant d'avoir la liste des visiteurs
+    ch.emitSync({})
+    await flush()
     expect(ch.trackCalls).toEqual([{ id: 'me', joinTs: 1250 }])
+  })
+
+  it('sans premier sync, on s’annonce quand même après 1,5 s (jamais de visiteur invisible)', async () => {
+    const ctx = setup()
+    const ch = await boot(ctx)
+    ch.accept()
+    await ctx.clock.advance(1499)
+    expect(ch.trackCalls).toHaveLength(0)
+    await ctx.clock.advance(1)
+    expect(ch.trackCalls).toHaveLength(1)
+    ctx.player.moving = true
+    await ctx.clock.advance(1500)
+    expect(ch.sendCalls.length).toBeGreaterThan(0) // et la position part
+  })
+
+  it('une salle pleine : on ne s’annonce pas, on ne publie rien, on la quitte directement (ni track ni untrack)', async () => {
+    const ctx = setup()
+    ctx.player.moving = true
+    const ch = await boot(ctx)
+    ch.accept()
+    ch.emitSync(others(CAP)) // 30 déjà là : nous serions le 31e
+    await ctx.clock.advance(374) // gigue de saut : 375 ms
+    expect(ctx.client.created).toHaveLength(1)
+    await ctx.clock.advance(1)
+    expect(ctx.client.created.map((c) => c.name)).toEqual(['musee:v1:room-1', 'musee:v1:room-2'])
+    expect(ch.trackCalls).toHaveLength(0)
+    expect(ch.untrackCalls).toBe(0)
+    expect(ch.sendCalls).toHaveLength(0) // pas un message de position dans une salle où l'on ne reste pas
+    expect(ch.unsubscribed).toBe(true)
+    expect(ctx.session.stats().hops).toBe(1)
+    await ctx.clock.advance(5000) // le délai de repli de 1,5 s de l'ancien canal ne s'annonce pas non plus
+    expect(ch.trackCalls).toHaveLength(0)
+  })
+
+  it('si une place se libère avant le saut, on reste et on s’annonce alors', async () => {
+    const ctx = setup()
+    const ch = await boot(ctx)
+    ch.accept()
+    ch.emitSync(others(CAP))
+    await ctx.clock.advance(200)
+    ch.emitSync(others(CAP - 1)) // quelqu'un est parti devant nous
+    await flush()
+    expect(ch.trackCalls).toHaveLength(1)
+    await ctx.clock.advance(5000)
+    expect(ctx.client.created).toHaveLength(1)
+    expect(ctx.session.stats().hops).toBe(0)
+  })
+
+  it('un sync reçu avant SUBSCRIBED : on s’annonce dès l’abonnement', async () => {
+    const ctx = setup()
+    const ch = await boot(ctx)
+    ch.emitSync(others(2))
+    await flush()
+    expect(ch.trackCalls).toHaveLength(0) // pas encore rejoint : track lèverait dans le SDK
+    ch.accept()
+    await flush()
+    expect(ch.trackCalls).toHaveLength(1)
   })
 
   it('un refus de track : une nouvelle tentative 1–2 s plus tard, puis succès sans erreur de canal', async () => {
@@ -696,6 +762,7 @@ describe('5. track à l’abonnement', () => {
     const ch = await boot(ctx)
     ch.trackResults = ['error', 'ok']
     ch.accept()
+    ch.emitSync({})
     await flush()
     expect(ch.trackCalls).toHaveLength(1)
     await ctx.clock.advance(1499) // random 0,5 → 1 500 ms
@@ -711,6 +778,7 @@ describe('5. track à l’abonnement', () => {
     const ch = await boot(ctx)
     ch.trackResults = ['timed out', 'timed out']
     ch.accept()
+    ch.emitSync({})
     await flush()
     await ctx.clock.advance(1500)
     expect(ctx.session.stats().state).toBe('backoff')
@@ -723,9 +791,21 @@ describe('5. track à l’abonnement', () => {
     const ch = await boot(ctx)
     ch.trackResults = ['error']
     ch.accept()
+    ch.emitSync({})
     ctx.session.stop()
     await ctx.clock.advance(5000)
     expect(ch.trackCalls).toHaveLength(1)
+  })
+
+  it('stop() pendant l’attente du premier sync : jamais d’annonce', async () => {
+    const ctx = setup()
+    const ch = await boot(ctx)
+    ch.accept()
+    ctx.session.stop()
+    await ctx.clock.advance(10_000)
+    expect(ch.trackCalls).toHaveLength(0)
+    expect(ch.untrackCalls).toBe(0)
+    expect(ctx.clock.live).toBe(0)
   })
 })
 
@@ -932,7 +1012,7 @@ describe('7. solo : nouvelle tentative', () => {
     expect(probe.sendCalls.length).toBeGreaterThan(0)
   })
 
-  it('un sondage qui ne reçoit jamais de sync finit par publier sa position (filet de 5 s)', async () => {
+  it('un sondage qui ne reçoit jamais de sync finit par s’annoncer et publier sa position (filet de 1,5 s)', async () => {
     const ctx = setup({ pickStartRoom: undefined, config: { maxRooms: 1, soloRetryMs: 10_000 } })
     await toSolo(ctx)
     await ctx.clock.advance(10_000)
@@ -940,10 +1020,26 @@ describe('7. solo : nouvelle tentative', () => {
     probe.accept()
     await flush()
     ctx.player.moving = true
-    await ctx.clock.advance(4900)
+    await ctx.clock.advance(1400)
+    expect(probe.trackCalls).toHaveLength(0)
     expect(probe.sendCalls).toHaveLength(0)
     await ctx.clock.advance(300)
+    expect(probe.trackCalls).toHaveLength(1)
     expect(probe.sendCalls.length).toBeGreaterThan(0)
+  })
+
+  it('un sondage qui trouve la salle pleine ne s’y annonce jamais : ni track, ni untrack, ni position', async () => {
+    const ctx = setup({ pickStartRoom: undefined, config: { maxRooms: 1, soloRetryMs: 10_000 } })
+    await toSolo(ctx)
+    await ctx.clock.advance(10_000)
+    const probe = ctx.client.created[1]
+    probe.accept()
+    probe.emitSync(others(CAP))
+    await flush()
+    expect(ctx.session.stats().state).toBe('solo')
+    expect(probe.trackCalls).toHaveLength(0)
+    expect(probe.untrackCalls).toBe(0)
+    expect(probe.sendCalls).toHaveLength(0)
   })
 
   it('avec soloRetryMs = 0, reste solo', async () => {
@@ -980,6 +1076,7 @@ describe('8. onglet caché', () => {
     await ctx.clock.advance(1)
     expect(ctx.client.created).toHaveLength(2)
     ctx.client.created[1].accept()
+    ctx.client.created[1].emitSync({})
     await flush()
     expect(ctx.client.created[1].trackCalls).toHaveLength(1)
   })

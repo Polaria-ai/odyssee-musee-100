@@ -649,11 +649,32 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
     return peak
   }
 
-  it('(o) banc : 200 joueurs arrivés sur 60 s, salles de 30 × 8, quotas du plan gratuit simulés — aucune salle au-dessus de 30, une seule salle chacun, 7 salles au plus', async () => {
-    server = new FakeRealtimeServer({ maxConnections: 200, maxJoinsPerSecond: 100 })
-    const N = 200
-    for (let i = 1; i <= N; i++) makeRig({ prod: true, moving: false, seed: 4000 + i * 7, config: { initialJoinJitterMs: ARRIVAL_SPREAD_MS, soloRetryMs: 0, quotaSoloRetryMs: 0 } }).session.start()
+  interface ArrivalMetrics {
+    placed: number
+    solo: number
+    finalCounts: number[]
+    peaks: number[]
+    maxOccupied: number
+    duplicateSamples: number
+    maxStore: number
+    joins: number
+    peakJoinsPerSecond: number
+    maxJoinsPerClient: number
+    maxReconnects: number
+    tracks: number
+    untracks: number
+    peakPresenceCallsPerSecond: number
+    presenceDeliveries: number
+    peakPresenceDeliveriesPerSecond: number
+    peakConnectedUsers: number
+  }
 
+  /** `n` joueurs arrivent sur `spreadMs` (config de production, quotas du plan gratuit simulés), puis le régime s'établit. */
+  async function arrivalBench(n: number, spreadMs: number): Promise<ArrivalMetrics> {
+    server = new FakeRealtimeServer({ maxConnections: 200, maxJoinsPerSecond: 100 })
+    for (let i = 1; i <= n; i++) {
+      makeRig({ prod: true, moving: false, seed: 4000 + i * 7, config: { initialJoinJitterMs: spreadMs, soloRetryMs: 0, quotaSoloRetryMs: 0 } }).session.start()
+    }
     let maxOccupied = 0
     let maxStore = 0
     let duplicateSamples = 0
@@ -665,41 +686,88 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
       if (new Set(ids).size !== ids.length) duplicateSamples++
       for (const r of rigs) maxStore = Math.max(maxStore, r.store.peers.size)
     }
-    for (let t = 0; t < 100_000; t += 500) {
+    for (let t = 0; t < spreadMs + 40_000; t += 500) {
       await run(500)
       sample()
     }
     await run(20_000) // régime établi : plus aucune jointure
     sample()
 
+    const presenceCalls = server.frames.filter((f) => f.event === 'presence').map((f) => f.t)
+    return {
+      placed: rigs.filter((r) => state(r) === 'subscribed').length,
+      solo: rigs.filter((r) => state(r) === 'solo').length,
+      finalCounts: Array.from({ length: MAX_ROOMS }, (_, i) => server.memberCount(topicOf(i + 1))),
+      peaks: Array.from({ length: MAX_ROOMS }, (_, i) => server.peakMemberCount(topicOf(i + 1))),
+      maxOccupied,
+      duplicateSamples,
+      maxStore,
+      joins: server.joinCount(),
+      peakJoinsPerSecond: server.peakJoinsPerSecond(),
+      maxJoinsPerClient: Math.max(...rigs.map((r) => r.session.stats().joins)),
+      maxReconnects: Math.max(...rigs.map((r) => r.session.stats().reconnects)),
+      tracks: server.trackCount(),
+      untracks: server.untrackCount(),
+      peakPresenceCallsPerSecond: peakPerSecond(presenceCalls),
+      presenceDeliveries: server.deliveries().presence,
+      peakPresenceDeliveriesPerSecond: server.peakDeliveriesPerSecond('presence'),
+      peakConnectedUsers: server.peakConnectedUsers(),
+    }
+  }
+
+  it('(o) banc : 200 joueurs arrivés sur 60 s, salles de 30 × 8, quotas du plan gratuit simulés — aucune salle au-dessus de 30, une seule salle chacun, 7 salles au plus', async () => {
+    const N = 200
+    const m = await arrivalBench(N, ARRIVAL_SPREAD_MS)
+    const ids = server.trackedPayloads().map((p) => p.id)
+    expect(server.restBroadcasts).toHaveLength(0)
+
     // Tous placés, aucun en solo, aucun quota atteint.
-    expect(rigs.filter((r) => state(r) === 'subscribed')).toHaveLength(N)
-    expect(rigs.filter((r) => state(r) === 'solo')).toHaveLength(0)
+    expect(m.placed).toBe(N)
+    expect(m.solo).toBe(0)
     expect(server.quotaRefusals).toEqual({ connections: 0, joins: 0 })
 
     // Aucune salle au-dessus de 30 (en régime établi), chacun dans une seule salle, 7 salles au plus.
-    const finalCounts = Array.from({ length: MAX_ROOMS }, (_, i) => server.memberCount(topicOf(i + 1)))
-    expect(Math.max(...finalCounts)).toBeLessThanOrEqual(ROOM_CAPACITY)
-    expect(finalCounts.reduce((a, b) => a + b, 0)).toBe(N)
-    expect(finalCounts.filter((n) => n > 0).length).toBeLessThanOrEqual(7)
-    expect(maxOccupied).toBeLessThanOrEqual(7)
-    expect(duplicateSamples).toBe(0)
-    const ids = server.trackedPayloads().map((p) => p.id)
+    expect(Math.max(...m.finalCounts)).toBeLessThanOrEqual(ROOM_CAPACITY)
+    expect(m.finalCounts.reduce((a, b) => a + b, 0)).toBe(N)
+    expect(m.finalCounts.filter((c) => c > 0).length).toBeLessThanOrEqual(7)
+    expect(m.maxOccupied).toBeLessThanOrEqual(7)
+    expect(m.duplicateSamples).toBe(0)
     expect(new Set(ids).size).toBe(N)
+    expect(ids).toHaveLength(N)
     // Pic transitoire : une salle déborde un instant (les derniers arrivés la traversent, puis la quittent), de quelques places.
-    const peaks = Array.from({ length: MAX_ROOMS }, (_, i) => server.peakMemberCount(topicOf(i + 1)))
-    expect(Math.max(...peaks)).toBeLessThanOrEqual(ROOM_CAPACITY + 12)
+    expect(Math.max(...m.peaks)).toBeLessThanOrEqual(ROOM_CAPACITY + 12)
 
     // Trafic de jointures borné, sous le plafond de 100 jointures/s du plan gratuit.
-    const joins = server.joinCount()
-    expect(joins).toBeLessThanOrEqual(900)
-    expect(server.peakJoinsPerSecond()).toBeLessThanOrEqual(100)
-    expect(Math.max(...rigs.map((r) => r.session.stats().joins))).toBeLessThanOrEqual(MAX_ROOMS)
-    expect(Math.max(...rigs.map((r) => r.session.stats().reconnects))).toBe(0)
-    expect(server.peakConnectedUsers()).toBeLessThanOrEqual(200)
+    expect(m.joins).toBeLessThanOrEqual(900)
+    expect(m.peakJoinsPerSecond).toBeLessThanOrEqual(100)
+    expect(m.maxJoinsPerClient).toBeLessThanOrEqual(MAX_ROOMS)
+    expect(m.maxReconnects).toBe(0)
+    expect(m.peakConnectedUsers).toBeLessThanOrEqual(200)
+    // Présence : seuls les visiteurs qui ont leur place s'annoncent (aucun track/untrack pour une salle traversée).
+    expect(m.tracks).toBeLessThanOrEqual(N + 30)
+    expect(m.untracks).toBeLessThanOrEqual(30)
+    expect(m.peakPresenceCallsPerSecond).toBeLessThanOrEqual(20)
     // Registre des pairs borné : une salle de 30, jamais plus de 29 autres (+ quelques retardataires).
-    expect(maxStore).toBeLessThanOrEqual(ROOM_CAPACITY + 6)
-    expect(maxStore).toBeLessThanOrEqual(MAX_PEER_RECORDS)
+    expect(m.maxStore).toBeLessThanOrEqual(ROOM_CAPACITY + 6)
+    expect(m.maxStore).toBeLessThanOrEqual(MAX_PEER_RECORDS)
+
+    // Régime établi à 1 envoi/s : la moitié des joueurs marche pendant 30 s, les autres sont immobiles.
+    rigs.forEach((r, i) => {
+      r.player.moving = i % 2 === 0
+    })
+    await run(1500) // laisse partir les positions de départ
+    const before = { ...server.deliveries(), broadcasts: server.broadcastCount() }
+    const t0 = Date.now()
+    await run(30_000)
+    const t1 = Date.now()
+    const emitted = server.broadcastCount() - before.broadcasts
+    const delivered = server.deliveries().broadcast - before.broadcast
+    // 100 marcheurs × 1/s + 100 immobiles × 1/10 s = 110 émissions/s ; chacune est livrée aux 29 autres de la salle.
+    expect(emitted / 30).toBeGreaterThan(95)
+    expect(emitted / 30).toBeLessThan(125)
+    expect(delivered / emitted).toBeGreaterThan(24)
+    expect(delivered / emitted).toBeLessThan(29.1)
+    expect(server.peakDeliveriesPerSecond('broadcast', t0, t1)).toBeLessThan(4500)
     expect(server.restBroadcasts).toHaveLength(0)
 
     // Arrêt général : plus aucune présence, aucun canal, aucun minuteur de session.
@@ -710,12 +778,21 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
     expect(rigs.every((r) => r.store.peers.size === 0)).toBe(true)
 
     // Les chiffres mesurés (reproductibles : PRNG et horloge simulés) sont consignés dans le README.
-    const presenceFrames = server.frames.filter((f) => f.event === 'presence').map((f) => f.t)
     console.info(
-      `[banc 200] jointures=${joins} pic jointures/s=${server.peakJoinsPerSecond()} track=${server.trackCount()} untrack=${server.untrackCount()} ` +
-        `pic présence/s=${peakPerSecond(presenceFrames)} pic membres par salle=${peaks.join('/')} salles finales=${finalCounts.join('/')} ` +
-        `max jointures par joueur=${Math.max(...rigs.map((r) => r.session.stats().joins))} pic connexions=${server.peakConnectedUsers()}`,
+      `[banc 200] ${JSON.stringify({ ...m, emissionsParSeconde: emitted / 30, livraisonsParSeconde: delivered / 30, pointeLivraisonsParSeconde: server.peakDeliveriesPerSecond('broadcast', t0, t1) })}`,
     )
+  }, 300_000)
+
+  it('(o bis) arrivée en rafale : 200 joueurs sur 10 s au lieu de 60 s — les invariants tiennent, le quota de jointures/s décide du reste', async () => {
+    const N = 200
+    const m = await arrivalBench(N, 10_000)
+    expect(m.placed + m.solo).toBe(N)
+    expect(Math.max(...m.finalCounts)).toBeLessThanOrEqual(ROOM_CAPACITY)
+    expect(m.duplicateSamples).toBe(0)
+    expect(m.joins - server.quotaRefusals.joins - server.quotaRefusals.connections).toBeGreaterThan(0) // le serveur simulé refuse au-delà de 100/s : ces refus sont des solos silencieux
+    expect(m.maxReconnects).toBe(0)
+    expect(server.restBroadcasts).toHaveLength(0)
+    console.info(`[banc 200 en 10 s] ${JSON.stringify({ ...m, refus: server.quotaRefusals })}`)
   }, 300_000)
 
   it('(p) banc : 260 joueurs, serveur refusant au-delà de 200 connexions — les 60 suivants jouent seuls, sans erreur, sans réessayer avant le délai long', async () => {
@@ -757,5 +834,8 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
     expect(solo.every((r) => state(r) === 'solo')).toBe(true) // toujours seuls, toujours silencieux
     expect(consoleError).not.toHaveBeenCalled()
     consoleError.mockRestore()
+    console.info(
+      `[banc 260] ${JSON.stringify({ placed: placed.length, solo: solo.length, joins: server.joinCount(), refus: server.quotaRefusals, pointeConnexions: server.peakConnectedUsers(), pointeJointuresParSeconde: server.peakJoinsPerSecond() })}`,
+    )
   }, 300_000)
 })

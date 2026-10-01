@@ -357,6 +357,8 @@ export class FakeRealtimeServer {
   private refCounter = 0
   private keyCounter = 0
   private recentJoinTimes: number[] = []
+  private presenceDeliveryTimes: number[] = []
+  private broadcastDeliveryTimes: number[] = []
   private peakUsers = 0
   private memberPeaks = new Map<string, number>()
 
@@ -453,6 +455,26 @@ export class FakeRealtimeServer {
   /** Plus grand nombre de membres joints en même temps à ce topic depuis le début. */
   peakMemberCount(topic: string): number {
     return this.memberPeaks.get(fullTopic(topic)) ?? 0
+  }
+
+  /**
+   * Livraisons serveur -> clients depuis le début (une par destinataire) : `presence` = diffusions `presence_diff`,
+   * `broadcast` = relais d'une position. Le quota « messages/s » de Supabase compte les émissions ET les livraisons.
+   */
+  deliveries(): { presence: number; broadcast: number } {
+    return { presence: this.presenceDeliveryTimes.length, broadcast: this.broadcastDeliveryTimes.length }
+  }
+
+  /** Plus grand nombre de livraisons de ce type dans une fenêtre glissante d'une seconde, entre `from` et `to` (horloge simulée). */
+  peakDeliveriesPerSecond(kind: 'presence' | 'broadcast', from = -Infinity, to = Infinity): number {
+    const all = kind === 'presence' ? this.presenceDeliveryTimes : this.broadcastDeliveryTimes
+    const times = all.filter((t) => t >= from && t <= to)
+    let peak = 0
+    for (let i = 0, j = 0; i < times.length; i++) {
+      while (times[i] - times[j] >= 1000) j++
+      peak = Math.max(peak, i - j + 1)
+    }
+    return peak
   }
 
   /** Plus grand nombre de `phx_join` reçus dans une fenêtre glissante d'une seconde (horloge simulée comprise). */
@@ -651,6 +673,8 @@ export class FakeRealtimeServer {
     this.recentJoinTimes.length = 0
     this.peakUsers = 0
     this.memberPeaks.clear()
+    this.presenceDeliveryTimes.length = 0
+    this.broadcastDeliveryTimes.length = 0
     this.quotaRefusals = { connections: 0, joins: 0 }
   }
 
@@ -898,16 +922,21 @@ export class FakeRealtimeServer {
     if (!sender) return
     const userEvent = String(payload.event ?? '')
     const frame = encodeBinaryBroadcast(topic, userEvent, payload.payload)
+    const now = Date.now()
     for (const m of this.topics.get(topic) ?? []) {
       if (m === sender && !sender.self) continue
+      this.broadcastDeliveryTimes.push(now)
       this.deliver(m.conn, frame)
     }
     if (sender.ack) this.reply(conn, sender.joinRef, ref, topic, 'ok', {})
   }
 
   private presenceDiff(topic: string, diff: { joins: Record<string, { metas: Meta[] }>; leaves: Record<string, { metas: Meta[] }> }): void {
+    const now = Date.now()
     for (const m of this.topics.get(topic) ?? []) {
-      if (m.presence) this.pushJson(m.conn, m.joinRef, null, topic, 'presence_diff', diff)
+      if (!m.presence) continue
+      this.presenceDeliveryTimes.push(now)
+      this.pushJson(m.conn, m.joinRef, null, topic, 'presence_diff', diff)
     }
   }
 

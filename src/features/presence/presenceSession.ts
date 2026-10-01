@@ -25,6 +25,9 @@
  *   laisse remonter d'exception.
  * - Aucun envoi hors canal SUBSCRIBED et rejoint (sinon le SDK bascule chaque `send` en POST REST).
  * - Aucune synchronisation des clients : gigue à l'arrivée, avant chaque saut, sur chaque reconnexion.
+ * - On ne s'annonce (`track`) qu'après avoir reçu la liste de la salle (premier sync, au plus `FIRST_SYNC_WAIT_MS`) et
+ *   seulement si on y a sa place : l'arrivée puis le départ d'un visiteur d'une salle pleine ne coûtent ni `track`, ni
+ *   `untrack`, ni les deux diffusions de présence à ses 30 membres (quota de 20 messages de présence/s du plan gratuit).
  */
 import {
   peerStore,
@@ -180,8 +183,12 @@ const TRACK_RETRY_MAX_MS = 2000
  * relancer le recul à 1 s à chaque cycle (boucle sans fin qui entretient la surcharge).
  */
 const STABLE_CHANNEL_MS = 30000
-/** Un sondage depuis le solo qui n'a reçu aucun sync dans ce délai (après `track` accepté) publie sa position. */
-const PROBE_MAX_MS = 5000
+/**
+ * On n'annonce sa présence (`track`) qu'une fois connue la liste des visiteurs de la salle (premier `presence_state` du
+ * serveur, juste après la jointure) : une salle pleine n'a pas à recevoir notre arrivée puis notre départ. Si ce premier
+ * état n'arrive pas dans ce délai, on s'annonce quand même (et un sondage depuis le solo est tenu pour concluant).
+ */
+const FIRST_SYNC_WAIT_MS = 1500
 /** Garde-fou : `unsubscribe` qui ne se résoudrait jamais ne doit pas bloquer la session. */
 const UNSUBSCRIBE_SAFETY_MS = 15000
 
@@ -250,8 +257,10 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
   let lastRoom: number | null = null
   /** Sondage depuis le solo : tant que vrai, aucune position n'est publiée et une salle pleine ramène en solo. */
   let probing = false
-  /** `track` accepté sur le canal courant. */
-  let trackedOk = false
+  /** `track` lancé sur le canal courant : seul un canal annoncé a un `untrack` à faire au départ. */
+  let tracking = false
+  /** Un sync du canal courant a conclu que nous avons notre place dans cette salle (nous pouvons nous y annoncer). */
+  let stayDecided = false
 
   let joins = 0
   let hops = 0
@@ -315,7 +324,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
   const hopSlot = slot('timeout') // gigue avant un saut de salle
   const trackRetry = slot('timeout')
   const stableSlot = slot('timeout') // canal resté sain assez longtemps : le compteur d'échecs repart de zéro
-  const probeSlot = slot('timeout') // filet d'un sondage qui ne reçoit jamais de sync
+  const syncWaitSlot = slot('timeout') // premier état de présence attendu avant de s'annoncer
   const hiddenSlot = slot('timeout')
   const sendSlot = slot('interval')
   const pruneSlot = slot('interval')
@@ -372,14 +381,16 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
    */
   function detach(withUntrack: boolean): void {
     generation += 1
+    const wasTracking = tracking
     sendSlot.clear()
     hopSlot.clear()
     trackRetry.clear()
     stableSlot.clear()
-    probeSlot.clear()
+    syncWaitSlot.clear()
     hopWanted = false
     sendState = null
-    trackedOk = false
+    tracking = false
+    stayDecided = false
     probing = false
     const ch = channel
     const wasSubscribed = channelSubscribed
@@ -387,8 +398,9 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     channelSubscribed = false
     if (!ch) return
 
-    // `untrack` sur un canal jamais rejoint lèverait dans le SDK (« before joining ») : seulement si abonné.
-    if (withUntrack && wasSubscribed) {
+    // `untrack` sur un canal jamais rejoint lèverait dans le SDK (« before joining ») : seulement si abonné ; et inutile (un
+    // message de présence de plus, compté dans le quota) si nous ne nous y étions pas annoncés.
+    if (withUntrack && wasSubscribed && wasTracking) {
       try {
         void Promise.resolve(ch.untrack()).catch(() => {})
       } catch {
@@ -483,8 +495,10 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
       channelSubscribed = true
       sendState = null
       setState('subscribed')
-      tryTrack(ch, gen, 0)
-      if (!probing) sendSlot.set(sendTick, SEND_TICK_MS)
+      // On ne s'annonce pas encore : on attend la liste des visiteurs de la salle (premier sync), pour ne pas arriver puis
+      // repartir d'une salle pleine devant ses 30 membres. Si elle l'a déjà donnée (stayDecided), on s'annonce tout de suite.
+      if (stayDecided) startTracking(ch, gen)
+      else syncWaitSlot.set(() => firstSyncTimeout(ch, gen), FIRST_SYNC_WAIT_MS)
     } else if (status === 'CLOSED') {
       // Nous retirons nous-mêmes nos canaux en invalidant d'abord la génération : un CLOSED qui arrive
       // ici n'est donc jamais le nôtre, c'est le serveur (message système, limite de débit…).
@@ -493,6 +507,25 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     } else {
       onFailure(gen, status, err)
     }
+  }
+
+  /** S'annonce (`track`) sur le canal courant, et commence à publier la position, sauf pendant un sondage non conclu. */
+  function startTracking(ch: RealtimeChannelLike, gen: number): void {
+    if (tracking || !channelSubscribed || stopped || gen !== generation || ch !== channel) return
+    tracking = true
+    syncWaitSlot.clear()
+    tryTrack(ch, gen, 0)
+    if (!probing) {
+      sendState = null
+      sendSlot.set(sendTick, SEND_TICK_MS)
+    }
+  }
+
+  /** Aucun état de présence reçu à temps : on s'annonce quand même, et un sondage depuis le solo est tenu pour concluant. */
+  function firstSyncTimeout(ch: RealtimeChannelLike, gen: number): void {
+    if (stopped || gen !== generation || ch !== channel) return
+    endProbe()
+    startTracking(ch, gen)
   }
 
   /** `track` avec une seule nouvelle tentative (1–2 s) avant de traiter l'échec comme une erreur de canal. */
@@ -524,19 +557,16 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
 
   /** `track` accepté : le canal devient « sain » s'il n'échoue pas pendant `STABLE_CHANNEL_MS`. */
   function onTracked(): void {
-    trackedOk = true
     stableSlot.set(() => {
       attempts = 0
     }, STABLE_CHANNEL_MS)
-    if (probing) probeSlot.set(() => endProbe(), PROBE_MAX_MS)
   }
 
-  /** Le sondage est concluant (ou sans réponse) : on reste dans la salle et on publie notre position. */
+  /** Le sondage est concluant (ou sans réponse) : on reste dans la salle ; la position se publie dès qu'on s'est annoncé. */
   function endProbe(): void {
     if (!probing) return
     probing = false
-    probeSlot.clear()
-    if (channel && channelSubscribed && !sendSlot.active) {
+    if (tracking && channel && channelSubscribed && !sendSlot.active) {
       sendState = null
       sendSlot.set(sendTick, SEND_TICK_MS)
     }
@@ -655,11 +685,15 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     setPeers(others.length)
 
     if (target === room) {
-      // La décision de partir ne tient plus (quelqu'un est parti devant nous) : on annule le saut annoncé.
+      // La décision de partir ne tient plus (quelqu'un est parti devant nous) : on annule le saut annoncé, et on s'annonce
+      // (sans effet si c'est déjà fait ; si le canal n'est pas encore abonné, SUBSCRIBED s'en chargera).
       hopSlot.clear()
       hopWanted = false
+      stayDecided = true
+      startTracking(ch, gen)
       return
     }
+    stayDecided = false // salle pleine pour nous : on ne s'y annonce pas, on la quitte directement.
     hopTarget = target
     if (hopWanted) return // un saut est déjà annoncé ; il relira la dernière décision à l'échéance.
     hopWanted = true
@@ -673,7 +707,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
         return
       }
       hops += 1
-      if (trackedOk) attempts = 0 // un canal qui a accepté notre présence et donné un sync n'est pas en échec.
+      attempts = 0 // un canal qui a répondu (il nous a donné la liste de la salle) n'est pas en échec ; les sauts ne vont qu'en avant.
       joinRoom(hopTarget)
     }, delay)
   }
@@ -780,7 +814,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
       hopSlot.clear()
       trackRetry.clear()
       stableSlot.clear()
-      probeSlot.clear()
+      syncWaitSlot.clear()
       hiddenSlot.clear()
       sendSlot.clear()
       pruneSlot.clear()
