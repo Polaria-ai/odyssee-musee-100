@@ -1,5 +1,5 @@
 /** Assemblage des écrans et des surimpressions. Propriétaire : intégration. */
-import { useEffect } from 'react'
+import { Suspense, lazy, useEffect, useState } from 'react'
 import { isOverlayOpen, useGame } from './state/gameStore'
 import { placePlayer, resetInput } from './state/runtime'
 import { loadPeople } from './data/repository'
@@ -21,9 +21,24 @@ import { useArchivesRefresh } from './archives/useArchivesRefresh'
 import { usePresence } from './features/presence/usePresence'
 import { TouchJoystick } from './player/TouchJoystick'
 import { useKeyboardControls } from './player/useKeyboardControls'
-import { RemiChat } from './features/remiChat/RemiChat'
 import { useAudioDirector } from './audio'
 import { Signature } from './features/signature/Signature'
+
+// Le chat avec Rémi · IA (et, derrière lui, son buste 3D) sort du paquet d'entrée : il est chargé à sa
+// première ouverture, puis reste monté pour garder la conversation jusqu'à la fin de la session.
+const RemiChat = lazy(() => import('./features/remiChat/RemiChat').then((m) => ({ default: m.RemiChat })))
+
+function RemiChatSlot() {
+  const open = useGame((s) => s.remiChatOpen)
+  const [opened, setOpened] = useState(false)
+  if (open && !opened) setOpened(true)
+  if (!open && !opened) return null
+  return (
+    <Suspense fallback={null}>
+      <RemiChat />
+    </Suspense>
+  )
+}
 
 export function App() {
   const screen = useGame((s) => s.screen)
@@ -95,7 +110,7 @@ export function App() {
           <StampCard />
           <DialogueBox />
           <Signature />
-          <RemiChat />
+          <RemiChatSlot />
         </>
       )}
       <Toast />
