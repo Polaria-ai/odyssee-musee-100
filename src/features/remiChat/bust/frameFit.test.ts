@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest'
 import { Group, PerspectiveCamera, Vector3 } from 'three'
 import { BonePoseDriver } from './bonePose'
 import { ATTENTION, BODY_YAW, BUST_FOV } from './config'
+import { chinWorld, FIST_RADIUS as FIST_RADIUS_MEASURED } from './fistGeometry.fixture'
 import { FRAME_SAFE_FRACTION, computeFraming } from './framing'
 import { AIM_SEGMENTS, AIM_STRIDE, GESTURE_IDS, createGestureEngine, type AimSegment } from './gestures'
 import { measureBust } from './rig'
@@ -125,8 +126,10 @@ describe('gestes dans le cadre', () => {
       const elbow = bones.get('RightForeArm')!.getWorldPosition(new Vector3())
       const wrist = bones.get('RightHand')!.getWorldPosition(new Vector3())
       const fist = wrist.clone().add(wrist.clone().sub(elbow).normalize().multiplyScalar(FIST_OFFSET))
-      const chinY = bones.get('Head')!.getWorldPosition(new Vector3()).y // la base du crâne, au niveau du menton
-      expect(fist.y, `${variant} ${aspect}`).toBeLessThanOrEqual(chinY)
+      // Le bout du menton (mesuré sur le maillage), pas l'os de la tête : celui-ci est ~5 cm plus haut, et un poing
+      // collé au menton passait ce test (capture de Baptiste, 01/10). Le poing, rayon compris, reste sous le menton.
+      const chinY = chinWorld(bones.get('Head')!).y
+      expect(fist.y + FIST_RADIUS_MEASURED, `${variant} ${aspect}`).toBeLessThanOrEqual(chinY)
       expect(Math.abs(fist.clone().project(camera).x)).toBeLessThan(FRAME_SAFE_FRACTION)
       expect(fist.clone().project(camera).y).toBeGreaterThan(1 - 2 * framing.cutFraction)
     }

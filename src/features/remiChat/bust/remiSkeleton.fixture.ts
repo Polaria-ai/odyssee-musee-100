@@ -43,6 +43,17 @@ export const REMI_SKELETON: readonly FixtureBone[] = [
 ]
 
 /**
+ * Axes X, Y et Z (dans le monde, pose de liaison en A, normalisés) des os de main, lus dans les matrices de liaison
+ * inverses du GLB. Les deux repères sont IDENTIQUES (pas en miroir) : X vers la droite de l'écran, Y le long du bras
+ * vers le bas et un peu vers l'avant, Z vers l'arrière. C'est ce qui fixe la règle de symétrie des poignets : la même
+ * pose à gauche s'écrit (x, −y, −z) (`gestures.ts`, « Poignets »).
+ */
+export const REMI_BIND_HAND_AXES = {
+  LeftHand: { x: [1, 0, 0], y: [0, -0.92, 0.38], z: [0, -0.38, -0.92] },
+  RightHand: { x: [1, -0.02, 0.03], y: [-0.03, -0.93, 0.38], z: [0.02, -0.38, -0.93] },
+} as const
+
+/**
  * Échelle et décalage que `getCharacterAssets` donne à Rémi dans le jeu (hauteur visée 1,8 m, pieds à 0),
  * mesurés dans le navigateur : bassin à 0,829 m et bout de tête à 1,776 m, contre 0,785 et 1,681 m bruts.
  */

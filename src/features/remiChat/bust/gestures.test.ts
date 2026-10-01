@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { Euler, Quaternion } from 'three'
 import type { RemiMood } from '../contract'
 import {
   AIM_COUNT,
@@ -16,17 +17,26 @@ import {
   MOODS,
   MOOD_BLEND_SECONDS,
   POSE_LENGTH,
+  WRIST_BEAT_INTERVAL_MAX,
+  WRIST_BEAT_INTERVAL_MIN,
+  WRIST_DRIFT,
+  WRIST_LIMIT_FLEX,
+  WRIST_LIMIT_TILT,
+  WRIST_LIMIT_TWIST,
   createGestureEngine,
   createRng,
   gestureAims,
   gestureDurationRange,
   gestureEnvelope,
+  gestureWrists,
   smootherstep,
   softLimit,
   type GestureEngine,
 } from './gestures'
 
 const DT = 1 / 60
+/** Vitesse angulaire maximale d'un poignet (rad/s) : ~183°/s, un petit coup de poignet vif, jamais un à-coup. Mesuré : 165°/s. */
+const WRIST_MAX_RAD_PER_S = 3.2
 
 /** Fait tourner le moteur `seconds` secondes dans l'humeur `mood`, en appelant `each` après chaque image. */
 function run(engine: GestureEngine, mood: RemiMood, seconds: number, each?: () => void): void {
@@ -269,12 +279,16 @@ describe('moteur de gestes', () => {
     const prevPose = copy(engine.pose)
     const prevAim = copy(engine.aim)
     let maxPose = 0
+    let maxWrist = 0
     let maxAim = 0
     for (const mood of cycle) {
       for (let k = 0; k < 10; k++) {
         run(engine, mood, 1, () => {
           engine.pose.forEach((v, i) => {
-            maxPose = Math.max(maxPose, Math.abs(v - prevPose[i]))
+            const bone = DRIVEN_BONES[Math.floor(i / 3)]
+            // Les poignets sont vifs par nature (battements de ponctuation) : leur vitesse a sa propre borne, plus bas.
+            if (bone === 'leftHand' || bone === 'rightHand') maxWrist = Math.max(maxWrist, Math.abs(v - prevPose[i]))
+            else maxPose = Math.max(maxPose, Math.abs(v - prevPose[i]))
             prevPose[i] = v
           })
           for (let s = 0; s < AIM_COUNT; s++) {
@@ -291,6 +305,7 @@ describe('moteur de gestes', () => {
       }
     }
     expect(maxPose).toBeLessThan(0.02) // radians par image
+    expect(maxWrist).toBeLessThan(WRIST_MAX_RAD_PER_S * DT) // un poignet, par axe : jamais plus vite que la borne de vitesse
     // Le plus raide : la montée d'un geste de 1,9 s (≈ 0,05) pendant que le poids de parole monte aussi (≈ 0,045).
     // Une vraie cassure vaudrait ≥ 0,2.
     expect(maxAim).toBeLessThan(0.09)
@@ -343,8 +358,9 @@ describe('moteur de gestes', () => {
     expect(maxStep).toBeLessThan(0.06) // jamais d'à-coup (une cassure vaudrait ≥ 0,2)
     expect(weightAtBlendEnd).toBeCloseTo(0, 6) // au bout de MOOD_BLEND_SECONDS les bras sont revenus au clip
     expect(armWeight()).toBe(0)
+    // Les poignets reviennent à leur seule dérive de repos (quelques degrés au plus), plus aucun geste ni battement.
     for (const hand of ['leftHand', 'rightHand'] as const) {
-      for (let axis = 0; axis < 3; axis++) expect(Math.abs(engine.pose[poseIndex(hand) + axis])).toBeLessThan(1e-3)
+      for (let axis = 0; axis < 3; axis++) expect(Math.abs(engine.pose[poseIndex(hand) + axis])).toBeLessThanOrEqual(WRIST_DRIFT.idle + 1e-6)
     }
   })
 
@@ -401,5 +417,182 @@ describe('moteur de gestes', () => {
     b.update(MAX_DT, 'speaking')
     expect(a.time).toBeCloseTo(b.time, 9)
     expect(copy(a.pose)).toEqual(copy(b.pose))
+  })
+})
+
+// --- Poignets (WEL-927) --------------------------------------------------------------------------
+
+const HANDS = ['leftHand', 'rightHand'] as const
+const _euler = new Euler()
+
+/** Rotation du poignet (celle que `bonePose` pose dans le repère de la main) à l'image courante. */
+function wristQuat(engine: GestureEngine, hand: (typeof HANDS)[number]): Quaternion {
+  const i = poseIndex(hand)
+  return new Quaternion().setFromEuler(_euler.set(engine.pose[i], engine.pose[i + 1], engine.pose[i + 2], 'YXZ'))
+}
+
+/** Rotation du poignet image par image, après `warmup` secondes que l'on ne garde pas. */
+function wristSeries(engine: GestureEngine, hand: (typeof HANDS)[number], mood: RemiMood, seconds: number, warmup = 0): Quaternion[] {
+  run(engine, mood, warmup)
+  const out: Quaternion[] = []
+  run(engine, mood, seconds, () => out.push(wristQuat(engine, hand)))
+  return out
+}
+
+/**
+ * Pour chaque fenêtre de `windowSeconds` (départ toutes les 0,1 s), l'ÉTENDUE de la pose du poignet : le plus grand
+ * angle entre deux de ses poses dans la fenêtre. Si c'est ~0, le poing est resté figé pendant toute la fenêtre.
+ */
+function windowRanges(series: Quaternion[], windowSeconds: number): number[] {
+  const length = Math.round(windowSeconds / DT)
+  const out: number[] = []
+  for (let a = 0; a + length < series.length; a += 6) {
+    let range = 0
+    for (let i = a; i <= a + length; i += 4) for (let j = i + 4; j <= a + length; j += 4) range = Math.max(range, series[i].angleTo(series[j]))
+    out.push(range)
+  }
+  return out
+}
+
+const degrees = (rad: number) => (rad * 180) / Math.PI
+
+describe('poignets', () => {
+  it('limites : inclinaison, torsion et flexion bornées à des valeurs vérifiées sur captures rapprochées', () => {
+    // Au-delà de ~50° de torsion ou ~40° de flexion, la manche commence à se plisser sur les captures de la page
+    // de démonstration (`dev/capture-bust.mjs hands`) : les butées restent en deçà (0,85 rad ≈ 49°, 0,7 ≈ 40°).
+    expect(WRIST_LIMIT_TILT).toBeLessThanOrEqual(0.45)
+    expect(WRIST_LIMIT_TWIST).toBeLessThanOrEqual(0.85)
+    expect(WRIST_LIMIT_FLEX).toBeLessThanOrEqual(0.7)
+    for (const hand of HANDS) expect([...BONE_LIMITS[hand]]).toEqual([WRIST_LIMIT_TILT, WRIST_LIMIT_TWIST, WRIST_LIMIT_FLEX])
+  })
+
+  it('chaque geste tourne le poignet de la main qui parle, dans une plage sûre (pose tenue + oscillation + battement sous 85 % des butées)', () => {
+    const limits = [WRIST_LIMIT_TILT, WRIST_LIMIT_TWIST, WRIST_LIMIT_FLEX]
+    for (const id of GESTURE_IDS) {
+      for (const mirrored of [false, true]) {
+        const wrists = gestureWrists(id, mirrored)
+        expect(Object.keys(wrists).length, `${id} : au moins un poignet`).toBeGreaterThan(0)
+        for (const [hand, w] of Object.entries(wrists)) {
+          for (let axis = 0; axis < 3; axis++) {
+            const total = Math.abs(w.hold[axis]) + Math.abs(w.wave[axis]) + Math.abs(w.pulse[axis])
+            expect(total, `${id}${mirrored ? ' (miroir)' : ''} ${hand} axe ${axis}`).toBeLessThanOrEqual(0.85 * limits[axis])
+          }
+          // Un geste qui laisse le poing exactement comme au repos n'apprend rien : torsion ou flexion d'au moins 0,1 rad.
+          const reach = Math.max(Math.abs(w.hold[1]) + Math.abs(w.wave[1]) + Math.abs(w.pulse[1]), Math.abs(w.hold[2]) + Math.abs(w.wave[2]) + Math.abs(w.pulse[2]))
+          expect(reach, `${id} ${hand}`).toBeGreaterThanOrEqual(0.1)
+        }
+      }
+    }
+  })
+
+  it('le miroir d\'un geste retourne la torsion et la flexion (x, −y, −z) et change de main', () => {
+    for (const id of ['enumerate', 'heart', 'point'] as const) {
+      const right = gestureWrists(id, false).rightHand!
+      const left = gestureWrists(id, true).leftHand!
+      expect(gestureWrists(id, false).leftHand).toBeUndefined()
+      expect(gestureWrists(id, true).rightHand).toBeUndefined()
+      for (const key of ['hold', 'wave', 'pulse'] as const) {
+        expect(left[key][0]).toBeCloseTo(right[key][0], 6)
+        expect(left[key][1]).toBeCloseTo(-right[key][1], 6)
+        expect(left[key][2]).toBeCloseTo(-right[key][2], 6)
+      }
+    }
+    for (const id of ['openPalms', 'openArms'] as const) {
+      const { leftHand, rightHand } = gestureWrists(id)
+      expect(leftHand!.hold[0]).toBeCloseTo(rightHand!.hold[0], 6)
+      expect(leftHand!.hold[1]).toBeCloseTo(-rightHand!.hold[1], 6)
+      expect(leftHand!.hold[2]).toBeCloseTo(-rightHand!.hold[2], 6)
+    }
+  })
+
+  it('variété : en parole, le poing ne reste jamais le même plus de 1,5 s (toutes les fenêtres, 4 graines, 2 mains, 2 minutes)', () => {
+    const minimums: number[] = []
+    const medians: number[] = []
+    for (const seed of [1, 2, 3, 4]) {
+      for (const hand of HANDS) {
+        const ranges = windowRanges(wristSeries(createGestureEngine(seed), hand, 'speaking', 120, 2), 1.5)
+        minimums.push(Math.min(...ranges))
+        medians.push([...ranges].sort((a, b) => a - b)[Math.floor(ranges.length / 2)])
+        // 90 % des fenêtres de 1,5 s voient le poignet bouger d'au moins 8°…
+        expect(ranges.filter((r) => degrees(r) >= 8).length / ranges.length, `graine ${seed} ${hand}`).toBeGreaterThanOrEqual(0.9)
+      }
+    }
+    // … et aucune ne le voit bouger de moins de 3,5° (mesuré : pires fenêtres entre 4° et 8°, médiane ~20°).
+    expect(degrees(Math.min(...minimums))).toBeGreaterThanOrEqual(3.5)
+    expect(degrees(Math.min(...medians))).toBeGreaterThanOrEqual(14)
+  })
+
+  it('vitesse angulaire du poignet bornée (aucun à-coup) : toutes humeurs, 4 graines, coupures d\'humeur comprises', () => {
+    let worst = 0
+    for (const seed of [1, 2, 3, 4]) {
+      const engine = createGestureEngine(seed)
+      const previous: Quaternion[] = HANDS.map((hand) => wristQuat(engine, hand))
+      for (const mood of ['speaking', 'idle', 'speaking', 'thinking', 'listening', 'speaking'] as RemiMood[]) {
+        run(engine, mood, 20, () => {
+          HANDS.forEach((hand, h) => {
+            const q = wristQuat(engine, hand)
+            worst = Math.max(worst, previous[h].angleTo(q) / DT)
+            previous[h] = q
+          })
+        })
+      }
+    }
+    expect(worst).toBeLessThan(WRIST_MAX_RAD_PER_S)
+    expect(worst).toBeGreaterThan(1) // et la parole bouge bel et bien le poignet : pas une borne atteinte par défaut
+  })
+
+  it('au repos et à l\'écoute : de petits mouvements permanents, jamais figé, jamais agité', () => {
+    for (const mood of ['idle', 'listening'] as RemiMood[]) {
+      for (const hand of HANDS) {
+        const series = wristSeries(createGestureEngine(9), hand, mood, 60, 2)
+        const rest = new Quaternion()
+        const amplitude = Math.max(...series.map((q) => rest.angleTo(q)))
+        const range = Math.max(...windowRanges(series, 6))
+        expect(degrees(range), `${mood} ${hand} : bouge`).toBeGreaterThan(0.8)
+        expect(amplitude, `${mood} ${hand} : petit`).toBeLessThan(WRIST_DRIFT[mood] * 2)
+        let fastest = 0
+        for (let i = 1; i < series.length; i++) fastest = Math.max(fastest, series[i - 1].angleTo(series[i]) / DT)
+        expect(degrees(fastest), `${mood} ${hand} : doux`).toBeLessThan(20) // °/s
+      }
+    }
+  })
+
+  it('en parole le poignet est nettement plus vif qu\'à l\'écoute (battements de ponctuation)', () => {
+    const peakSpeed = (mood: RemiMood) => {
+      const series = wristSeries(createGestureEngine(5), 'rightHand', mood, 40, 2)
+      let fastest = 0
+      for (let i = 1; i < series.length; i++) fastest = Math.max(fastest, series[i - 1].angleTo(series[i]) / DT)
+      return degrees(fastest)
+    }
+    expect(peakSpeed('speaking')).toBeGreaterThan(60)
+    expect(peakSpeed('listening')).toBeLessThan(20)
+    // Les battements se suivent à un rythme de parole : un battement toutes les 0,75 à 1,4 s.
+    expect(WRIST_BEAT_INTERVAL_MIN).toBeGreaterThanOrEqual(0.6)
+    expect(WRIST_BEAT_INTERVAL_MAX).toBeLessThanOrEqual(1.6)
+  })
+
+  it('prefers-reduced-motion : l\'amplitude des poignets est réduite (≤ 45 % de la normale)', () => {
+    const amplitude = (reducedMotion: boolean) => {
+      const engine = createGestureEngine(55, { reducedMotion })
+      const rest = new Quaternion()
+      let peak = 0
+      run(engine, 'speaking', 1)
+      run(engine, 'speaking', 60, () => {
+        for (const hand of HANDS) peak = Math.max(peak, rest.angleTo(wristQuat(engine, hand)))
+      })
+      return peak
+    }
+    const normal = amplitude(false)
+    const reduced = amplitude(true)
+    expect(normal).toBeGreaterThan(0.3)
+    expect(reduced).toBeLessThanOrEqual(0.45 * normal)
+  })
+
+  it('une graine, une chorégraphie de poignets : même graine identique, graine différente autre', () => {
+    const a = wristSeries(createGestureEngine(31), 'rightHand', 'speaking', 20)
+    const b = wristSeries(createGestureEngine(31), 'rightHand', 'speaking', 20)
+    const c = wristSeries(createGestureEngine(32), 'rightHand', 'speaking', 20)
+    expect(b.every((q, i) => q.equals(a[i]))).toBe(true)
+    expect(c.some((q, i) => !q.equals(a[i]))).toBe(true)
   })
 })
