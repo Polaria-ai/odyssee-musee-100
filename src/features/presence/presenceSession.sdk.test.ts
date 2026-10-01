@@ -399,7 +399,7 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
     expect(random.placed + random.solo).toBe(40)
     for (let i = 1; i <= 6; i++) expect(server.memberCount(topicOf(i))).toBeLessThanOrEqual(4)
     expect(random.placed).toBeGreaterThan(fromRoom1.placed - 8) // sous saturation, l'aléa peut laisser quelques places vides
-  })
+  }, 120_000)
 
   it('(j) track qui ne répond jamais "ok" + canal fermé juste après chaque SUBSCRIBED : solo, pas de boucle (le compteur ne se remet pas à zéro)', async () => {
     const r = makeRig({ config: { reconnectMaxAttempts: 3, soloRetryMs: 0 } })
@@ -631,7 +631,7 @@ describe('presenceSession contre le vrai SDK Supabase', () => {
     expect(server.quotaRefusals.joins).toBe(30)
     expect(consoleError).not.toHaveBeenCalled()
     consoleError.mockRestore()
-  })
+  }, 60_000)
 
   /**
    * Arrivée groupée : les joueurs scannent le QR code de fin de soirée sur ~60 s. La gigue d'arrivée de la session

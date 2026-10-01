@@ -270,7 +270,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
   let received = 0
   let lastError: string | null = null
   let soloReason: string | null = null
-  /** Quota signalé par le serveur, tant qu'il est la raison du solo. */
+  /** Quota signalé par le serveur, tant que son délai de nouvelle tentative court (joueur en solo, ou onglet caché entre-temps). */
   let quotaKind: QuotaKind | null = null
   /** Instant (horloge `now`) avant lequel aucune nouvelle jointure n'est tentée après un quota ; `null` sinon. */
   let quotaUntil: number | null = null
@@ -757,7 +757,7 @@ export function createPresenceSession(opts: PresenceSessionOptions): PresenceSes
     room = null
     attempts = 0
     soloReason = null
-    quotaKind = null // le délai (`quotaUntil`) survit : il est relu au retour au premier plan.
+    // `quotaKind` et `quotaUntil` survivent : le délai d'un quota est relu au retour au premier plan.
     setState('hidden')
     closeSocketWhenIdle()
   }

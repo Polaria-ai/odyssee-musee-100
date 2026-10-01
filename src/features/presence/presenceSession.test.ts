@@ -1593,6 +1593,7 @@ describe('11. quota dépassé : solo immédiat, sans reconnexion', () => {
     ctx.session.setHidden(false) // t = 61 250 : bien avant l'échéance
     expect(ctx.session.stats().state).toBe('solo')
     expect(ctx.session.stats().soloReason).toBe('quota')
+    expect(ctx.session.stats().quota).toBe('too_many_connections')
     await ctx.clock.advance(200_000)
     expect(ctx.client.created).toHaveLength(1) // pas de jointure sur un serveur saturé
     await ctx.clock.advance(39_000) // t = 300 250 : l'échéance (301 250) approche
