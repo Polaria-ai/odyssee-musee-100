@@ -13,6 +13,7 @@ import { Remi } from '../npc/Remi'
 import { ArchivesRoom } from '../archives/ArchivesRoom'
 import { RemoteVisitors } from '../features/presence/RemoteVisitors'
 import { StampStations } from '../features/stamps/StampStations'
+import { SignaturePlate } from '../features/signature/SignaturePlate'
 import { AttractCamera } from './AttractCamera'
 import { DebugProbe } from './DebugProbe'
 import { playerColliders } from './playerColliders'
@@ -85,6 +86,7 @@ export function Experience() {
       <Suspense fallback={null}>
         <Museum layout={layout} people={people} />
         <StampStations layout={layout} />
+        <SignaturePlate />
         <Remi placement={layout.curator} />
         {archivesLayout && <ArchivesRoom archives={archivesLayout} />}
         {playing ? <Player layout={playerLayout ?? layout} /> : <AttractCamera layout={layout} />}
