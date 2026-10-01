@@ -39,6 +39,7 @@ export function Hud() {
   const visitedSessions = useGame((s) => s.visitedSessions)
   const people = useGame((s) => s.people)
   const mapOpen = useGame((s) => s.mapOpen)
+  const remiChatOpen = useGame((s) => s.remiChatOpen)
   const setMapOpen = useGame((s) => s.setMapOpen)
   const t = useT(strings)
   const tc = useT(cardStrings)
@@ -121,8 +122,8 @@ export function Hud() {
         )}
       </div>
 
-      {/* Masqué pendant un dialogue : la bulle le recouvrirait et il ne ferait rien (interact() l'ignore). */}
-      {actionLabel && !dialogue && (
+      {/* Masqué pendant un dialogue ou le chat avec Rémi : ils le recouvriraient et il ne ferait rien (interact() l'ignore). */}
+      {actionLabel && !dialogue && !remiChatOpen && (
         <button
           type="button"
           className="ui-hud__action"
@@ -136,7 +137,8 @@ export function Hud() {
         </button>
       )}
 
-      <CoachMark />
+      {/* Comme pendant un dialogue, l'aide au premier pas attend la fin du chat d'accueil (elle se montre à sa fermeture). */}
+      {!remiChatOpen && <CoachMark />}
       <MuseumMap open={mapOpen} onClose={() => setMapOpen(false)} />
     </div>
   )

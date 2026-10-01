@@ -21,7 +21,7 @@ import { useArchivesRefresh } from './archives/useArchivesRefresh'
 import { usePresence } from './features/presence/usePresence'
 import { TouchJoystick } from './player/TouchJoystick'
 import { useKeyboardControls } from './player/useKeyboardControls'
-import { remiDialogue } from './npc/remiScript'
+import { RemiChat } from './features/remiChat/RemiChat'
 import { useAudioDirector } from './audio'
 
 export function App() {
@@ -50,13 +50,14 @@ export function App() {
     }
   }, [])
 
-  // Entrée dans le musée : placement au point d'apparition et accueil de Rémi.
+  // Entrée dans le musée : placement au point d'apparition et accueil de Rémi, qui ouvre le chat
+  // (message d'accueil déjà affiché, voir `src/features/remiChat/useRemiChat.ts`).
   useEffect(() => {
     if (screen !== 'play' || !layout) return
     placePlayer(layout.spawn.position.x, layout.spawn.position.z, layout.spawn.rotationY)
     resetInput()
     const g = useGame.getState()
-    if (Object.keys(g.visited).length === 0) g.startDialogue(remiDialogue({ kind: 'welcome' }))
+    if (Object.keys(g.visited).length === 0) g.openRemiChat()
   }, [screen, layout])
 
   useEffect(() => {
@@ -92,6 +93,7 @@ export function App() {
           <ArchiveCard />
           <StampCard />
           <DialogueBox />
+          <RemiChat />
         </>
       )}
       <Toast />

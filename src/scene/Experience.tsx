@@ -49,6 +49,10 @@ export function Experience() {
   const people = useGame((s) => s.people)
   const screen = useGame((s) => s.screen)
   const quality = useGame((s) => s.quality)
+  // Le chat avec Rémi recouvre tout l'écran et a son propre <Canvas> (le buste) : le musée, invisible, cesse
+  // d'être rendu (deux scènes WebGL en même temps épuiseraient un téléphone). Le <Canvas> reste monté, donc le
+  // contexte WebGL, les textures et l'état de la scène sont intacts à la reprise.
+  const chatOpen = useGame((s) => s.remiChatOpen)
   const setQuality = useGame((s) => s.setQuality)
   const { canvasKey, onCreated } = useCanvasRecovery()
   // Colliders du joueur = ceux de l'architecture (murs, meubles cachés, cimaises…) + ceux du mobilier
@@ -69,7 +73,7 @@ export function Experience() {
       dpr={quality === 'high' ? [1, 1.75] : [1, 1.25]}
       gl={{ antialias: quality === 'high', powerPreference: 'high-performance', preserveDrawingBuffer: false }}
       camera={{ fov: cameraRig.fovDeg, near: 0.1, far: 120, position: [0, 9, 14] }}
-      frameloop="always"
+      frameloop={chatOpen ? 'never' : 'always'}
       onCreated={onCreated}
     >
       <color attach="background" args={[sceneCharter.background]} />

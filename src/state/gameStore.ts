@@ -19,7 +19,6 @@ import type {
   Screen,
   WingId,
 } from '../types'
-import { remiDialogue } from '../npc/remiScript'
 import { archivistDialogue } from '../archives/archivistScript'
 import { loadPersisted, savePersisted } from './persist'
 
@@ -74,6 +73,8 @@ export interface GameState {
   stampCardOpen: boolean
   /** Plan du musée (bouton « Plan » du HUD) : surimpression comme les autres, coupe le déplacement. */
   mapOpen: boolean
+  /** Chat avec Rémi · IA (accueil, ou « Parler à Rémi » au comptoir) : surimpression plein écran, coupe le déplacement. */
+  remiChatOpen: boolean
 
   dialogue: Dialogue | null
   dialogueIndex: number
@@ -107,6 +108,9 @@ export interface GameState {
   awardStamp: (wing: ExhibitWingId) => void
   setStampCardOpen: (open: boolean) => void
   setMapOpen: (open: boolean) => void
+  /** Ouvre le chat avec Rémi · IA ; referme toute autre surimpression (elles ne s'empilent jamais). */
+  openRemiChat: () => void
+  closeRemiChat: () => void
   startDialogue: (dialogue: Dialogue) => void
   advanceDialogue: () => void
   closeDialogue: () => void
@@ -165,6 +169,7 @@ export const useGame = create<GameState>()((set, get) => ({
   stamps: (persisted.stamps as Partial<Record<ExhibitWingId, number>>) ?? {},
   stampCardOpen: false,
   mapOpen: false,
+  remiChatOpen: false,
 
   dialogue: null,
   dialogueIndex: 0,
@@ -195,7 +200,7 @@ export const useGame = create<GameState>()((set, get) => ({
       savePersisted({ visitedSessions: next })
       set({ visitedSessions: next })
     }
-    set({ openSessionId })
+    set({ openSessionId, remiChatOpen: false })
   },
   closeSession: () => set({ openSessionId: null }),
   markArchivesDiscovered: () => {
@@ -235,21 +240,13 @@ export const useGame = create<GameState>()((set, get) => ({
       )
       return
     }
-    if (s.nearCurator) {
-      s.startDialogue(
-        remiDialogue({
-          kind: 'talk',
-          visitedCount: Object.keys(s.visited).length,
-          stampsCount: Object.keys(s.stamps).length,
-          total: s.people.length,
-          archivesToVisit: s.sessions.length > 0 && Object.keys(s.visitedSessions).length === 0,
-        }),
-      )
-    }
+    // « Parler à Rémi » ouvre le chat (V5) : le dialogue scripté `talk` n'est plus que son repli
+    // si le service est indisponible (voir `src/features/remiChat/useRemiChat.ts`).
+    if (s.nearCurator) s.openRemiChat()
   },
   openPerson: (openPersonId) => {
     get().markVisited(openPersonId)
-    set({ openPersonId })
+    set({ openPersonId, remiChatOpen: false })
   },
   closePerson: () => set({ openPersonId: null }),
   markVisited: (personId) => {
@@ -266,10 +263,22 @@ export const useGame = create<GameState>()((set, get) => ({
     savePersisted({ stamps: next })
     set({ stamps: next })
   },
-  // Ouvrir le carnet ou le plan referme le dialogue en cours : deux surimpressions ne s'empilent jamais.
-  setStampCardOpen: (stampCardOpen) => set(stampCardOpen ? { stampCardOpen, dialogue: null, dialogueIndex: 0 } : { stampCardOpen }),
-  setMapOpen: (mapOpen) => set(mapOpen ? { mapOpen, dialogue: null, dialogueIndex: 0 } : { mapOpen }),
-  startDialogue: (dialogue) => set({ dialogue, dialogueIndex: 0 }),
+  // Ouvrir le carnet ou le plan referme le dialogue en cours et le chat : deux surimpressions ne s'empilent jamais.
+  setStampCardOpen: (stampCardOpen) =>
+    set(stampCardOpen ? { stampCardOpen, dialogue: null, dialogueIndex: 0, remiChatOpen: false } : { stampCardOpen }),
+  setMapOpen: (mapOpen) => set(mapOpen ? { mapOpen, dialogue: null, dialogueIndex: 0, remiChatOpen: false } : { mapOpen }),
+  openRemiChat: () =>
+    set({
+      remiChatOpen: true,
+      dialogue: null,
+      dialogueIndex: 0,
+      stampCardOpen: false,
+      mapOpen: false,
+      openPersonId: null,
+      openSessionId: null,
+    }),
+  closeRemiChat: () => set({ remiChatOpen: false }),
+  startDialogue: (dialogue) => set({ dialogue, dialogueIndex: 0, remiChatOpen: false }),
   advanceDialogue: () => {
     const { dialogue, dialogueIndex } = get()
     if (!dialogue) return
@@ -285,13 +294,13 @@ export const useGame = create<GameState>()((set, get) => ({
   setQuality: (quality) => set({ quality }),
   resetProgress: () => {
     savePersisted({ visited: {}, stamps: {}, visitedSessions: {} })
-    set({ visited: {}, stamps: {}, visitedSessions: {}, openPersonId: null, openSessionId: null, stampCardOpen: false })
+    set({ visited: {}, stamps: {}, visitedSessions: {}, openPersonId: null, openSessionId: null, stampCardOpen: false, remiChatOpen: false })
   },
 }))
 
 /** Vrai quand une interface recouvre le jeu : le joueur ne doit pas bouger. */
 export function isOverlayOpen(
-  s: Pick<GameState, 'openPersonId' | 'openSessionId' | 'dialogue' | 'stampCardOpen' | 'mapOpen'>,
+  s: Pick<GameState, 'openPersonId' | 'openSessionId' | 'dialogue' | 'stampCardOpen' | 'mapOpen' | 'remiChatOpen'>,
 ): boolean {
-  return s.openPersonId !== null || s.openSessionId !== null || s.dialogue !== null || s.stampCardOpen || s.mapOpen
+  return s.openPersonId !== null || s.openSessionId !== null || s.dialogue !== null || s.stampCardOpen || s.mapOpen || s.remiChatOpen
 }
