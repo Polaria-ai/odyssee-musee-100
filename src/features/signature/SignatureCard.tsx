@@ -8,7 +8,7 @@
  * déplacement à zéro, et tant qu'elle est ouverte un écouteur clavier en phase de capture avale tout sauf
  * Échap et Tab — le jeu, qui écoute `window`, ne reçoit ni déplacement ni action (Entrée/E/Espace).
  */
-import { useEffect, useRef } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 import { useT } from '../../i18n'
 import { playSfx } from '../../audio'
 import { resetInput } from '../../state/runtime'
@@ -29,7 +29,9 @@ export function SignatureCard() {
   const t = useT(strings)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
+  // Écouteur posé dans le même cycle que l'affichage (useLayoutEffect) : un Échap pressé dès l'ouverture,
+  // sur un appareil lent, ne doit pas arriver avant lui (même course que le chat de Rémi, CI Android).
+  useLayoutEffect(() => {
     if (!open) return
     resetInput()
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null

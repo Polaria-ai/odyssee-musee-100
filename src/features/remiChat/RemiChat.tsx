@@ -68,8 +68,10 @@ export function RemiChat() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
 
-  // Échap ferme le chat.
-  useEffect(() => {
+  // Échap ferme le chat. Écouteur posé dans le même cycle que l'affichage (useLayoutEffect) : avec un
+  // useEffect, sur un appareil lent, un Échap pressé dès l'apparition du chat arrivait avant l'écouteur
+  // et restait sans effet (reproduit sous processeur ralenti ×6 : 3 échecs sur 5, CI Android).
+  useLayoutEffect(() => {
     if (!open) return
     function onKey(e: globalThis.KeyboardEvent) {
       if (e.key === 'Escape') closeRemiChat()
