@@ -13,8 +13,8 @@ import { CHARACTERS } from '../../../characters/models'
 import { charter3d } from '../../../styles/tokens'
 import type { RemiBustVariant, RemiMood } from '../contract'
 import { computeFraming, type BustMetrics, type Framing } from './framing'
-import { MAX_DT, createGestureEngine, type GestureId } from './gestures'
-import { createBustRig } from './rig'
+import { MAX_DT, createGestureEngine, type GestureEngine, type GestureId } from './gestures'
+import { createBustRig, type BustRig } from './rig'
 import { ATTENTION, BODY_YAW, BUST_FOV, DEFAULT_SEED } from './config'
 
 /** Réglages de mise au point (page de démonstration `dev/bust-demo.html`), jamais utilisés en production. */
@@ -36,6 +36,18 @@ export interface BustDebug {
   onMetrics?: (metrics: BustMetrics, framing: Framing) => void
   /** Reçoit le moteur de rendu à sa création (vérification des fuites : `gl.info.memory`). */
   onRenderer?: (gl: WebGLRenderer) => void
+  /**
+   * Reçoit le rig, le moteur de gestes et `advance(secondes)` qui fait avancer clip et chorégraphie à 60 i/s
+   * SANS rendre (planches de captures à intervalles réguliers, mesures d'orientation des poignets dans le
+   * navigateur). Avec `speed=0`, la pose affichée est celle de l'instant atteint.
+   */
+  onControl?: (control: BustControl) => void
+}
+
+export interface BustControl {
+  rig: BustRig
+  engine: GestureEngine
+  advance: (seconds: number) => void
 }
 
 export interface BustSceneProps {
@@ -167,6 +179,20 @@ function BustModel({ mood, variant, reducedMotion, onFraming, onReady, debug, sc
       return { x: v.x, y: v.y }
     })
   }, [rig, camera, debug])
+
+  useEffect(() => {
+    if (!debug?.onControl) return
+    debug.onControl({
+      rig,
+      engine,
+      advance(seconds) {
+        for (let t = 0; t < seconds - 1e-9; t += 1 / 60) {
+          rig.animator.update(1 / 60)
+          engine.update(1 / 60, moodRef.current)
+        }
+      },
+    })
+  }, [rig, engine, debug])
 
   useFrame((_state, delta) => {
     const dt = (delta < MAX_DT ? delta : MAX_DT) * speed
