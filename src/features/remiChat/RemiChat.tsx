@@ -1,6 +1,10 @@
 /**
- * Chat avec Rémi · IA (V5, WEL-920) : surimpression plein écran qui remplace le dialogue scripté de Rémi.
+ * Chat avec Rémi · IA (V5, WEL-920) : surimpression plein écran qui remplace le dialogue scripté de Rémi au
+ * comptoir (« Parler à Rémi »). L'accueil de l'entrée reste la bulle scriptée en bas de l'écran (`App.tsx`).
  * Propriétaire : agent chat-ui.
+ *
+ * Le chat est translucide : le musée (le canvas du jeu, figé pendant le chat) reste visible derrière Rémi et derrière
+ * les bulles, sous un voile sombre léger qui garantit la lisibilité (voir `remiChat.css`).
  *
  * - PC (largeur ≥ 900 px ET paysage) : écran coupé en deux, le buste de Rémi à gauche, le chat à droite.
  * - Téléphone (tout le reste) : le buste de Rémi en fond plein écran, les bulles par-dessus sur le bas,
@@ -53,8 +57,8 @@ export function RemiChat() {
     closeRemiChat()
   }
 
-  // Ouverture : focus sur la saisie, sauf à l'ouverture automatique de bienvenue sur téléphone (le clavier
-  // ne doit pas surgir sur le message d'accueil) ; à la fermeture, le focus retourne où il était.
+  // Ouverture : focus sur la saisie, sauf sur téléphone devant un fil vide (le clavier ne doit pas surgir sur le
+  // premier message de Rémi et les suggestions, ni cacher le musée) ; à la fermeture, le focus retourne où il était.
   useEffect(() => {
     if (!open) return
     stickRef.current = true

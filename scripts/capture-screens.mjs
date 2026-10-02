@@ -5,10 +5,10 @@
  * Prérequis : `pnpm build && pnpm preview` sur 127.0.0.1:4173 (ou E2E_BASE_URL).
  * Usage : PW_CHROMIUM_PATH=… node scripts/capture-screens.mjs [dossier=screens] [--chat]
  *
- * `--chat` : ne capture que le chat avec Rémi · IA (V5), sur PC 1440×900, iPhone 390×844 et paysage 844×390, avec
- * deux échanges simulés. `/api/remi` est intercepté (réponses SSE au format de `src/features/remiChat/contract.ts`) :
- * aucun appel réseau réel. Les réponses n'apparaissent que si `client.ts` est le vrai client (le bouchon répond
- * sans réseau) ; le buste de Rémi est celui de `RemiBust.tsx` (un `div` vide tant que l'agent remi-bust n'a pas livré).
+ * `--chat` : ne capture que l'entrée dans le jeu (bulle d'accueil de Rémi en bas de l'écran, musée visible) et le chat
+ * avec Rémi · IA (V5) ouvert au comptoir par « Parler à Rémi », sur PC 1440×900, iPhone 390×844 et paysage 844×390,
+ * avec deux échanges simulés. `/api/remi` est intercepté (réponses SSE au format de `src/features/remiChat/contract.ts`) :
+ * aucun appel réseau réel. Le chat est translucide : le musée doit se voir derrière Rémi et derrière les bulles.
  */
 import { mkdirSync } from 'node:fs'
 import { chromium, devices } from '@playwright/test'
@@ -26,6 +26,7 @@ const browser = await chromium.launch({
 
 async function session(name, contextOptions) {
   const ctx = await browser.newContext(contextOptions)
+  ctx.setDefaultTimeout(120_000)
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -38,9 +39,9 @@ async function session(name, contextOptions) {
   await shot('01-titre', 2500)
   // Plus d'écran de personnalisation : on entre directement en Cyril (décision du 29/09).
   await page.getByTestId('enter-button').click()
-  // Depuis la V5, l'accueil de Rémi est le chat (message d'accueil déjà affiché), plus un dialogue scripté.
+  // L'accueil de Rémi est la bulle scriptée en bas de l'écran (le chat ne s'ouvre qu'au comptoir).
   await shot('03-accueil-remi', 3500)
-  await page.evaluate(() => window.__musee.state().closeRemiChat())
+  await page.evaluate(() => window.__musee.state().closeDialogue())
   await shot('04-hall-spawn')
   const rooms = await page.evaluate(() => window.__musee.state().layout.rooms.map((r) => ({ id: r.id, b: r.bounds })))
   for (const r of rooms.filter((x) => x.id !== 'hall')) {
@@ -113,9 +114,14 @@ function sse(chunks) {
   return [...chunks.map((text) => ({ type: 'delta', text })), { type: 'done' }].map((e) => `data: ${JSON.stringify(e)}\n\n`).join('')
 }
 
-/** Chat avec Rémi · IA : accueil, puis deux échanges simulés (réponses interceptées sur `/api/remi`). */
+/**
+ * Entrée dans le jeu (bulle d'accueil), puis chat avec Rémi · IA ouvert au comptoir : premier message, puis deux
+ * échanges simulés (réponses interceptées sur `/api/remi`).
+ */
 async function chatSession(name, contextOptions) {
   const ctx = await browser.newContext({ locale: 'fr-FR', ...contextOptions })
+  // Machine partagée et rendu logiciel : les attentes par défaut (30 s) sont parfois trop courtes.
+  ctx.setDefaultTimeout(120_000)
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -134,16 +140,28 @@ async function chatSession(name, contextOptions) {
   await page.goto(`${base}/?e2e=1`)
   await page.getByTestId('title-screen').waitFor()
   await page.getByTestId('enter-button').click()
+  // Arrivée directement dans le jeu : la bulle de Rémi en bas, le musée visible, aucun chat.
+  await page.getByTestId('dialogue-box').waitFor()
+  await shot('chat-01-entree', 3500)
+  await page.evaluate(() => window.__musee.state().closeDialogue())
+  // Au comptoir : « Parler à Rémi » ouvre le chat par-dessus le musée.
+  const curator = await page.evaluate(() => window.__musee.state().layout.curator.position)
+  await page.evaluate(([x, z]) => window.__musee.teleport(x, z + 2.2), [curator.x, curator.z])
+  await page.getByTestId('action-button').waitFor()
+  await shot('chat-02-comptoir', 4000)
+  await page.getByTestId('action-button').click()
   await page.getByTestId('remi-chat').waitFor()
-  await shot('chat-01-accueil', 2500)
+  // Le buste 3D arrive après l'ouverture (silhouette en attendant) : on attend qu'il soit à l'écran avant de photographier.
+  await page.locator('[data-testid="remi-bust"][data-state="ready"]').waitFor().catch(() => errors.push('buste 3D jamais prêt'))
+  await shot('chat-03-ouverture', 1500)
   await page.getByTestId('remi-chat-suggestion').nth(2).click()
   await page.getByTestId('remi-chat-message').nth(2).waitFor()
   await page.getByTestId('remi-chat-input').fill('Par où commencer ?')
-  await shot('chat-02-saisie', 400)
+  await shot('chat-04-saisie', 400)
   await page.getByTestId('remi-chat-send').click()
   await page.getByTestId('remi-chat-message').nth(4).waitFor()
   await page.getByTestId('remi-chat-typing').waitFor({ state: 'detached' })
-  await shot('chat-03-deux-echanges', 800)
+  await shot('chat-05-deux-echanges', 800)
   console.log(name, errors.length ? `erreurs : ${errors.join(' | ')}` : 'aucune erreur de page')
   await ctx.close()
 }

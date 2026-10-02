@@ -2,8 +2,8 @@
  * Canvas unique du jeu. Propriétaire : intégration.
  * Les modules y branchent leurs composants 3D ; ne pas créer d'autre Canvas plein écran.
  */
-import { Suspense, useCallback, useMemo, useRef, useState } from 'react'
-import { Canvas } from '@react-three/fiber'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Canvas, advance, useStore } from '@react-three/fiber'
 import { PerformanceMonitor } from '@react-three/drei'
 import { useGame } from '../state/gameStore'
 import { Museum } from '../world/Museum'
@@ -39,6 +39,43 @@ function useCanvasRecovery() {
   return { canvasKey, onCreated }
 }
 
+/**
+ * Rendu en pause (chat avec Rémi ouvert, `frameloop="never"`) : l'image figée est ce que le visiteur voit à travers
+ * le chat translucide, elle ne doit jamais devenir noire ni vide.
+ * Redimensionner un <canvas> en efface le contenu (clavier Android qui redimensionne la page, rotation, fenêtre PC) ;
+ * en `never`, R3F n'a aucune image à redessiner (`invalidate()` est sans effet), et `demand` relancerait aussi les
+ * `useFrame` de toute la scène, ce que le `PerformanceMonitor` lirait comme une chute de cadence (qualité abaissée à tort).
+ * On redessine donc une seule fois, directement, dès que R3F a changé la taille ou le ratio de pixels : sans passer
+ * par `useFrame`, sans faire avancer le jeu, et dans la même tâche que le redimensionnement (aucune image vide affichée).
+ * Notre écouteur est posé après celui de R3F : il s'exécute une fois le moteur de rendu et la caméra remis à la bonne taille.
+ */
+function PausedRepaint({ paused }: { paused: boolean }) {
+  const store = useStore()
+  // Canvas remonté pendant le chat (contexte WebGL perdu puis recréé, voir `useCanvasRecovery`) : en `never`, R3F ne
+  // dessine rien de lui-même, le musée resterait vide derrière le chat jusqu'à sa fermeture. Cet effet ne tourne qu'une
+  // fois la scène prête (le composant est dans le `Suspense`) : une seule image complète, caméra du joueur comprise.
+  useEffect(() => {
+    const state = store.getState()
+    if (state.frameloop === 'never') advance(state.clock.elapsedTime + 1 / 60, true, state)
+  }, [store])
+  useEffect(() => {
+    if (!paused) return
+    const { size, viewport } = store.getState()
+    let width = size.width
+    let height = size.height
+    let dpr = viewport.dpr
+    return store.subscribe((state) => {
+      const next = state.size
+      if (next.width === width && next.height === height && state.viewport.dpr === dpr) return
+      width = next.width
+      height = next.height
+      dpr = state.viewport.dpr
+      state.gl.render(state.scene, state.camera)
+    })
+  }, [paused, store])
+  return null
+}
+
 // Charte 3D (docs/CHARTE-3D.md §1 et §3) : `flat` = pas de tone mapping. ACES Filmic, le défaut de R3F,
 // fait dériver les bleus et le corail (`#1d49c1` s'afficherait `#003ec3`) ; sans lui, la charte est ce
 // qu'on voit. Fond, brouillard et lumières viennent du même objet.
@@ -50,8 +87,9 @@ export function Experience() {
   const people = useGame((s) => s.people)
   const screen = useGame((s) => s.screen)
   const quality = useGame((s) => s.quality)
-  // Le chat avec Rémi recouvre tout l'écran et a son propre <Canvas> (le buste) : le musée, invisible, cesse
-  // d'être rendu (deux scènes WebGL en même temps épuiseraient un téléphone). Le <Canvas> reste monté, donc le
+  // Le chat avec Rémi recouvre tout l'écran et a son propre <Canvas> (le buste) : le musée cesse d'être rendu
+  // (deux scènes WebGL en même temps épuiseraient un téléphone), mais reste visible, figé, à travers le chat
+  // translucide (`PausedRepaint` le redessine à chaque redimensionnement). Le <Canvas> reste monté, donc le
   // contexte WebGL, les textures et l'état de la scène sont intacts à la reprise.
   const chatOpen = useGame((s) => s.remiChatOpen)
   const setQuality = useGame((s) => s.setQuality)
@@ -84,6 +122,7 @@ export function Experience() {
       <DebugProbe />
       <PerformanceMonitor onDecline={() => setQuality('low')} flipflops={2} />
       <Suspense fallback={null}>
+        <PausedRepaint paused={chatOpen} />
         <Museum layout={layout} people={people} />
         <StampStations layout={layout} />
         <SignaturePlate />

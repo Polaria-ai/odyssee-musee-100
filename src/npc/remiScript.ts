@@ -82,8 +82,8 @@ function welcomeDialogue(): Dialogue {
       'To the south of the hall, a door leads to the 2040 Archives: each session of the evening has its own display case.',
     ),
     line(
-      'Je reste à l\'accueil : revenez me voir quand vous le souhaitez.',
-      "I'll be here at the front desk: come back and see me whenever you like.",
+      'Je reste à l\'accueil : au comptoir, touchez « Parler à Rémi » pour me poser vos questions par écrit.',
+      "I'll be here at the front desk: at the counter, tap “Talk to Rémi” to ask me your questions in writing.",
     ),
   ])
 }

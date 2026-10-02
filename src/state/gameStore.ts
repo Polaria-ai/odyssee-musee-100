@@ -73,7 +73,7 @@ export interface GameState {
   stampCardOpen: boolean
   /** Plan du musée (bouton « Plan » du HUD) : surimpression comme les autres, coupe le déplacement. */
   mapOpen: boolean
-  /** Chat avec Rémi · IA (accueil, ou « Parler à Rémi » au comptoir) : surimpression plein écran, coupe le déplacement. */
+  /** Chat avec Rémi · IA (ouvert par « Parler à Rémi » au comptoir) : surimpression plein écran translucide, coupe le déplacement. */
   remiChatOpen: boolean
 
   dialogue: Dialogue | null
