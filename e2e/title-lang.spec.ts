@@ -22,7 +22,7 @@ test('bascule FR/EN sur l’écran titre', async ({ page }) => {
 test('bascule FR/EN dans le HUD une fois en jeu', async ({ page }) => {
   await gotoMusee(page)
   await enterMuseum(page)
-  // L'accueil de Rémi (le chat, depuis la V5) recouvre le HUD : on le ferme avant de toucher à ses boutons.
+  // L'accueil de Rémi (la bulle de dialogue en bas de l'écran) s'affiche à l'entrée : on le ferme avant de toucher au HUD.
   await dismissWelcomeDialogue(page)
   await expect(page.getByTestId('hud')).toBeVisible()
 

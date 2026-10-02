@@ -12,13 +12,11 @@
  * `fallback` (silhouette définitive).
  */
 import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { charter3d } from '../../styles/tokens'
 import type { RemiBustProps, RemiBustVariant } from './contract'
 import type { BustDebug } from './bust/BustScene'
 import { Silhouette } from './bust/Silhouette'
 import { hasWebGL } from './bust/env'
 import { fadeMask, type Framing } from './bust/framing'
-import { haloBackground } from './bust/style'
 
 const BustCanvas = lazy(() => import('./bust/BustCanvas'))
 
@@ -26,10 +24,10 @@ const BustCanvas = lazy(() => import('./bust/BustCanvas'))
 const CONTEXT_RESTORE_WAIT_MS = 1500
 const MAX_REMOUNTS = 2
 
-/** Position du halo et du fondu avant que le modèle ne soit mesuré (puis remplacés par le vrai cadre). */
-const DEFAULT_LAYOUT: Record<RemiBustVariant, { headCenter: number; cut: number; fadeEnd: number }> = {
-  split: { headCenter: 0.3, cut: 0.86, fadeEnd: 1 },
-  fullscreen: { headCenter: 0.2, cut: 0.5, fadeEnd: 0.6 },
+/** Position du fondu avant que le modèle ne soit mesuré (puis remplacée par le vrai cadre). */
+const DEFAULT_LAYOUT: Record<RemiBustVariant, { cut: number; fadeEnd: number }> = {
+  split: { cut: 0.86, fadeEnd: 1 },
+  fullscreen: { cut: 0.5, fadeEnd: 0.6 },
 }
 
 /** Attrape toute erreur de rendu autour du bloc 3D (chargement de son code, création du contexte WebGL) : repli propre. */
@@ -103,7 +101,6 @@ export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
 
   const state = !supported || failed ? 'fallback' : ready && !lost ? 'ready' : 'loading'
   const defaults = DEFAULT_LAYOUT[variant]
-  const headCenter = framing?.headCenterFraction ?? defaults.headCenter
   const mask = fadeMask(framing ?? { cutFraction: defaults.cut, fadeEndFraction: defaults.fadeEnd })
 
   const root: CSSProperties = {
@@ -111,8 +108,8 @@ export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
     width: '100%',
     height: '100%',
     overflow: 'hidden',
-    // Halo doux derrière la tête : le cyan du contre-jour déborde sur le fond posé par le parent.
-    background: haloBackground(headCenter, charter3d.base.cyanVif),
+    // Aucun fond ni halo : le canvas du buste est transparent, c'est le musée du jeu qui passe derrière Rémi.
+    // Seul le liseré cyan du contre-jour (matériau du modèle) reste sur le personnage.
   }
   // Le corps s'estompe sous la coupe à mi-torse (masque CSS : le canvas reste transparent).
   const layer: CSSProperties = { position: 'absolute', inset: 0, maskImage: mask, WebkitMaskImage: mask }

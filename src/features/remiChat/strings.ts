@@ -3,7 +3,7 @@
  *
  * Deux familles :
  *  - l'interface (titre, boutons, étiquettes) : formulations neutres, sans « tu » ni « vous » ;
- *  - ce que le chat fait dire à Rémi quand le service ne répond pas normalement (préambule du repli,
+ *  - ce que le chat fait dire à Rémi sans passer par l'IA (premier message du fil, préambule du repli,
  *    attente, fin de discussion, message illisible) : écrit à son nom, donc au vouvoiement, sobre,
  *    sans opinion ni promesse, comme `src/npc/remiScript.ts`. Ces phrases sont aussi listées dans
  *    `docs/TEXTES-REMI.md` (section « Chat avec Rémi · IA ») pour la relecture de Rémi Godeau.
@@ -38,6 +38,12 @@ export const strings = defineStrings({
   send: { fr: 'Envoyer', en: 'Send' },
   counter: { fr: '{n}/{max}', en: '{n}/{max}' },
   counterOver: { fr: '{n}/{max} : message trop long', en: '{n}/{max}: message too long' },
+
+  // Premier message du fil : court, puisque l'accueil complet est déjà passé dans la bulle du jeu
+  greeting: {
+    fr: 'Bonjour ! Je suis Rémi · IA. Posez-moi vos questions sur le musée, les 100 ou la soirée.',
+    en: "Hello! I'm Rémi · AI. Ask me your questions about the museum, the 100 or the evening.",
+  },
 
   // Réponses de Rémi quand le service ne répond pas comme prévu
   fallbackPreface: { fr: 'Je vous réponds brièvement :', en: 'Let me answer briefly:' },

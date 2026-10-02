@@ -6,8 +6,8 @@
  * rien quand le chat est fermé) : l'historique est donc conservé tant que la page reste ouverte, sans rien
  * écrire sur le disque ni sur le réseau.
  *
- * - Ouverture : le fil se garnit d'un premier message de Rémi, instantané et sans réseau (le texte d'accueil
- *   de `remiDialogue`, ou sa conversation de comptoir si le visiteur a déjà avancé).
+ * - Ouverture : le fil se garnit d'un premier message de Rémi, court, instantané et sans réseau (`greetingText`) :
+ *   l'accueil complet est déjà passé dans la bulle du jeu à l'entrée dans le musée.
  * - Envoi : les `MAX_HISTORY_MESSAGES` derniers messages partent avec la langue, le `visitorId` et la progression.
  * - Erreurs (`RemiChatErrorCode`) : `unavailable` → repli scripté (réponse de comptoir de Rémi), `rate_limited` →
  *   attente avec « Réessayer », `limit_reached` → message de fin, `bad_request` → message court.
@@ -78,15 +78,11 @@ function joinLines(lines: readonly { text: { fr: string; en: string } }[], lang:
 }
 
 /**
- * Premier message du fil : l'accueil tant que le visiteur n'a rien vu, sinon la conversation de comptoir
- * (même texte que l'ancien dialogue « Parler à Rémi »). Paragraphes séparés par une ligne vide.
+ * Premier message du fil : une ou deux phrases qui disent qui parle et ce qu'on peut demander. Le visiteur a déjà
+ * eu l'accueil complet dans la bulle du jeu (`remiDialogue` welcome) : le chat ne le répète pas.
  */
-export function greetingText(lang: Lang, progress: RemiChatProgress): string {
-  const fresh = progress.visitedCount === 0 && progress.stampsCount === 0
-  const dialogue = fresh
-    ? remiDialogue({ kind: 'welcome' })
-    : remiDialogue({ kind: 'talk', ...progress })
-  return joinLines(dialogue.lines, lang, '\n\n')
+export function greetingText(lang: Lang): string {
+  return translate(strings, lang)('greeting')
 }
 
 /**
@@ -140,7 +136,7 @@ export interface RemiChatController {
   showSuggestions: boolean
   /** Dernier message terminé de Rémi, pour la région `aria-live` (jamais le texte en cours de flux). */
   announcement: { id: number; text: string } | null
-  /** Vrai si la dernière ouverture a démarré un fil vide (ouverture de bienvenue). */
+  /** Vrai si la dernière ouverture a démarré un fil vide (première discussion de la partie). */
   openedEmpty: boolean
 }
 
@@ -328,7 +324,7 @@ export function useRemiChat(open: boolean): RemiChatController {
     if (!open) return
     if (entriesRef.current.length === 0) {
       commit(() => [
-        { id: nextId(), role: 'assistant', content: greetingText(useGame.getState().lang, readProgress()), kind: 'message' },
+        { id: nextId(), role: 'assistant', content: greetingText(useGame.getState().lang), kind: 'message' },
       ])
       startTail()
     }
