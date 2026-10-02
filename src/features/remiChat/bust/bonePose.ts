@@ -49,7 +49,9 @@ export const GLB_BONE_NAMES: Readonly<Record<DrivenBone | 'leftArm' | 'leftForeA
 }
 
 /** Étapes dans l'ordre de la hiérarchie : chaque os est traité après son parent. */
-type Step = { readonly euler: DrivenBone } | { readonly aim: AimSegment; readonly name: keyof typeof GLB_BONE_NAMES; readonly child: keyof typeof GLB_BONE_NAMES }
+type Step =
+  | { readonly euler: DrivenBone; readonly wrist?: boolean }
+  | { readonly aim: AimSegment; readonly name: keyof typeof GLB_BONE_NAMES; readonly child: keyof typeof GLB_BONE_NAMES }
 
 const STEPS: readonly Step[] = [
   { euler: 'spine02' },
@@ -58,11 +60,11 @@ const STEPS: readonly Step[] = [
   { euler: 'leftShoulder' },
   { aim: 'leftArm', name: 'leftArm', child: 'leftForeArm' },
   { aim: 'leftForeArm', name: 'leftForeArm', child: 'leftHand' },
-  { euler: 'leftHand' },
+  { euler: 'leftHand', wrist: true },
   { euler: 'rightShoulder' },
   { aim: 'rightArm', name: 'rightArm', child: 'rightForeArm' },
   { aim: 'rightForeArm', name: 'rightForeArm', child: 'rightHand' },
-  { euler: 'rightHand' },
+  { euler: 'rightHand', wrist: true },
   { euler: 'neck' },
   { euler: 'head' },
 ]
@@ -149,6 +151,15 @@ export class BonePoseDriver {
         const z = pose[i + 2]
         if (Math.abs(x) >= EPSILON || Math.abs(y) >= EPSILON || Math.abs(z) >= EPSILON) {
           _part.setFromEuler(_euler.set(x, y, z, 'YXZ'))
+          if (step.wrist) {
+            // Poignet : rotation dans le repère PROPRE de l'os de la main (Y = axe de l'avant-bras, le même des deux
+            // côtés dans le squelette de Meshy), donc torsion et flexion restent celles du poignet quelle que soit
+            // la pose du bras. Le Y de la torsion et le Z de la flexion changent de signe d'une main à l'autre.
+            bone.quaternion.multiply(_part)
+            slot.written.copy(bone.quaternion)
+            slot.hasWritten = true
+            continue
+          }
           _delta.copy(_frame).multiply(_part).multiply(_frameInv) // delta du repère du personnage → monde
           moved = true
         }

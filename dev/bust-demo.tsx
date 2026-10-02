@@ -73,6 +73,9 @@ function Demo() {
       zoomOut: num(params.get('zoomOut')),
       modelPath: params.get('model') ?? undefined,
       onRenderer,
+      onControl: (control: unknown) => {
+        ;(window as unknown as { __bustControl: unknown }).__bustControl = control
+      },
       onProbe: (fn: unknown) => {
         ;(window as unknown as { __bustProject: unknown }).__bustProject = fn
       },

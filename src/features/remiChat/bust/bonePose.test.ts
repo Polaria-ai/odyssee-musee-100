@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { Group, Quaternion, Vector3, type Object3D } from 'three'
+import { Euler, Group, Quaternion, Vector3, type Object3D } from 'three'
 import { BonePoseDriver } from './bonePose'
 import { AIM_COUNT, AIM_INDEX, AIM_LENGTH, AIM_MAX_SWING, AIM_STRIDE, BONE_INDEX, POSE_LENGTH, type AimSegment } from './gestures'
-import { makeRemiSkeleton } from './remiSkeleton.fixture'
+import { REMI_BIND_HAND_AXES, makeRemiSkeleton } from './remiSkeleton.fixture'
 
 const CHILD: Record<AimSegment, string> = { leftArm: 'LeftForeArm', leftForeArm: 'LeftHand', rightArm: 'RightForeArm', rightForeArm: 'RightHand' }
 const BONE: Record<AimSegment, string> = { leftArm: 'LeftArm', leftForeArm: 'LeftForeArm', rightArm: 'RightArm', rightForeArm: 'RightForeArm' }
@@ -169,5 +169,87 @@ describe('BonePoseDriver', () => {
 
   it('compte de visées et tampons cohérents', () => {
     expect(AIM_LENGTH).toBe(AIM_COUNT * AIM_STRIDE)
+  })
+})
+
+describe('poignets : rotation dans le repère propre de la main', () => {
+  const HAND = { leftHand: 'LeftHand', rightHand: 'RightHand' } as const
+  const worldAxisY = (bones: Map<string, Object3D>, name: string) => new Vector3(0, 1, 0).transformDirection(bones.get(name)!.matrixWorld)
+  const worldQuat = (bones: Map<string, Object3D>, name: string) => bones.get(name)!.getWorldQuaternion(new Quaternion())
+
+  for (const hand of ['leftHand', 'rightHand'] as const) {
+    const name = HAND[hand]
+    const at = BONE_INDEX[hand] * 3
+
+    it(`${hand} : la torsion (y) tourne le poing autour de l'axe de l'avant-bras, sans le déplacer, du bon angle`, () => {
+      const { bones, pose, apply } = setup(0.3)
+      apply()
+      const axisBefore = worldAxisY(bones, name)
+      const quatBefore = worldQuat(bones, name)
+      pose[at + 1] = 0.6
+      apply()
+      expect(worldAxisY(bones, name).angleTo(axisBefore)).toBeLessThan(1e-6)
+      expect(worldQuat(bones, name).angleTo(quatBefore)).toBeCloseTo(0.6, 5)
+    })
+
+    it(`${hand} : la flexion (z) et l'inclinaison (x) inclinent l'axe du poing de l'angle demandé, dans le plan de la main`, () => {
+      for (const axis of [0, 2]) {
+        const { bones, pose, apply } = setup(-0.4)
+        apply()
+        const axisBefore = worldAxisY(bones, name)
+        pose[at + axis] = 0.5
+        apply()
+        expect(worldAxisY(bones, name).angleTo(axisBefore), `axe ${axis}`).toBeCloseTo(0.5, 5)
+      }
+    })
+
+    it(`${hand} : le même ordre donne la même rotation de poignet quelles que soient la visée du bras et la rotation du corps`, () => {
+      // Rotation RELATIVE de la main par rapport à l'avant-bras : c'est elle qu'on commande, pas l'orientation dans le monde.
+      const relative = (yaw: number, armed: boolean) => {
+        const { bones, pose, aimAt, apply } = setup(yaw)
+        if (armed) {
+          aimAt('rightForeArm', [0.3, 0.6, 0.75], 1)
+          aimAt('leftForeArm', [-0.3, 0.6, 0.75], 1)
+        }
+        apply()
+        const parent = bones.get(hand === 'leftHand' ? 'LeftForeArm' : 'RightForeArm')!
+        const rest = parent.getWorldQuaternion(new Quaternion()).invert().multiply(worldQuat(bones, name))
+        pose[at] = 0.2
+        pose[at + 1] = -0.4
+        pose[at + 2] = 0.3
+        apply()
+        const turned = parent.getWorldQuaternion(new Quaternion()).invert().multiply(worldQuat(bones, name))
+        return rest.invert().multiply(turned) // rotation ajoutée, dans le repère de l'avant-bras avant rotation
+      }
+      const reference = relative(0, false)
+      for (const [yaw, armed] of [[0.2, false], [-0.5, true], [0.9, true]] as const) expect(relative(yaw, armed).angleTo(reference)).toBeLessThan(1e-5)
+      expect(reference.angleTo(new Quaternion())).toBeGreaterThan(0.4)
+    })
+
+    it(`${hand} : pas d'accumulation (200 applications de la même consigne) et restore() rend la rotation d'animation`, () => {
+      const { bones, driver, pose, apply } = setup()
+      const before = bones.get(name)!.quaternion.clone()
+      pose[at] = 0.2
+      pose[at + 1] = 0.5
+      pose[at + 2] = -0.3
+      apply()
+      const first = bones.get(name)!.quaternion.clone()
+      for (let i = 0; i < 200; i++) apply()
+      expect(bones.get(name)!.quaternion.angleTo(first)).toBeLessThan(1e-6)
+      expect(first.angleTo(before)).toBeGreaterThan(0.3)
+      driver.restore()
+      expect(bones.get(name)!.quaternion.equals(before)).toBe(true)
+    })
+  }
+
+  it('les deux mains ont le MÊME repère en pose de liaison : le miroir d\'un poignet est (x, −y, −z)', () => {
+    // Données du GLB (matrices de liaison inverses) : axes X, Y, Z des deux os de main alignés à moins de 0,06 rad.
+    const { LeftHand, RightHand } = REMI_BIND_HAND_AXES
+    for (const axis of ['x', 'y', 'z'] as const) expect(new Vector3(...LeftHand[axis]).angleTo(new Vector3(...RightHand[axis]))).toBeLessThan(0.06)
+    // Le maillage de la main gauche est le symétrique de la droite (x → −x) : en coordonnées locales, une réflexion
+    // diag(−1, 1, 1). Une rotation (x, y, z) devient alors (x, −y, −z) : le quaternion perd le signe de y et de z.
+    const right = new Quaternion().setFromEuler(new Euler(0.2, 0.5, -0.3, 'YXZ'))
+    const reflected = new Quaternion(right.x, -right.y, -right.z, right.w)
+    expect(new Quaternion().setFromEuler(new Euler(0.2, -0.5, 0.3, 'YXZ')).angleTo(reflected)).toBeLessThan(1e-5)
   })
 })
