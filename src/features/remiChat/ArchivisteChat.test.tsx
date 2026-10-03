@@ -256,16 +256,16 @@ describe('chat de l’Archiviste · IA', () => {
     expect(screen.queryByTestId('remi-chat')).not.toBeInTheDocument()
   })
 
-  it('RemiChat et ArchivisteChat s’ouvrent chacun pour leur persona seulement', () => {
-    render(
-      <>
-        <RemiChat />
-      </>,
-    )
+  it('RemiChat seul ne s’ouvre pas pour l’Archiviste, ArchivisteChat seul ne s’ouvre pas pour Rémi', () => {
+    const remiOnly = render(<RemiChat />)
     openArchiviste()
-    expect(screen.queryByTestId('remi-chat')).not.toBeInTheDocument() // le chat de Rémi seul ne s'ouvre pas pour l'Archiviste
+    expect(screen.queryByTestId('remi-chat')).not.toBeInTheDocument()
+    remiOnly.unmount()
     act(() => useGame.getState().closeRemiChat())
+
     render(<ArchivisteChat />)
+    openRemi()
+    expect(screen.queryByTestId('remi-chat')).not.toBeInTheDocument()
     openArchiviste()
     expect(screen.getByTestId('remi-chat')).toHaveAttribute('data-persona', 'archiviste')
   })

@@ -49,51 +49,6 @@ describe('archivistDialogue', () => {
     expectWellFormed(d)
   })
 
-  describe('chatFallback (repli du chat de l’Archiviste · IA)', () => {
-    const tiers = [
-      { name: 'programme non chargé', total: 0, published: 0 },
-      { name: 'rien de publié', total: 17, published: 0 },
-      { name: 'quelques archives publiées', total: 17, published: 5 },
-      { name: 'tout publié', total: 17, published: 17 },
-    ]
-
-    it.each(tiers)('$name : bien formé', ({ total, published }) => {
-      for (let served = 0; served < 4; served += 1) expectWellFormed(archivistDialogue({ kind: 'chatFallback', served, total, published }))
-    })
-
-    it('vouvoie le visiteur : aucun tutoiement en français', () => {
-      const tutoiement = /(^|[^\p{L}])(?:(?:tu|toi|ton|ta|tes|te)(?![\p{L}])|t')|-toi(?![\p{L}])/iu
-      for (const t of tiers) {
-        for (let served = 0; served < 4; served += 1) {
-          const d = archivistDialogue({ kind: 'chatFallback', served, total: t.total, published: t.published })
-          for (const l of d.lines) expect(l.text.fr, d.id).not.toMatch(tutoiement)
-        }
-      }
-    })
-
-    it("n'affirme rien sur ce qui a été dit : pas de nom d'intervenant·e, pas de guillemets de citation", () => {
-      for (const t of tiers) {
-        for (let served = 0; served < 4; served += 1) {
-          const d = archivistDialogue({ kind: 'chatFallback', served, total: t.total, published: t.published })
-          const allText = d.lines.map((l) => `${l.text.fr} ${l.text.en}`).join(' ')
-          expect(allText).not.toMatch(/Vautrin|Gorintin|Arnould|Cloix|Fitoussi|Boucher|Menasé|[«»“”]/)
-        }
-      }
-    })
-
-    it('tourne sur les variantes d’un palier et change de palier avec published', () => {
-      const ids = (published: number) => new Set([0, 1, 2, 3].map((served) => archivistDialogue({ kind: 'chatFallback', served, total: 17, published }).id))
-      expect(ids(0).size).toBeGreaterThan(1)
-      const all = [...ids(0), ...ids(5), ...ids(17)]
-      expect(new Set(all).size).toBe(ids(0).size + ids(5).size + ids(17).size)
-    })
-
-    it('est déterministe', () => {
-      const event = { kind: 'chatFallback', served: 2, total: 17, published: 5 } as const
-      expect(archivistDialogue(event)).toEqual(archivistDialogue(event))
-    })
-  })
-
   describe('talk', () => {
     const tiers: Array<{ name: string; consulted: number; total: number; published: number }> = [
       { name: 'programme non chargé', consulted: 0, total: 0, published: 0 },

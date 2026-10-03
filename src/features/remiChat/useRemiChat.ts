@@ -16,7 +16,7 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../../state/gameStore'
-import { archivistDialogue } from '../../archives/archivistScript'
+import { archivistChatFallback } from '../../archives/archivistChatFallback'
 import { pick, translate } from '../../i18n'
 import { remiDialogue } from '../../npc/remiScript'
 import type { Lang } from '../../types'
@@ -108,14 +108,14 @@ export function greetingText(lang: Lang, persona: ChatPersona = DEFAULT_PERSONA)
 /**
  * Réponse de repli quand le service est indisponible : « Je vous réponds brièvement : » suivi des lignes
  * du dialogue scripté du personnage, concaténées : la conversation de comptoir de Rémi (`remiDialogue` talk), ou, pour
- * l'Archiviste, son état des archives au vouvoiement (`archivistDialogue` chatFallback). `served` (nombre de replis déjà
+ * l'Archiviste, son état des archives au vouvoiement (`archivistChatFallback`). `served` (nombre de replis déjà
  * donnés) fait tourner les variantes pour que deux replis de suite ne soient pas identiques.
  */
 export function fallbackText(lang: Lang, progress: RemiChatProgress, served: number, persona: ChatPersona = DEFAULT_PERSONA): string {
   const preface = pick(PERSONAS[persona].fallbackPreface, lang)
   if (persona === 'archiviste') {
     const archives = progress.archives ?? { consulted: 0, total: 0, published: 0 }
-    const dialogue = archivistDialogue({ kind: 'chatFallback', served, total: archives.total, published: archives.published })
+    const dialogue = archivistChatFallback({ served, total: archives.total, published: archives.published })
     return `${preface} ${joinLines(dialogue.lines, lang, ' ')}`
   }
   const visitedCount = progress.visitedCount > 0 ? progress.visitedCount + served : 0
