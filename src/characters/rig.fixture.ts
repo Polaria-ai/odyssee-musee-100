@@ -63,6 +63,8 @@ export function makeTestRig(): { scene: Group; animations: AnimationClip[] } {
     // Racine décalée de (1, 1) par rapport à « idle » (comme le « wave » de Rémi).
     positionClip('wave', 1, [1, 0.5, 1, 1, 0.6, 1]),
     positionClip('walk', 1, [0, 0.5, 0, 0, 0.5, 0]),
+    // Racine décalée de (-0,5, 0,25) par rapport à « idle » (comme le « talk » de l'Archiviste).
+    positionClip('talk', 4, [-0.5, 0.5, 0.25, -0.5, 0.6, 0.25]),
   ]
   return { scene, animations }
 }

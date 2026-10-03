@@ -9,16 +9,18 @@
  * (portes, cadres, comptoir d'accueil). Une première version à 1,45 m et 1,5 m (29/09) se lisait trop
  * petite à l'écran : ces personnages ont des proportions d'adulte (petite tête), contrairement à
  * l'ancien avatar chibi, et Rémi disparaissait derrière le comptoir. D'où 1,7 m pour Cyril (≈ 1,48 ×
- * le joueur d'origine) et 1,8 m pour Rémi (≈ 1,57 ×), vérifié sur captures. La hauteur est celle du
- * personnage dans sa pose d'attente (clip « idle », tête comprise) : `GlbCharacter` met le modèle à
- * l'échelle pour l'atteindre exactement.
+ * le joueur d'origine) et 1,8 m pour Rémi (≈ 1,57 ×), vérifié sur captures. L'Archiviste (WEL-928) a la
+ * taille de Cyril, 1,7 m : une femme adulte, plus petite que Rémi. La hauteur est celle du personnage dans sa
+ * pose d'attente (clip « idle », tête comprise) : `GlbCharacter` met le modèle à l'échelle pour l'atteindre
+ * exactement.
  *
- * Squelette Meshy à 24 os, un seul maillage texturé (~12 400 triangles), compression meshopt,
- * texture WebP 1024. Sources et provenance : `scripts/build-characters.mjs`, `docs/ASSETS.md`.
+ * Squelette Meshy à 24 os (le MÊME pour les trois : mêmes noms, même ordre), un seul maillage texturé
+ * (~12 400 triangles pour Cyril et Rémi, 12 467 pour l'Archiviste : 15 585 à la source, allégé pour tenir le
+ * budget du fichier), compression meshopt, texture WebP 1024. Sources et provenance : `scripts/build-characters.mjs`, `docs/ASSETS.md`.
  */
 
 /** Nom logique d'un clip (celui que le jeu demande), distinct du nom du clip dans le fichier GLB. */
-export type ClipName = 'idle' | 'walk' | 'wave'
+export type ClipName = 'idle' | 'walk' | 'wave' | 'talk'
 
 export interface CharacterDef {
   /** Chemin public du GLB (voir `src/assets/useModel.ts`). */
@@ -39,6 +41,11 @@ export const CHARACTERS = {
     path: '/models/characters/remi.glb',
     height: 1.8,
     clips: { idle: 'idle', wave: 'wave' },
+  },
+  archiviste: {
+    path: '/models/characters/archiviste.glb',
+    height: 1.7,
+    clips: { idle: 'idle', wave: 'wave', talk: 'talk' },
   },
 } as const satisfies Record<string, CharacterDef>
 

@@ -224,10 +224,12 @@ Accents par salle : hall `#e8785c`, Infrastructures `#6de4e5`, Industrialisation
 | Panneau d'entrée | `archives.sign` | fond `rgba(10,23,56,0.94)`, contour `#57bfd6`, titre `#ffffff`, date `#6de4e5`, mention `#e8785c` | |
 | Chemin de la frise | `floor.pathGlow`, `pathLine`, `nodeGlow`, `node` | `rgba(87,191,214,0.28)`, `rgba(109,228,229,0.9)`, `rgba(109,228,229,0.55)`, `#ffffff` | |
 | Bulle « ! » des Archives | `archives.bubble` | fond `#57bfd6`, contour `#ffffff`, « ! » `#050b1e` | 9,2:1 |
-| Archiviste : buste, tête | `archivist.torso`, `head` | `#57bfd6`, `#ffffff` | |
-| Archiviste : anneaux, particules | `archivist.ring`, `particle` | `#6de4e5`, `#ffffff` | plus d'or |
-| Archiviste : faisceau, socle, liseré | `archivist.beam`, `plinth`, `plinthRim` | `#57bfd6`, `#eaf1ff`, `#57bfd6` | |
+| Archiviste : personnage 3D | `characters/archiviste.glb` (`CHARACTERS.archiviste`) | 1,70 m ; manteau et pantalon anthracite, cheveux argentés (texture générée, hors palette) | personne entièrement générée ; remplace le buste, la tête, les anneaux, les particules et le faisceau (`archivist.torso`, `head`, `ring`, `particle`, `beam` n'existent plus) |
+| Archiviste : socle projecteur, liseré | `archivist.plinth`, `plinthRim` | `#eaf1ff`, `#57bfd6` | disque plat de 3 cm (rayon 0,66 m) sous ses pieds |
+| Archiviste : halo au sol | `archivist.halo` | `#6de4e5`, dégradé radial (opacité 0,9, « respire » de ± 0,12) | l'identité « IA venue de 2040 », sobre : cyan de la charte, plus d'anneaux ni de silhouette translucide |
 | Archiviste : bulle de dialogue | `archivist.bubbleFill`, `bubbleStroke`, `bubbleDots` | `#0a1738`, `#57bfd6`, `#ffffff` | |
+
+**L'Archiviste 3D (WEL-928, `archives/Archivist.tsx`).** Un vrai personnage, « comme Cyril ou Rémi », posé pieds à y = 0 à la place de l'ancien hologramme (`layout.archivist`, au sud de la porte, à l'est de l'axe). Taille 1,70 m, comme Cyril (Rémi : 1,80 m). Clips : `idle` en boucle ; `wave` joué une fois quand le joueur entre dans sa portée (`ARCHIVIST_TALK_RADIUS`, 2,6 m), au plus toutes les 20 s (même règle que Rémi, `useArchivistGreeting`) ; `talk` (gestes des mains) tant qu'un de ses dialogues est ouvert. Elle se tourne vers le joueur dans une plage bornée de ±40° autour de son orientation de repos (même suivi que Rémi : `turnToward`, `approach`), seulement à moins de 6,5 m : un joueur resté dans le hall, au nord du mur, ne la fait pas se retourner. La bulle « … » d'invitation est conservée, recalée à 2,25 m (au-dessus de la tête et de la main levée pendant le salut). Inchangés : collider (0,4 m de demi-côté), rayon de dialogue, dialogues (`archivistScript.ts`). Occlusion de caméra : la caméra reste AU SUD du joueur et rien de haut n'est entre eux (elle mesure 1,70 m, le socle 3 cm). Le GLB est préchargé avec Cyril et Rémi ; le personnage n'est dessiné que lorsqu'il est dans le champ de la caméra. Fabrication du GLB : `docs/ASSETS.md`.
 
 ### 4.9 Typographie des canvas
 
@@ -331,13 +333,24 @@ Répartition retenue (à réaffecter si l'orchestrateur découpe autrement) : **
 - **`archives/room/RoomShell.tsx`** : `WALL_MATERIAL` = `rooms.archives.wall` ; `PILLAR_MATERIAL` = `archives.pillar` ; `THRESHOLD_MATERIAL` = `archives.threshold` (émissif 0,55) ; `BENCH_MATERIAL` = `archives.bench` ; `WALL_PANEL_MATERIAL` = `archives.panel` (couleur, émissif, 0,12) ; `LECTERN_MATERIAL` = `archives.lectern` ; cristaux `crystals.a` (l. 128) et `crystals.b` (l. 129) ; antennes `archives.antenna` (plus `theme.trim`). Murs : même parure que le hall sur les murs est, ouest, sud et sur `archives.northWall` (plinthe, lambris `wainscot`, listel, corniche `rooms.archives.cornice`, bande `cap` sur le mur sud coupé) — constantes de `world/constants.ts` (`WAINSCOT_HEIGHT`, `CORNICE_HEIGHT`, `CORNICE_TOP_GAP`, `TRIM_PROTRUSION`, `LISTEL_HEIGHT`, `CAP_HEIGHT`), géométrie fusionnée à couleurs par sommet (un appel de dessin). Plus de `palette.*`.
 - **`archives/room/Vitrine.tsx`** (l. 29-34) : `archives.vitrine.socle`, `socleEmissive`, `socleHighlight`, `socleHighlightEmissive`, `capsuleIdle`, `capsuleArchived` (émissifs et opacités inchangés).
 - **`archives/room/textures.ts`** : clap du film (l. 80) `nuit` au lieu de `wingThemes.archives.wall` ; écran de vitrine (l. 214-238) `screenFill`, `screenIdle`/`screenArchived`, `screenText`, `screenSub`, titre 600, heure en JetBrains Mono 500 ; sol (l. 274-310) `archives.floor.*` (fond `base`, vignette `vignetteEdge`, chemin `pathGlow`/`pathLine`, repères `nodeGlow`/`node`) ; panneau d'entrée (l. 334-352) `archives.sign` (titre 600) ; bulle (l. 365-373) `archives.bubble` (« ! » 600).
-- **`archives/Archivist.tsx`** (l. 46-56, 83-96) : buste `archivist.torso`, tête `head`, anneaux `ring`, particules `particle`, faisceau `beam`, socle `plinth`, liseré `plinthRim` ; bulle de dialogue : fond `bubbleFill`, contour `bubbleStroke`, points `bubbleDots` (plus de `palette.gold` ni `palette.cream`). Formes inchangées.
+- **`archives/Archivist.tsx`** : socle `archivist.plinth`, liseré `plinthRim`, halo `halo` ; bulle de dialogue : fond `bubbleFill`, contour `bubbleStroke`, points `bubbleDots` (plus de `palette.gold` ni `palette.cream`). Le buste, la tête, les anneaux, les particules et le faisceau (`torso`, `head`, `ring`, `particle`, `beam`) ont disparu au profit du personnage 3D (§4.8, WEL-928).
 - **`archives/room/DecorModel.tsx`** : rien (la teinte est un paramètre).
 
 ## 8. Prérequis transverses
 
 - **Polices dans les canvas.** Poppins et JetBrains Mono viennent de Google Fonts (`index.html`). Un canvas peint avec une police pas encore chargée retombe sur `system-ui` et la texture reste en cache avec ce repli. Avant le premier dessin de texture, attendre `document.fonts.load('600 16px Poppins')` et `document.fonts.load('500 16px "JetBrains Mono"')` (avec un délai maximum, ~1,5 s), par exemple avant de monter `<Museum>`.
 - **Budget mobile.** Tout est fusionné : disque du hall, chemins, listel, bandes de dessus = quelques dizaines de boîtes ajoutées à la géométrie de la salle (aucun appel de dessin en plus) ; les cadres restent un maillage par portrait (trois géométries, un matériau partagé) ; aucune ombre temps réel ; textures ≤ 512 px. Exception voulue (WEL-923) : le sol de fond de chaque salle est un maillage à part (une matière = un matériau texturé) : **un appel de dessin de plus par salle visible**, au lieu de zéro. Les Archives gardent leur sol en un seul maillage. Cartes de sol : 8 fichiers webp ≤ 512 px, 287 Ko au total (budget 450 Ko). Mesuré le 01/10 (SwiftShader, `e2e/performance.spec.ts`, projet desktop) : au plus 92 à 117 appels de dessin selon la mesure, au spawn et au milieu de chaque aile (budget 150, voir §4.1), contre ≈ 1 à 3 de moins avant ; la mesure de `renderer.info` varie de ± 15 appels d'une image à l'autre, le surcoût réel est le sol de chaque salle dans le champ.
+  Archiviste 3D (WEL-928), mesuré le 03/10 avec la même méthode (SwiftShader, médiane de 7 relevés espacés de 0,45 s, mêmes points, build de base `b9cd686` contre la branche ; appels / triangles) :
+
+  | Point | Pixel 7 (412×915), avant | après | PC 1440×900, avant | après |
+  |---|---|---|---|---|
+  | Hall, au spawn | 94 / 42 549 | 95 / 55 016 | 57 / 40 841 | 57 / 40 841 |
+  | Archives, à l'arrivée | 100 / 43 041 | 97 / 54 668 | 75 / 43 319 | 62 / 53 246 |
+  | Archives, face à l'Archiviste | 83 / 42 819 | 70 / 52 746 | 93 / 44 507 | 80 / 54 434 |
+  | Archives, fond de salle | 99 / 43 585 | 86 / 53 512 | 112 / 32 827 | 99 / 42 754 |
+
+  Bilan dans les Archives : **− 13 appels** (l'hologramme en comptait 16 : buste, tête, 3 anneaux, 8 particules, faisceau, socle, liseré ; le personnage en compte 4 avec le socle, le liseré et le halo ; la mesure varie de ± 2 appels) et **+ 9 900 triangles** (12 467 contre ≈ 2 550 pour l'hologramme, écart mesuré), le budget de 150 appels reste respecté (≤ 112). Au spawn du hall, le PC ne le voit pas ; le Pixel 7, plus haut en portrait, garde sa sphère de culling dans le champ sans qu'il soit visible à l'écran (+ 12 467 triangles, + 1 appel).
+
 
 ## 9. Vérifications
 
