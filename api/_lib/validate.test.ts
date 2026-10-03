@@ -18,7 +18,37 @@ describe('validateRemiRequest', () => {
     })
     expect(result).toEqual({
       ok: true,
-      value: { messages: [{ role: 'user', content: 'Bonjour Rémi' }], lang: 'en', visitorId: 'abc-123', userMessageCount: 1 },
+      value: {
+        messages: [{ role: 'user', content: 'Bonjour Rémi' }],
+        lang: 'en',
+        visitorId: 'abc-123',
+        persona: 'remi',
+        userMessageCount: 1,
+      },
+    })
+  })
+
+  describe('persona', () => {
+    it('absente (clients déjà en ligne) ou null : Rémi, par défaut', () => {
+      for (const raw of [validPayload(), { ...validPayload(), persona: null }]) {
+        const result = validateRemiRequest(raw)
+        expect(result.ok).toBe(true)
+        if (result.ok) expect(result.value.persona).toBe('remi')
+      }
+    })
+
+    it('accepte remi et archiviste', () => {
+      for (const persona of ['remi', 'archiviste'] as const) {
+        const result = validateRemiRequest(validPayload({ persona }))
+        expect(result.ok).toBe(true)
+        if (result.ok) expect(result.value.persona).toBe(persona)
+      }
+    })
+
+    it('refuse une persona inconnue ou mal typée : persona.invalid', () => {
+      for (const persona of ['Remi', 'curator', '', ' archiviste', 'archiviste ', 42, true, {}, ['remi']]) {
+        expect(reason({ ...validPayload(), persona }), JSON.stringify(persona)).toBe('persona.invalid')
+      }
     })
   })
 
@@ -36,7 +66,7 @@ describe('validateRemiRequest', () => {
   it('ignore les champs inconnus', () => {
     const result = validateRemiRequest({ ...validPayload(), role: 'system', model: 'autre/modele' })
     expect(result.ok).toBe(true)
-    if (result.ok) expect(Object.keys(result.value).sort()).toEqual(['lang', 'messages', 'userMessageCount', 'visitorId'])
+    if (result.ok) expect(Object.keys(result.value).sort()).toEqual(['lang', 'messages', 'persona', 'userMessageCount', 'visitorId'])
   })
 
   it('ne garde que les MAX_HISTORY_MESSAGES messages les plus récents, et compte ceux du visiteur avant la coupe', () => {

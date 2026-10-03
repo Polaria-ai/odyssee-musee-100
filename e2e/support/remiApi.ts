@@ -1,5 +1,6 @@
 /**
- * Faux `/api/remi` des E2E (chat avec Rémi · IA, V5 WEL-920) : aucun test n'appelle jamais le vrai réseau
+ * Faux `/api/remi` des E2E (chat avec Rémi · IA, V5 WEL-920, et avec l'Archiviste · IA, WEL-929 : même route, même flux,
+ * la persona est dans le corps de la requête) : aucun test n'appelle jamais le vrai réseau
  * (ni OpenRouter, ni la fonction Vercel). Les réponses sont au format EXACT du contrat
  * (`src/features/remiChat/contract.ts`) : `text/event-stream`, une ligne `data: <json>` par événement
  * (`delta`, puis `done` ou `error`), requête en JSON `{ messages, lang, visitorId, context }`. Elles restent
@@ -24,6 +25,8 @@ export interface RemiRequestBody {
   lang: 'fr' | 'en'
   visitorId: string
   context?: { visitedCount: number; stampsCount: number; total: number }
+  /** Absent pour Rémi (persona par défaut : sa requête est celle d'avant l'Archiviste), `'archiviste'` pour l'Archiviste · IA. */
+  persona?: 'remi' | 'archiviste'
 }
 
 /** Ce que répond le faux serveur à une requête. */

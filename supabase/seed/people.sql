@@ -823,7 +823,7 @@ He launched ChapsVision in 2019, a data-processing and AI software company that 
 
 On 16 June 2026, the Prime Minister announced that Argonos, its platform, will progressively replace Palantir at the DGSI.',
   NULL, NULL,
-  NULL, NULL, '[{"label":"ChapsVision, à propos","url":"https://www.chapsvision.com/fr/a-propos/"},{"label":"Wikipédia, Olivier Dellenbach","url":"https://fr.wikipedia.org/wiki/Olivier_Dellenbach"}]'::jsonb, false, false
+  '/portraits/olivier-dellenbach.webp', 'REA', '[{"label":"ChapsVision, à propos","url":"https://www.chapsvision.com/fr/a-propos/"},{"label":"Wikipédia, Olivier Dellenbach","url":"https://fr.wikipedia.org/wiki/Olivier_Dellenbach"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,
@@ -1486,7 +1486,7 @@ In April 2024, he founded Harmattan AI with five partners. The company builds au
 
 In January 2026, it raised 200 million dollars, with Dassault Aviation, at a valuation of 1.4 billion dollars. In June 2026, France ordered 5,000 more drones from it.',
   NULL, NULL,
-  NULL, NULL, '[{"label":"Harmattan AI, site officiel","url":"https://www.harmattan.ai"},{"label":"Harmattan AI sur Wikipédia","url":"https://fr.wikipedia.org/wiki/Harmattan_AI"}]'::jsonb, false, false
+  '/portraits/mouad-m-ghari.webp', 'DR', '[{"label":"Harmattan AI, site officiel","url":"https://www.harmattan.ai"},{"label":"Harmattan AI sur Wikipédia","url":"https://fr.wikipedia.org/wiki/Harmattan_AI"}]'::jsonb, false, false
 )
 on conflict (id) do update set
   ord = excluded.ord,

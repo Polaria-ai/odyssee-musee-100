@@ -19,7 +19,7 @@ import type {
   Screen,
   WingId,
 } from '../types'
-import { archivistDialogue } from '../archives/archivistScript'
+import type { ChatPersona } from '../features/remiChat/contract'
 import { loadPersisted, savePersisted } from './persist'
 
 export type Quality = 'low' | 'high'
@@ -73,8 +73,14 @@ export interface GameState {
   stampCardOpen: boolean
   /** Plan du musée (bouton « Plan » du HUD) : surimpression comme les autres, coupe le déplacement. */
   mapOpen: boolean
-  /** Chat avec Rémi · IA (accueil, ou « Parler à Rémi » au comptoir) : surimpression plein écran, coupe le déplacement. */
+  /**
+   * Un chat IA est ouvert (« Parler à Rémi » au comptoir, « Parler à l'Archiviste » dans les Archives) : surimpression
+   * plein écran translucide, coupe le déplacement et met le rendu du musée en pause. Le nom date du seul chat de Rémi et
+   * reste, pour ne casser ni les tests ni la pause du rendu : il vaut pour N'IMPORTE QUELLE persona, `chatPersona` dit laquelle.
+   */
   remiChatOpen: boolean
+  /** Persona du chat ouvert, ou du dernier ouvert (Rémi au départ). Écrite avec `remiChatOpen` par `openChat`. */
+  chatPersona: ChatPersona
 
   dialogue: Dialogue | null
   dialogueIndex: number
@@ -100,7 +106,7 @@ export interface GameState {
   setNearby: (personId: string | null) => void
   setNearCurator: (near: boolean) => void
   setCurrentRoom: (room: WingId | null) => void
-  /** Action principale (bouton rond, Entrée) : regarder le portrait proche, sinon parler à Rémi. */
+  /** Action principale (bouton rond, Entrée) : regarder le portrait proche, consulter la vitrine proche, sinon parler à l'Archiviste ou à Rémi (chat IA). */
   interact: () => void
   openPerson: (personId: string) => void
   closePerson: () => void
@@ -108,8 +114,11 @@ export interface GameState {
   awardStamp: (wing: ExhibitWingId) => void
   setStampCardOpen: (open: boolean) => void
   setMapOpen: (open: boolean) => void
-  /** Ouvre le chat avec Rémi · IA ; referme toute autre surimpression (elles ne s'empilent jamais). */
+  /** Ouvre le chat IA de la persona ; referme toute autre surimpression (elles ne s'empilent jamais). */
+  openChat: (persona: ChatPersona) => void
+  /** Ouvre le chat avec Rémi · IA (`openChat('remi')`). */
   openRemiChat: () => void
+  /** Referme le chat ouvert, quelle que soit sa persona (le nom date du seul chat de Rémi). */
   closeRemiChat: () => void
   startDialogue: (dialogue: Dialogue) => void
   advanceDialogue: () => void
@@ -170,6 +179,7 @@ export const useGame = create<GameState>()((set, get) => ({
   stampCardOpen: false,
   mapOpen: false,
   remiChatOpen: false,
+  chatPersona: 'remi',
 
   dialogue: null,
   dialogueIndex: 0,
@@ -229,20 +239,14 @@ export const useGame = create<GameState>()((set, get) => ({
       s.openSession(s.nearbySessionId)
       return
     }
+    // « Parler à l'Archiviste » ouvre SON chat (WEL-929), comme « Parler à Rémi » le sien (V5) : les dialogues
+    // scriptés `talk` ne sont plus que leur repli si le service est indisponible (voir `useRemiChat.ts`).
+    // Les autres dialogues scriptés de l'Archiviste (arrivée, tampon) restent dans la bulle du jeu (`DialogueBox`).
     if (s.nearArchivist) {
-      s.startDialogue(
-        archivistDialogue({
-          kind: 'talk',
-          consulted: Object.keys(s.visitedSessions).length,
-          total: s.sessions.length,
-          published: Object.keys(s.archives).length,
-        }),
-      )
+      s.openChat('archiviste')
       return
     }
-    // « Parler à Rémi » ouvre le chat (V5) : le dialogue scripté `talk` n'est plus que son repli
-    // si le service est indisponible (voir `src/features/remiChat/useRemiChat.ts`).
-    if (s.nearCurator) s.openRemiChat()
+    if (s.nearCurator) s.openChat('remi')
   },
   openPerson: (openPersonId) => {
     get().markVisited(openPersonId)
@@ -267,9 +271,10 @@ export const useGame = create<GameState>()((set, get) => ({
   setStampCardOpen: (stampCardOpen) =>
     set(stampCardOpen ? { stampCardOpen, dialogue: null, dialogueIndex: 0, remiChatOpen: false } : { stampCardOpen }),
   setMapOpen: (mapOpen) => set(mapOpen ? { mapOpen, dialogue: null, dialogueIndex: 0, remiChatOpen: false } : { mapOpen }),
-  openRemiChat: () =>
+  openChat: (chatPersona) =>
     set({
       remiChatOpen: true,
+      chatPersona,
       dialogue: null,
       dialogueIndex: 0,
       stampCardOpen: false,
@@ -277,6 +282,7 @@ export const useGame = create<GameState>()((set, get) => ({
       openPersonId: null,
       openSessionId: null,
     }),
+  openRemiChat: () => get().openChat('remi'),
   closeRemiChat: () => set({ remiChatOpen: false }),
   startDialogue: (dialogue) => set({ dialogue, dialogueIndex: 0, remiChatOpen: false }),
   advanceDialogue: () => {

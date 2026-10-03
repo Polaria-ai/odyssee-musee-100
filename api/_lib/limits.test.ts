@@ -9,6 +9,7 @@ function clock(start = 1_000_000) {
 }
 
 const call = (ip: string, visitorId: string, userMessageCount = 1) => ({ ip, visitorId, userMessageCount })
+const callAs = (persona: 'remi' | 'archiviste', ip: string, visitorId: string, userMessageCount = 1) => ({ ip, visitorId, persona, userMessageCount })
 
 describe('plafond de débit par (IP, visiteur)', () => {
   it('accepte une rafale de 3, refuse la 4e avec le délai d’attente, puis recharge un jeton toutes les 2 s', () => {
@@ -147,5 +148,50 @@ describe('clientIp', () => {
     expect(clientIp(new Headers({ 'x-real-ip': '203.0.113.6' }))).toBe('203.0.113.6')
     expect(clientIp(new Headers({ 'x-forwarded-for': '198.51.100.1, 10.0.0.1' }))).toBe('198.51.100.1')
     expect(clientIp(new Headers())).toBe('unknown')
+  })
+})
+
+describe('comptés séparément par persona', () => {
+  it('sans persona, c’est Rémi : les mêmes compteurs que persona remi', () => {
+    const c = clock()
+    const limiter = createRemiLimiter({ now: c.now, visitorCap: 2, pair: { capacity: 10, refillMs: 1 } })
+    expect(limiter.check(call('1.1.1.1', 'v1')).ok).toBe(true)
+    expect(limiter.check(callAs('remi', '1.1.1.1', 'v1')).ok).toBe(true)
+    expect(limiter.check(call('1.1.1.1', 'v1'))).toEqual({ ok: false, code: 'limit_reached' })
+  })
+
+  it('le plafond de messages de Rémi n’entame pas celui de l’Archiviste, et inversement', () => {
+    const c = clock()
+    const limiter = createRemiLimiter({ now: c.now, visitorCap: 2, pair: { capacity: 10, refillMs: 1 } })
+    for (let i = 0; i < 2; i += 1) expect(limiter.check(callAs('remi', '1.1.1.1', 'v1')).ok).toBe(true)
+    expect(limiter.check(callAs('remi', '1.1.1.1', 'v1'))).toEqual({ ok: false, code: 'limit_reached' })
+    for (let i = 0; i < 2; i += 1) expect(limiter.check(callAs('archiviste', '1.1.1.1', 'v1')).ok).toBe(true)
+    expect(limiter.check(callAs('archiviste', '1.1.1.1', 'v1'))).toEqual({ ok: false, code: 'limit_reached' })
+  })
+
+  it('le débit est compté par persona : la rafale de Rémi ne retarde pas l’Archiviste', () => {
+    const c = clock()
+    const limiter = createRemiLimiter({ now: c.now })
+    for (let i = 0; i < 3; i += 1) expect(limiter.check(callAs('remi', '1.1.1.1', 'v1')).ok).toBe(true)
+    expect(limiter.check(callAs('remi', '1.1.1.1', 'v1')).ok).toBe(false)
+    expect(limiter.check(callAs('archiviste', '1.1.1.1', 'v1')).ok).toBe(true)
+  })
+
+  it('le seau par IP est lui aussi propre à chaque persona', () => {
+    const c = clock()
+    const limiter = createRemiLimiter({ now: c.now, ip: { capacity: 2, refillMs: 1000 } })
+    expect(limiter.check(callAs('remi', '6.6.6.6', 'a')).ok).toBe(true)
+    expect(limiter.check(callAs('remi', '6.6.6.6', 'b')).ok).toBe(true)
+    expect(limiter.check(callAs('remi', '6.6.6.6', 'c')).ok).toBe(false)
+    expect(limiter.check(callAs('archiviste', '6.6.6.6', 'c')).ok).toBe(true)
+  })
+
+  it('un message rendu après un échec du fournisseur est rendu à la bonne persona', () => {
+    const c = clock()
+    const limiter = createRemiLimiter({ now: c.now, visitorCap: 1, pair: { capacity: 10, refillMs: 1 } })
+    const decision = limiter.check(callAs('archiviste', '1.1.1.1', 'v1'))
+    expect(decision.ok).toBe(true)
+    if (decision.ok) decision.refund()
+    expect(limiter.check(callAs('archiviste', '1.1.1.1', 'v1')).ok).toBe(true)
   })
 })

@@ -48,6 +48,19 @@ describe('CharacterAnimator', () => {
     expect(action('idle').getEffectiveWeight()).toBeCloseTo(0)
   })
 
+  it('joue « talk » en boucle (les gestes de l’Archiviste pendant ses répliques) puis reprend « idle »', () => {
+    const { animator, action } = setup()
+    animator.play('idle')
+    animator.play('talk')
+    expect(animator.current).toBe('talk')
+    animator.update(9) // talk dure 4 s : deux tours et demi, toujours en lecture
+    expect(action('talk').isRunning()).toBe(true)
+    animator.play('idle')
+    animator.update(CROSSFADE_SECONDS + 0.01)
+    expect(animator.current).toBe('idle')
+    expect(action('idle').getEffectiveWeight()).toBeCloseTo(1)
+  })
+
   it('ne relance pas un clip déjà en cours : seule la cadence change', () => {
     const { animator, action } = setup()
     animator.play('idle')

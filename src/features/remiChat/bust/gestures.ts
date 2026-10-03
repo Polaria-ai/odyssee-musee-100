@@ -11,13 +11,29 @@
  *
  * Deux sorties, posées par-dessus le clip « idle » du mixeur par `bonePose.ts` :
  *  - `pose` : des DELTAS d'Euler (tangage x, lacet y, roulis z, radians) pour la colonne, le cou, la
- *    tête, les épaules et les mains. x > 0 penche un os debout vers l'avant ; y > 0 le tourne vers la
- *    droite de l'écran ; z > 0 le penche vers la gauche de l'écran ;
+ *    tête et les épaules. x > 0 penche un os debout vers l'avant ; y > 0 le tourne vers la droite de
+ *    l'écran ; z > 0 le penche vers la gauche de l'écran. Les deux MAINS (os `leftHand`, `rightHand`) sont
+ *    à part : leurs trois angles sont ceux du POIGNET, dans le repère propre de l'os de la main (voir
+ *    « Poignets » ci-dessous) ;
  *  - `aim` : pour les 4 segments des bras (bras, avant-bras de chaque côté), une DIRECTION CIBLE absolue
  *    dans le repère de l'écran (vecteur unitaire) et un poids 0 à 1. Les bras ne se posent pas en deltas : le clip « idle » de
  *    Meshy n'est pas symétrique (avant-bras gauche en arrière, droit en avant), un même delta donnerait
  *    deux gestes différents. Viser une direction donne le même geste des deux côtés, et place les mains
  *    où on l'a décidé (dans le cadre, devant le torse, jamais à travers lui).
+ *
+ * POIGNETS (WEL-927). Le GLB n'a pas d'os de doigts : les mains sont des poings fermés, qu'on ne peut
+ * qu'orienter. L'angle de la main dans le monde dépend déjà de l'avant-bras visé, mais sans poignet
+ * piloté le poing gardait la MÊME orientation par rapport à l'avant-bras : mesuré avant correction, le
+ * poignet ne bougeait que de 11° au plus (et seulement dans « paumes ouvertes »). Trois angles par main,
+ * dans le repère de l'os (Y = axe de l'avant-bras, identique des deux côtés dans le squelette de Meshy) :
+ *  - x : inclinaison latérale (x > 0 vers le côté du petit doigt, x < 0 vers le pouce) ;
+ *  - y : torsion autour de l'avant-bras (y > 0 pour la main droite du personnage : la paume se tourne vers
+ *    le haut et vers l'avant, supination ; y < 0 : le dos du poing se tourne vers l'interlocuteur) ;
+ *  - z : flexion/extension (z < 0 pour la main droite : le poing se ferme vers l'intérieur du poignet).
+ * Les deux mains étant des copies miroir : un même geste à gauche s'écrit (x, −y, −z), ce que fait `toPose`.
+ * Quatre sources s'additionnent : la pose tenue de chaque geste, une oscillation lente pendant le plateau
+ * du geste (`wave`), des battements de ponctuation au rythme de la parole, et une dérive permanente de
+ * quelques degrés (toutes humeurs). Amplitudes mesurées : voir `BONE_LIMITS` et `wrists.test.ts`.
  *
  * Calques : humeur (poids lissés qui somment à 1) → pose de base + micro-mouvements ; en `speaking`,
  * une bibliothèque de gestes de bras enchaînés toutes les 2,5 à 4 s et des hochements rythmés. Tout
@@ -38,15 +54,21 @@ export const POSE_LENGTH = BONE_COUNT * 3
 
 export const BONE_INDEX = Object.fromEntries(DRIVEN_BONES.map((name, i) => [name, i])) as Record<DrivenBone, number>
 
+/** Limites du poignet (radians) : inclinaison latérale, torsion de l'avant-bras par le poignet, flexion. */
+export const WRIST_LIMIT_TILT = 0.45
+export const WRIST_LIMIT_TWIST = 0.85
+export const WRIST_LIMIT_FLEX = 0.7
+
 /** Limite d'amplitude par os et par axe (radians) : la pose finale n'atteint jamais ces valeurs. */
 export const BONE_LIMITS: Readonly<Record<DrivenBone, readonly [number, number, number]>> = {
   spine02: [0.1, 0.12, 0.1],
   spine01: [0.14, 0.16, 0.12],
   spine: [0.18, 0.2, 0.14],
   leftShoulder: [0.25, 0.25, 0.3],
-  leftHand: [0.8, 0.8, 0.8],
+  // Poignets : inclinaison, torsion, flexion. Bornes vérifiées sur captures rapprochées (aucune torsion de la manche).
+  leftHand: [WRIST_LIMIT_TILT, WRIST_LIMIT_TWIST, WRIST_LIMIT_FLEX],
   rightShoulder: [0.25, 0.25, 0.3],
-  rightHand: [0.8, 0.8, 0.8],
+  rightHand: [WRIST_LIMIT_TILT, WRIST_LIMIT_TWIST, WRIST_LIMIT_FLEX],
   neck: [0.3, 0.35, 0.25],
   head: [0.45, 0.55, 0.36],
 }
@@ -155,10 +177,19 @@ interface GestureSpec {
   readonly symmetric: boolean
   /** Directions visées au sommet du geste (voir le repère en tête de fichier). */
   readonly aim: AimSpec
-  /** Deltas d'Euler au sommet (colonne, tête, mains). */
+  /** Deltas d'Euler au sommet (colonne, cou, tête, épaules). */
   readonly pose?: PoseSpec
-  /** Battements pendant le plateau : le geste glisse `count` fois vers `aim`/`pose` ci-dessous et revient. */
-  readonly pulse?: { readonly count: number; readonly aim?: AimSpec; readonly pose?: PoseSpec }
+  /** Poignets au sommet (angles de la main dans son repère propre, voir « Poignets » en tête de fichier). */
+  readonly wrist?: PoseSpec
+  /** Oscillation lente des poignets pendant le geste : `wrist` × sin(2π t / période), nulle aux deux bouts. */
+  readonly wave?: { readonly period: number; readonly wrist: PoseSpec }
+  /** Battements pendant le plateau : le geste glisse `count` fois vers `aim`/`pose`/`wrist` ci-dessous et revient. */
+  readonly pulse?: { readonly count: number; readonly aim?: AimSpec; readonly pose?: PoseSpec; readonly wrist?: PoseSpec }
+}
+
+/** Poignets des deux mains pour un geste symétrique : la gauche est le miroir (x, −y, −z) de la droite. */
+function bothWrists(right: Euler3): PoseSpec {
+  return { rightHand: right, leftHand: [right[0], -right[1], -right[2]] }
 }
 
 /** Symétrise une visée du bras droit vers le gauche (x change de signe). */
@@ -175,76 +206,95 @@ function bothArms(right: AimSpec): AimSpec {
  */
 const GESTURE_SPECS: readonly GestureSpec[] = [
   {
-    // Deux paumes ouvertes vers l'interlocuteur, avant-bras relevés devant la poitrine.
+    // Deux paumes ouvertes vers l'interlocuteur, avant-bras relevés devant la poitrine : les poings se
+    // tournent paume vers le haut (torsion), le poignet un peu en extension, et ils se balancent doucement.
     id: 'openPalms',
     minDuration: 2.2,
     maxDuration: 3.2,
     symmetric: true,
-    aim: bothArms({ rightArm: [-0.2, -0.74, 0.5], rightForeArm: [0.1, 0.78, 0.62] }),
-    pose: { spine: [-0.03, 0, 0], rightHand: [-0.2, 0, 0], leftHand: [-0.2, 0, 0] },
+    aim: bothArms({ rightArm: [-0.2, -0.74, 0.5], rightForeArm: [0.12, 0.46, 0.88] }),
+    pose: { spine: [-0.03, 0, 0] },
+    wrist: bothWrists([0, 0.5, 0.1]),
+    wave: { period: 1.9, wrist: bothWrists([0.05, 0.16, 0.1]) },
   },
   {
-    // Énumération : une main relevée devant la poitrine qui marque trois temps.
+    // Énumération : une main relevée devant la poitrine qui marque trois temps (le poing plonge à chaque temps).
     id: 'enumerate',
     minDuration: 2.4,
     maxDuration: 3.4,
     symmetric: false,
-    aim: { rightArm: [-0.22, -0.78, 0.55], rightForeArm: [0.35, 0.85, 0.4] },
+    aim: { rightArm: [-0.22, -0.78, 0.55], rightForeArm: [0.35, 0.48, 0.8] },
     pose: { spine: [0, -0.04, 0] },
-    pulse: { count: 3, aim: { rightForeArm: [0.3, 0.5, 0.82] } },
+    wrist: { rightHand: [0, 0.22, 0.05] },
+    wave: { period: 1.6, wrist: { rightHand: [0.04, 0.12, 0.08] } },
+    pulse: { count: 3, aim: { rightForeArm: [0.3, 0.18, 0.94] }, wrist: { rightHand: [0.04, -0.08, -0.15] } },
   },
   {
-    // Main sur le cœur.
+    // Main sur le cœur : le poing se tourne contre la poitrine, poignet fléchi vers l'intérieur.
     id: 'heart',
     minDuration: 2.2,
     maxDuration: 3.0,
     symmetric: false,
     aim: { rightArm: [-0.1, -0.92, 0.38], rightForeArm: [0.75, 0.62, 0.3] },
     pose: { head: [0.05, 0, 0] },
+    wrist: { rightHand: [0, -0.3, -0.3] },
+    wave: { period: 1.7, wrist: { rightHand: [0.05, 0.14, 0.1] } },
   },
   {
-    // Ouverture des deux bras, mesurée : les coudes restent dans le cadre.
+    // Ouverture des deux bras, mesurée : les coudes restent dans le cadre. Les poings s'ouvrent paume vers le haut.
     id: 'openArms',
     minDuration: 2.4,
     maxDuration: 3.4,
     symmetric: true,
-    aim: bothArms({ rightArm: [-0.42, -0.66, 0.5], rightForeArm: [0.2, 0.68, 0.7] }),
+    aim: bothArms({ rightArm: [-0.42, -0.66, 0.5], rightForeArm: [0.22, 0.44, 0.87] }),
     pose: { spine: [-0.04, 0, 0], head: [-0.03, 0, 0] },
+    wrist: bothWrists([0, 0.45, 0.15]),
+    wave: { period: 2.1, wrist: bothWrists([0.04, 0.14, 0.08]) },
   },
   {
-    // Légère désignation : l'avant-bras s'ouvre vers l'extérieur, du côté du chat quand c'est le gauche.
+    // Légère désignation : l'avant-bras s'ouvre vers l'extérieur, du côté du chat quand c'est le gauche ;
+    // le poignet se redresse puis marque d'un petit coup.
     id: 'point',
     minDuration: 1.9,
     maxDuration: 2.8,
     symmetric: false,
-    aim: { rightArm: [-0.22, -0.72, 0.6], rightForeArm: [-0.05, 0.5, 0.86] },
+    aim: { rightArm: [-0.22, -0.72, 0.6], rightForeArm: [-0.05, 0.4, 0.915] },
     pose: { spine: [0, 0.05, 0], head: [0, 0.06, 0] },
+    wrist: { rightHand: [-0.1, 0.3, 0.2] },
+    wave: { period: 1.5, wrist: { rightHand: [0.05, 0.13, 0.07] } },
+    pulse: { count: 2, wrist: { rightHand: [-0.04, 0.08, -0.14] } },
   },
   {
-    // Peser le pour et le contre : une main monte quand l'autre descend, deux fois.
+    // Peser le pour et le contre : une main monte quand l'autre descend, deux fois, les poings qui basculent.
     id: 'weigh',
     minDuration: 2.6,
     maxDuration: 3.5,
     symmetric: true,
     aim: {
       rightArm: [-0.3, -0.72, 0.55],
-      rightForeArm: [0.25, 0.9, 0.4],
+      rightForeArm: [0.25, 0.6, 0.78],
       leftArm: [0.3, -0.78, 0.5],
-      leftForeArm: [-0.3, 0.78, 0.55],
+      leftForeArm: [-0.3, 0.4, 0.86],
     },
+    wrist: { rightHand: [0, 0.4, 0.1], leftHand: [0, 0.3, 0.1] },
     pulse: {
       count: 2,
-      aim: { rightForeArm: [0.15, 0.4, 0.9], leftForeArm: [-0.1, 0.35, 0.93] },
+      aim: { rightForeArm: [0.15, 0.22, 0.96], leftForeArm: [-0.1, 0.2, 0.97] },
       pose: { head: [0, 0, 0.03] },
+      wrist: { rightHand: [0, -0.28, -0.08], leftHand: [0, -0.28, -0.08] },
     },
   },
 ]
 
 /**
- * Réflexion : la main droite du personnage (à gauche de l'écran, côté opposé au chat) monte sous le
- * menton, le coude bien avancé. La main reste SOUS la bouche et devant l'épaule : jamais devant le visage.
+ * Réflexion : la main droite du personnage (à gauche de l'écran, côté opposé au chat) se relève devant le
+ * buste, le coude avancé, SOUS le menton : mesuré sur le rendu, l'ancienne visée (avant-bras presque vertical)
+ * amenait le poing contre le menton, ce que Baptiste a signalé. Le poing reste au niveau de la poitrine,
+ * poignet souple, et ne passe jamais devant le visage (test `wrists.test.ts`).
  */
-const THINKING_AIM: AimSpec = { rightArm: [-0.12, -0.58, 0.8], rightForeArm: [0.55, 0.78, 0.12] }
+const THINKING_AIM: AimSpec = { rightArm: [-0.12, -0.58, 0.8], rightForeArm: [0.55, 0.5, 0.67] }
+/** Poignet pendant la réflexion : le poing légèrement fléchi, qui se tourne de temps à autre (en plus de la dérive). */
+const THINKING_WRIST: PoseSpec = { rightHand: [0.03, -0.12, -0.14] }
 
 function normalized(v: Vec3): Vec3 {
   const len = Math.hypot(v[0], v[1], v[2]) || 1
@@ -287,8 +337,11 @@ function toPose(spec: PoseSpec | undefined, mirrored: boolean): Float32Array {
 interface GestureVariant {
   readonly aim: AimData
   readonly pose: Float32Array
+  readonly wrist: Float32Array
+  readonly waveWrist: Float32Array | null
   readonly pulseAim: AimData | null
   readonly pulsePose: Float32Array | null
+  readonly pulseWrist: Float32Array | null
 }
 
 interface GestureDef {
@@ -301,12 +354,16 @@ function variantOf(spec: GestureSpec, mirrored: boolean): GestureVariant {
   return {
     aim: toAim(spec.aim, mirrored),
     pose: toPose(spec.pose, mirrored),
+    wrist: toPose(spec.wrist, mirrored),
+    waveWrist: spec.wave ? toPose(spec.wave.wrist, mirrored) : null,
     pulseAim: spec.pulse?.aim ? toAim(spec.pulse.aim, mirrored) : null,
     pulsePose: spec.pulse?.pose ? toPose(spec.pulse.pose, mirrored) : null,
+    pulseWrist: spec.pulse?.wrist ? toPose(spec.pulse.wrist, mirrored) : null,
   }
 }
 
 const THINKING = toAim(THINKING_AIM, false)
+const THINKING_WRIST_POSE = toPose(THINKING_WRIST, false)
 
 const GESTURES: readonly GestureDef[] = GESTURE_SPECS.map((spec) => ({ spec, variants: [variantOf(spec, false), variantOf(spec, true)] }))
 
@@ -325,6 +382,25 @@ export function gestureAims(id: GestureId, mirrored = false): Partial<Record<Aim
   AIM_SEGMENTS.forEach((seg, i) => {
     if (data.has[i]) out[seg] = [data.dir[i * 3], data.dir[i * 3 + 1], data.dir[i * 3 + 2]]
   })
+  return out
+}
+
+/**
+ * Poignets d'un geste, pour les tests : pose tenue, amplitude de l'oscillation et du battement (les trois en
+ * valeur absolue par axe, dans l'ordre inclinaison, torsion, flexion), par main, côté non miroir sauf demande.
+ */
+export function gestureWrists(id: GestureId, mirrored = false): Partial<Record<'leftHand' | 'rightHand', { hold: Euler3; wave: Euler3; pulse: Euler3 }>> {
+  const def = GESTURES.find((g) => g.spec.id === id)!
+  const variant = def.variants[mirrored && !def.spec.symmetric ? 1 : 0]
+  const out: Partial<Record<'leftHand' | 'rightHand', { hold: Euler3; wave: Euler3; pulse: Euler3 }>> = {}
+  for (const hand of ['leftHand', 'rightHand'] as const) {
+    const i = BONE_INDEX[hand] * 3
+    const read = (src: Float32Array | null): Euler3 => (src ? [src[i], src[i + 1], src[i + 2]] : [0, 0, 0])
+    const hold = read(variant.wrist)
+    const wave = read(variant.waveWrist)
+    const pulse = read(variant.pulseWrist)
+    if (hold.some((v) => v !== 0) || wave.some((v) => v !== 0) || pulse.some((v) => v !== 0)) out[hand] = { hold, wave, pulse }
+  }
   return out
 }
 
@@ -400,6 +476,36 @@ export class GesturePlanner {
 
 // --- Moteur --------------------------------------------------------------------------------------
 
+// --- Poignets : constantes du moteur ------------------------------------------------------------
+
+/**
+ * Dérive permanente des poignets (radians, crête de la torsion, l'axe le plus ample ; la flexion en prend 80 %
+ * et l'inclinaison 60 %) par humeur. Au repos, ~2° : le clip « idle » de Meshy fait déjà bouger les mains de 8 à
+ * 10° sur sa boucle de 2,4 s, on ne fait que la casser. En parole, jusqu'à 9° de torsion : assez pour que le poing
+ * ne reste jamais figé plus de 1,5 s entre deux gestes (voir `wrists.test.ts`), trop peu pour qu'on y lise un tic.
+ */
+export const WRIST_DRIFT: Readonly<Record<RemiMood, number>> = { idle: 0.04, listening: 0.05, thinking: 0.055, speaking: 0.16 }
+/** Périodes (secondes) des deux composantes de la dérive pour [inclinaison, torsion, flexion] : une lente, une plus vive. */
+const WRIST_DRIFT_PERIODS: readonly (readonly [number, number])[] = [
+  [4.3, 2.6],
+  [3.1, 1.9],
+  [3.7, 2.1],
+]
+/** Part de l'amplitude de dérive par axe : la torsion se voit le plus, l'inclinaison latérale le moins. */
+const WRIST_DRIFT_AXIS: readonly number[] = [0.6, 1, 0.8]
+/** Les deux mains ne battent jamais à l'unisson : la droite est 13 % plus lente. */
+const WRIST_DRIFT_RIGHT_SLOWER = 1.13
+
+/**
+ * Battements de ponctuation du poignet : durée d'un battement, intervalle entre deux. Un battement part aussi à
+ * chaque hochement de tête (même rythme de parole), pourvu que le précédent soit terminé sur les deux mains
+ * (durée + décalage maximal de la seconde main) : deux battements ne se chevauchent jamais, ce qui ferait sauter la pose.
+ */
+export const WRIST_BEAT_SECONDS = 0.44
+const WRIST_BEAT_SECOND_HAND_DELAY_MAX = 0.14
+export const WRIST_BEAT_INTERVAL_MIN = 0.75
+export const WRIST_BEAT_INTERVAL_MAX = 1.4
+
 export const MOODS: readonly RemiMood[] = ['idle', 'listening', 'thinking', 'speaking']
 const MOOD_INDEX: Readonly<Record<RemiMood, number>> = { idle: 0, listening: 1, thinking: 2, speaking: 3 }
 
@@ -471,6 +577,14 @@ export function createGestureEngine(seed: number, initial: Partial<GestureSettin
 
   const slots: Slot[] = Array.from({ length: MAX_ACTIVE }, () => ({ active: false, def: GESTURES[0], side: 0 as 0 | 1, start: 0, duration: 1, amplitude: 1 }))
   const phases = Array.from({ length: 16 }, () => rng() * TAU)
+  // Poignets : leur propre suite aléatoire, pour que la chorégraphie du reste (hochements, gestes) ne change pas.
+  const wristRng = createRng(Math.imul(seed ^ 0x51ed270b, 0x2c1b3c6d) >>> 0)
+  const wristPhases = Array.from({ length: 12 }, () => wristRng() * TAU) // main × axe × composante
+  const beatStart = [-10, -10] // [main gauche, main droite]
+  const beatDepth = [0, 0]
+  const beatTwist = [0, 0]
+  let nextBeatAt = Infinity
+  let lastBeatAt = -10
 
   let time = 0
   let nextGestureAt = Infinity
@@ -570,6 +684,26 @@ export function createGestureEngine(seed: number, initial: Partial<GestureSettin
     add(BONE_INDEX.head, hx * lively, hy * lively, hz * lively, 1)
     add(BONE_INDEX.neck, hx * 0.3 * lively, hy * 0.3 * lively, 0, 1)
 
+    // --- Poignets : dérive permanente (deux composantes par axe, périodes incommensurables), toutes humeurs.
+    const driftAmp = (WRIST_DRIFT.idle * weights[0] + WRIST_DRIFT.listening * weights[1] + WRIST_DRIFT.thinking * weights[2] + WRIST_DRIFT.speaking * weights[3]) * motion
+    for (let h = 0; h < 2; h++) {
+      const stretch = h === 0 ? 1 : WRIST_DRIFT_RIGHT_SLOWER
+      let tilt = 0
+      let twist = 0
+      let flex = 0
+      for (let axis = 0; axis < 3; axis++) {
+        const [slowPeriod, quickPeriod] = WRIST_DRIFT_PERIODS[axis]
+        const value =
+          driftAmp *
+          WRIST_DRIFT_AXIS[axis] *
+          (0.55 * Math.sin((TAU * time) / (slowPeriod * stretch) + wristPhases[h * 6 + axis * 2]) + 0.45 * Math.sin((TAU * time) / (quickPeriod * stretch) + wristPhases[h * 6 + axis * 2 + 1]))
+        if (axis === 0) tilt = value
+        else if (axis === 1) twist = value
+        else flex = value
+      }
+      add(h === 0 ? BONE_INDEX.leftHand : BONE_INDEX.rightHand, tilt, twist, flex, 1)
+    }
+
     // --- Le corps est tourné de `bodyYaw` : la tête revient en partie vers la caméra.
     add(BONE_INDEX.head, 0, -0.55 * settings.bodyYaw, 0, 1)
 
@@ -596,6 +730,7 @@ export function createGestureEngine(seed: number, initial: Partial<GestureSettin
       add(BONE_INDEX.head, -0.1, 0.2 * side, -0.24 * side, wThink)
       add(BONE_INDEX.neck, -0.04, 0.08 * side, -0.08 * side, wThink)
       addAim(THINKING, wThink * motion, null, 0)
+      addPose(THINKING_WRIST_POSE, wThink * motion)
       add(BONE_INDEX.spine, 0, 0, 0.035 * sway * motion, wThink)
       add(BONE_INDEX.spine01, 0, 0.025 * sway * motion, 0.02 * sway * motion, wThink)
       add(BONE_INDEX.head, 0, 0, 0.03 * Math.sin((TAU * time) / 3.6 + phases[6] + 0.7) * motion, wThink)
@@ -662,6 +797,9 @@ export function createGestureEngine(seed: number, initial: Partial<GestureSettin
       addAim(variant.aim, w * armGain, variant.pulseAim, beat)
       addPose(variant.pose, w * wSpeak)
       if (variant.pulsePose) addPose(variant.pulsePose, w * wSpeak * beat)
+      addPose(variant.wrist, w * armGain)
+      if (variant.pulseWrist) addPose(variant.pulseWrist, w * armGain * beat)
+      if (variant.waveWrist) addPose(variant.waveWrist, w * armGain * Math.sin((TAU * elapsed) / slot.def.spec.wave!.period))
       if (env > bestEnvelope) {
         bestEnvelope = env
         activeId = slot.def.spec.id
@@ -676,7 +814,39 @@ export function createGestureEngine(seed: number, initial: Partial<GestureSettin
       addAim(variant.aim, 1, variant.pulseAim, beat)
       addPose(variant.pose, 1)
       if (variant.pulsePose) addPose(variant.pulsePose, beat)
+      addPose(variant.wrist, 1)
+      if (variant.pulseWrist) addPose(variant.pulseWrist, beat)
+      if (variant.waveWrist) addPose(variant.waveWrist, Math.sin((TAU * time) / forced.def.spec.wave!.period))
       activeId = forced.def.spec.id
+    }
+
+    // Battements de ponctuation du poignet (parole) : le poing plonge d'un petit coup, au rythme de la parole : sur
+    // chaque hochement de tête (`nodStart === time` ne vaut que l'image où le hochement part) et entre deux. La
+    // main la plus engagée dans un geste part en premier et plus fort que l'autre.
+    if (!speakingNow) nextBeatAt = Infinity
+    else if (nextBeatAt === Infinity) nextBeatAt = time + between(wristRng, 0.3, 0.8)
+    const nodStartsNow = nodStart === time
+    if (speakingNow && raw[MOOD_INDEX.speaking] > 0.05 && (time >= nextBeatAt || (nodStartsNow && time - lastBeatAt >= WRIST_BEAT_SECONDS + WRIST_BEAT_SECOND_HAND_DELAY_MAX))) {
+      const lead = wristRng() < 0.5 ? 0 : 1
+      const depth = between(wristRng, 0.14, 0.22)
+      const twist = (wristRng() < 0.5 ? -1 : 1) * between(wristRng, 0.04, 0.11)
+      for (let h = 0; h < 2; h++) {
+        beatStart[h] = time + (h === lead ? 0 : between(wristRng, 0.06, WRIST_BEAT_SECOND_HAND_DELAY_MAX))
+        beatDepth[h] = h === lead ? depth : depth * 0.55
+        beatTwist[h] = twist
+      }
+      lastBeatAt = time
+      nextBeatAt = time + between(wristRng, WRIST_BEAT_INTERVAL_MIN, WRIST_BEAT_INTERVAL_MAX)
+    }
+    for (let h = 0; h < 2; h++) {
+      const u = (time - beatStart[h]) / WRIST_BEAT_SECONDS
+      if (u < 0 || u >= 1) continue
+      const bump = Math.sin(Math.PI * u) ** 2
+      // Plus marqué quand le bras est levé (la main se voit), discret quand il pend.
+      const engaged = Math.min(1, aimWeight[AIM_INDEX[h === 0 ? 'leftForeArm' : 'rightForeArm']])
+      const gain = wSpeak * motion * (0.5 + 0.5 * engaged) * bump
+      const sign = h === 0 ? 1 : -1 // main gauche : miroir de la droite (y et z changent de signe)
+      add(h === 0 ? BONE_INDEX.leftHand : BONE_INDEX.rightHand, 0.25 * beatDepth[h], -sign * beatTwist[h], sign * beatDepth[h], gain)
     }
 
     // Limite douce par os et par axe.

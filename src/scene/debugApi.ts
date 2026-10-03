@@ -3,7 +3,7 @@
  * Sert aux tests Playwright (téléportation, lecture d'état). Propriétaire : intégration.
  */
 import { useGame } from '../state/gameStore'
-import { input, placePlayer, player } from '../state/runtime'
+import { archivistProbe, input, placePlayer, player } from '../state/runtime'
 import type { PresenceStats } from '../features/presence/presenceSession'
 
 export interface MuseeDebugApi {
@@ -25,6 +25,8 @@ export interface MuseeDebugApi {
   cameraPosition?: () => { x: number; y: number; z: number }
   /** Projette un point du monde en coordonnées écran (clientX/Y), pour viser un point de sol précis. */
   worldToScreen?: (x: number, y: number, z: number) => { clientX: number; clientY: number }
+  /** État de l'Archiviste 3D (chargée ? triangles, clip demandé, rotation vers le joueur), lu sur `state/runtime.ts`. */
+  archivist: () => typeof archivistProbe
   /** Compteurs de la session de présence (état, salle, sauts, erreurs…), posée par `usePresence` tant qu'elle tourne. */
   presence?: () => PresenceStats
 }
@@ -51,6 +53,7 @@ export function installDebugApi(): void {
     player,
     input,
     teleport: (x, z, rotY = 0) => placePlayer(x, z, rotY),
+    archivist: () => ({ ...archivistProbe }),
     goToPerson: (personId) => {
       const frame = useGame.getState().layout?.frames.find((f) => f.personId === personId)
       if (!frame) return false

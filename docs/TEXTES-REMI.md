@@ -6,7 +6,7 @@
 
 Le Musée des 100 est le jeu mobile 3D de la soirée « 2026 : l'Odyssée de l'IA » (6 octobre 2026). Décision du 29/09 : Rémi Godeau, directeur de la rédaction de L'Opinion et co-organisateur de la soirée, accueille les visiteurs au comptoir du hall. Il apparaît sous la forme d'un personnage 3D qui salue le visiteur quand celui-ci s'approche du comptoir.
 
-Il ne parle pas à voix haute. Depuis la V5, l'accueil et la conversation du comptoir passent par un **chat textuel avec « Rémi · IA »** (V5, WEL-920) : à l'entrée dans le musée (tant qu'aucun portrait n'a été ouvert) le chat s'ouvre avec le texte d'accueil de la section 1 déjà affiché (il compose son premier message, mot pour mot), puis le visiteur peut lui écrire ; chaque fois qu'il touche « Parler à Rémi » près du comptoir, le chat se rouvre. Les réponses libres de ce chat sont **générées par une IA** (la mention « Réponses générées par une IA » reste affichée en haut du chat) et ne figurent pas dans ce document : seuls les textes écrits d'avance sont listés ici, y compris les répliques de la section 2, qui servent de **réponse de repli** quand le service de l'IA ne répond pas (section 5). Les répliques des sections 3 et 4 (tampon obtenu, carnet complet) s'affichent toujours dans une boîte de dialogue, sous son nom « Rémi Godeau ».
+Il ne parle pas à voix haute. À l'entrée dans le musée (tant qu'aucun portrait n'a été ouvert), le visiteur arrive directement dans le jeu : le texte d'accueil de la section 1 s'affiche dans la bulle de dialogue, en bas de l'écran. Depuis la V5, la conversation du comptoir passe par un **chat textuel avec « Rémi · IA »** (V5, WEL-920) : chaque fois que le visiteur touche « Parler à Rémi » près du comptoir, le chat s'ouvre, par-dessus le musée, avec un court premier message (section 5.0), puis il peut lui écrire. Les réponses libres de ce chat sont **générées par une IA** (la mention « Réponses générées par une IA » reste affichée en haut du chat) et ne figurent pas dans ce document : seuls les textes écrits d'avance sont listés ici, y compris les répliques de la section 2, qui servent de **réponse de repli** quand le service de l'IA ne répond pas (section 5). Les répliques des sections 3 et 4 (tampon obtenu, carnet complet) s'affichent toujours dans une boîte de dialogue, sous son nom « Rémi Godeau ».
 
 ## Ce qu'il est demandé à Rémi Godeau / L'Opinion
 
@@ -41,7 +41,7 @@ Il ne parle pas à voix haute. Depuis la V5, l'accueil et la conversation du com
 | 5 | Approchez-vous d'un portrait et touchez « Regarder » pour ouvrir sa fiche. | Step up to a portrait and tap “Look” to open its card. | |
 | 6 | Le rallye des tampons : lisez plusieurs portraits d'une même aile, et un tampon s'ajoute à votre carnet. | The stamp rally: read several portraits in the same wing, and a stamp is added to your stamp card. | |
 | 7 | Au sud du hall, une porte mène aux Archives de 2040 : chaque séquence de la soirée y a sa vitrine. | To the south of the hall, a door leads to the 2040 Archives: each session of the evening has its own display case. | |
-| 8 | Je reste à l'accueil : revenez me voir quand vous le souhaitez. | I'll be here at the front desk: come back and see me whenever you like. | |
+| 8 | Je reste à l'accueil : au comptoir, touchez « Parler à Rémi » pour me poser vos questions par écrit. | I'll be here at the front desk: at the counter, tap “Talk to Rémi” to ask me your questions in writing. | |
 
 ## 2. Conversation au comptoir
 
@@ -139,7 +139,15 @@ Affiché juste après l'obtention du tampon d'une aile (et de son toast).
 
 ## 5. Chat avec Rémi · IA : phrases écrites d'avance
 
-Ces phrases sont prononcées au nom de Rémi par l'interface du chat, quand le service de l'IA ne répond pas normalement. Elles suivent les mêmes règles que les sections précédentes (vouvoiement, sobriété, ni opinion ni promesse).
+Ces phrases sont prononcées au nom de Rémi par l'interface du chat, sans passer par l'IA (premier message du fil) ou quand le service de l'IA ne répond pas normalement. Elles suivent les mêmes règles que les sections précédentes (vouvoiement, sobriété, ni opinion ni promesse).
+
+### 5.0 Premier message du chat
+
+*Affiché dès l'ouverture du chat au comptoir, sans appel au serveur : l'accueil complet (section 1) a déjà été donné dans la bulle du jeu, le chat ne le répète pas. Les suggestions de questions s'affichent juste dessous.*
+
+| # | Français | English | Validation Rémi |
+|---|---|---|---|
+| 1 | Bonjour ! Je suis Rémi · IA. Posez-moi vos questions sur le musée, les 100 ou la soirée. | Hello! I'm Rémi · AI. Ask me your questions about the museum, the 100 or the evening. | |
 
 ### 5.1 Réponse de repli (service indisponible)
 

@@ -25,6 +25,7 @@ import {
   gotoMusee,
   museePlayer,
   teleport,
+  waitForCameraSettled,
   waitForRenderInfo,
 } from './support/museeApi'
 
@@ -356,7 +357,7 @@ test('vitrine : navigation précédente/suivante entre séquences', async ({ pag
 // L'Archiviste.
 // ---------------------------------------------------------------------------
 
-test('Archiviste : « Parler à l’Archiviste » ouvre un dialogue', async ({ page }) => {
+test('Archiviste : « Parler à l’Archiviste » ouvre son chat IA (plus un dialogue scripté)', async ({ page }) => {
   const state = await enterMuseumWithArchives(page)
   const archivist = state.archivesLayout!.archivist
 
@@ -367,9 +368,80 @@ test('Archiviste : « Parler à l’Archiviste » ouvre un dialogue', async ({ p
   await expect(actionButton).toHaveText("Parler à l'Archiviste")
   await actionButton.click()
 
-  const box = page.getByTestId('dialogue-box')
-  await expect(box).toBeVisible()
-  await expect(box).toContainText("L'Archiviste")
+  // Depuis WEL-929 : le chat de l'Archiviste · IA (détails dans `archiviste-chat.spec.ts`), pas la bulle du jeu.
+  const chat = page.getByTestId('remi-chat')
+  await expect(chat).toBeVisible({ timeout: 60_000 })
+  await expect(chat).toHaveAttribute('data-persona', 'archiviste')
+  await expect(page.getByRole('heading', { name: 'Archiviste · IA' })).toBeVisible()
+  await expect(page.getByTestId('dialogue-box')).toHaveCount(0)
+})
+
+/** Sonde de l'Archiviste 3D (`window.__musee.archivist()`, `src/state/runtime.ts::archivistProbe`). */
+interface ArchivistProbe {
+  loaded: boolean
+  triangles: number
+  clip: 'idle' | 'wave' | 'talk'
+  yaw: number
+  /** Fois où son maillage a été dessiné (ne bouge pas tant qu'elle est hors du champ de la caméra). */
+  drawn: number
+}
+
+async function archivistProbe(page: Page): Promise<ArchivistProbe> {
+  return page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: { archivist?: () => unknown } }).__musee
+    if (!musee?.archivist) throw new Error('window.__musee.archivist indisponible : build sans la sonde de l’Archiviste ?')
+    return musee.archivist()
+  }) as Promise<ArchivistProbe>
+}
+
+test('Archiviste 3D : le personnage est chargé, salue à l’approche (une fois) et se tourne vers le joueur dans une plage bornée', async ({
+  page,
+}) => {
+  const state = await enterMuseumWithArchives(page)
+  const archives = state.archivesLayout!
+  const archivist = archives.archivist
+
+  // Joueur à l'arrivée (hors de portée de l'Archiviste) : le GLB se charge, au repos.
+  await teleport(page, archives.arrival.position.x, archives.arrival.position.z, archives.arrival.rotationY)
+  await expect.poll(async () => (await archivistProbe(page)).loaded, { timeout: 30_000 }).toBe(true)
+  const idle = await archivistProbe(page)
+  // Le vrai maillage de l'Archiviste (≥ 10 000 triangles), pas un repli ni la silhouette abstraite d'avant (≈ 3 000).
+  expect(idle.triangles, 'maillage de l’Archiviste').toBeGreaterThan(10_000)
+  expect(idle.clip).toBe('idle')
+
+  // Le joueur arrive à sa droite, à portée : elle le salue (clip « wave » joué une fois), puis revient au repos.
+  await teleport(page, archivist.position.x + 1.6, archivist.position.z + 1.6, Math.PI)
+  await expect.poll(async () => (await archivistProbe(page)).clip, { timeout: 10_000 }).toBe('wave')
+  await expect.poll(async () => (await archivistProbe(page)).clip, { timeout: 30_000 }).toBe('idle')
+
+  // Elle s'est tournée vers lui (côté est : rotation positive), sans jamais dépasser ±40°.
+  await expect.poll(async () => (await archivistProbe(page)).yaw, { timeout: 10_000 }).toBeGreaterThan(0.3)
+  expect((await archivistProbe(page)).yaw).toBeLessThanOrEqual((40 * Math.PI) / 180 + 1e-6)
+
+  // De l'autre côté, elle se tourne de l'autre côté ; de loin (hall), elle reprend son orientation de repos.
+  await teleport(page, archivist.position.x - 1.6, archivist.position.z + 1.6, Math.PI)
+  await expect.poll(async () => (await archivistProbe(page)).yaw, { timeout: 10_000 }).toBeLessThan(-0.3)
+  await teleport(page, archives.arrival.position.x, archives.arrival.position.z - 8, 0)
+  await expect.poll(async () => Math.abs((await archivistProbe(page)).yaw), { timeout: 10_000 }).toBeLessThan(0.05)
+})
+
+test('Archiviste 3D : hors du champ de la caméra (spawn du hall) elle n’est pas dessinée, dans la salle elle l’est', async ({
+  page,
+}) => {
+  const state = await enterMuseumWithArchives(page)
+  const archives = state.archivesLayout!
+
+  // Au point d'apparition du hall, elle est derrière le bas de l'écran (6,4 m au sud-est, tous formats testés) :
+  // son maillage (12 467 triangles) ne doit pas être dessiné pour rien, c'est le budget de tous les joueurs au départ.
+  await expect.poll(async () => (await archivistProbe(page)).loaded, { timeout: 30_000 }).toBe(true)
+  await waitForCameraSettled(page)
+  const atSpawn = (await archivistProbe(page)).drawn
+  await page.waitForTimeout(1_500)
+  expect((await archivistProbe(page)).drawn, 'dessinée alors qu’elle est hors du champ, au spawn du hall').toBe(atSpawn)
+
+  // Dans la salle, face à elle, elle est dessinée à chaque image.
+  await teleport(page, archives.archivist.position.x, archives.archivist.position.z + 2.4, Math.PI)
+  await expect.poll(async () => (await archivistProbe(page)).drawn, { timeout: 15_000 }).toBeGreaterThan(atSpawn + 2)
 })
 
 // ---------------------------------------------------------------------------
@@ -564,11 +636,16 @@ test('aucune erreur console sur le parcours complet des Archives', async ({ page
   await expect(page.getByTestId('archive-card')).toBeVisible()
   await page.keyboard.press('Escape')
 
-  // L'Archiviste.
+  // L'Archiviste : depuis la V5.1 (WEL-929), « Parler à l'Archiviste » ouvre son chat IA (code chargé à
+  // la demande, d'où le délai large), plus le dialogue scripté. /api/remi est intercepté par gotoMusee.
   await teleport(page, archives.archivist.position.x, archives.archivist.position.z)
   await page.waitForTimeout(500)
   await page.getByTestId('action-button').click()
-  await expect(page.getByTestId('dialogue-box')).toBeVisible()
+  const chat = page.getByTestId('remi-chat')
+  await expect(chat).toBeVisible({ timeout: 60_000 })
+  await expect(chat).toHaveAttribute('data-persona', 'archiviste')
+  await page.getByTestId('remi-chat-close').click()
+  await expect(chat).toBeHidden()
   await closeAnyDialogue(page)
 
   // Carnet et plan.

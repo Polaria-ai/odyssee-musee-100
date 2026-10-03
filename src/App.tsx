@@ -8,6 +8,7 @@ import { loadEvening } from './data/evening'
 import { buildArchivesLayout, mergeArchivesIntoLayout } from './archives/layout'
 import { ArchiveCard } from './archives/ArchiveCard'
 import { archivistDialogue } from './archives/archivistScript'
+import { remiDialogue } from './npc/remiScript'
 import { Experience } from './scene/Experience'
 import { LoadingScreen } from './ui/LoadingScreen'
 import { TitleScreen } from './ui/TitleScreen'
@@ -24,18 +25,31 @@ import { useKeyboardControls } from './player/useKeyboardControls'
 import { useAudioDirector } from './audio'
 import { Signature } from './features/signature/Signature'
 
-// Le chat avec Rémi · IA (et, derrière lui, son buste 3D) sort du paquet d'entrée : il est chargé à sa
-// première ouverture, puis reste monté pour garder la conversation jusqu'à la fin de la session.
-const RemiChat = lazy(() => import('./features/remiChat/RemiChat').then((m) => ({ default: m.RemiChat })))
+// Les chats IA (Rémi · IA et l'Archiviste · IA, et, derrière eux, le buste 3D) sortent du paquet d'entrée : ils sont
+// chargés à la première ouverture, puis restent montés pour garder chaque conversation jusqu'à la fin de la session.
+// Ils ne s'ouvrent qu'au comptoir (« Parler à Rémi ») ou au socle de l'Archiviste (« Parler à l'Archiviste ») : leur code
+// est donc préchargé dès que le joueur s'approche de l'un ou de l'autre, pour que le geste du visiteur ne tombe pas sur
+// un écran vide le temps du téléchargement.
+const loadAiChats = () => import('./features/remiChat/RemiChat').then((m) => ({ default: m.AiChats }))
+const loadRemiBust = () => import('./features/remiChat/bust/BustCanvas')
+const AiChats = lazy(loadAiChats)
 
 function RemiChatSlot() {
   const open = useGame((s) => s.remiChatOpen)
+  const nearCurator = useGame((s) => s.nearCurator)
+  const nearArchivist = useGame((s) => s.nearArchivist)
   const [opened, setOpened] = useState(false)
+  const near = nearCurator || nearArchivist
+  useEffect(() => {
+    if (!near) return
+    void loadAiChats()
+    void loadRemiBust()
+  }, [near])
   if (open && !opened) setOpened(true)
   if (!open && !opened) return null
   return (
     <Suspense fallback={null}>
-      <RemiChat />
+      <AiChats />
     </Suspense>
   )
 }
@@ -44,6 +58,7 @@ export function App() {
   const screen = useGame((s) => s.screen)
   const layout = useGame((s) => s.layout)
   const overlay = useGame(isOverlayOpen)
+  const remiChatOpen = useGame((s) => s.remiChatOpen)
 
   useEffect(() => {
     let cancelled = false
@@ -66,14 +81,15 @@ export function App() {
     }
   }, [])
 
-  // Entrée dans le musée : placement au point d'apparition et accueil de Rémi, qui ouvre le chat
-  // (message d'accueil déjà affiché, voir `src/features/remiChat/useRemiChat.ts`).
+  // Entrée dans le musée : placement au point d'apparition et accueil de Rémi, dans la bulle scriptée en bas de
+  // l'écran. Le visiteur arrive directement dans le jeu, le musée sous les yeux ; le chat avec Rémi · IA ne
+  // s'ouvre qu'au comptoir (« Parler à Rémi »).
   useEffect(() => {
     if (screen !== 'play' || !layout) return
     placePlayer(layout.spawn.position.x, layout.spawn.position.z, layout.spawn.rotationY)
     resetInput()
     const g = useGame.getState()
-    if (Object.keys(g.visited).length === 0) g.openRemiChat()
+    if (Object.keys(g.visited).length === 0) g.startDialogue(remiDialogue({ kind: 'welcome' }))
   }, [screen, layout])
 
   useEffect(() => {
@@ -97,7 +113,9 @@ export function App() {
   useKeyboardControls(playing && !overlay)
 
   return (
-    <div className="app" data-screen={screen}>
+    // `data-remi-chat` : le chat est translucide (on voit le musée à travers), le HUD du jeu est donc masqué en CSS
+    // pendant qu'il est ouvert (voir `src/features/remiChat/remiChat.css`).
+    <div className="app" data-screen={screen} data-remi-chat={remiChatOpen || undefined}>
       <Experience />
       {screen === 'loading' && <LoadingScreen />}
       {screen === 'title' && <TitleScreen />}

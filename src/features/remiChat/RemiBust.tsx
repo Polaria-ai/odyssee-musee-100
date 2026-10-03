@@ -1,7 +1,8 @@
 /**
- * Buste 3D animé de Rémi · IA dans le chat (son propre `<Canvas>`, WEL-919). Le parent (`RemiChat`)
- * décide de la taille : le buste remplit son conteneur (moitié gauche de l'écran sur PC, plein écran
- * derrière les bulles sur téléphone). Signature et `data-testid` inchangés depuis le bouchon.
+ * Buste 3D animé de Rémi · IA, ou de l'Archiviste · IA (prop `character`, Rémi par défaut), dans le chat (son propre
+ * `<Canvas>`, WEL-919, WEL-929). Le parent (`PersonaChat`) décide de la taille : le buste remplit son conteneur (moitié
+ * gauche de l'écran sur PC, plein écran derrière les bulles sur téléphone). Signature et `data-testid="remi-bust"`
+ * inchangés depuis le bouchon, pour les deux personnages (`data-character` dit lequel).
  *
  * Le rendu 3D (`bust/BustCanvas`) est chargé à la demande : les tests jsdom du chat et le premier
  * chargement du jeu n'embarquent pas ce code. Partout où la 3D ne peut pas s'afficher (WebGL absent,
@@ -12,13 +13,11 @@
  * `fallback` (silhouette définitive).
  */
 import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { charter3d } from '../../styles/tokens'
-import type { RemiBustProps, RemiBustVariant } from './contract'
+import { DEFAULT_PERSONA, type RemiBustProps, type RemiBustVariant } from './contract'
 import type { BustDebug } from './bust/BustScene'
 import { Silhouette } from './bust/Silhouette'
 import { hasWebGL } from './bust/env'
 import { fadeMask, type Framing } from './bust/framing'
-import { haloBackground } from './bust/style'
 
 const BustCanvas = lazy(() => import('./bust/BustCanvas'))
 
@@ -26,10 +25,10 @@ const BustCanvas = lazy(() => import('./bust/BustCanvas'))
 const CONTEXT_RESTORE_WAIT_MS = 1500
 const MAX_REMOUNTS = 2
 
-/** Position du halo et du fondu avant que le modèle ne soit mesuré (puis remplacés par le vrai cadre). */
-const DEFAULT_LAYOUT: Record<RemiBustVariant, { headCenter: number; cut: number; fadeEnd: number }> = {
-  split: { headCenter: 0.3, cut: 0.86, fadeEnd: 1 },
-  fullscreen: { headCenter: 0.2, cut: 0.5, fadeEnd: 0.6 },
+/** Position du fondu avant que le modèle ne soit mesuré (puis remplacée par le vrai cadre). */
+const DEFAULT_LAYOUT: Record<RemiBustVariant, { cut: number; fadeEnd: number }> = {
+  split: { cut: 0.86, fadeEnd: 1 },
+  fullscreen: { cut: 0.5, fadeEnd: 0.6 },
 }
 
 /** Attrape toute erreur de rendu autour du bloc 3D (chargement de son code, création du contexte WebGL) : repli propre. */
@@ -55,11 +54,11 @@ export interface RemiBustViewProps extends RemiBustProps {
   debug?: BustDebug
 }
 
-export function RemiBust({ mood, variant }: RemiBustProps) {
-  return <RemiBustView mood={mood} variant={variant} />
+export function RemiBust({ mood, variant, character }: RemiBustProps) {
+  return <RemiBustView mood={mood} variant={variant} character={character} />
 }
 
-export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
+export function RemiBustView({ mood, variant, character = DEFAULT_PERSONA, debug }: RemiBustViewProps) {
   const [supported] = useState(hasWebGL)
   const [failed, setFailed] = useState(false)
   const [ready, setReady] = useState(false)
@@ -103,7 +102,6 @@ export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
 
   const state = !supported || failed ? 'fallback' : ready && !lost ? 'ready' : 'loading'
   const defaults = DEFAULT_LAYOUT[variant]
-  const headCenter = framing?.headCenterFraction ?? defaults.headCenter
   const mask = fadeMask(framing ?? { cutFraction: defaults.cut, fadeEndFraction: defaults.fadeEnd })
 
   const root: CSSProperties = {
@@ -111,14 +109,14 @@ export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
     width: '100%',
     height: '100%',
     overflow: 'hidden',
-    // Halo doux derrière la tête : le cyan du contre-jour déborde sur le fond posé par le parent.
-    background: haloBackground(headCenter, charter3d.base.cyanVif),
+    // Aucun fond ni halo : le canvas du buste est transparent, c'est le musée du jeu qui passe derrière Rémi.
+    // Seul le liseré cyan du contre-jour (matériau du modèle) reste sur le personnage.
   }
   // Le corps s'estompe sous la coupe à mi-torse (masque CSS : le canvas reste transparent).
   const layer: CSSProperties = { position: 'absolute', inset: 0, maskImage: mask, WebkitMaskImage: mask }
 
   return (
-    <div data-testid="remi-bust" data-mood={mood} data-variant={variant} data-state={state} aria-hidden="true" style={root}>
+    <div data-testid="remi-bust" data-character={character} data-mood={mood} data-variant={variant} data-state={state} aria-hidden="true" style={root}>
       {supported && !failed && (
         <div style={layer}>
           <BustBoundary key={canvasKey} onFail={onFail}>
@@ -126,6 +124,7 @@ export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
               <BustCanvas
                 mood={mood}
                 variant={variant}
+                character={character}
                 debug={debug}
                 onFraming={setFraming}
                 onReady={onReady}

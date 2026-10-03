@@ -57,13 +57,20 @@ export interface MuseeGameState {
   openPersonId: string | null
   nearbyPersonId: string | null
   nearCurator: boolean
+  /** À portée du socle de l'Archiviste (bouton « Parler à l'Archiviste »). */
+  nearArchivist: boolean
   currentRoom: string | null
   dialogue: MuseeDialogue | null
   dialogueIndex: number
   stampCardOpen: boolean
   mapOpen: boolean
-  /** Chat avec Rémi · IA ouvert (accueil à la première entrée, « Parler à Rémi » ensuite). */
+  /**
+   * Un chat IA est ouvert (uniquement par « Parler à Rémi » au comptoir ou « Parler à l'Archiviste » à son socle :
+   * l'accueil de l'entrée est la bulle de dialogue). Le nom date du seul chat de Rémi ; `chatPersona` dit lequel.
+   */
   remiChatOpen: boolean
+  /** Persona du chat ouvert (ou du dernier ouvert) : `'remi'` au départ. */
+  chatPersona: 'remi' | 'archiviste'
   peersCount: number
   layout: MuseeLayout | null
   openPerson: (personId: string) => void
@@ -308,8 +315,9 @@ export async function closePersonViaState(page: Page): Promise<void> {
 /**
  * Amène le joueur de l'écran titre à l'écran de jeu : clique « Entrer » (on entre directement
  * au musée, en Cyril : plus d'écran de personnalisation) et attend le canvas. L'accueil de Rémi
- * (le chat, depuis la V5) peut ensuite s'afficher (voir `dismissWelcomeDialogue`) : on ne le ferme
- * pas ici, chaque test décide s'il veut l'observer ou le fermer.
+ * (la bulle de dialogue en bas de l'écran) s'affiche ensuite (voir `dismissWelcomeDialogue`) : on ne le ferme
+ * pas ici, chaque test décide s'il veut l'observer ou le fermer. Le chat avec Rémi · IA, lui, ne s'ouvre jamais
+ * à l'entrée (voir `openRemiChat`).
  */
 export async function enterMuseum(page: Page): Promise<void> {
   await expect(page.getByTestId('title-screen')).toBeVisible()
@@ -319,9 +327,10 @@ export async function enterMuseum(page: Page): Promise<void> {
 }
 
 /**
- * Ferme l'accueil de Rémi s'il est affiché. Depuis la V5, c'est le chat avec Rémi · IA (bouton fermer,
- * comme un visiteur) ; un dialogue scripté encore affiché (tampons, Archiviste) l'est en cliquant
- * jusqu'à sa fermeture (borné, pour ne jamais boucler indéfiniment si l'app ne répond pas).
+ * Ferme l'accueil de Rémi s'il est affiché : la bulle de dialogue scripté (bouton « Passer », ou clic par clic ;
+ * borné pour ne jamais boucler indéfiniment si l'app ne répond pas), puis, si un test l'avait ouvert, le chat
+ * avec Rémi · IA (bouton fermer, comme un visiteur). Les autres dialogues scriptés (tampons, Archiviste) se ferment
+ * de la même façon.
  * Le nom est resté `dismissWelcomeDialogue` : une quarantaine d'appels en dépendent.
  */
 export async function dismissWelcomeDialogue(page: Page): Promise<void> {
@@ -330,16 +339,36 @@ export async function dismissWelcomeDialogue(page: Page): Promise<void> {
   // arrive encore. On se fie donc à l'état, puis on attend le chat avant de le fermer par son bouton.
   const chatOpen = (await museeState(page).catch(() => null))?.remiChatOpen === true
   if (chatOpen || (await chat.isVisible().catch(() => false))) {
-    await expect(chat).toBeVisible({ timeout: 15_000 })
+    await expect(chat).toBeVisible({ timeout: 60_000 })
     await page.getByTestId('remi-chat-close').click()
     await expect(chat).toBeHidden()
   }
   const box = page.getByTestId('dialogue-box')
+  // L'accueil est lancé par un effet de `App.tsx` : l'état le dit tout de suite, la bulle quelques instants plus tard.
+  const dialogueStarted = (await museeState(page).catch(() => null))?.dialogue != null
+  if (dialogueStarted) await expect(box).toBeVisible()
   if (!(await box.isVisible().catch(() => false))) return
-  for (let i = 0; i < 20 && (await box.isVisible().catch(() => false)); i++) {
-    await box.click()
+  // « Passer » ferme la bulle d'un seul geste (huit répliques d'accueil, tapées lettre par lettre : cliquer sur chacune
+  // coûterait ~12 s à chaque test) ; sans lui, on avance clic par clic.
+  const skip = box.locator('button')
+  for (let i = 0; i < 30 && (await box.isVisible().catch(() => false)); i++) {
+    if (await skip.isVisible().catch(() => false)) await skip.click()
+    else await box.click()
     await page.waitForTimeout(50)
   }
+}
+
+/**
+ * Ouvre le chat avec Rémi · IA comme le fait l'action « Parler à Rémi » du comptoir (`interact()` appelle
+ * `openRemiChat()`), sans marcher jusqu'au comptoir. Le test du vrai geste au comptoir est dans `remi-chat.spec.ts`.
+ * Le chat est chargé à la demande : on attend qu'il soit à l'écran.
+ */
+export async function openRemiChat(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+    musee?.state().openRemiChat()
+  })
+  await expect(page.getByTestId('remi-chat')).toBeVisible({ timeout: 60_000 })
 }
 
 /** Vrai si la page déborde horizontalement (scrollWidth > clientWidth), signe d'un débordement CSS. */

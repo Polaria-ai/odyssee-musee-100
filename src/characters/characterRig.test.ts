@@ -1,8 +1,18 @@
-import { AnimationMixer, Box3, MeshLambertMaterial, MeshStandardMaterial, Vector3, VectorKeyframeTrack } from 'three'
+import { AnimationMixer, Box3, MeshLambertMaterial, MeshStandardMaterial, ShaderLib, Vector3, VectorKeyframeTrack } from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { describe, expect, it } from 'vitest'
-import { alignRootToReference, findSkinnedMesh, fitToHeight, getCharacterAssets, makeMatteMaterial } from './characterRig'
-import type { CharacterDef } from './models'
+import {
+  CHARACTER_LOD_BIAS,
+  CULLING_MARGIN,
+  alignRootToReference,
+  applyLodBias,
+  findSkinnedMesh,
+  fitToHeight,
+  getCharacterAssets,
+  injectLodBias,
+  makeMatteMaterial,
+} from './characterRig'
+import { CHARACTERS, type CharacterDef } from './models'
 import { FIXTURE_MAP, makeTestRig, positionClip } from './rig.fixture'
 
 const DEF: CharacterDef = { path: '/test.glb', height: 1, clips: { idle: 'idle', wave: 'wave', walk: 'walk' } }
@@ -81,6 +91,63 @@ describe('makeMatteMaterial', () => {
   })
 })
 
+/** Fragment shader d'un Lambert tel que three le donne à `onBeforeCompile` (morceaux `#include` encore à résoudre). */
+const LAMBERT_FRAGMENT = ShaderLib.lambert.fragmentShader
+
+describe('biais de LOD des personnages (WEL-930)', () => {
+  it('est négatif : le GPU lit un niveau de mipmap plus fin, donc moins de mélange entre îlots voisins de l\'atlas', () => {
+    expect(CHARACTER_LOD_BIAS).toBe(-2)
+  })
+
+  it('injectLodBias biaise les deux lectures de texture (couleur et émissif) du fragment shader Lambert de three', () => {
+    // Garde-fou : si une mise à jour de three renomme ces morceaux de shader, ce test échoue au lieu de laisser le biais disparaître.
+    expect(LAMBERT_FRAGMENT).toContain('#include <map_fragment>')
+    expect(LAMBERT_FRAGMENT).toContain('#include <emissivemap_fragment>')
+    const patched = injectLodBias(LAMBERT_FRAGMENT)
+    expect(patched).toContain('texture2D( map, vMapUv, -2.00 )')
+    expect(patched).toContain('texture2D( emissiveMap, vEmissiveMapUv, -2.00 )')
+    expect(patched).not.toContain('texture2D( map, vMapUv )')
+    expect(patched).not.toContain('texture2D( emissiveMap, vEmissiveMapUv )')
+    // Le reste du shader est intact (éclairage, sortie) : seuls les deux morceaux sont remplacés par leur propre texte.
+    expect(patched).toContain('#include <lights_fragment_begin>')
+    expect(patched).toContain('#include <opaque_fragment>')
+    expect(injectLodBias(LAMBERT_FRAGMENT, -1.5)).toContain('texture2D( map, vMapUv, -1.50 )')
+  })
+
+  it('injectLodBias ne change rien à un shader qui n\'a pas ces morceaux', () => {
+    expect(injectLodBias('void main() { gl_FragColor = vec4( 1.0 ); }')).toBe('void main() { gl_FragColor = vec4( 1.0 ); }')
+  })
+
+  it('makeMatteMaterial applique le biais à un matériau texturé, avec une clé de programme propre au biais', () => {
+    const matte = makeMatteMaterial(new MeshStandardMaterial({ map: FIXTURE_MAP }))
+    const shader = { fragmentShader: LAMBERT_FRAGMENT }
+    matte.onBeforeCompile(shader as never, undefined as never)
+    expect(shader.fragmentShader).toContain(`texture2D( map, vMapUv, ${CHARACTER_LOD_BIAS.toFixed(2)} )`)
+    expect(matte.customProgramCacheKey()).toContain(String(CHARACTER_LOD_BIAS))
+    // Deux biais différents ne partagent pas le même programme compilé.
+    expect(applyLodBias(new MeshLambertMaterial(), -1).customProgramCacheKey()).not.toBe(matte.customProgramCacheKey())
+  })
+
+  it('makeMatteMaterial laisse son programme d\'origine à un matériau sans texture', () => {
+    const plain = makeMatteMaterial(new MeshStandardMaterial({ color: '#ff0000' }))
+    const shader = { fragmentShader: LAMBERT_FRAGMENT }
+    plain.onBeforeCompile(shader as never, undefined as never)
+    expect(shader.fragmentShader).toBe(LAMBERT_FRAGMENT)
+  })
+
+  it('Material.clone() perd le biais : applyLodBias le redonne à un clone (fondu d\'opacité de GlbCharacter)', () => {
+    const matte = makeMatteMaterial(new MeshStandardMaterial({ map: FIXTURE_MAP }))
+    const clone = matte.clone()
+    const shader = { fragmentShader: LAMBERT_FRAGMENT }
+    clone.onBeforeCompile(shader as never, undefined as never)
+    expect(shader.fragmentShader).toBe(LAMBERT_FRAGMENT) // le clone n'a PAS le biais
+    const biased = { fragmentShader: LAMBERT_FRAGMENT }
+    expect(applyLodBias(clone)).toBe(clone)
+    clone.onBeforeCompile(biased as never, undefined as never)
+    expect(biased.fragmentShader).toContain('vMapUv, -2.00 )')
+  })
+})
+
 describe('getCharacterAssets', () => {
   it('met le personnage à la hauteur visée, mesurée dans la pose idle, pieds posés à y = 0', () => {
     const { scene, animations } = makeTestRig()
@@ -137,6 +204,21 @@ describe('getCharacterAssets', () => {
     expect(animations[1].tracks[0].values[0]).toBe(1)
   })
 
+  it('recale aussi le clip « talk » de l’Archiviste, avec la définition réelle du personnage (squelette de Rémi)', () => {
+    const { scene, animations } = makeTestRig()
+    const assets = getCharacterAssets(scene, animations, CHARACTERS.archiviste)
+    // Hauteur de jeu de l'Archiviste atteinte exactement (la fixture mesure 2 m en pose idle).
+    expect(assets.scale).toBeCloseTo(CHARACTERS.archiviste.height / 2, 5)
+    expect(Object.keys(assets.clips).sort()).toEqual(['idle', 'talk', 'wave'])
+    const talk = assets.clips.talk!
+    expect(talk).not.toBe(animations[3])
+    expect(meanOf(talk.tracks[0].values, 0)).toBeCloseTo(0)
+    expect(meanOf(talk.tracks[0].values, 2)).toBeCloseTo(0)
+    // Le rebond vertical (Y) du clip est intact, et le clip d'origine n'est pas muté.
+    expect(talk.tracks[0].values[1]).toBeCloseTo(0.5)
+    expect(animations[3].tracks[0].values[0]).toBe(-0.5)
+  })
+
   it('donne une sphère de culling plus large que celle de la pose idle', () => {
     const { scene, animations } = makeTestRig()
     const assets = getCharacterAssets(scene, animations, DEF)
@@ -145,6 +227,24 @@ describe('getCharacterAssets', () => {
     skinned.skeleton.update()
     skinned.computeBoundingSphere()
     expect(assets.boundingSphere.radius).toBeGreaterThan(skinned.boundingSphere.radius * 1.2)
+  })
+
+  it('applique la marge de culling propre au personnage : 1,6 par défaut, plus serrée pour l’Archiviste (sans passer sous la pose idle)', () => {
+    const { scene, animations } = makeTestRig()
+    const probe = cloneSkinned(scene)
+    const skinned = findSkinnedMesh(probe)!
+    skinned.skeleton.update()
+    skinned.computeBoundingSphere()
+    const idleRadius = skinned.boundingSphere.radius
+
+    const byDefault = getCharacterAssets(scene, animations, DEF).boundingSphere.radius
+    expect(byDefault).toBeCloseTo(idleRadius * CULLING_MARGIN, 5)
+
+    const { scene: s2, animations: a2 } = makeTestRig()
+    const archivist = getCharacterAssets(s2, a2, CHARACTERS.archiviste).boundingSphere.radius
+    expect(archivist).toBeCloseTo(idleRadius * CHARACTERS.archiviste.cullMargin, 5)
+    expect(archivist).toBeGreaterThan(idleRadius * 1.1)
+    expect(archivist).toBeLessThan(byDefault)
   })
 
   it('échoue clairement quand un clip déclaré manque dans le fichier', () => {

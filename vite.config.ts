@@ -19,7 +19,7 @@ function vercelPageHeaders(): Record<string, string> {
 }
 
 /**
- * Sert `POST /api/remi` en `pnpm dev`, comme la fonction Vercel `api/remi.ts` (le serveur de dev ne sait
+ * Sert `POST /api/remi` en `pnpm dev` (Rémi · IA et l'Archiviste · IA), comme la fonction Vercel `api/remi.ts` (le serveur de dev ne sait
  * exécuter que le front). La clé OpenRouter est lue dans `.env.local` (ou l'environnement) par
  * `loadEnv(…, '')` et n'entre que dans le processus du serveur de dev : elle n'a pas de préfixe `VITE_`,
  * donc ni le navigateur ni le bundle ne la voient. Sans clé, la fonction répond `unavailable`.
@@ -32,7 +32,8 @@ function remiApiDev(mode: string): Plugin {
     apply: 'serve',
     configureServer(server) {
       const env = loadEnv(mode, process.cwd(), '')
-      for (const key of ['OPENROUTER_API_KEY', 'REMI_CHAT_DISABLED'] as const) {
+      // Les deux dernières (publiques, déjà dans le navigateur) servent à l'Archiviste · IA : lire les archives publiées.
+      for (const key of ['OPENROUTER_API_KEY', 'REMI_CHAT_DISABLED', 'VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'] as const) {
         if (process.env[key] === undefined && env[key] !== undefined) process.env[key] = env[key]
       }
       server.middlewares.use(

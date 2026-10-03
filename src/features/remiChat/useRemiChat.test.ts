@@ -78,29 +78,39 @@ describe('useRemiChat', () => {
       expect(result.current.entries).toEqual([])
     })
 
-    it('à l’ouverture : le message d’accueil de Rémi est déjà là, sans appel réseau', () => {
+    it('à l’ouverture : un court message de Rémi est déjà là, sans appel réseau', () => {
       const { result } = setup()
       expect(streamMock).not.toHaveBeenCalled()
       expect(result.current.entries).toHaveLength(1)
       const first = result.current.entries[0]
       expect(first.role).toBe('assistant')
-      const welcome = remiDialogue({ kind: 'welcome' }).lines.map((l) => l.text.fr)
-      for (const line of welcome) expect(first.content).toContain(line)
+      expect(first.content).toBe(t('greeting', 'fr'))
+      expect(first.content).toContain('Rémi · IA')
       expect(result.current.openedEmpty).toBe(true)
     })
 
-    it('le message d’accueil suit la langue', () => {
-      useGame.setState({ lang: 'en' })
+    it('le premier message ne répète pas l’accueil complet déjà passé dans la bulle du jeu', () => {
       const { result } = setup()
-      expect(result.current.entries[0].content).toContain('Welcome to the Museum of the 100')
+      const welcome = remiDialogue({ kind: 'welcome' }).lines.map((l) => l.text.fr)
+      const text = result.current.entries[0].content
+      for (const line of welcome) expect(text).not.toContain(line)
+      expect(text).not.toContain('Bienvenue au Musée des 100')
+      // Une ou deux phrases, pas huit paragraphes.
+      expect(text.split('\n\n')).toHaveLength(1)
+      expect(text.length).toBeLessThan(160)
     })
 
-    it('un visiteur qui a déjà avancé retrouve la conversation de comptoir, pas l’accueil', () => {
+    it('le premier message suit la langue', () => {
+      useGame.setState({ lang: 'en' })
+      const { result } = setup()
+      expect(result.current.entries[0].content).toBe(t('greeting', 'en'))
+      expect(result.current.entries[0].content).toContain('Rémi · AI')
+    })
+
+    it('un visiteur qui a déjà avancé reçoit le même court message (le chat ne s’ouvre qu’au comptoir)', () => {
       useGame.setState({ visited: { a: 1, b: 2 } })
       const { result } = setup()
-      const text = result.current.entries[0].content
-      expect(text).not.toContain('Bienvenue au Musée des 100')
-      expect(text).toBe(greetingText('fr', { visitedCount: 2, stampsCount: 0, total: 0, archivesToVisit: false }))
+      expect(result.current.entries[0].content).toBe(greetingText('fr'))
     })
 
     it('rouvrir le chat garde l’historique et n’ajoute pas un second accueil', async () => {
@@ -587,10 +597,13 @@ describe('buildHistory', () => {
 describe('textes', () => {
   const progress = { visitedCount: 0, stampsCount: 0, total: 100, archivesToVisit: false }
 
-  it('greetingText : paragraphes séparés par une ligne vide, une phrase par réplique', () => {
-    const text = greetingText('fr', progress)
-    const lines = remiDialogue({ kind: 'welcome' }).lines
-    expect(text.split('\n\n')).toHaveLength(lines.length)
+  it('greetingText : une ou deux phrases courtes, FR et EN', () => {
+    for (const lang of ['fr', 'en'] as const) {
+      const text = greetingText(lang)
+      expect(text).toBe(t('greeting', lang))
+      expect(text.length).toBeLessThan(160)
+      expect(text.split(/[.!?]\s/).length).toBeLessThanOrEqual(3)
+    }
   })
 
   it('fallbackText : lignes de la conversation de comptoir concaténées derrière le préambule, en FR et en EN', () => {

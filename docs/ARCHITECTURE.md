@@ -60,9 +60,11 @@ En local sans navigateur Playwright : `PW_CHROMIUM_PATH="$HOME/.agent-browser/br
 
 La CI GitHub (`.github/workflows/ci.yml`) enchaîne tout sur chaque PR.
 
-## Rémi · IA (V5)
+## Rémi · IA et Archiviste · IA (V5)
 
 Le chat avec Rémi passe par une fonction Vercel, `api/remi.ts` : le navigateur poste sur `/api/remi`, la fonction appelle OpenRouter (`deepseek/deepseek-v4.1-flash`) avec `OPENROUTER_API_KEY`, qui ne quitte jamais le serveur. Contrat partagé : `src/features/remiChat/contract.ts`. Interface et buste 3D : `src/features/remiChat/` (chargés à la demande, hors du paquet d'entrée). Détails, garde-fous et coût : `docs/REMI-IA.md`.
+
+La même fonction et le même composant servent l'**Archiviste · IA** (WEL-929) : la requête porte une `persona` (`remi` par défaut, `archiviste`), `PERSONAS` (`personas.ts`) configure le chat de chaque personnage (nom, mention IA, accueil, puces, buste, accent) et le store ouvre l'un ou l'autre (`openChat(persona)` ; `remiChatOpen` vaut « un chat IA est ouvert », `chatPersona` dit lequel). Pour l'Archiviste, la fonction lit aussi les archives publiées (`session_archives`, clé `anon`) afin qu'elle ne cite que ce qui a été publié.
 
 ## Supabase
 

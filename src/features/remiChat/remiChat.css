@@ -1,13 +1,30 @@
 /**
- * Chat avec Rémi · IA (V5, WEL-920). Propriétaire : agent chat-ui.
- * Charte de l'Odyssée (docs/CHARTE-3D.md, docs/DESIGN.md) : fonds bleu nuit, texte blanc pur, corail pour
+ * Chat avec Rémi · IA (V5, WEL-920) et avec l'Archiviste · IA (WEL-929) : le même composant, donc la même feuille de
+ * style ; seul l'accent change (`data-accent` sur `.remi-chat`, voir les variables `--accent*` ci-dessous). Les classes
+ * gardent le préfixe `remi-chat` : un seul chat est ouvert à la fois, `data-persona` dit lequel.
+ * Propriétaire : agent chat-ui.
+ * Charte de l'Odyssée (docs/CHARTE-3D.md, docs/DESIGN.md) : bleu nuit, texte blanc pur, corail pour
  * l'action et la parole du visiteur (texte bleu nuit dessus : le blanc sur corail échoue le contraste AA),
  * cyan en contrepoint. Cibles tactiles de 48 px au moins, champ de saisie à 16 px (sinon iOS zoome au focus).
  * Utilise les jetons de `src/styles/global.css`.
  *
+ * Le chat n'a AUCUN fond : le musée (le canvas du jeu, figé pendant le chat) reste visible derrière Rémi et
+ * derrière les bulles, pour que le visiteur ait l'impression de rester dans l'application. La lisibilité vient de
+ * trois choses seulement :
+ *  - un voile nuit léger et progressif (`.remi-chat::before`), plus marqué en haut (titre) et en bas (bulles) ;
+ *  - des éléments en « verre » : fond bleu nuit translucide + `backdrop-filter: blur` (puces, saisie, boutons, et sur PC
+ *    et en paysage tout le panneau), avec repli plus opaque quand le navigateur ne sait pas flouter (`@supports not`) ;
+ *  - des bulles de fil teintées (`--glass-thread`, 80 %), assez sombres pour que le blanc reste au contraste AA même
+ *    devant un élément blanc du musée.
+ * Un élément qui floute son arrière-plan ne doit avoir AUCUN ancêtre qui crée une « racine d'arrière-plan »
+ * (`mask`, `filter`, `opacity < 1`, `clip-path`…), sinon il ne voit plus le musée. Le fil, lui, est masqué (fondu en
+ * haut : la coupe nette du défilement ne flotte pas sur Rémi) : ses bulles n'ont donc pas de flou propre. L'animation
+ * d'ouverture ne garde pas son état final (`backwards`, pas `both`) pour la même raison.
+ *
  * Deux mises en page, choisies par `data-layout` (voir `useSplitLayout`) :
- *  - `split`   : PC (≥ 900 px de large ET paysage), Rémi à gauche (50 %), le chat à droite (50 %) ;
- *  - `overlay` : téléphone, Rémi en fond plein écran, bulles par-dessus sur le bas, saisie en bas.
+ *  - `split`   : PC (≥ 900 px de large ET paysage), Rémi à gauche (50 %) sur le musée, le chat à droite (50 %)
+ *                dans un panneau de verre ;
+ *  - `overlay` : téléphone, Rémi en fond plein écran par-dessus le musée, bulles de verre sur le bas, saisie en bas.
  * Clavier virtuel : `.remi-chat__frame` prend la zone visible (`--chat-top`, `--chat-height`, voir `useVisibleFrame`),
  * le buste reste à sa taille.
  */
@@ -26,18 +43,62 @@
 }
 
 .remi-chat {
+  /* Verre : bleu nuit translucide ; le flou fait le reste (voir le repli plus bas). */
+  --glass: rgba(10, 23, 56, 0.6);
+  /* Bulles du fil : pas de flou propre (le fil est masqué, voir `.remi-chat__thread`), donc un peu plus de teinte. */
+  --glass-thread: rgba(8, 19, 48, 0.8);
+  --glass-edge: rgba(190, 215, 255, 0.3);
+  /* Accent de la persona : parole du visiteur et bouton d'envoi. Corail (Rémi) ou cyan (Archiviste, couleur des Archives).
+     Le texte posé dessus reste `--on-accent` (bleu nuit) : le blanc échoue le contraste AA sur ces deux teintes. */
+  --accent: var(--corail);
+  --accent-deep: var(--corail-deep);
+  --accent-bubble: rgba(232, 120, 92, 0.94);
+  --glass-blur: blur(12px) saturate(1.25);
+  --panel-glass: linear-gradient(to bottom, rgba(7, 19, 54, 0.42), rgba(7, 19, 54, 0.58));
+  --panel-blur: blur(10px) saturate(1.2);
+  /* Hauteur du fondu en haut du fil (là où les anciens messages disparaissent en défilant). */
+  --thread-fade: 28px;
+  /* Flou propre à chaque bulle (téléphone) ; inutile quand tout le panneau est déjà flouté. */
+  --bubble-blur: var(--glass-blur);
+  /* Voile nuit léger sous Rémi : marqué en haut (titre) et en bas (bulles), presque nul à la hauteur du visage. */
+  --veil: linear-gradient(
+    to bottom,
+    rgba(5, 11, 30, 0.5) 0%,
+    rgba(5, 11, 30, 0.14) 20%,
+    rgba(5, 11, 30, 0.05) 42%,
+    rgba(5, 11, 30, 0.3) 66%,
+    rgba(5, 11, 30, 0.62) 100%
+  );
+
   position: fixed;
   inset: 0;
   z-index: 50;
   overflow: hidden;
-  background: var(--sky);
+  /* Aucun aplat : c'est le musée qu'on voit derrière. */
+  background: transparent;
   color: var(--ink);
   font-family: var(--font-body);
   outline: none;
   /* `body` interdit la sélection : sur iOS, un champ y devient impossible à remplir. */
   -webkit-user-select: text;
   user-select: text;
-  animation: remi-chat-in 180ms ease-out both;
+  /* `backwards` et non `both` : l'état final ne doit pas rester appliqué (racine d'arrière-plan, voir l'en-tête). */
+  animation: remi-chat-in 180ms ease-out backwards;
+}
+
+.remi-chat::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--veil);
+}
+
+.remi-chat[data-accent='cyan'] {
+  --accent: var(--cyan-vif);
+  --accent-deep: #2a8798;
+  --accent-bubble: rgba(109, 228, 229, 0.94);
 }
 
 @keyframes remi-chat-in {
@@ -49,23 +110,39 @@
   }
 }
 
+/* Navigateur qui ne sait pas flouter : le verre devient presque opaque (le texte reste lisible sur le musée net). */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .remi-chat {
+    --glass: rgba(10, 23, 56, 0.9);
+    --glass-thread: rgba(8, 19, 48, 0.9);
+    --panel-glass: linear-gradient(to bottom, rgba(7, 19, 54, 0.88), rgba(7, 19, 54, 0.92));
+  }
+}
+
 /* ---------- Rémi (buste) ---------- */
 
+/* Pas de fond : le canvas du buste est transparent, le musée passe derrière Rémi. */
 .remi-chat__stage {
   position: absolute;
   inset: 0;
+  z-index: 1;
   overflow: hidden;
-  background: radial-gradient(120% 90% at 50% 36%, #113198 0%, #071336 58%, #050b1e 100%);
 }
 
 .remi-chat[data-layout='split'] .remi-chat__stage {
   right: 50%;
 }
 
+/* À côté du panneau de verre, le voile reste discret : le musée doit se voir des deux côtés. */
+.remi-chat[data-layout='split']::before {
+  background: linear-gradient(to bottom, rgba(5, 11, 30, 0.34) 0%, rgba(5, 11, 30, 0.06) 30%, rgba(5, 11, 30, 0.06) 70%, rgba(5, 11, 30, 0.34) 100%);
+}
+
 /* ---------- Cadre de l'interface (en-tête + panneau) ---------- */
 
 .remi-chat__frame {
   position: absolute;
+  z-index: 2;
   left: 0;
   right: 0;
   top: var(--chat-top, 0px);
@@ -76,9 +153,12 @@
 }
 
 .remi-chat[data-layout='split'] .remi-chat__frame {
+  --bubble-blur: none;
   left: 50%;
-  background: var(--cream);
-  border-left: 1px solid rgba(77, 140, 255, 0.28);
+  background: var(--panel-glass);
+  -webkit-backdrop-filter: var(--panel-blur);
+  backdrop-filter: var(--panel-blur);
+  border-left: 1px solid var(--glass-edge);
 }
 
 /* ---------- En-tête ---------- */
@@ -90,8 +170,8 @@
   justify-content: space-between;
   gap: 12px;
   padding: calc(10px + var(--safe-top)) calc(12px + var(--safe-right)) 14px calc(16px + var(--safe-left));
-  /* Voile sombre : le titre reste lisible quel que soit le fond du buste. */
-  background: linear-gradient(to bottom, rgba(5, 11, 30, 0.92) 0%, rgba(5, 11, 30, 0.7) 60%, rgba(5, 11, 30, 0) 100%);
+  /* Voile sombre : le titre reste lisible quel que soit l'endroit du musée qui passe derrière. */
+  background: linear-gradient(to bottom, rgba(5, 11, 30, 0.66) 0%, rgba(5, 11, 30, 0.52) 62%, rgba(5, 11, 30, 0) 100%);
 }
 
 .remi-chat__frame[data-keyboard='true'] .remi-chat__header {
@@ -116,16 +196,34 @@
   line-height: 1.2;
   letter-spacing: 0.005em;
   color: var(--ink);
+  text-shadow: 0 1px 3px rgba(5, 11, 30, 0.7);
 }
 
+/* Téléphone (portrait) : la mention est une étiquette de verre sombre, lisible quel que soit l'endroit du musée qui passe
+   derrière (un voile seul ne garantit pas le contraste AA sur un élément blanc, à 11 px). Sur PC et en paysage, elle
+   repose déjà sur le panneau de verre (voir plus bas) : texte seul. */
 .remi-chat__notice {
-  margin: 2px 0 0;
+  display: inline-block;
+  margin: 6px 0 0;
+  padding: 3px 10px;
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-pill);
+  background: var(--glass-thread);
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: rgba(255, 255, 255, 0.94);
+}
+
+.remi-chat[data-layout='split'] .remi-chat__notice {
+  margin: 2px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  text-shadow: 0 1px 3px rgba(5, 11, 30, 0.85);
 }
 
 .remi-chat__close {
@@ -134,9 +232,11 @@
   height: 48px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  border: 1px solid var(--glass-edge);
   border-radius: 50%;
-  background: rgba(10, 23, 56, 0.9);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
   color: var(--ink);
   font-size: 18px;
   line-height: 1;
@@ -155,8 +255,7 @@
   display: flex;
   flex-direction: column;
   padding: 0 calc(12px + var(--safe-right)) calc(10px + var(--safe-bottom)) calc(12px + var(--safe-left));
-  /* Voile sombre sous les bulles : le texte reste lisible par-dessus le buste. */
-  background: linear-gradient(to top, rgba(5, 11, 30, 0.82) 0%, rgba(5, 11, 30, 0.82) 62%, rgba(5, 11, 30, 0) 100%);
+  /* Pas de fond ici : les bulles, les puces et la saisie sont chacune en verre, le musée passe entre elles. */
 }
 
 .remi-chat__frame[data-keyboard='true'] .remi-chat__panel {
@@ -167,10 +266,13 @@
   flex: 1 1 auto;
   margin-top: 0;
   padding: 0 24px 20px;
-  background: none;
 }
 
-/* Fil : collé en bas, il défile pour retrouver l'historique. Les anciens messages s'estompent en haut. */
+/* Fil : collé en bas, il défile pour retrouver l'historique. Un fondu en haut (masque) fait disparaître en douceur les
+   messages qui sortent de la zone : sans lui, la coupe nette du défilement flotterait au milieu de l'écran, sur Rémi.
+   Le masque crée une « racine d'arrière-plan » : les bulles du fil n'ont donc pas de flou propre (voir l'en-tête).
+   Le haut du fil est vide (`padding-top` = hauteur du fondu) : le premier message n'est jamais atténué tant que rien
+   n'a défilé. */
 .remi-chat__thread {
   position: relative;
   flex: 0 1 auto;
@@ -181,17 +283,15 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding: 28px 2px 4px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 28px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 28px);
+  padding: var(--thread-fade) 2px 4px;
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 var(--thread-fade));
+  mask-image: linear-gradient(to bottom, transparent 0, #000 var(--thread-fade));
 }
 
 .remi-chat[data-layout='split'] .remi-chat__thread {
   flex: 1 1 auto;
   max-height: none;
-  padding: 20px 2px 8px;
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
-  mask-image: linear-gradient(to bottom, transparent 0, #000 14px);
+  padding: var(--thread-fade) 2px 8px;
 }
 
 .remi-chat__list {
@@ -238,18 +338,19 @@
 
 .remi-chat__item[data-role='assistant'] .remi-chat__bubble {
   border-bottom-left-radius: 6px;
-  background: rgba(16, 33, 79, 0.96);
-  border: 1px solid rgba(77, 140, 255, 0.34);
+  background: var(--glass-thread);
+  border: 1px solid var(--glass-edge);
   color: var(--ink);
 }
 
 .remi-chat__item[data-role='assistant'][data-kind='notice'] .remi-chat__bubble {
-  border-color: rgba(87, 191, 214, 0.6);
+  border-color: rgba(87, 191, 214, 0.7);
 }
 
+/* L'accent de l'action et de la parole du visiteur (corail, la couleur du logo, ou cyan) reste presque plein : un flou n'y verrait rien. */
 .remi-chat__item[data-role='user'] .remi-chat__bubble {
   border-bottom-right-radius: 6px;
-  background: var(--corail);
+  background: var(--accent-bubble);
   color: var(--on-accent);
 }
 
@@ -257,9 +358,9 @@
   min-height: 48px;
   margin-top: 6px;
   padding: 0 20px;
-  border: none;
+  border: 1px solid var(--glass-edge);
   border-radius: var(--radius-pill);
-  background: var(--wood);
+  background: var(--glass-thread);
   color: var(--ink);
   font-family: var(--font-display);
   font-weight: 600;
@@ -280,9 +381,9 @@
   margin-top: 8px;
   padding: 6px 14px 6px 12px;
   border-radius: var(--radius-pill);
-  background: rgba(16, 33, 79, 0.96);
-  border: 1px solid rgba(77, 140, 255, 0.34);
-  color: var(--ink-soft);
+  background: var(--glass-thread);
+  border: 1px solid var(--glass-edge);
+  color: rgba(255, 255, 255, 0.86);
   font-size: 13px;
 }
 
@@ -347,9 +448,11 @@
   flex: none;
   min-height: 48px;
   padding: 0 18px;
-  border: 1px solid rgba(87, 191, 214, 0.65);
+  border: 1px solid rgba(87, 191, 214, 0.75);
   border-radius: var(--radius-pill);
-  background: rgba(10, 23, 56, 0.96);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--bubble-blur);
+  backdrop-filter: var(--bubble-blur);
   color: var(--ink);
   font-family: var(--font-body);
   font-weight: 500;
@@ -386,9 +489,11 @@
   margin: 0;
   padding: 12px 16px;
   resize: none;
-  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  border: 1.5px solid rgba(255, 255, 255, 0.5);
   border-radius: 24px;
-  background: rgba(10, 23, 56, 0.97);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--bubble-blur);
+  backdrop-filter: var(--bubble-blur);
   color: var(--ink);
   /* 16 px au moins : sous ce seuil, Safari iOS zoome la page au focus. */
   font: 400 16px/1.4 var(--font-body);
@@ -399,7 +504,7 @@
 }
 
 .remi-chat__input::placeholder {
-  color: rgba(255, 255, 255, 0.68);
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .remi-chat__input[data-over='true'] {
@@ -418,7 +523,8 @@
   font-family: var(--font-mono);
   font-size: 12px;
   font-weight: 500;
-  color: var(--ink-soft);
+  color: rgba(255, 255, 255, 0.86);
+  text-shadow: 0 1px 3px rgba(5, 11, 30, 0.85);
 }
 
 .remi-chat__counter[data-empty='true'] {
@@ -438,28 +544,40 @@
   place-items: center;
   border: none;
   border-radius: 50%;
-  background: var(--corail);
+  background: var(--accent);
   color: var(--on-accent);
-  box-shadow: 0 4px 0 var(--corail-deep);
+  box-shadow: 0 4px 0 var(--accent-deep);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .remi-chat__send:active:not(:disabled) {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--corail-deep);
+  box-shadow: 0 1px 0 var(--accent-deep);
 }
 
 .remi-chat__send:disabled {
-  background: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.55);
+  background: var(--glass);
+  border: 1px solid var(--glass-edge);
+  -webkit-backdrop-filter: var(--bubble-blur);
+  backdrop-filter: var(--bubble-blur);
+  color: rgba(255, 255, 255, 0.6);
   box-shadow: none;
 }
 
 /* ---------- Téléphone en paysage (hauteur courte, moins de 900 px de large) ---------- */
 
 /* Rémi garde sa moitié gauche, les bulles prennent la droite : en 390 px de haut, un voile sur le bas
-   ne laisserait ni buste ni fil lisibles. */
+   ne laisserait ni buste ni fil lisibles. Comme sur PC, le côté du chat est un panneau de verre. */
 @media (orientation: landscape) and (max-height: 520px) {
+  .remi-chat[data-layout='overlay'] {
+    --bubble-blur: none;
+    --thread-fade: 18px;
+  }
+
+  .remi-chat[data-layout='overlay']::before {
+    background: linear-gradient(to bottom, rgba(5, 11, 30, 0.3) 0%, rgba(5, 11, 30, 0.06) 30%, rgba(5, 11, 30, 0.06) 70%, rgba(5, 11, 30, 0.3) 100%);
+  }
+
   .remi-chat[data-layout='overlay'] .remi-chat__stage {
     right: min(58%, 520px);
   }
@@ -467,8 +585,10 @@
   .remi-chat[data-layout='overlay'] .remi-chat__frame {
     left: auto;
     width: min(58%, 520px);
-    background: rgba(5, 11, 30, 0.9);
-    border-left: 1px solid rgba(77, 140, 255, 0.28);
+    background: var(--panel-glass);
+    -webkit-backdrop-filter: var(--panel-blur);
+    backdrop-filter: var(--panel-blur);
+    border-left: 1px solid var(--glass-edge);
   }
 
   .remi-chat[data-layout='overlay'] .remi-chat__header {
@@ -480,17 +600,24 @@
     font-size: 18px;
   }
 
+  .remi-chat[data-layout='overlay'] .remi-chat__notice {
+    margin: 2px 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    text-shadow: 0 1px 3px rgba(5, 11, 30, 0.85);
+  }
+
   .remi-chat[data-layout='overlay'] .remi-chat__panel {
     flex: 1 1 auto;
     margin-top: 0;
     padding-left: 12px;
-    background: none;
   }
 
   .remi-chat[data-layout='overlay'] .remi-chat__thread {
     flex: 1 1 auto;
     max-height: none;
-    padding-top: 12px;
   }
 
   /* Clavier ouvert dans une fenêtre déjà basse : la mention discrète cède la place au fil. */
@@ -504,4 +631,15 @@
   .remi-chat__close:hover {
     border-color: var(--cyan-vif);
   }
+}
+
+/* ---------- Le jeu derrière le chat ---------- */
+
+/* Le chat est translucide : le HUD du jeu (boutons, compteurs, signature, astuce, toast) se verrait à travers lui sans rien pouvoir
+   faire (le chat capte tous les appuis). `App.tsx` pose `data-remi-chat` sur `.app` tant que le chat est ouvert. */
+.app[data-remi-chat] .ui-hud,
+.app[data-remi-chat] .sig-badge,
+.app[data-remi-chat] .ui-coach,
+.app[data-remi-chat] .ui-toast {
+  visibility: hidden;
 }

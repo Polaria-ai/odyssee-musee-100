@@ -1,5 +1,5 @@
 /**
- * Contenu du `<Canvas>` du buste : lumières « contre-jour cyan », Rémi, caméra de cadrage.
+ * Contenu du `<Canvas>` du buste : lumières « contre-jour cyan », le personnage (Rémi ou l'Archiviste), caméra de cadrage.
  * Une seule boucle (`useFrame` à la priorité par défaut) : mixeur → moteur de gestes → pose des os,
  * dans cet ordre, donc la couche procédurale passe TOUJOURS après le clip « idle ». Aucune priorité
  * positive (elle désactiverait le rendu automatique de R3F). Aucune allocation three.js dans `useFrame`.
@@ -11,10 +11,10 @@ import { Vector3, type AnimationClip, type Object3D, type WebGLRenderer } from '
 import { useModel } from '../../../assets/useModel'
 import { CHARACTERS } from '../../../characters/models'
 import { charter3d } from '../../../styles/tokens'
-import type { RemiBustVariant, RemiMood } from '../contract'
+import { DEFAULT_PERSONA, type ChatPersona, type RemiBustVariant, type RemiMood } from '../contract'
 import { computeFraming, type BustMetrics, type Framing } from './framing'
-import { MAX_DT, createGestureEngine, type GestureId } from './gestures'
-import { createBustRig } from './rig'
+import { MAX_DT, createGestureEngine, type GestureEngine, type GestureId } from './gestures'
+import { createBustRig, type BustRig } from './rig'
 import { ATTENTION, BODY_YAW, BUST_FOV, DEFAULT_SEED } from './config'
 
 /** Réglages de mise au point (page de démonstration `dev/bust-demo.html`), jamais utilisés en production. */
@@ -36,11 +36,25 @@ export interface BustDebug {
   onMetrics?: (metrics: BustMetrics, framing: Framing) => void
   /** Reçoit le moteur de rendu à sa création (vérification des fuites : `gl.info.memory`). */
   onRenderer?: (gl: WebGLRenderer) => void
+  /**
+   * Reçoit le rig, le moteur de gestes et `advance(secondes)` qui fait avancer clip et chorégraphie à 60 i/s
+   * SANS rendre (planches de captures à intervalles réguliers, mesures d'orientation des poignets dans le
+   * navigateur). Avec `speed=0`, la pose affichée est celle de l'instant atteint.
+   */
+  onControl?: (control: BustControl) => void
+}
+
+export interface BustControl {
+  rig: BustRig
+  engine: GestureEngine
+  advance: (seconds: number) => void
 }
 
 export interface BustSceneProps {
   mood: RemiMood
   variant: RemiBustVariant
+  /** Personnage du buste : son GLB et ses mesures (`DEFAULT_PERSONA`, Rémi, si absent). */
+  character?: ChatPersona
   reducedMotion: boolean
   /** Cadre calculé (pour le masque de fondu et le halo posés en CSS par le parent). */
   onFraming?: (framing: Framing) => void
@@ -88,7 +102,7 @@ function useBustModel(path: string): { model: LoadedModel | null; error: unknown
 }
 
 function BustLoader(props: BustSceneProps) {
-  const path = props.debug?.modelPath ?? CHARACTERS.remi.path
+  const path = props.debug?.modelPath ?? CHARACTERS[props.character ?? DEFAULT_PERSONA].path
   const { model, error } = useBustModel(path)
   const { onError } = props
   useEffect(() => {
@@ -99,8 +113,8 @@ function BustLoader(props: BustSceneProps) {
   return model ? <BustModel {...props} scene={model.scene} animations={model.animations} /> : null
 }
 
-function BustModel({ mood, variant, reducedMotion, onFraming, onReady, debug, scene, animations }: BustSceneProps & LoadedModel) {
-  const rig = useMemo(() => createBustRig(scene, animations), [scene, animations])
+function BustModel({ mood, variant, character, reducedMotion, onFraming, onReady, debug, scene, animations }: BustSceneProps & LoadedModel) {
+  const rig = useMemo(() => createBustRig(scene, animations, character), [scene, animations, character])
   const engine = useMemo(() => createGestureEngine(debug?.seed ?? DEFAULT_SEED), [debug?.seed])
   const moodRef = useRef(mood)
   const speed = debug?.speed ?? 1
@@ -167,6 +181,20 @@ function BustModel({ mood, variant, reducedMotion, onFraming, onReady, debug, sc
       return { x: v.x, y: v.y }
     })
   }, [rig, camera, debug])
+
+  useEffect(() => {
+    if (!debug?.onControl) return
+    debug.onControl({
+      rig,
+      engine,
+      advance(seconds) {
+        for (let t = 0; t < seconds - 1e-9; t += 1 / 60) {
+          rig.animator.update(1 / 60)
+          engine.update(1 / 60, moodRef.current)
+        }
+      },
+    })
+  }, [rig, engine, debug])
 
   useFrame((_state, delta) => {
     const dt = (delta < MAX_DT ? delta : MAX_DT) * speed
