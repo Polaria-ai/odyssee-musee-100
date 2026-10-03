@@ -1,5 +1,6 @@
 /**
- * Client du chat avec Rémi · IA : poste sur `REMI_CHAT_ENDPOINT` et lit le flux `text/event-stream`
+ * Client du chat avec Rémi · IA et l'Archiviste · IA (même fonction, `persona` de la requête) : poste sur
+ * `REMI_CHAT_ENDPOINT` et lit le flux `text/event-stream`
  * (une ligne `data: <json>` par `RemiStreamEvent`, terminée par `done` ou `error`).
  *
  * Ne lève jamais d'exception : tout échec (réseau, abandon, délai, HTTP 4xx/5xx, corps qui n'est pas du
@@ -15,7 +16,7 @@ import type {
   RemiStreamEvent,
   RemiStreamHandlers,
 } from './contract'
-import { REMI_CHAT_ENDPOINT } from './contract'
+import { DEFAULT_PERSONA, REMI_CHAT_ENDPOINT } from './contract'
 
 /** Le serveur abandonne le fournisseur à 20 s : au-delà de 30 s, c'est le réseau qui est en panne. */
 export const CLIENT_TIMEOUT_MS = 30_000
@@ -43,6 +44,18 @@ export function parseStreamLine(line: string): RemiStreamEvent | null {
   if (event.type === 'done') return { type: 'done' }
   if (event.type === 'error') return { type: 'error', code: isErrorCode(event.code) ? event.code : 'unavailable' }
   return null
+}
+
+/**
+ * Corps JSON de la requête. Rémi est la persona par défaut du serveur : on n'écrit pas le champ pour lui, donc sa
+ * requête reste octet pour octet celle d'avant l'Archiviste (et celle des clients déjà en ligne).
+ */
+export function serializeRequest(request: RemiChatRequest): string {
+  if (request.persona === undefined || request.persona === DEFAULT_PERSONA) {
+    const { persona: _omitted, ...rest } = request
+    return JSON.stringify(rest)
+  }
+  return JSON.stringify(request)
 }
 
 /** Code d'une réponse HTTP en erreur : celui du corps JSON s'il est valide, sinon déduit du statut. */
@@ -75,7 +88,7 @@ export async function streamRemiReply(request: RemiChatRequest, handlers: RemiSt
       response = await fetch(REMI_CHAT_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'text/event-stream' },
-        body: JSON.stringify(request),
+        body: serializeRequest(request),
         signal: controller.signal,
         cache: 'no-store',
       })

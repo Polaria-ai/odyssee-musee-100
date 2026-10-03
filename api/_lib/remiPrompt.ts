@@ -97,7 +97,8 @@ Pour tout ce qui n'est pas dans une ligne (parcours, âge, vie privée, opinions
 ${blocks.join('\n\n')}`
 }
 
-function programSection(data: PromptData): string {
+/** Section « LA SOIRÉE » : partagée avec le prompt de l'Archiviste (`archivistePrompt.ts`), pour que les deux disent la même chose. */
+export function programSection(data: PromptData): string {
   const { meta, program, speakers } = data
   const lines = program.map((s) => {
     const names = s.speakers.map((sp) => (sp.moderator ? `${sp.name} (animation)` : sp.name))

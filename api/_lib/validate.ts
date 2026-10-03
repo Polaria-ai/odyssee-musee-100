@@ -5,7 +5,8 @@
  * Les raisons renvoyées (`reason`) décrivent le champ fautif, jamais son contenu : elles peuvent
  * sans risque aller dans les journaux.
  */
-import type { ChatMessage, RemiChatContext, RemiChatRequest } from '../../src/features/remiChat/contract.js'
+import type { ChatMessage, ChatPersona, RemiChatContext, RemiChatRequest } from '../../src/features/remiChat/contract.js'
+import { CHAT_PERSONAS, DEFAULT_PERSONA } from '../../src/features/remiChat/contract.js'
 import {
   MAX_ASSISTANT_MESSAGE_CHARS,
   MAX_CONTEXT_COUNT,
@@ -20,6 +21,8 @@ export interface ValidRequest {
   messages: ChatMessage[]
   lang: RemiChatRequest['lang']
   visitorId: string
+  /** Qui répond. `DEFAULT_PERSONA` (Rémi) quand la requête n'en porte pas : les clients déjà en ligne n'envoient pas le champ. */
+  persona: ChatPersona
   context?: RemiChatContext
   /** Messages du visiteur dans l'historique reçu, avant troncature (le nouveau message compris). */
   userMessageCount: number
@@ -52,9 +55,18 @@ function validateContext(raw: unknown): RemiChatContext | null {
 export function validateRemiRequest(raw: unknown): ValidationResult {
   if (!isRecord(raw)) return { ok: false, reason: 'body.not_object' }
 
-  const { messages: rawMessages, lang, visitorId: rawVisitorId, context: rawContext } = raw
+  const { messages: rawMessages, lang, visitorId: rawVisitorId, context: rawContext, persona: rawPersona } = raw
 
   if (lang !== 'fr' && lang !== 'en') return { ok: false, reason: 'lang.invalid' }
+
+  // Absente (ou `null`) : Rémi, comme avant l'Archiviste. Présente : une des personas connues, jamais une autre valeur.
+  let persona: ChatPersona = DEFAULT_PERSONA
+  if (rawPersona !== undefined && rawPersona !== null) {
+    if (typeof rawPersona !== 'string' || !(CHAT_PERSONAS as readonly string[]).includes(rawPersona)) {
+      return { ok: false, reason: 'persona.invalid' }
+    }
+    persona = rawPersona as ChatPersona
+  }
 
   if (typeof rawVisitorId !== 'string') return { ok: false, reason: 'visitorId.invalid' }
   const visitorId = rawVisitorId.trim()
@@ -96,6 +108,7 @@ export function validateRemiRequest(raw: unknown): ValidationResult {
       messages: messages.slice(-MAX_HISTORY_MESSAGES),
       lang,
       visitorId,
+      persona,
       ...(context ? { context } : {}),
       userMessageCount,
     },

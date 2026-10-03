@@ -2,6 +2,11 @@
  * Cœur de la fonction `/api/remi` : reçoit la requête du navigateur, la valide, applique les plafonds,
  * appelle OpenRouter et relaie la réponse en `text/event-stream` (format `RemiStreamEvent`).
  *
+ * Une seule fonction pour deux personas (`persona` de la requête, Rémi · IA par défaut) : le prompt système est
+ * celui de Rémi (`remiPrompt.ts`) ou celui de l'Archiviste · IA (`archivistePrompt.ts`, alimenté par les archives
+ * publiées lues dans Supabase, `publishedArchives.ts`) ; tout le reste (validation, plafonds comptés par persona,
+ * appel, flux, erreurs) est commun.
+ *
  * Deux sortes de réponses :
  *  - AVANT le premier mot : une erreur HTTP avec un corps JSON `{"type":"error","code":…}` (400
  *    `bad_request`, 403 `limit_reached`, 429 `rate_limited`, 503 `unavailable`). On attend donc le
@@ -15,13 +20,15 @@
  */
 import type { RemiChatErrorCode, RemiStreamEvent } from '../../src/features/remiChat/contract.js'
 import { MAX_BODY_BYTES, UPSTREAM_TIMEOUT_MS } from './config.js'
+import { buildArchivistePrompt } from './archivistePrompt.js'
 import { clientIp, createRemiLimiter, type RemiLimiter } from './limits.js'
 import { openUpstream } from './openrouter.js'
+import { createArchivesSource, type ArchivesEnv, type ArchivesSource, type PublishedArchives } from './publishedArchives.js'
 import { buildSystemPrompt } from './remiPrompt.js'
 import { encodeSseEvent, readUpstreamEvents } from './sse.js'
 import { readJsonBody, validateRemiRequest } from './validate.js'
 
-export interface HandlerEnv {
+export interface HandlerEnv extends ArchivesEnv {
   OPENROUTER_API_KEY?: string
   REMI_CHAT_DISABLED?: string
 }
@@ -40,6 +47,8 @@ export interface HandlerDeps {
   getEnv: () => HandlerEnv
   fetchImpl: typeof fetch
   limiter: RemiLimiter
+  /** Archives publiées, lues pour l'Archiviste seulement (jamais pour Rémi). */
+  archives: ArchivesSource
   now: () => number
   log: (entry: LogEntry) => void
   timeoutMs: number
@@ -95,15 +104,25 @@ async function* guardEvents(events: AsyncGenerator<RemiStreamEvent>): AsyncGener
   yield { type: 'error', code: 'unavailable' }
 }
 
+/** Valeur de journal pour les archives : leur nombre, ou `unavailable` quand elles n'ont pas pu être lues. */
+function archivesLogValue(archives: PublishedArchives): number | string {
+  return archives === null ? 'unavailable' : archives.length
+}
+
 export function createRemiHandler(overrides: Partial<HandlerDeps> = {}): (request: Request) => Promise<Response> {
-  const deps: HandlerDeps = {
-    getEnv: () => process.env,
-    fetchImpl: (input, init) => globalThis.fetch(input, init),
+  const base = {
+    getEnv: (): HandlerEnv => process.env,
+    fetchImpl: ((input, init) => globalThis.fetch(input, init)) as typeof fetch,
     limiter: createRemiLimiter(),
     now: Date.now,
-    log: (entry) => console.log(JSON.stringify(entry)),
+    log: (entry: LogEntry) => console.log(JSON.stringify(entry)),
     timeoutMs: UPSTREAM_TIMEOUT_MS,
     ...overrides,
+  }
+  // Source des archives : construite avec les dépendances résolues (même `fetch`, même horloge, même environnement).
+  const deps: HandlerDeps = {
+    ...base,
+    archives: overrides.archives ?? createArchivesSource({ getEnv: base.getEnv, fetchImpl: base.fetchImpl, now: base.now }),
   }
 
   return async function handleRemi(request: Request): Promise<Response> {
@@ -137,6 +156,7 @@ export function createRemiHandler(overrides: Partial<HandlerDeps> = {}): (reques
     const decision = deps.limiter.check({
       ip: clientIp(request.headers),
       visitorId: value.visitorId,
+      persona: value.persona,
       userMessageCount: value.userMessageCount,
     })
     if (!decision.ok) {
@@ -145,6 +165,25 @@ export function createRemiHandler(overrides: Partial<HandlerDeps> = {}): (reques
         errorResponse('rate_limited', { headers: { 'Retry-After': String(decision.retryAfterSec) } }),
         'rate_limited',
       )
+    }
+
+    const fields: Record<string, string | number | boolean> = {
+      persona: value.persona,
+      lang: value.lang,
+      history: value.messages.length,
+      in_chars: value.messages.reduce((sum, m) => sum + m.content.length, 0),
+    }
+
+    // Prompt du persona. L'Archiviste lit d'abord les archives publiées (délai court, cache, jamais d'erreur : une
+    // panne donne un prompt sans archives). Cette lecture se fait AVANT le délai accordé à OpenRouter, qu'elle ne
+    // grignote pas ; elle est bornée (`ARCHIVES_TIMEOUT_MS`), donc la fonction reste très en deçà de ses 30 s.
+    let system: string
+    if (value.persona === 'archiviste') {
+      const archives = await deps.archives.load().catch((): PublishedArchives => null)
+      fields.archives = archivesLogValue(archives)
+      system = buildArchivistePrompt({ lang: value.lang, context: value.context, archives })
+    } else {
+      system = buildSystemPrompt({ lang: value.lang, context: value.context })
     }
 
     // Un seul contrôleur pour OpenRouter : délai dépassé, client parti ou flux fermé l'abandonnent.
@@ -162,15 +201,9 @@ export function createRemiHandler(overrides: Partial<HandlerDeps> = {}): (reques
       request.signal.removeEventListener('abort', onClientGone)
     }
 
-    const fields: Record<string, string | number | boolean> = {
-      lang: value.lang,
-      history: value.messages.length,
-      in_chars: value.messages.reduce((sum, m) => sum + m.content.length, 0),
-    }
-
     const upstream = await openUpstream({
       apiKey,
-      system: buildSystemPrompt({ lang: value.lang, context: value.context }),
+      system,
       messages: value.messages,
       signal: upstreamAbort.signal,
       fetchImpl: deps.fetchImpl,

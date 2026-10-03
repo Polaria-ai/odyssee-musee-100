@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { CLIENT_TIMEOUT_MS, parseStreamLine, streamRemiReply } from './client'
+import { CLIENT_TIMEOUT_MS, parseStreamLine, serializeRequest, streamRemiReply } from './client'
 import { REMI_CHAT_ENDPOINT, type RemiChatRequest, type RemiStreamEvent } from './contract'
 
 const request: RemiChatRequest = {
@@ -74,6 +74,27 @@ describe('streamRemiReply : requête', () => {
     expect((init.headers as Record<string, string>)['Content-Type']).toBe('application/json')
     expect(JSON.parse(init.body as string)).toEqual(request)
     expect(init.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('persona : Rémi (explicite ou non) part sans le champ, l’Archiviste le porte', async () => {
+    fetchMock.mockImplementation(() => Promise.resolve(sse([delta('Bonjour'), DONE])))
+    const bodyOf = (n: number) => JSON.parse((fetchMock.mock.calls[n][1] as RequestInit).body as string) as Record<string, unknown>
+
+    await streamRemiReply(request, collector().handlers)
+    await streamRemiReply({ ...request, persona: 'remi' }, collector().handlers)
+    await streamRemiReply({ ...request, persona: 'archiviste' }, collector().handlers)
+
+    expect(bodyOf(0)).toEqual(request)
+    expect('persona' in bodyOf(0)).toBe(false)
+    expect('persona' in bodyOf(1)).toBe(false)
+    expect(bodyOf(1)).toEqual(request) // la requête de Rémi reste celle d'avant l'Archiviste, champ pour champ
+    expect(bodyOf(2)).toEqual({ ...request, persona: 'archiviste' })
+  })
+
+  it('serializeRequest : la requête de Rémi est octet pour octet celle des clients déjà en ligne', () => {
+    expect(serializeRequest({ ...request, persona: 'remi' })).toBe(JSON.stringify(request))
+    expect(serializeRequest(request)).toBe(JSON.stringify(request))
+    expect(serializeRequest({ ...request, persona: 'archiviste' })).toBe(JSON.stringify({ ...request, persona: 'archiviste' }))
   })
 
   it('appelle onDelta dans l’ordre, au fil de l’arrivée des morceaux', async () => {
