@@ -57,13 +57,20 @@ export interface MuseeGameState {
   openPersonId: string | null
   nearbyPersonId: string | null
   nearCurator: boolean
+  /** À portée du socle de l'Archiviste (bouton « Parler à l'Archiviste »). */
+  nearArchivist: boolean
   currentRoom: string | null
   dialogue: MuseeDialogue | null
   dialogueIndex: number
   stampCardOpen: boolean
   mapOpen: boolean
-  /** Chat avec Rémi · IA ouvert (uniquement par « Parler à Rémi » au comptoir : l'accueil de l'entrée est la bulle de dialogue). */
+  /**
+   * Un chat IA est ouvert (uniquement par « Parler à Rémi » au comptoir ou « Parler à l'Archiviste » à son socle :
+   * l'accueil de l'entrée est la bulle de dialogue). Le nom date du seul chat de Rémi ; `chatPersona` dit lequel.
+   */
   remiChatOpen: boolean
+  /** Persona du chat ouvert (ou du dernier ouvert) : `'remi'` au départ. */
+  chatPersona: 'remi' | 'archiviste'
   peersCount: number
   layout: MuseeLayout | null
   openPerson: (personId: string) => void

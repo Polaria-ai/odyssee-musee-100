@@ -261,6 +261,18 @@ describe('archives publiées injectées', () => {
     expect(block).not.toMatch(/x{1001}/)
   })
 
+  it('la borne par défaut tient les 19 séquences d’une soirée ordinaire (synthèse ~700 caractères, trois citations en deux langues)', () => {
+    const ordinary = EVENING_PROGRAM.map((s) =>
+      archive(s.id, {
+        summary: { fr: 'x'.repeat(700), en: 'y'.repeat(700) },
+        quotes: Array.from({ length: 3 }, (_, i) => ({ text: { fr: `${i}`.repeat(150), en: `${i}`.repeat(150) }, author: 'Prénom Nom', verified: true })),
+      }),
+    )
+    const block = buildArchivesBlock(ordinary, 'fr')
+    expect(block.match(/^## Vitrine/gm)).toHaveLength(EVENING_PROGRAM.length)
+    expect(block).not.toMatch(/n'est pas reprise|ne sont pas reprises/)
+  })
+
   it('garde toujours au moins une archive, même plus longue que la borne', () => {
     const block = buildArchivesBlock([archive(first.id, { summary: { fr: 'y'.repeat(1200), en: '' } })], 'fr', DEFAULT_PROMPT_DATA, 100)
     expect(block).toContain('y'.repeat(1200))

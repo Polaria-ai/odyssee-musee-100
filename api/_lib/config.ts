@@ -47,5 +47,11 @@ export const ARCHIVES_TIMEOUT_MS = 2500
 export const MAX_ARCHIVE_SUMMARY_CHARS = 1200
 export const MAX_ARCHIVE_QUOTES = 5
 export const MAX_QUOTE_CHARS = 280
-/** Part du prompt réservée aux archives publiées : au-delà, les dernières séquences sont écartées entières, jamais coupées en deux. */
-export const MAX_ARCHIVES_PROMPT_CHARS = 14_000
+/**
+ * Part du prompt réservée aux archives publiées : au-delà, les dernières séquences sont écartées entières, jamais coupées
+ * en deux. 48 000 caractères (~14 000 jetons) tiennent les 19 séquences d'une soirée ordinaire (~1 900 caractères chacune,
+ * soit ~36 000 : une synthèse de ~700 et trois citations en deux langues, mesuré sur des archives factices de cette taille) ;
+ * seules des archives au maximum de leurs bornes sur toutes les séquences (~4 000 caractères chacune) dépasseraient, et les
+ * dernières seraient alors signalées comme non reprises (« n'en dis rien, renvoie vers la vitrine »).
+ */
+export const MAX_ARCHIVES_PROMPT_CHARS = 48_000
