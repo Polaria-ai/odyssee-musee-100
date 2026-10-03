@@ -212,12 +212,10 @@ export const charter3d = {
       screenText: '#ffffff',
       screenSub: 'rgba(255,255,255,0.75)',
     },
+    // L'Archiviste est un personnage 3D (WEL-928) : ne restent que son socle projecteur, son liseré et son halo
+    // cyan au sol, et sa bulle d'invitation. Plus de buste, de tête, d'anneaux, de particules ni de faisceau.
     archivist: {
-      torso: '#57bfd6',
-      head: '#ffffff',
-      ring: '#6de4e5',
-      particle: '#ffffff',
-      beam: '#57bfd6',
+      halo: '#6de4e5',
       plinth: '#eaf1ff',
       plinthRim: '#57bfd6',
       bubbleFill: '#0a1738',

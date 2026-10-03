@@ -23,9 +23,10 @@ export const ROOT_BONE = 'Hips'
 /**
  * Marge sur la sphère de culling. Elle est mesurée dans la pose « idle » ; un bras levé (clip
  * « wave ») sort de presque 2 × la demi-largeur de cette pose. Sans marge, un personnage en bord
- * d'écran disparaîtrait d'un coup dès que son bras sort de la sphère.
+ * d'écran disparaîtrait d'un coup dès que son bras sort de la sphère. Un personnage peut en demander
+ * une autre (`CharacterDef.cullMargin`).
  */
-const CULLING_MARGIN = 1.6
+export const CULLING_MARGIN = 1.6
 
 export function findSkinnedMesh(root: Object3D): SkinnedMesh | null {
   let found: SkinnedMesh | null = null
@@ -144,7 +145,7 @@ export function getCharacterAssets(scene: Object3D, animations: AnimationClip[],
   const box = new Box3().setFromObject(probe)
   const { scale, offsetY } = fitToHeight(box, def.height)
   const boundingSphere = skinned.boundingSphere.clone()
-  boundingSphere.radius *= CULLING_MARGIN
+  boundingSphere.radius *= def.cullMargin ?? CULLING_MARGIN
   mixer.stopAllAction()
   mixer.uncacheRoot(probe)
 

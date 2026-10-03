@@ -1,8 +1,8 @@
 import { AnimationMixer, Box3, MeshLambertMaterial, MeshStandardMaterial, Vector3, VectorKeyframeTrack } from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { describe, expect, it } from 'vitest'
-import { alignRootToReference, findSkinnedMesh, fitToHeight, getCharacterAssets, makeMatteMaterial } from './characterRig'
-import type { CharacterDef } from './models'
+import { CULLING_MARGIN, alignRootToReference, findSkinnedMesh, fitToHeight, getCharacterAssets, makeMatteMaterial } from './characterRig'
+import { CHARACTERS, type CharacterDef } from './models'
 import { FIXTURE_MAP, makeTestRig, positionClip } from './rig.fixture'
 
 const DEF: CharacterDef = { path: '/test.glb', height: 1, clips: { idle: 'idle', wave: 'wave', walk: 'walk' } }
@@ -137,6 +137,21 @@ describe('getCharacterAssets', () => {
     expect(animations[1].tracks[0].values[0]).toBe(1)
   })
 
+  it('recale aussi le clip « talk » de l’Archiviste, avec la définition réelle du personnage (squelette de Rémi)', () => {
+    const { scene, animations } = makeTestRig()
+    const assets = getCharacterAssets(scene, animations, CHARACTERS.archiviste)
+    // Hauteur de jeu de l'Archiviste atteinte exactement (la fixture mesure 2 m en pose idle).
+    expect(assets.scale).toBeCloseTo(CHARACTERS.archiviste.height / 2, 5)
+    expect(Object.keys(assets.clips).sort()).toEqual(['idle', 'talk', 'wave'])
+    const talk = assets.clips.talk!
+    expect(talk).not.toBe(animations[3])
+    expect(meanOf(talk.tracks[0].values, 0)).toBeCloseTo(0)
+    expect(meanOf(talk.tracks[0].values, 2)).toBeCloseTo(0)
+    // Le rebond vertical (Y) du clip est intact, et le clip d'origine n'est pas muté.
+    expect(talk.tracks[0].values[1]).toBeCloseTo(0.5)
+    expect(animations[3].tracks[0].values[0]).toBe(-0.5)
+  })
+
   it('donne une sphère de culling plus large que celle de la pose idle', () => {
     const { scene, animations } = makeTestRig()
     const assets = getCharacterAssets(scene, animations, DEF)
@@ -145,6 +160,24 @@ describe('getCharacterAssets', () => {
     skinned.skeleton.update()
     skinned.computeBoundingSphere()
     expect(assets.boundingSphere.radius).toBeGreaterThan(skinned.boundingSphere.radius * 1.2)
+  })
+
+  it('applique la marge de culling propre au personnage : 1,6 par défaut, plus serrée pour l’Archiviste (sans passer sous la pose idle)', () => {
+    const { scene, animations } = makeTestRig()
+    const probe = cloneSkinned(scene)
+    const skinned = findSkinnedMesh(probe)!
+    skinned.skeleton.update()
+    skinned.computeBoundingSphere()
+    const idleRadius = skinned.boundingSphere.radius
+
+    const byDefault = getCharacterAssets(scene, animations, DEF).boundingSphere.radius
+    expect(byDefault).toBeCloseTo(idleRadius * CULLING_MARGIN, 5)
+
+    const { scene: s2, animations: a2 } = makeTestRig()
+    const archivist = getCharacterAssets(s2, a2, CHARACTERS.archiviste).boundingSphere.radius
+    expect(archivist).toBeCloseTo(idleRadius * CHARACTERS.archiviste.cullMargin, 5)
+    expect(archivist).toBeGreaterThan(idleRadius * 1.1)
+    expect(archivist).toBeLessThan(byDefault)
   })
 
   it('échoue clairement quand un clip déclaré manque dans le fichier', () => {

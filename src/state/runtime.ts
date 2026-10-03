@@ -26,6 +26,22 @@ export const player = {
   speed: 0,
 }
 
+/**
+ * État de l'Archiviste 3D, écrit par `archives/Archivist.tsx` (quelques nombres, aucun objet) et lu par la sonde
+ * de test `window.__musee.archivist()` (`scene/debugApi.ts`). `loaded` : le GLB est arrivé et le personnage monté ;
+ * `triangles` : ceux de son maillage ; `clip` : le clip demandé ; `yaw` : sa rotation vers le joueur (radians,
+ * relative à son orientation de repos) ; `drawn` : combien de fois son maillage a été soumis au rendu, donc qui
+ * ne bouge plus tant qu'elle est hors du champ de la caméra (compté seulement quand la sonde de test est active,
+ * jamais en production).
+ */
+export const archivistProbe = {
+  loaded: false,
+  triangles: 0,
+  clip: 'idle' as 'idle' | 'wave' | 'talk',
+  yaw: 0,
+  drawn: 0,
+}
+
 /** Remet l'entrée à zéro (changement d'écran, ouverture d'une fiche). */
 export function resetInput(): void {
   input.moveX = 0

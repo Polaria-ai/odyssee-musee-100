@@ -29,7 +29,7 @@ packs Kenney — détail complet (bbox brute, gabarit visé, poids, vérificatio
 `docs/assets/props.md`, fusionné ici. Les modules Cadres & Cartels (WEL-875) et Personnages (WEL-876)
 n'utilisent **aucun** modèle CC0 : géométrie procédurale (aucun cadre/spot de galerie exploitable trouvé
 dans les 6 packs, voir `docs/assets/frames.md`). Personnages : voir la section « Personnages générés »
-ci-dessous (Cyril et Rémi, depuis le 29/09 ; l'avatar et Minerve sculptés en three.js sont retirés).
+ci-dessous (Cyril et Rémi depuis le 29/09, l'Archiviste depuis le 01/10 ; l'avatar et Minerve sculptés en three.js sont retirés).
 
 ### Branchés via `architecture.decorPlacements` (contrat WEL-874)
 
@@ -80,18 +80,32 @@ ci-dessous (Cyril et Rémi, depuis le 29/09 ; l'avatar et Minerve sculptés en t
 
 35 GLB optimisés au total, 204 Ko (`pnpm verify:bundle` : largement sous 400 Ko/fichier et 6 Mo au total).
 
-## Personnages générés (29/09/2026)
+## Personnages générés (29/09/2026, l'Archiviste le 01/10/2026)
 
 | Fichier publié | Personne | Provenance | Clips | Poids |
 |---|---|---|---|---|
 | `public/models/characters/cyril.glb` | Cyril de Sousa Cardoso | Photo fournie par Baptiste (accord de la personne) → image en pied Seedream 5 Pro → Meshy 7.1 (12 400 triangles) → squelette Meshy (24 os) | `idle` (Meshy Idle_02), `walk` (Meshy Casual_Walk) | 344 Ko |
 | `public/models/characters/remi.glb` | Rémi Godeau | Idem | `idle` (Meshy Idle_02), `wave` (Meshy Big_Wave_Hello) | 368 Ko |
+| `public/models/characters/archiviste.glb` | L'Archiviste de 2040 : personne ENTIÈREMENT GÉNÉRÉE, aucune personne réelle | Référence fournie par Baptiste le 01/10/2026 (image en pied Seedream 5 Pro) → Meshy 7.1 → remaillage Meshy (15 585 triangles) → squelette Meshy (24 os, le même que Cyril et Rémi) | `idle` (Meshy Idle_02), `wave` (Meshy Big_Wave_Hello), `talk` (Meshy Talk_with_Hands_Open) | 389 Ko |
 
 - Générés dans Magnific (projet « Odyssée de l'IA — Musée des 100 »), crédits du compte Premium+ de Baptiste : 12 000 environ au total, dont une première attente (« Idle », agitée, écartée).
 - Sources brutes (photos, images en pied, GLB Meshy ~7 Mo par clip) hors Git : `~/Dev/odyssee-musee-100-assets/personnages/`.
 - Construction : `node scripts/build-characters.mjs` fusionne les clips d'un personnage en un seul GLB (même squelette), puis optimise (meshopt, texture WebP 1024).
 - Texture en ligne : three.js lit les textures intégrées aux GLB par `fetch(blob:…)` (Chrome, Android, Safari ≥ 17). La CSP de `vercel.json` doit donc garder `blob:` dans `connect-src`, sinon les modèles s'affichent en blanc (constaté en production le 29/09). `pnpm verify:security` le vérifie ; `vite preview` sert les en-têtes de Vercel, les E2E locaux tournent sous la même CSP que la production.
-- Pas de licence CC0 ici : ce sont les images de deux personnes réelles, utilisées avec leur accord pour ce jeu uniquement.
+- Pas de licence CC0 ici : Cyril et Rémi sont les images de deux personnes réelles, utilisées avec leur accord pour ce jeu uniquement. L'Archiviste est une personne entièrement générée (aucune personne réelle, confirmé par Baptiste) : rien à autoriser.
+- Sources de l'Archiviste (hors Git, `~/Dev/odyssee-musee-100-assets/personnages/`) : `archiviste-b.png` (image en pied validée), `archiviste-meshy.glb` (Meshy 7.1), `archiviste-remesh.glb` (remaillage), `archiviste-rig.glb` (squelette), `archiviste-idle.glb` / `-wave.glb` / `-talk.glb` (un clip chacun, ~7 Mo, texture 2048²), aperçus `archiviste-meshy-apercu.png` et `archiviste-remesh-apercu.png`.
+- Dans le jeu : `src/archives/Archivist.tsx` (salle des Archives de 2040, voir `docs/CHARTE-3D.md` §4.8). Hauteur 1,7 m (comme Cyril). Le fichier (389 Ko) est préchargé avec les deux autres (`src/characters/GlbCharacter.tsx`), donc téléchargé par tous les joueurs au démarrage, qu'ils aillent ou non aux Archives (la salle est montée en permanence). Il n'est dessiné que lorsque l'Archiviste est dans le champ de la caméra (sphère de culling resserrée, `cullMargin` 1,25 : voir `docs/CHARTE-3D.md` §4.8 et §8).
+
+### L'Archiviste : pourquoi sa chaîne de fabrication est plus longue (WEL-928)
+
+`node scripts/build-characters.mjs archiviste` (options : `--debug dossier`, `--out dossier`, `--no-clean`, voir l'en-tête du script). Cyril et Rémi gardent la chaîne d'origine (leurs GLB n'ont pas bougé) ; l'Archiviste a deux étapes de plus, parce que son GLB sortait à 470 Ko, au-dessus des 400 Ko par fichier de `pnpm verify:bundle` (maillage de 15 585 triangles contre 12 400, et trois clips au lieu de deux), et parce que le remaillage Meshy a abîmé sa texture.
+
+1. **Nettoyage de la texture** (`scripts/clean-texture-stains.mjs`, local et déterministe, sharp). Le remaillage a laissé des amas de texels presque noirs dans les zones anthracite du bas du manteau et du pantalon. L'atlas Meshy est un patchwork d'îlots séparés de noir ; des veines claires courent aussi sur le tissu.
+   - Taches : texels neutres nettement plus sombres (< 62 %) que la moyenne locale de leur zone anthracite, dans un îlot UV anthracite, en amas de 4 à 150 texels, remplacés par la couleur des voisins sains du même îlot. 6 tours de détection et de remplissage (chaque tour révèle de nouvelles taches) : 79, 36, 24, 20, 19, 19 amas ; **3 043 texels de taches changés** sur 2048² (0,15 % des texels utilisés). Les amas de plus de 150 texels sont laissés : une première version les remplissait aussi et peignait une étoile grise sur le t-shirt noir de l'Archiviste (qui partage l'îlot du manteau), constatée au rendu et corrigée.
+   - Marge des îlots : la couleur de chaque îlot est étendue de 40 texels dans le vide qui l'entoure (1,83 million de texels de vide changés, 43,7 % de l'atlas : des texels que le maillage n'affiche pas, seuls des texels inutilisés changent). Hypothèse de départ : le filtrage de la texture mélange le noir du vide et les mèches grises voisines au bord des îlots, d'où des veines claires ; la marge devait les atténuer.
+   - Protection : les îlots rattachés aux os `Head`, `neck`, `head_end`, `headfront`, `LeftHand` et `RightHand` (visage, cheveux, yeux, mains) ne sont jamais modifiés. Le script le contrôle par différence avant/après et lève une erreur si un texel protégé, ou un texel qui n'est ni une tache ni du vide, a changé (**0 texel protégé changé**, confirmé par une mesure indépendante sur des masques UV recalculés : 3 043 texels utilisés changés, 0 dans les îlots protégés, 0 hors taches et vide). Les tests (`scripts/clean-texture-stains.test.ts`) le vérifient sur un atlas synthétique et sur la vraie source.
+   - **Effet visible : faible, à ne pas surestimer** (vérification indépendante du 03/10). Les taches nettement visibles sont rares et peu contrastées au rendu : sur les texels de vêtement, des amas sombres de 6 texels ou plus passent de 53 à 30 ; il reste 2 071 texels sombres isolés sur 762 701 texels anthracite. Les veines claires ne sont pas supprimées : à nombre de pixels clairs neutres comparés, le bas du corps en trois quarts passe de 1 512 à 1 482 pixels (− 2 %), et de fines veines blanches courent sur le manteau et le pantalon avant comme après, comme sur la veste de Cyril (défaut déjà présent dans la base). Le gain réel et mesuré de la marge est un fichier plus léger (WebP : 409 392 → 398 360 octets). Les planches de preuve (`~/Dev/odyssee-musee-100-assets/v5-captures/archiviste-3d/`, texture et bas du corps avant/après) montrent des images presque identiques : c'est la lecture honnête.
+2. **Allègement du fichier** : images clés des clips fusionnées à 0,003 (écart de rotation < 0,3°, invisible, −28 Ko), maillage allégé à 12 467 triangles (80 % des sommets, erreur maximale 0,5 % de la taille du modèle, −30 Ko ; un maillage allégé se compresse moins bien que son nombre de triangles ne le laisse croire), texture 1024 en WebP qualité 80 comme les deux autres, puis meshopt. Résultat : **389 Ko** (texture 90 Ko, clips 29 Ko, maillage 270 Ko), contre 368 Ko pour Rémi. Sans le nettoyage de la texture, la même chaîne donne 400 Ko (409 392 octets, à 200 octets de la limite) : une marge lisse se compresse mieux qu'un fond noir bordé de franges.
 
 
 ## Textures de sol (WEL-923)
