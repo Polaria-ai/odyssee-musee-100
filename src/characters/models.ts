@@ -29,6 +29,14 @@ export interface CharacterDef {
   readonly height: number
   /** Nom logique → nom du clip dans le GLB. Toujours un clip `idle` : c'est le repos et le repli. */
   readonly clips: { readonly idle: string } & Readonly<Partial<Record<ClipName, string>>>
+  /**
+   * Marge de la sphère de culling autour de la pose « idle » (voir `CULLING_MARGIN` dans `characterRig.ts`,
+   * 1,6 par défaut : un personnage en bord d'écran ne disparaît pas quand un bras sort de la sphère).
+   * Un personnage qui reste sur place, toujours loin du bord de l'écran quand il bouge les bras (l'Archiviste),
+   * en demande moins : trop large, la sphère déborde dans le champ de la caméra alors que le personnage est
+   * hors écran, et son maillage entier est dessiné pour rien (+ 12 467 triangles au spawn du hall sur Pixel 7).
+   */
+  readonly cullMargin?: number
 }
 
 export const CHARACTERS = {
@@ -46,6 +54,10 @@ export const CHARACTERS = {
     path: '/models/characters/archiviste.glb',
     height: 1.7,
     clips: { idle: 'idle', wave: 'wave', talk: 'talk' },
+    // Debout sur son socle : le salut et les gestes de « talk » n'ont lieu que joueur à moins de 2,6 m, donc
+    // elle est alors près du centre de l'écran. 1,25 couvre le bras levé et laisse la sphère hors du champ
+    // quand elle est hors écran (WEL-928, vérification du 03/10).
+    cullMargin: 1.25,
   },
 } as const satisfies Record<string, CharacterDef>
 

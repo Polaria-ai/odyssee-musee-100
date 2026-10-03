@@ -26,8 +26,10 @@ import { findSkinnedMesh } from '../characters/characterRig'
 import { BODY_TURN_RATE, approach, turnToward } from '../npc/remiBehavior'
 import type { Placement } from '../types'
 import { useGame } from '../state/gameStore'
+import { debugEnabled } from '../scene/debugApi'
 import { archivistProbe, player as runtimePlayer } from '../state/runtime'
 import { charter3d } from '../styles/tokens'
+import { playerCoversBubble } from './archivistBubble'
 import { ARCHIVIST_NAME } from './archivistScript'
 import { ARCHIVIST_TALK_RADIUS } from './room/constants'
 import { useArchivistGreeting } from './useArchivistGreeting'
@@ -47,6 +49,11 @@ const BUBBLE_BOB = 0.05
  * joueur resté dans le hall, au nord du mur, ne la ferait sinon pas se tourner vers ce mur.
  */
 const TRACK_RADIUS = 6.5
+
+/** Compteur de la sonde de test (`archivistProbe.drawn`) : appelé par three à chaque fois que le maillage est dessiné. */
+function countDraw(): void {
+  archivistProbe.drawn += 1
+}
 
 const colors = charter3d.archives.archivist // socle, liseré, halo cyan et bulle (voir docs/CHARTE-3D.md §4.8)
 
@@ -195,6 +202,9 @@ export function Archivist({ placement }: { placement: Placement }) {
     const mesh = group ? findSkinnedMesh(group) : null
     archivistProbe.loaded = !!mesh
     archivistProbe.triangles = mesh ? Math.round((mesh.geometry.index?.count ?? mesh.geometry.attributes.position.count) / 3) : 0
+    // Three n'appelle `onBeforeRender` que pour un objet réellement dessiné (après le culling) : de quoi tester
+    // qu'elle n'est pas dessinée hors du champ. Rien en production (sonde de test inactive).
+    if (mesh && debugEnabled()) mesh.onBeforeRender = countDraw
   }, [])
 
   useFrame((state, delta) => {
@@ -215,11 +225,13 @@ export function Archivist({ placement }: { placement: Placement }) {
     // Halo : respiration lente de l'opacité (un matériau partagé, un nombre écrit).
     haloMat.opacity = HALO_OPACITY + Math.sin(t * 1.6) * HALO_BREATH
 
-    // Bulle « … » : flotte doucement et fait toujours face à la caméra.
+    // Bulle « … » : flotte doucement et fait toujours face à la caméra. Cachée quand le joueur est juste
+    // derrière elle : la caméra est au sud, la bulle se poserait sur son torse (`archivistBubble.ts`).
     const bubble = bubbleRef.current
     if (bubble) {
       bubble.position.y = BUBBLE_BASE_Y + Math.sin(t * 2.2) * BUBBLE_BOB
       bubble.quaternion.copy(state.camera.quaternion)
+      bubble.visible = !playerCoversBubble(dx, dz)
     }
 
     // Détection de proximité (contrat) : ~150 ms, pas chaque image.

@@ -25,6 +25,7 @@ import {
   gotoMusee,
   museePlayer,
   teleport,
+  waitForCameraSettled,
   waitForRenderInfo,
 } from './support/museeApi'
 
@@ -378,6 +379,8 @@ interface ArchivistProbe {
   triangles: number
   clip: 'idle' | 'wave' | 'talk'
   yaw: number
+  /** Fois où son maillage a été dessiné (ne bouge pas tant qu'elle est hors du champ de la caméra). */
+  drawn: number
 }
 
 async function archivistProbe(page: Page): Promise<ArchivistProbe> {
@@ -417,6 +420,25 @@ test('Archiviste 3D : le personnage est chargé, salue à l’approche (une fois
   await expect.poll(async () => (await archivistProbe(page)).yaw, { timeout: 10_000 }).toBeLessThan(-0.3)
   await teleport(page, archives.arrival.position.x, archives.arrival.position.z - 8, 0)
   await expect.poll(async () => Math.abs((await archivistProbe(page)).yaw), { timeout: 10_000 }).toBeLessThan(0.05)
+})
+
+test('Archiviste 3D : hors du champ de la caméra (spawn du hall) elle n’est pas dessinée, dans la salle elle l’est', async ({
+  page,
+}) => {
+  const state = await enterMuseumWithArchives(page)
+  const archives = state.archivesLayout!
+
+  // Au point d'apparition du hall, elle est derrière le bas de l'écran (6,4 m au sud-est, tous formats testés) :
+  // son maillage (12 467 triangles) ne doit pas être dessiné pour rien, c'est le budget de tous les joueurs au départ.
+  await expect.poll(async () => (await archivistProbe(page)).loaded, { timeout: 30_000 }).toBe(true)
+  await waitForCameraSettled(page)
+  const atSpawn = (await archivistProbe(page)).drawn
+  await page.waitForTimeout(1_500)
+  expect((await archivistProbe(page)).drawn, 'dessinée alors qu’elle est hors du champ, au spawn du hall').toBe(atSpawn)
+
+  // Dans la salle, face à elle, elle est dessinée à chaque image.
+  await teleport(page, archives.archivist.position.x, archives.archivist.position.z + 2.4, Math.PI)
+  await expect.poll(async () => (await archivistProbe(page)).drawn, { timeout: 15_000 }).toBeGreaterThan(atSpawn + 2)
 })
 
 // ---------------------------------------------------------------------------

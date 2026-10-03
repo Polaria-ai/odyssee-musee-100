@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { dims } from '../styles/tokens'
+import { CULLING_MARGIN } from './characterRig'
 import { CHARACTERS, CHARACTER_IDS, hasClip } from './models'
 
 /** JSON d'un GLB (premier chunk), sans charger three : vérifie le fichier livré, pas seulement la config. */
@@ -52,6 +53,13 @@ describe('CHARACTERS', () => {
     expect(remi.slice(0, 2)).toEqual(['Hips', 'LeftUpLeg'])
     expect(jointNames(CHARACTERS.archiviste.path)).toEqual(remi)
     expect(jointNames(CHARACTERS.cyril.path)).toEqual(remi)
+  })
+
+  it('ne resserre la sphère de culling que pour l’Archiviste (Cyril et Rémi gardent la marge par défaut)', () => {
+    expect(CHARACTERS.archiviste.cullMargin).toBeGreaterThanOrEqual(1.1)
+    expect(CHARACTERS.archiviste.cullMargin).toBeLessThan(CULLING_MARGIN)
+    expect('cullMargin' in CHARACTERS.cyril).toBe(false)
+    expect('cullMargin' in CHARACTERS.remi).toBe(false)
   })
 
   it('garde l’Archiviste dans le budget d’un fichier de personnage (verify:bundle : 400 Ko par fichier)', () => {

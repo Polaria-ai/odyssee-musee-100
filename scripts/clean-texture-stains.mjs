@@ -8,10 +8,16 @@
  *  A. Taches. Le remaillage laisse, dans les zones sombres et unies d'un vêtement, des amas de texels nettement
  *     plus sombres que le tissu qui les entoure (surtout le long des bords d'îlots). Ils sont détectés puis
  *     remplacés par la couleur environnante (`detectStains`, `fillStains`).
- *  B. Veines claires. Le filtrage de la texture (bilinéaire, puis mipmaps à distance) mélange, sur le bord d'un
- *     îlot, le noir du vide et le gris des cheveux voisins : de fines craquelures claires courent sur le manteau.
- *     On étend donc la couleur de chaque îlot dans le vide qui l'entoure (`padAtlas`, « marge » ou dilatation
- *     des bords) : seuls des texels INUTILISÉS changent, jamais un texel que le maillage affiche.
+ *  B. Veines claires (hypothèse). Le filtrage de la texture (bilinéaire, puis mipmaps à distance) mélange, sur le
+ *     bord d'un îlot, le noir du vide et le gris des cheveux voisins : de fines craquelures claires courent sur le
+ *     manteau. On étend donc la couleur de chaque îlot dans le vide qui l'entoure (`padAtlas`, « marge » ou
+ *     dilatation des bords) : seuls des texels INUTILISÉS changent, jamais un texel que le maillage affiche.
+ *
+ * EFFET MESURÉ (vérification indépendante du 03/10/2026) : faible. Les taches changées sont 3 043 texels (0,15 % des
+ * texels utilisés) ; des amas sombres de 6 texels ou plus passent de 53 à 30. Les veines claires, elles, ne
+ * disparaissent pas : − 2 % de pixels clairs neutres sur le bas du corps rendu en trois quarts (1 512 contre 1 482),
+ * des veines blanches restent visibles sur le manteau, comme sur la veste de Cyril. Le gain réel de la marge est un
+ * WebP plus léger (GLB : 409 392 → 398 360 octets), pas un tissu plus lisse.
  *
  * Étapes, dans l'ordre :
  *  1. Zones. Les triangles du maillage sont rastérisés dans l'espace UV : on sait quels texels sont réellement
@@ -37,7 +43,7 @@
  *     1024 : au-delà, les mipmaps à distance ne mélangent plus le vide à un îlot), le vide prend la couleur des
  *     îlots voisins ; le vêtement passe avant les autres îlots dans la moyenne. `padOtherSpeed` (1 par défaut)
  *     peut ralentir les îlots qui ne sont pas du vêtement. Essais sur l'Archiviste (rendu 3D rapproché, éclairci) :
- *     marge 16 → 40, vitesses égales = le moins de veines claires sur le manteau, et un WebP plus léger (une marge
+ *     marge 16 → 40, vitesses égales = un peu moins de veines claires sur le manteau (écart faible, voir « EFFET MESURÉ »), et un WebP plus léger (une marge
  *     lisse se compresse mieux qu'un fond noir bordé de franges : −11 Ko sur le GLB à qualité égale).
  *  5. Contrôle par différence. Le rapport donne le nombre de texels changés par étape et leur part ; les texels
  *     changés qui ne sont NI une tache NI du vide, et les texels PROTÉGÉS changés, doivent être nuls (sinon la
