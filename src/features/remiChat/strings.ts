@@ -92,7 +92,7 @@ export const archivisteStrings = defineStrings({
   // Premier message du fil : court, le visiteur vient de la saluer ou de s'approcher de son socle
   greeting: {
     fr: "Bonjour. Je suis l'Archiviste · IA, gardienne des Archives de 2040. Interrogez-moi sur les vitrines ou sur le programme du 6 octobre.",
-    en: "Hello. I'm the Archivist · AI, keeper of the 2040 Archives. Ask me about the display cases or the October 6 programme.",
+    en: "Hello. I'm the Archivist · AI, keeper of the 2040 Archives. Ask me about the display cases or the October 6 program.",
   },
 
   // Préambule du repli quand le service ne répond pas (les lignes viennent de `archivistScript.ts`)
