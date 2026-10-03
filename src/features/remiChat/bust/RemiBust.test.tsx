@@ -63,6 +63,14 @@ describe('RemiBust sans WebGL (jsdom)', () => {
     expect(root()).toHaveAttribute('aria-hidden', 'true')
   })
 
+  it('personnage : Rémi par défaut, l\'Archiviste sur demande (data-character), même data-testid', () => {
+    const { rerender } = render(<RemiBust mood="idle" variant="split" />)
+    expect(root()).toHaveAttribute('data-character', 'remi')
+    rerender(<RemiBust mood="idle" variant="split" character="archiviste" />)
+    expect(root()).toHaveAttribute('data-testid', 'remi-bust')
+    expect(root()).toHaveAttribute('data-character', 'archiviste')
+  })
+
   it('repli : silhouette stylisée visible, jamais d\'écran vide, aucune erreur ni avertissement console', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
@@ -106,7 +114,19 @@ describe('RemiBust avec WebGL', () => {
     expect(silhouette()).toHaveStyle({ opacity: '0' })
     expect(received.mood).toBe('listening')
     expect(received.variant).toBe('split')
+    expect(received.character).toBe('remi') // Rémi par défaut
     expect(mocks.mounts).toBe(1)
+  })
+
+  it('transmet le personnage demandé au rendu 3D (GLB et mesures de l\'Archiviste)', async () => {
+    let received: Record<string, unknown> = {}
+    mocks.canvas = (props) => {
+      received = props as Record<string, unknown>
+      return <ReadyOnMount onReady={(props as BustCanvasProps).onReady} />
+    }
+    render(<RemiBust mood="idle" variant="fullscreen" character="archiviste" />)
+    await waitFor(() => expect(root()).toHaveAttribute('data-state', 'ready'))
+    expect(received.character).toBe('archiviste')
   })
 
   it('reste en attente tant que le modèle n\'est pas là', async () => {

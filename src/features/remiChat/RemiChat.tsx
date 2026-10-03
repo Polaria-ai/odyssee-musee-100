@@ -1,31 +1,37 @@
 /**
- * Chat avec Rémi · IA (V5, WEL-920) : surimpression plein écran qui remplace le dialogue scripté de Rémi au
- * comptoir (« Parler à Rémi »). L'accueil de l'entrée reste la bulle scriptée en bas de l'écran (`App.tsx`).
- * Propriétaire : agent chat-ui.
+ * Chat avec Rémi · IA (V5, WEL-920) et avec l'Archiviste · IA (WEL-929) : surimpression plein écran qui remplace le
+ * dialogue scripté de Rémi au comptoir (« Parler à Rémi ») ou celui de l'Archiviste (« Parler à l'Archiviste »).
+ * L'accueil de l'entrée reste la bulle scriptée en bas de l'écran (`App.tsx`). Propriétaire : agent chat-ui.
  *
- * Le chat est translucide : le musée (le canvas du jeu, figé pendant le chat) reste visible derrière Rémi et derrière
+ * UN SEUL composant pour les deux personnages : `PersonaChat` lit sa configuration dans `PERSONAS` (`personas.ts` :
+ * nom, mention IA, accueil, puces, personnage du buste, accent de couleur). `RemiChat` et `ArchivisteChat` n'en
+ * sont que deux instances ; `AiChats` les monte ensemble pour que chacune garde son fil pendant toute la partie.
+ *
+ * Le chat est translucide : le musée (le canvas du jeu, figé pendant le chat) reste visible derrière le buste et derrière
  * les bulles, sous un voile sombre léger qui garantit la lisibilité (voir `remiChat.css`).
  *
- * - PC (largeur ≥ 900 px ET paysage) : écran coupé en deux, le buste de Rémi à gauche, le chat à droite.
- * - Téléphone (tout le reste) : le buste de Rémi en fond plein écran, les bulles par-dessus sur le bas,
+ * - PC (largeur ≥ 900 px ET paysage) : écran coupé en deux, le buste à gauche, le chat à droite.
+ * - Téléphone (tout le reste) : le buste en fond plein écran, les bulles par-dessus sur le bas,
  *   la saisie en bas. Le clavier virtuel est géré par `visualViewport` (la saisie reste au-dessus).
  *
- * Le composant reste monté pendant la partie et ne rend rien tant que le chat est fermé : le fil de messages
- * (état de `useRemiChat`) survit donc aux fermetures. Ouvrir/fermer : `openRemiChat` / `closeRemiChat`
- * (`src/state/gameStore.ts`). Le buste est `RemiBust` (autre module) ; son humeur suit la conversation.
+ * Chaque instance reste montée pendant la partie et ne rend rien tant que SON chat est fermé : le fil de messages
+ * (état de `useRemiChat`) survit donc aux fermetures. Ouvrir/fermer : `openChat(persona)` (ou `openRemiChat`) et
+ * `closeRemiChat` (`src/state/gameStore.ts`) ; un seul chat est ouvert à la fois, donc les `data-testid` `remi-chat*`
+ * désignent toujours celui de la persona ouverte (`data-persona` sur la racine dit laquelle). Le buste est `RemiBust`
+ * (autre module) ; son humeur suit la conversation.
  */
 import { useEffect, useId, useLayoutEffect, useRef, type CSSProperties, type KeyboardEvent } from 'react'
 import { useGame } from '../../state/gameStore'
-import { useT } from '../../i18n'
+import { usePick, useT } from '../../i18n'
 import { playSfx } from '../../audio'
-import { MAX_USER_MESSAGE_CHARS } from './contract'
+import { MAX_USER_MESSAGE_CHARS, type ChatPersona } from './contract'
+import { PERSONAS } from './personas'
 import { RemiBust } from './RemiBust'
 import { strings } from './strings'
 import { useRemiChat, type ChatEntry } from './useRemiChat'
 import { useSplitLayout, useVisibleFrame } from './useChatViewport'
+import type { Localized } from '../../types'
 import './remiChat.css'
-
-const SUGGESTION_KEYS = ['suggestionHow', 'suggestionWho', 'suggestionArchives', 'suggestionProgram'] as const
 
 /** Hauteur maximale (px) du champ de saisie avant qu'il ne défile. */
 const MAX_INPUT_HEIGHT = 128
@@ -34,13 +40,16 @@ const STICK_THRESHOLD = 64
 
 const FOCUSABLE = 'button:not([disabled]), textarea:not([disabled]), [href], [tabindex]:not([tabindex="-1"])'
 
-export function RemiChat() {
-  const open = useGame((s) => s.remiChatOpen)
+/** Le chat d'une persona : ouvert quand un chat est ouvert (`remiChatOpen`) ET que c'est le sien (`chatPersona`). */
+export function PersonaChat({ persona }: { persona: ChatPersona }) {
+  const config = PERSONAS[persona]
+  const open = useGame((s) => s.remiChatOpen && s.chatPersona === persona)
   const closeRemiChat = useGame((s) => s.closeRemiChat)
   const t = useT(strings)
+  const text = usePick()
   const split = useSplitLayout()
   const frame = useVisibleFrame(open)
-  const chat = useRemiChat(open)
+  const chat = useRemiChat(open, persona)
   const { entries, phase, draft, send, retry } = chat
   const busy = phase !== 'idle'
 
@@ -150,6 +159,8 @@ export function RemiChat() {
       ref={rootRef}
       className="remi-chat"
       data-testid="remi-chat"
+      data-persona={persona}
+      data-accent={config.accent}
       data-layout={split ? 'split' : 'overlay'}
       data-mood={chat.mood}
       role="dialog"
@@ -159,16 +170,16 @@ export function RemiChat() {
       onKeyDown={onRootKeyDown}
     >
       <div className="remi-chat__stage" data-testid="remi-chat-stage" aria-hidden="true">
-        <RemiBust mood={chat.mood} variant={split ? 'split' : 'fullscreen'} />
+        <RemiBust mood={chat.mood} variant={split ? 'split' : 'fullscreen'} character={config.character} />
       </div>
 
       <div className="remi-chat__frame" data-testid="remi-chat-frame" data-keyboard={frame.keyboard} style={frameStyle}>
         <header className="remi-chat__header">
           <div className="remi-chat__heading">
             <h2 id={titleId} className="remi-chat__title">
-              {t('title')}
+              {text(config.title)}
             </h2>
-            <p className="remi-chat__notice">{t('aiNotice')}</p>
+            <p className="remi-chat__notice">{text(config.aiNotice)}</p>
           </div>
           <button type="button" className="remi-chat__close" data-testid="remi-chat-close" aria-label={t('close')} onClick={close}>
             ✕
@@ -182,13 +193,13 @@ export function RemiChat() {
             className="remi-chat__thread"
             data-testid="remi-chat-thread"
             role="region"
-            aria-label={t('threadLabel')}
+            aria-label={text(config.threadLabel)}
             tabIndex={0}
             onScroll={onScroll}
           >
             <ul className="remi-chat__list" aria-busy={busy}>
               {entries.map((entry) => (
-                <ChatBubble key={entry.id} entry={entry} last={entry.id === lastId} busy={busy} onRetry={retry} />
+                <ChatBubble key={entry.id} entry={entry} author={config.author} last={entry.id === lastId} busy={busy} onRetry={retry} />
               ))}
             </ul>
             {busy && (
@@ -198,7 +209,7 @@ export function RemiChat() {
                   <i />
                   <i />
                 </span>
-                {t('typing')}
+                {text(config.typing)}
               </div>
             )}
           </div>
@@ -210,9 +221,15 @@ export function RemiChat() {
 
           {chat.showSuggestions && (
             <div className="remi-chat__suggestions" role="group" aria-label={t('suggestionsLabel')}>
-              {SUGGESTION_KEYS.map((key) => (
-                <button key={key} type="button" className="remi-chat__chip" data-testid="remi-chat-suggestion" onClick={() => submit(t(key))}>
-                  {t(key)}
+              {config.suggestions.map((suggestion) => (
+                <button
+                  key={suggestion.fr}
+                  type="button"
+                  className="remi-chat__chip"
+                  data-testid="remi-chat-suggestion"
+                  onClick={() => submit(text(suggestion))}
+                >
+                  {text(suggestion)}
                 </button>
               ))}
             </div>
@@ -231,10 +248,10 @@ export function RemiChat() {
                 className="remi-chat__input"
                 data-testid="remi-chat-input"
                 data-over={chat.overLimit}
-                aria-label={t('inputLabel')}
+                aria-label={text(config.inputLabel)}
                 aria-describedby={counterId}
                 aria-invalid={chat.overLimit}
-                placeholder={t(chat.ended ? 'inputPlaceholderEnded' : 'inputPlaceholder')}
+                placeholder={chat.ended ? t('inputPlaceholderEnded') : text(config.inputPlaceholder)}
                 rows={1}
                 enterKeyHint="send"
                 autoComplete="off"
@@ -269,11 +286,24 @@ export function RemiChat() {
   )
 }
 
-function ChatBubble({ entry, last, busy, onRetry }: { entry: ChatEntry; last: boolean; busy: boolean; onRetry: () => void }) {
+function ChatBubble({
+  entry,
+  author,
+  last,
+  busy,
+  onRetry,
+}: {
+  entry: ChatEntry
+  author: Localized
+  last: boolean
+  busy: boolean
+  onRetry: () => void
+}) {
   const t = useT(strings)
+  const text = usePick()
   return (
     <li className="remi-chat__item" data-role={entry.role} data-kind={entry.kind} data-last={last || undefined}>
-      <span className="remi-chat__sr">{t(entry.role === 'user' ? 'authorUser' : 'authorRemi')}</span>
+      <span className="remi-chat__sr">{entry.role === 'user' ? t('authorUser') : text(author)}</span>
       <p
         className="remi-chat__bubble"
         data-testid="remi-chat-message"
@@ -290,5 +320,25 @@ function ChatBubble({ entry, last, busy, onRetry }: { entry: ChatEntry; last: bo
         </button>
       )}
     </li>
+  )
+}
+
+/** Le chat de Rémi · IA (au comptoir du hall). */
+export function RemiChat() {
+  return <PersonaChat persona="remi" />
+}
+
+/** Le chat de l'Archiviste · IA (dans les Archives de 2040). */
+export function ArchivisteChat() {
+  return <PersonaChat persona="archiviste" />
+}
+
+/** Les chats de la partie, montés ensemble : chacun garde son fil (état de son `useRemiChat`) jusqu'à la fin de la session. */
+export function AiChats() {
+  return (
+    <>
+      <RemiChat />
+      <ArchivisteChat />
+    </>
   )
 }

@@ -1,6 +1,7 @@
 /**
- * Conversation avec Rémi · IA (V5, WEL-920) : fil de messages, envoi, flux, erreurs, plafonds, humeur du buste.
- * Propriétaire : agent chat-ui.
+ * Conversation avec Rémi · IA (V5, WEL-920) ou l'Archiviste · IA (WEL-929) : fil de messages, envoi, flux, erreurs,
+ * plafonds, humeur du buste. Propriétaire : agent chat-ui. Un seul hook pour les deux personas (`PERSONAS`,
+ * `personas.ts`) : chacune a son instance, donc son propre fil, conservé pendant la session.
  *
  * Le fil vit dans l'état React du composant `RemiChat`, qui reste monté pendant toute la partie (il ne rend
  * rien quand le chat est fermé) : l'historique est donc conservé tant que la page reste ouverte, sans rien
@@ -15,20 +16,25 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useGame } from '../../state/gameStore'
+import { archivistDialogue } from '../../archives/archivistScript'
 import { pick, translate } from '../../i18n'
 import { remiDialogue } from '../../npc/remiScript'
 import type { Lang } from '../../types'
 import { streamRemiReply } from './client'
 import {
+  DEFAULT_PERSONA,
   MAX_HISTORY_MESSAGES,
   MAX_MESSAGES_PER_VISITOR,
   MAX_USER_MESSAGE_CHARS,
   type ChatMessage,
+  type ChatPersona,
   type ChatRole,
   type RemiChatErrorCode,
+  type RemiChatRequest,
   type RemiChatResult,
   type RemiMood,
 } from './contract'
+import { PERSONAS } from './personas'
 import { strings } from './strings'
 
 /** Durée pendant laquelle Rémi reste en train de « parler » (gestes) après le dernier morceau de texte. */
@@ -60,6 +66,8 @@ export interface RemiChatProgress {
   stampsCount: number
   total: number
   archivesToVisit: boolean
+  /** Les Archives de 2040 (repli et contexte de l'Archiviste) : vitrines consultées, nombre de vitrines, archives publiées. */
+  archives?: { consulted: number; total: number; published: number }
 }
 
 /** Progression de la partie, lue à la demande (jamais figée dans une fermeture). */
@@ -70,7 +78,19 @@ function readProgress(): RemiChatProgress {
     stampsCount: Object.keys(g.stamps).length,
     total: g.people.length,
     archivesToVisit: g.sessions.length > 0 && Object.keys(g.visitedSessions).length === 0,
+    archives: { consulted: Object.keys(g.visitedSessions).length, total: g.sessions.length, published: Object.keys(g.archives).length },
   }
+}
+
+/**
+ * Progression envoyée au serveur (`RemiChatContext`). Rémi : portraits ouverts, tampons, nombre de portraits.
+ * L'Archiviste : vitrines consultées, tampons, nombre de vitrines (`api/_lib/archivistePrompt.ts` le lit ainsi).
+ */
+export function chatContext(progress: RemiChatProgress, persona: ChatPersona): NonNullable<RemiChatRequest['context']> {
+  if (persona === 'archiviste' && progress.archives) {
+    return { visitedCount: progress.archives.consulted, stampsCount: progress.stampsCount, total: progress.archives.total }
+  }
+  return { visitedCount: progress.visitedCount, stampsCount: progress.stampsCount, total: progress.total }
 }
 
 function joinLines(lines: readonly { text: { fr: string; en: string } }[], lang: Lang, separator: string): string {
@@ -78,22 +98,28 @@ function joinLines(lines: readonly { text: { fr: string; en: string } }[], lang:
 }
 
 /**
- * Premier message du fil : une ou deux phrases qui disent qui parle et ce qu'on peut demander. Le visiteur a déjà
- * eu l'accueil complet dans la bulle du jeu (`remiDialogue` welcome) : le chat ne le répète pas.
+ * Premier message du fil : une ou deux phrases qui disent qui parle et ce qu'on peut demander. Pour Rémi, le visiteur a
+ * déjà eu l'accueil complet dans la bulle du jeu (`remiDialogue` welcome) : le chat ne le répète pas.
  */
-export function greetingText(lang: Lang): string {
-  return translate(strings, lang)('greeting')
+export function greetingText(lang: Lang, persona: ChatPersona = DEFAULT_PERSONA): string {
+  return pick(PERSONAS[persona].greeting, lang)
 }
 
 /**
  * Réponse de repli quand le service est indisponible : « Je vous réponds brièvement : » suivi des lignes
- * de la conversation de comptoir (`remiDialogue` talk), concaténées. `served` (nombre de replis déjà donnés)
- * fait tourner les variantes pour que deux replis de suite ne soient pas identiques.
+ * du dialogue scripté du personnage, concaténées : la conversation de comptoir de Rémi (`remiDialogue` talk), ou, pour
+ * l'Archiviste, son état des archives au vouvoiement (`archivistDialogue` chatFallback). `served` (nombre de replis déjà
+ * donnés) fait tourner les variantes pour que deux replis de suite ne soient pas identiques.
  */
-export function fallbackText(lang: Lang, progress: RemiChatProgress, served: number): string {
+export function fallbackText(lang: Lang, progress: RemiChatProgress, served: number, persona: ChatPersona = DEFAULT_PERSONA): string {
+  const preface = pick(PERSONAS[persona].fallbackPreface, lang)
+  if (persona === 'archiviste') {
+    const archives = progress.archives ?? { consulted: 0, total: 0, published: 0 }
+    const dialogue = archivistDialogue({ kind: 'chatFallback', served, total: archives.total, published: archives.published })
+    return `${preface} ${joinLines(dialogue.lines, lang, ' ')}`
+  }
   const visitedCount = progress.visitedCount > 0 ? progress.visitedCount + served : 0
   const dialogue = remiDialogue({ kind: 'talk', ...progress, visitedCount })
-  const preface = translate(strings, lang)('fallbackPreface')
   return `${preface} ${joinLines(dialogue.lines, lang, ' ')}`
 }
 
@@ -140,7 +166,7 @@ export interface RemiChatController {
   openedEmpty: boolean
 }
 
-export function useRemiChat(open: boolean): RemiChatController {
+export function useRemiChat(open: boolean, persona: ChatPersona = DEFAULT_PERSONA): RemiChatController {
   const [entries, setEntries] = useState<ChatEntry[]>([])
   const [draft, setDraftState] = useState('')
   const [focused, setFocused] = useState(false)
@@ -249,13 +275,13 @@ export function useRemiChat(open: boolean): RemiChatController {
         ])
       } else {
         const served = entriesRef.current.filter((e) => e.fallback).length
-        const reply = fallbackText(useGame.getState().lang, readProgress(), served)
+        const reply = fallbackText(useGame.getState().lang, readProgress(), served, persona)
         commit((list) => [...list, { id: nextId(), role: 'assistant', content: reply, kind: 'message', fallback: true }])
         announce(reply)
       }
       startTail()
     },
-    [announce, changePhase, commit, endChat, startTail],
+    [announce, changePhase, commit, endChat, persona, startTail],
   )
 
   /** Lance la requête pour la question `userId` (déjà dans le fil). */
@@ -269,11 +295,12 @@ export function useRemiChat(open: boolean): RemiChatController {
 
       const g = useGame.getState()
       const progress = readProgress()
-      const request = {
+      const request: RemiChatRequest = {
         messages: buildHistory(entriesRef.current),
         lang: g.lang,
         visitorId: g.visitorId,
-        context: { visitedCount: progress.visitedCount, stampsCount: progress.stampsCount, total: progress.total },
+        context: chatContext(progress, persona),
+        persona, // `client.ts` ne l'écrit pas pour Rémi : sa requête reste celle d'avant l'Archiviste
       }
 
       let result: RemiChatResult
@@ -299,7 +326,7 @@ export function useRemiChat(open: boolean): RemiChatController {
       if (pending.cancelled) return
       finish(pending, result)
     },
-    [changePhase, commit, finish, stopTail],
+    [changePhase, commit, finish, persona, stopTail],
   )
 
   /** Annule la requête en cours (fermeture du chat) : sans texte reçu, la question revient dans le champ. */
@@ -324,7 +351,7 @@ export function useRemiChat(open: boolean): RemiChatController {
     if (!open) return
     if (entriesRef.current.length === 0) {
       commit(() => [
-        { id: nextId(), role: 'assistant', content: greetingText(useGame.getState().lang), kind: 'message' },
+        { id: nextId(), role: 'assistant', content: greetingText(useGame.getState().lang, persona), kind: 'message' },
       ])
       startTail()
     }

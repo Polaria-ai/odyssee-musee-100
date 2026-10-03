@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { isOverlayOpen, useGame } from './gameStore'
 import { generatePlaceholderPeople } from '../data/placeholder'
 import { buildMuseumLayout } from '../world/layout'
-import { ARCHIVIST_NAME } from '../archives/archivistScript'
+import { ARCHIVIST_NAME, archivistDialogue } from '../archives/archivistScript'
 
 describe('gameStore', () => {
   beforeEach(() => {
@@ -56,7 +56,7 @@ describe('gameStore', () => {
 
 describe('gameStore — Archives de 2040', () => {
   beforeEach(() => {
-    useGame.setState({ nearbyPersonId: null, nearbySessionId: null, nearArchivist: false, nearCurator: false, openPersonId: null, openSessionId: null, dialogue: null, stampCardOpen: false, mapOpen: false, remiChatOpen: false, visitedSessions: {} })
+    useGame.setState({ nearbyPersonId: null, nearbySessionId: null, nearArchivist: false, nearCurator: false, openPersonId: null, openSessionId: null, dialogue: null, stampCardOpen: false, mapOpen: false, remiChatOpen: false, chatPersona: 'remi', visitedSessions: {} })
   })
 
   it('interact : portrait > archive > Archiviste > Rémi', () => {
@@ -67,7 +67,10 @@ describe('gameStore — Archives de 2040', () => {
     useGame.getState().closeSession()
     useGame.setState({ nearbySessionId: null })
     useGame.getState().interact()
-    expect(useGame.getState().dialogue?.speaker).toEqual(ARCHIVIST_NAME)
+    // Près de l'Archiviste : SON chat s'ouvre (WEL-929), pas un dialogue scripté ni le chat de Rémi.
+    expect(useGame.getState().remiChatOpen).toBe(true)
+    expect(useGame.getState().chatPersona).toBe('archiviste')
+    expect(useGame.getState().dialogue).toBeNull()
   })
 
   it('une fiche d’archive ouverte compte comme surimpression', () => {
@@ -97,6 +100,7 @@ describe('gameStore — chat avec Rémi · IA', () => {
   beforeEach(() => {
     useGame.setState({
       remiChatOpen: false,
+      chatPersona: 'remi',
       dialogue: null,
       dialogueIndex: 0,
       stampCardOpen: false,
@@ -110,7 +114,7 @@ describe('gameStore — chat avec Rémi · IA', () => {
     })
   })
 
-  it('est fermé au départ, s’ouvre et se ferme', () => {
+  it('est fermé au départ (Rémi pour persona), s’ouvre et se ferme', () => {
     expect(useGame.getState().remiChatOpen).toBe(false)
     useGame.getState().openRemiChat()
     expect(useGame.getState().remiChatOpen).toBe(true)
@@ -191,10 +195,44 @@ describe('gameStore — chat avec Rémi · IA', () => {
     expect(useGame.getState().remiChatOpen).toBe(true)
   })
 
-  it('l’Archiviste garde son dialogue scripté (DialogueBox), le chat ne s’ouvre pas', () => {
+  it('interact : « Parler à l’Archiviste » ouvre le chat de l’Archiviste, pas son dialogue scripté talk', () => {
+    useGame.setState({ nearArchivist: true, nearCurator: false })
+    useGame.getState().interact()
+    expect(useGame.getState().remiChatOpen).toBe(true)
+    expect(useGame.getState().chatPersona).toBe('archiviste')
+    expect(useGame.getState().dialogue).toBeNull()
+  })
+
+  it('interact : l’Archiviste passe avant Rémi quand le joueur est à portée des deux', () => {
     useGame.setState({ nearArchivist: true, nearCurator: true })
     useGame.getState().interact()
+    expect(useGame.getState().chatPersona).toBe('archiviste')
+  })
+
+  it('les autres dialogues scriptés de l’Archiviste restent dans la bulle du jeu (DialogueBox), sans chat', () => {
+    useGame.getState().startDialogue(archivistDialogue({ kind: 'stampAwarded' }))
     expect(useGame.getState().dialogue?.speaker).toEqual(ARCHIVIST_NAME)
+    expect(useGame.getState().remiChatOpen).toBe(false)
+  })
+
+  it('openChat(persona) retient la persona ; openRemiChat ouvre Rémi, même après un chat de l’Archiviste', () => {
+    expect(useGame.getState().chatPersona).toBe('remi')
+    useGame.getState().openChat('archiviste')
+    expect(useGame.getState()).toMatchObject({ remiChatOpen: true, chatPersona: 'archiviste' })
+    useGame.getState().closeRemiChat()
+    expect(useGame.getState().remiChatOpen).toBe(false)
+    useGame.getState().openRemiChat()
+    expect(useGame.getState()).toMatchObject({ remiChatOpen: true, chatPersona: 'remi' })
+  })
+
+  it('le chat de l’Archiviste compte comme surimpression, referme les autres et se referme comme celui de Rémi', () => {
+    useGame.setState({ stampCardOpen: true, mapOpen: true, openPersonId: 'p1', openSessionId: 's1' })
+    useGame.getState().startDialogue(dialogue)
+    useGame.getState().openChat('archiviste')
+    const s = useGame.getState()
+    expect(isOverlayOpen(s)).toBe(true)
+    expect([s.dialogue, s.stampCardOpen, s.mapOpen, s.openPersonId, s.openSessionId]).toEqual([null, false, false, null, null])
+    useGame.getState().setMapOpen(true)
     expect(useGame.getState().remiChatOpen).toBe(false)
   })
 

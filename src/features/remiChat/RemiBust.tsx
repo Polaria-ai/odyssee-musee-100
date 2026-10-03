@@ -1,7 +1,8 @@
 /**
- * Buste 3D animé de Rémi · IA dans le chat (son propre `<Canvas>`, WEL-919). Le parent (`RemiChat`)
- * décide de la taille : le buste remplit son conteneur (moitié gauche de l'écran sur PC, plein écran
- * derrière les bulles sur téléphone). Signature et `data-testid` inchangés depuis le bouchon.
+ * Buste 3D animé de Rémi · IA, ou de l'Archiviste · IA (prop `character`, Rémi par défaut), dans le chat (son propre
+ * `<Canvas>`, WEL-919, WEL-929). Le parent (`PersonaChat`) décide de la taille : le buste remplit son conteneur (moitié
+ * gauche de l'écran sur PC, plein écran derrière les bulles sur téléphone). Signature et `data-testid="remi-bust"`
+ * inchangés depuis le bouchon, pour les deux personnages (`data-character` dit lequel).
  *
  * Le rendu 3D (`bust/BustCanvas`) est chargé à la demande : les tests jsdom du chat et le premier
  * chargement du jeu n'embarquent pas ce code. Partout où la 3D ne peut pas s'afficher (WebGL absent,
@@ -12,7 +13,7 @@
  * `fallback` (silhouette définitive).
  */
 import { Component, Suspense, lazy, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import type { RemiBustProps, RemiBustVariant } from './contract'
+import { DEFAULT_PERSONA, type RemiBustProps, type RemiBustVariant } from './contract'
 import type { BustDebug } from './bust/BustScene'
 import { Silhouette } from './bust/Silhouette'
 import { hasWebGL } from './bust/env'
@@ -53,11 +54,11 @@ export interface RemiBustViewProps extends RemiBustProps {
   debug?: BustDebug
 }
 
-export function RemiBust({ mood, variant }: RemiBustProps) {
-  return <RemiBustView mood={mood} variant={variant} />
+export function RemiBust({ mood, variant, character }: RemiBustProps) {
+  return <RemiBustView mood={mood} variant={variant} character={character} />
 }
 
-export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
+export function RemiBustView({ mood, variant, character = DEFAULT_PERSONA, debug }: RemiBustViewProps) {
   const [supported] = useState(hasWebGL)
   const [failed, setFailed] = useState(false)
   const [ready, setReady] = useState(false)
@@ -115,7 +116,7 @@ export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
   const layer: CSSProperties = { position: 'absolute', inset: 0, maskImage: mask, WebkitMaskImage: mask }
 
   return (
-    <div data-testid="remi-bust" data-mood={mood} data-variant={variant} data-state={state} aria-hidden="true" style={root}>
+    <div data-testid="remi-bust" data-character={character} data-mood={mood} data-variant={variant} data-state={state} aria-hidden="true" style={root}>
       {supported && !failed && (
         <div style={layer}>
           <BustBoundary key={canvasKey} onFail={onFail}>
@@ -123,6 +124,7 @@ export function RemiBustView({ mood, variant, debug }: RemiBustViewProps) {
               <BustCanvas
                 mood={mood}
                 variant={variant}
+                character={character}
                 debug={debug}
                 onFraming={setFraming}
                 onReady={onReady}

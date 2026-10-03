@@ -36,7 +36,10 @@ export interface ChatMessage {
   content: string
 }
 
-/** Progression de la partie, pour que Rémi oriente le visiteur (facultatif). */
+/**
+ * Progression de la partie, pour que le personnage oriente le visiteur (facultatif). Rémi : portraits ouverts,
+ * tampons, nombre de portraits. L'Archiviste : vitrines consultées, tampons, nombre de vitrines.
+ */
 export interface RemiChatContext {
   visitedCount: number
   stampsCount: number

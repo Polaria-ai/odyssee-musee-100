@@ -6,7 +6,7 @@
 import { Fragment, StrictMode, useCallback, useEffect, useMemo, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import type { WebGLRenderer } from 'three'
-import type { RemiBustVariant, RemiMood } from '../src/features/remiChat/contract'
+import { CHAT_PERSONAS, type RemiBustVariant, type RemiMood } from '../src/features/remiChat/contract'
 import { RemiBustView } from '../src/features/remiChat/RemiBust'
 import { GESTURE_IDS, type GestureId } from '../src/features/remiChat/bust/gestures'
 
@@ -58,6 +58,8 @@ function Demo() {
   const [renderer, setRenderer] = useState<WebGLRenderer | null>(null)
   const [report, setReport] = useState('')
   const showPanel = params.get('controls') !== '0'
+  // `?character=archiviste` : le buste de l'Archiviste · IA (Rémi par défaut).
+  const character = pick(params.get('character'), CHAT_PERSONAS, 'remi')
 
   const onRenderer = useCallback((gl: WebGLRenderer) => {
     ;(window as unknown as { __bustGl: WebGLRenderer }).__bustGl = gl // vérifications (images rendues, ressources)
@@ -152,7 +154,7 @@ function Demo() {
   return (
     <>
       <div id="frame" style={{ width: size.width, height: size.height }} data-testid="frame">
-        {shown && <RemiBustView mood={mood} variant={variant} debug={debug} />}
+        {shown && <RemiBustView mood={mood} variant={variant} character={character} debug={debug} />}
       </div>
       {showPanel && (
         <div id="panel">

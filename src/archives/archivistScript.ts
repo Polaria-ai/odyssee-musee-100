@@ -14,6 +14,11 @@ export type ArchivistEvent =
   | { kind: 'firstVisit' }
   /** Le 4e tampon (Archives) vient d'être obtenu (voir `useStampWatcher`). */
   | { kind: 'stampAwarded' }
+  /**
+   * Réponse de repli du chat de l'Archiviste · IA quand le service est indisponible (WEL-929). Même état des
+   * archives que `talk`, mais au vouvoiement, comme le reste du chat. `served` : replis déjà donnés (fait tourner les variantes).
+   */
+  | { kind: 'chatFallback'; served: number; total: number; published: number }
 
 export const ARCHIVIST_NAME: Localized = { fr: "L'Archiviste", en: 'The Archivist' }
 
@@ -160,6 +165,72 @@ function talkDialogue(consulted: number, total: number, published: number): Dial
   return pickVariant(TALK_PARTIAL, seed)
 }
 
+// --- Repli du chat de l'Archiviste · IA (vouvoiement : le chat vouvoie le visiteur) -------------
+
+const CHAT_FALLBACK_EMPTY: readonly Dialogue[] = [
+  dialogue('chat-fallback-empty-0', [
+    line(
+      "Pour l'instant, ces vitrines sont vides : les archives seront déposées après la soirée, une fois tout relu.",
+      'For now, these display cases are empty: the archives will be deposited after the evening, once everything has been reviewed.',
+      'neutral',
+    ),
+  ]),
+  dialogue('chat-fallback-empty-1', [
+    line(
+      "Je ne peux rien affirmer sur ce qui se dit ce soir tant que ce n'est pas publié. Le programme est à votre disposition d'ici là.",
+      "I can't state anything about tonight until it's published. The programme is there for you until then.",
+      'thinking',
+    ),
+  ]),
+  dialogue('chat-fallback-empty-2', [
+    line(
+      'Les archives se remplissent à la fin de la soirée. Repassez devant les vitrines un peu plus tard.',
+      'The archives fill up at the end of the evening. Come back to the display cases a little later.',
+      'neutral',
+    ),
+  ]),
+]
+
+const CHAT_FALLBACK_PARTIAL: readonly Dialogue[] = [
+  dialogue('chat-fallback-partial-0', [
+    line(
+      'Quelques vitrines se sont déjà remplies. Les autres suivront au fil de la relecture : repassez un peu plus tard.',
+      'A few display cases have already filled in. The others will follow as the review continues: come back a little later.',
+      'happy',
+    ),
+  ]),
+  dialogue('chat-fallback-partial-1', [
+    line(
+      "La mémoire de cette soirée s'écrit petit à petit : certaines séquences sont archivées, d'autres attendent leur tour.",
+      "This evening's memory is being written little by little: some sessions are archived, others are still waiting their turn.",
+      'thinking',
+    ),
+  ]),
+]
+
+const CHAT_FALLBACK_FULL: readonly Dialogue[] = [
+  dialogue('chat-fallback-full-0', [
+    line(
+      'Toutes les vitrines sont remplies : la soirée est désormais intégralement archivée. Belle lecture !',
+      'All the display cases are filled in: the evening is now fully archived. Enjoy the read!',
+      'happy',
+    ),
+  ]),
+  dialogue('chat-fallback-full-1', [
+    line(
+      "La mémoire de cette soirée est complète, de la première à la dernière séquence. Merci de l'avoir traversée avec moi.",
+      "This evening's memory is complete, from the first session to the last. Thank you for walking through it with me.",
+      'happy',
+    ),
+  ]),
+]
+
+function chatFallbackDialogue(served: number, total: number, published: number): Dialogue {
+  if (published <= 0) return pickVariant(CHAT_FALLBACK_EMPTY, served)
+  if (total > 0 && published >= total) return pickVariant(CHAT_FALLBACK_FULL, served)
+  return pickVariant(CHAT_FALLBACK_PARTIAL, served)
+}
+
 // --- Tampon Archives obtenu --------------------------------------------------
 
 function stampAwardedDialogue(): Dialogue {
@@ -187,5 +258,7 @@ export function archivistDialogue(event: ArchivistEvent): Dialogue {
       return firstVisitDialogue()
     case 'stampAwarded':
       return stampAwardedDialogue()
+    case 'chatFallback':
+      return chatFallbackDialogue(event.served, event.total, event.published)
   }
 }

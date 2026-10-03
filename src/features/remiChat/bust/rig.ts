@@ -1,5 +1,6 @@
 /**
- * Rémi prêt pour le buste : clone de la scène chargée par `useModel`, animateur « idle », pilotage
+ * Le personnage prêt pour le buste (Rémi, ou l'Archiviste : même squelette de 24 os, mêmes mesures prises sur les os) :
+ * clone de la scène chargée par `useModel`, animateur « idle », pilotage
  * procédural des os et mesures de cadrage. three seul (aucun React) : le cycle de vie est dans `dispose`.
  *
  * Pourquoi des copies plutôt que le matériau et la géométrie partagés avec le Rémi du musée :
@@ -24,7 +25,9 @@ import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js
 import { CharacterAnimator } from '../../../characters/animator'
 import { findSkinnedMesh, getCharacterAssets } from '../../../characters/characterRig'
 import { CHARACTERS } from '../../../characters/models'
+import { DEFAULT_PERSONA, type ChatPersona } from '../contract'
 import { BonePoseDriver } from './bonePose'
+import { FIT_MESH_TOP } from './config'
 import { createBustMaterial } from './material'
 import type { BustMetrics } from './framing'
 
@@ -48,6 +51,22 @@ function worldY(root: Object3D, name: string): number | null {
   return bone ? bone.getWorldPosition(_v).y : null
 }
 
+const _vertex = new Vector3()
+
+/** Ordonnée monde du point le plus haut du maillage dans sa pose actuelle (peau comprise). Tous les sommets : une fois à la création. */
+function meshTopY(mesh: SkinnedMesh): number {
+  mesh.updateMatrixWorld(true)
+  mesh.skeleton.update()
+  const count = mesh.geometry.getAttribute('position').count
+  let top = -Infinity
+  for (let i = 0; i < count; i++) {
+    mesh.getVertexPosition(i, _vertex)
+    const y = _vertex.applyMatrix4(mesh.matrixWorld).y
+    if (y > top) top = y
+  }
+  return top
+}
+
 function worldPoint(root: Object3D, name: string): Vector3 | null {
   const bone = root.getObjectByName(name)
   return bone ? bone.getWorldPosition(new Vector3()) : null
@@ -55,19 +74,21 @@ function worldPoint(root: Object3D, name: string): Vector3 | null {
 
 /**
  * Mesures du cadrage prises sur les os dans l'instant 0 du clip « idle » :
- *  - sommet du crâne : bout de l'os de tête (`head_end`) ;
+ *  - sommet de la tête : bout de l'os de tête (`head_end`), ou, si `mesh` est fourni, le point le plus haut du maillage
+ *    dans cette pose (cheveux compris) quand il dépasse l'os : un chignon ne doit pas sortir du cadre ;
  *  - ligne de coupe : milieu du torse = os `Spine01`, entre le bassin et les épaules ;
  *  - demi-largeur d'épaules : moitié de la distance entre les deux os de bras.
  * Repli (os absents) : proportions de la hauteur du modèle, jamais une valeur factice silencieuse.
  */
-export function measureBust(root: Object3D, height: number): BustMetrics {
+export function measureBust(root: Object3D, height: number, mesh?: SkinnedMesh): BustMetrics {
   root.updateMatrixWorld(true)
   const headEnd = worldY(root, 'head_end')
   const head = worldY(root, 'Head')
   const spine01 = worldY(root, 'Spine01')
   const left = worldPoint(root, 'LeftArm')
   const right = worldPoint(root, 'RightArm')
-  const headTopY = headEnd ?? (head !== null ? head + height * 0.12 : height)
+  const boneTopY = headEnd ?? (head !== null ? head + height * 0.12 : height)
+  const headTopY = mesh ? Math.max(boneTopY, meshTopY(mesh)) : boneTopY
   const headBaseY = head ?? headTopY - height * 0.14
   return {
     headTopY,
@@ -167,8 +188,13 @@ export function smoothNormals(geometry: BufferGeometry): void {
   geometry.setAttribute('normal', new BufferAttribute(normals, 3))
 }
 
-export function createBustRig(scene: Object3D, animations: AnimationClip[]): BustRig {
-  const def = CHARACTERS.remi
+/**
+ * `character` : le personnage du buste (`DEFAULT_PERSONA` = Rémi). Le buste ne joue que le clip « idle » du fichier : les
+ * gestes de la parole sont procéduraux (`gestures.ts`) et identiques pour tous, y compris l'Archiviste, dont le clip
+ * « talk » (fait pour la salle, vue de loin) n'est pas utilisé (voir `docs/REMI-IA.md`).
+ */
+export function createBustRig(scene: Object3D, animations: AnimationClip[], character: ChatPersona = DEFAULT_PERSONA): BustRig {
+  const def = CHARACTERS[character]
   const assets = getCharacterAssets(scene, animations, def)
 
   const root = cloneSkinned(scene)
@@ -192,7 +218,7 @@ export function createBustRig(scene: Object3D, animations: AnimationClip[]): Bus
   const animator = new CharacterAnimator(root, { idle: assets.clips.idle })
   const driver = new BonePoseDriver(root)
   animator.play('idle') // pose le squelette dans l'instant 0 : les mesures ci-dessous sont celles du rendu
-  const metrics = measureBust(root, def.height)
+  const metrics = measureBust(root, def.height, FIT_MESH_TOP[character] ? mesh : undefined)
 
   return {
     root,

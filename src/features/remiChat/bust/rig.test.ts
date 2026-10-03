@@ -5,9 +5,11 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { BufferAttribute, BufferGeometry } from 'three'
+import { BufferAttribute, BufferGeometry, Skeleton, SkinnedMesh, Vector3 } from 'three'
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
-import { smoothNormals } from './rig'
+import { FIT_MESH_TOP } from './config'
+import { makeRemiSkeleton } from './remiSkeleton.fixture'
+import { measureBust, smoothNormals } from './rig'
 
 function normalOf(geometry: BufferGeometry, vertex: number): [number, number, number] {
   const n = geometry.getAttribute('normal')
@@ -176,5 +178,47 @@ describe('smoothNormals sur remi.glb', () => {
       }
     }
     expect(distinct).toBe(6208) // positions distinctes du maillage (13 519 sommets)
+  })
+})
+
+describe('measureBust : sommet de la tête', () => {
+  /** Squelette de test (os `head_end` compris) et un maillage dont le sommet le plus haut est à `topAbove` mètres au-dessus de `head_end`. */
+  function withMeshTop(topAbove: number) {
+    const { root, bones } = makeRemiSkeleton()
+    const bare = measureBust(root, 1.8)
+    const geometry = new BufferGeometry()
+    // Trois sommets liés à l'os 0 : le plus haut fixe le sommet du maillage (repère du clone, avant son échelle).
+    const local = (bare.headTopY + topAbove) / root.scale.y
+    geometry.setAttribute('position', new BufferAttribute(new Float32Array([0, 0, 0, 0.1, 0.5, 0, 0, local, 0]), 3))
+    geometry.setAttribute('skinIndex', new BufferAttribute(new Uint16Array(12), 4))
+    geometry.setAttribute('skinWeight', new BufferAttribute(new Float32Array([1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]), 4))
+    const mesh = new SkinnedMesh(geometry)
+    root.add(mesh)
+    root.updateMatrixWorld(true)
+    mesh.bind(new Skeleton([...bones.values()])) // liaison dans la pose courante : la peau ne déforme rien
+    return { root, mesh, bare }
+  }
+
+  it('sans maillage : le bout de l\'os head_end, comme avant l\'Archiviste', () => {
+    const { root } = makeRemiSkeleton()
+    const bare = measureBust(root, 1.8)
+    expect(bare.headTopY).toBeCloseTo(root.getObjectByName('head_end')!.getWorldPosition(new Vector3()).y, 6)
+  })
+
+  it('avec le maillage : le sommet des cheveux quand il dépasse l\'os (chignon), le reste du cadrage inchangé', () => {
+    const { root, mesh, bare } = withMeshTop(0.034)
+    const fitted = measureBust(root, 1.8, mesh)
+    expect(fitted.headTopY).toBeCloseTo(bare.headTopY + 0.034, 3)
+    expect(fitted.cutY).toBe(bare.cutY)
+    expect(fitted.shoulderHalfWidth).toBe(bare.shoulderHalfWidth)
+  })
+
+  it('un maillage qui reste sous l\'os ne baisse jamais le sommet', () => {
+    const { root, mesh, bare } = withMeshTop(-0.05)
+    expect(measureBust(root, 1.8, mesh).headTopY).toBe(bare.headTopY)
+  })
+
+  it('seule l\'Archiviste est cadrée sur son maillage : le cadrage de Rémi ne bouge pas', () => {
+    expect(FIT_MESH_TOP).toEqual({ remi: false, archiviste: true })
   })
 })
