@@ -636,11 +636,16 @@ test('aucune erreur console sur le parcours complet des Archives', async ({ page
   await expect(page.getByTestId('archive-card')).toBeVisible()
   await page.keyboard.press('Escape')
 
-  // L'Archiviste.
+  // L'Archiviste : depuis la V5.1 (WEL-929), « Parler à l'Archiviste » ouvre son chat IA (code chargé à
+  // la demande, d'où le délai large), plus le dialogue scripté. /api/remi est intercepté par gotoMusee.
   await teleport(page, archives.archivist.position.x, archives.archivist.position.z)
   await page.waitForTimeout(500)
   await page.getByTestId('action-button').click()
-  await expect(page.getByTestId('dialogue-box')).toBeVisible()
+  const chat = page.getByTestId('remi-chat')
+  await expect(chat).toBeVisible({ timeout: 60_000 })
+  await expect(chat).toHaveAttribute('data-persona', 'archiviste')
+  await page.getByTestId('remi-chat-close').click()
+  await expect(chat).toBeHidden()
   await closeAnyDialogue(page)
 
   // Carnet et plan.
