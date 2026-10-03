@@ -1,5 +1,5 @@
 /**
- * Contenu du `<Canvas>` du buste : lumières « contre-jour cyan », Rémi, caméra de cadrage.
+ * Contenu du `<Canvas>` du buste : lumières « contre-jour cyan », le personnage (Rémi ou l'Archiviste), caméra de cadrage.
  * Une seule boucle (`useFrame` à la priorité par défaut) : mixeur → moteur de gestes → pose des os,
  * dans cet ordre, donc la couche procédurale passe TOUJOURS après le clip « idle ». Aucune priorité
  * positive (elle désactiverait le rendu automatique de R3F). Aucune allocation three.js dans `useFrame`.
@@ -11,7 +11,7 @@ import { Vector3, type AnimationClip, type Object3D, type WebGLRenderer } from '
 import { useModel } from '../../../assets/useModel'
 import { CHARACTERS } from '../../../characters/models'
 import { charter3d } from '../../../styles/tokens'
-import type { RemiBustVariant, RemiMood } from '../contract'
+import { DEFAULT_PERSONA, type ChatPersona, type RemiBustVariant, type RemiMood } from '../contract'
 import { computeFraming, type BustMetrics, type Framing } from './framing'
 import { MAX_DT, createGestureEngine, type GestureEngine, type GestureId } from './gestures'
 import { createBustRig, type BustRig } from './rig'
@@ -53,6 +53,8 @@ export interface BustControl {
 export interface BustSceneProps {
   mood: RemiMood
   variant: RemiBustVariant
+  /** Personnage du buste : son GLB et ses mesures (`DEFAULT_PERSONA`, Rémi, si absent). */
+  character?: ChatPersona
   reducedMotion: boolean
   /** Cadre calculé (pour le masque de fondu et le halo posés en CSS par le parent). */
   onFraming?: (framing: Framing) => void
@@ -100,7 +102,7 @@ function useBustModel(path: string): { model: LoadedModel | null; error: unknown
 }
 
 function BustLoader(props: BustSceneProps) {
-  const path = props.debug?.modelPath ?? CHARACTERS.remi.path
+  const path = props.debug?.modelPath ?? CHARACTERS[props.character ?? DEFAULT_PERSONA].path
   const { model, error } = useBustModel(path)
   const { onError } = props
   useEffect(() => {
@@ -111,8 +113,8 @@ function BustLoader(props: BustSceneProps) {
   return model ? <BustModel {...props} scene={model.scene} animations={model.animations} /> : null
 }
 
-function BustModel({ mood, variant, reducedMotion, onFraming, onReady, debug, scene, animations }: BustSceneProps & LoadedModel) {
-  const rig = useMemo(() => createBustRig(scene, animations), [scene, animations])
+function BustModel({ mood, variant, character, reducedMotion, onFraming, onReady, debug, scene, animations }: BustSceneProps & LoadedModel) {
+  const rig = useMemo(() => createBustRig(scene, animations, character), [scene, animations, character])
   const engine = useMemo(() => createGestureEngine(debug?.seed ?? DEFAULT_SEED), [debug?.seed])
   const moodRef = useRef(mood)
   const speed = debug?.speed ?? 1

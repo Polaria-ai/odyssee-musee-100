@@ -357,7 +357,7 @@ test('vitrine : navigation précédente/suivante entre séquences', async ({ pag
 // L'Archiviste.
 // ---------------------------------------------------------------------------
 
-test('Archiviste : « Parler à l’Archiviste » ouvre un dialogue', async ({ page }) => {
+test('Archiviste : « Parler à l’Archiviste » ouvre son chat IA (plus un dialogue scripté)', async ({ page }) => {
   const state = await enterMuseumWithArchives(page)
   const archivist = state.archivesLayout!.archivist
 
@@ -368,9 +368,12 @@ test('Archiviste : « Parler à l’Archiviste » ouvre un dialogue', async ({ p
   await expect(actionButton).toHaveText("Parler à l'Archiviste")
   await actionButton.click()
 
-  const box = page.getByTestId('dialogue-box')
-  await expect(box).toBeVisible()
-  await expect(box).toContainText("L'Archiviste")
+  // Depuis WEL-929 : le chat de l'Archiviste · IA (détails dans `archiviste-chat.spec.ts`), pas la bulle du jeu.
+  const chat = page.getByTestId('remi-chat')
+  await expect(chat).toBeVisible({ timeout: 60_000 })
+  await expect(chat).toHaveAttribute('data-persona', 'archiviste')
+  await expect(page.getByRole('heading', { name: 'Archiviste · IA' })).toBeVisible()
+  await expect(page.getByTestId('dialogue-box')).toHaveCount(0)
 })
 
 /** Sonde de l'Archiviste 3D (`window.__musee.archivist()`, `src/state/runtime.ts::archivistProbe`). */

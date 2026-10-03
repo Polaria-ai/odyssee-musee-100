@@ -35,3 +35,23 @@ export const MAX_ASSISTANT_MESSAGE_CHARS = 3000
 export const MAX_VISITOR_ID_CHARS = 64
 /** Borne des compteurs de la progression transmise en contexte. */
 export const MAX_CONTEXT_COUNT = 10_000
+
+// Archives publiées lues pour l'Archiviste · IA (voir `publishedArchives.ts`).
+/** Durée pendant laquelle une lecture réussie est réutilisée : 200 visiteurs, une requête par minute et par instance. */
+export const ARCHIVES_CACHE_MS = 60_000
+/** Un échec n'est mémorisé que brièvement : le retour de Supabase est vite pris en compte, sans le marteler. */
+export const ARCHIVES_FAILURE_CACHE_MS = 10_000
+/** Délai de lecture des archives (corps compris) : bien en deçà du délai accordé à OpenRouter, jamais bloquant. */
+export const ARCHIVES_TIMEOUT_MS = 2500
+/** Bornes de la table `session_archives` (voir `supabase/migrations/20260925120000_evening.sql` et `eveningSchema.ts`). */
+export const MAX_ARCHIVE_SUMMARY_CHARS = 1200
+export const MAX_ARCHIVE_QUOTES = 5
+export const MAX_QUOTE_CHARS = 280
+/**
+ * Part du prompt réservée aux archives publiées : au-delà, les dernières séquences sont écartées entières, jamais coupées
+ * en deux. 48 000 caractères (~14 000 jetons) tiennent les 19 séquences d'une soirée ordinaire (~1 900 caractères chacune,
+ * soit ~36 000 : une synthèse de ~700 et trois citations en deux langues, mesuré sur des archives factices de cette taille) ;
+ * seules des archives au maximum de leurs bornes sur toutes les séquences (~4 000 caractères chacune) dépasseraient, et les
+ * dernières seraient alors signalées comme non reprises (« n'en dis rien, renvoie vers la vitrine »).
+ */
+export const MAX_ARCHIVES_PROMPT_CHARS = 48_000

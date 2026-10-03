@@ -1,5 +1,8 @@
 /**
- * Chat avec Rémi · IA (V5, WEL-920). Propriétaire : agent chat-ui.
+ * Chat avec Rémi · IA (V5, WEL-920) et avec l'Archiviste · IA (WEL-929) : le même composant, donc la même feuille de
+ * style ; seul l'accent change (`data-accent` sur `.remi-chat`, voir les variables `--accent*` ci-dessous). Les classes
+ * gardent le préfixe `remi-chat` : un seul chat est ouvert à la fois, `data-persona` dit lequel.
+ * Propriétaire : agent chat-ui.
  * Charte de l'Odyssée (docs/CHARTE-3D.md, docs/DESIGN.md) : bleu nuit, texte blanc pur, corail pour
  * l'action et la parole du visiteur (texte bleu nuit dessus : le blanc sur corail échoue le contraste AA),
  * cyan en contrepoint. Cibles tactiles de 48 px au moins, champ de saisie à 16 px (sinon iOS zoome au focus).
@@ -45,6 +48,11 @@
   /* Bulles du fil : pas de flou propre (le fil est masqué, voir `.remi-chat__thread`), donc un peu plus de teinte. */
   --glass-thread: rgba(8, 19, 48, 0.8);
   --glass-edge: rgba(190, 215, 255, 0.3);
+  /* Accent de la persona : parole du visiteur et bouton d'envoi. Corail (Rémi) ou cyan (Archiviste, couleur des Archives).
+     Le texte posé dessus reste `--on-accent` (bleu nuit) : le blanc échoue le contraste AA sur ces deux teintes. */
+  --accent: var(--corail);
+  --accent-deep: var(--corail-deep);
+  --accent-bubble: rgba(232, 120, 92, 0.94);
   --glass-blur: blur(12px) saturate(1.25);
   --panel-glass: linear-gradient(to bottom, rgba(7, 19, 54, 0.42), rgba(7, 19, 54, 0.58));
   --panel-blur: blur(10px) saturate(1.2);
@@ -85,6 +93,12 @@
   z-index: 0;
   pointer-events: none;
   background: var(--veil);
+}
+
+.remi-chat[data-accent='cyan'] {
+  --accent: var(--cyan-vif);
+  --accent-deep: #2a8798;
+  --accent-bubble: rgba(109, 228, 229, 0.94);
 }
 
 @keyframes remi-chat-in {
@@ -333,10 +347,10 @@
   border-color: rgba(87, 191, 214, 0.7);
 }
 
-/* Le corail de l'action et de la parole du visiteur reste presque plein (c'est la couleur du logo) : un flou n'y verrait rien. */
+/* L'accent de l'action et de la parole du visiteur (corail, la couleur du logo, ou cyan) reste presque plein : un flou n'y verrait rien. */
 .remi-chat__item[data-role='user'] .remi-chat__bubble {
   border-bottom-right-radius: 6px;
-  background: rgba(232, 120, 92, 0.94);
+  background: var(--accent-bubble);
   color: var(--on-accent);
 }
 
@@ -530,15 +544,15 @@
   place-items: center;
   border: none;
   border-radius: 50%;
-  background: var(--corail);
+  background: var(--accent);
   color: var(--on-accent);
-  box-shadow: 0 4px 0 var(--corail-deep);
+  box-shadow: 0 4px 0 var(--accent-deep);
   transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .remi-chat__send:active:not(:disabled) {
   transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--corail-deep);
+  box-shadow: 0 1px 0 var(--accent-deep);
 }
 
 .remi-chat__send:disabled {

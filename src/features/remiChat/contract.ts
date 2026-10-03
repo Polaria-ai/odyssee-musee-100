@@ -1,6 +1,7 @@
 /**
- * Contrat partagé du chat avec Rémi · IA (V5, WEL-918 à WEL-920). Fichier figé : les agents
- * `chat-api`, `remi-bust` et `chat-ui` le lisent, aucun ne le modifie sans l'orchestrateur.
+ * Contrat partagé du chat avec Rémi · IA (V5, WEL-918 à WEL-920), étendu au chat de l'Archiviste · IA
+ * (WEL-929) par la notion de persona. Fichier figé : les agents `chat-api`, `remi-bust` et `chat-ui` le lisent,
+ * aucun ne le modifie sans l'orchestrateur.
  *
  * Le navigateur n'appelle jamais OpenRouter : il poste sur `/api/remi` (fonction Vercel), qui seule
  * connaît `OPENROUTER_API_KEY`. Réponse en flux `text/event-stream`, une ligne `data: <json>` par
@@ -19,6 +20,15 @@ export const MAX_HISTORY_MESSAGES = 12
 /** Messages qu'un visiteur peut envoyer pendant une session (au-delà : `limit_reached`). */
 export const MAX_MESSAGES_PER_VISITOR = 40
 
+/**
+ * Qui répond : Rémi · IA (au comptoir du hall) ou l'Archiviste · IA (dans les Archives de 2040). Une seule
+ * fonction `/api/remi` sert les deux, avec son prompt, ses plafonds et son historique propres.
+ */
+export type ChatPersona = 'remi' | 'archiviste'
+export const CHAT_PERSONAS: readonly ChatPersona[] = ['remi', 'archiviste']
+/** Persona de toute requête qui n'en porte pas : celle des clients déjà en ligne (avant le chat de l'Archiviste). */
+export const DEFAULT_PERSONA: ChatPersona = 'remi'
+
 export type ChatRole = 'user' | 'assistant'
 
 export interface ChatMessage {
@@ -26,7 +36,10 @@ export interface ChatMessage {
   content: string
 }
 
-/** Progression de la partie, pour que Rémi oriente le visiteur (facultatif). */
+/**
+ * Progression de la partie, pour que le personnage oriente le visiteur (facultatif). Rémi : portraits ouverts,
+ * tampons, nombre de portraits. L'Archiviste : vitrines consultées, tampons, nombre de vitrines.
+ */
 export interface RemiChatContext {
   visitedCount: number
   stampsCount: number
@@ -39,6 +52,12 @@ export interface RemiChatRequest {
   /** `visitorId` du store : sert au plafond par visiteur, jamais stocké. */
   visitorId: string
   context?: RemiChatContext
+  /**
+   * Facultatif, `DEFAULT_PERSONA` (`'remi'`) quand il manque : les clients déjà en ligne ne l'envoient pas, et
+   * `client.ts` ne l'écrit pas non plus pour Rémi (requête identique à celle d'avant l'Archiviste).
+   * Une valeur inconnue est refusée en `bad_request`.
+   */
+  persona?: ChatPersona
 }
 
 export type RemiChatErrorCode =
@@ -79,4 +98,6 @@ export type RemiMood = 'idle' | 'listening' | 'thinking' | 'speaking'
 export interface RemiBustProps {
   mood: RemiMood
   variant: RemiBustVariant
+  /** Personnage du buste : le GLB et le squelette sont ceux de Rémi par défaut (`DEFAULT_PERSONA`). */
+  character?: ChatPersona
 }

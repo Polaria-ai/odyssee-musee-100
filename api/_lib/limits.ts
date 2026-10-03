@@ -12,10 +12,16 @@
  *  - seau à jetons par IP, volontairement large : il borne un script qui changerait de `visitorId`
  *    à chaque requête, sans bloquer la salle entière → `rate_limited`.
  *
+ * Rémi · IA et l'Archiviste · IA partagent la fonction mais pas les compteurs : chaque persona a ses propres
+ * 40 messages par visiteur et ses propres seaux (les clés des trois tables portent la persona). Un visiteur qui
+ * a épuisé Rémi peut donc encore parler à l'Archiviste, et inversement ; les tables restent bornées ensemble.
+ *
  * La mémoire est bornée : les entrées inactives sont purgées, et au-delà de `maxEntries` les plus
  * anciennes sont évincées. L'IP n'est jamais conservée en clair (empreinte salée, propre à l'instance).
  */
 import { createHash, randomUUID } from 'node:crypto'
+import type { ChatPersona } from '../../src/features/remiChat/contract.js'
+import { DEFAULT_PERSONA } from '../../src/features/remiChat/contract.js'
 import { MAX_MESSAGES_PER_VISITOR } from './config.js'
 
 export interface BucketConfig {
@@ -43,6 +49,8 @@ export interface LimiterOptions {
 export interface LimitInput {
   ip: string
   visitorId: string
+  /** Qui répond (`DEFAULT_PERSONA` si absente) : les plafonds et le débit sont comptés séparément par persona. */
+  persona?: ChatPersona
   /** Messages du visiteur dans l'historique reçu (le nouveau compris). */
   userMessageCount: number
 }
@@ -128,16 +136,18 @@ export function createRemiLimiter(options: LimiterOptions = {}): RemiLimiter {
   }
 
   return {
-    check({ ip, visitorId, userMessageCount }) {
+    check({ ip, visitorId: rawVisitorId, persona = DEFAULT_PERSONA, userMessageCount }) {
       const t = now()
       if (t - lastPurge >= purgeEveryMs || pairBuckets.size > maxEntries || visitors.size > maxEntries) purge(t)
 
+      // Les trois tables sont par persona : le séparateur `|` ne peut pas se trouver dans un `visitorId` (voir `validate.ts`).
+      const visitorId = `${persona}|${rawVisitorId}`
       const counter = visitors.get(visitorId)
       const sent = counter?.count ?? 0
       if (sent >= visitorCap || userMessageCount > visitorCap) return { ok: false, code: 'limit_reached' }
 
-      const ipKey = fingerprint(ip)
-      const pairKey = `${ipKey}:${visitorId}`
+      const ipKey = `${persona}|${fingerprint(ip)}`
+      const pairKey = `${ipKey}:${rawVisitorId}`
       const pair = refilled(pairBuckets, pairKey, pairCfg, t)
       const ipBucket = refilled(ipBuckets, ipKey, ipCfg, t)
 
