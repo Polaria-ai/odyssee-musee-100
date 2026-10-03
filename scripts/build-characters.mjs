@@ -9,9 +9,9 @@
  * Usage : node scripts/build-characters.mjs [nom…] [--debug dossier] [--out dossier] [--no-clean]
  *   - sans nom : tous les personnages ; avec des noms : seulement ceux-là (les autres GLB ne sont pas touchés) ;
  *   - --out dossier : écrit les GLB ailleurs que dans public/models/characters ;
- *   - --no-clean : saute le nettoyage de la texture (pour comparer avant / après, avec --out) ;
- *   - --debug dossier : pour un personnage dont la texture est nettoyée, écrit la texture avant / après, le
- *     masque des texels changés, et garde le GLB fusionné avant optimisation (voir `scripts/clean-texture-stains.mjs`).
+ *   - --no-clean : saute le traitement de la texture, taches et marge (pour comparer avant / après, avec --out) ;
+ *   - --debug dossier : écrit la texture avant / après traitement, le masque des texels changés (bleu : marge,
+ *     rouge : taches), et garde le GLB fusionné avant optimisation (voir `scripts/clean-texture-stains.mjs`).
  * Voir docs/ASSETS.md (section Personnages) pour la provenance et l'accord des personnes.
  */
 import { execFileSync } from 'node:child_process'
@@ -41,10 +41,12 @@ const CHARACTERS = {
 }
 
 /**
- * Réglages propres à un personnage (aucun pour Cyril et Rémi : leurs GLB restent construits comme avant).
- *  - `cleanTexture` : réglages (ou `{}` : ceux par défaut) du nettoyage de la texture avant l'optimisation (taches
- *    du remaillage Meshy, marges d'îlots), voir `scripts/clean-texture-stains.mjs`. La variable d'environnement
- *    CHARACTER_CLEAN_OPTIONS (JSON) les surcharge, pour essayer des valeurs sans éditer ce fichier.
+ * Réglages propres à un personnage.
+ *  - `cleanTexture` : réglages (ou `{}` : ceux par défaut) du traitement de la texture AVANT sa réduction à 1024 et
+ *    son optimisation, voir `scripts/clean-texture-stains.mjs` : nettoyage des taches du remaillage Meshy (`passes`) et
+ *    dilatation des îlots dans le vide (`padRadius`, `scripts/atlas-padding.mjs`). Les trois personnages reçoivent la
+ *    dilatation ; seul l'Archiviste a des taches à nettoyer (`passes: 0` pour les deux autres). La variable
+ *    d'environnement CHARACTER_CLEAN_OPTIONS (JSON) surcharge ces réglages, pour essayer des valeurs sans éditer ce fichier.
  *  - `lean` : chaîne plus économe, pour tenir le budget de 400 Ko de `pnpm verify:bundle`. L'Archiviste a un
  *    maillage plus lourd (15 585 triangles contre 12 400) et trois clips au lieu de deux (470 Ko avec la chaîne
  *    des deux autres). `resampleTolerance` fusionne les images clés quasi identiques (écart de rotation < 0,3 °,
@@ -53,6 +55,8 @@ const CHARACTERS = {
  *    maximal en fraction de la taille du modèle). Même taille de texture (1024) et même squelette que les autres.
  */
 const OPTIONS = {
+  cyril: { cleanTexture: { passes: 0 } },
+  remi: { cleanTexture: { passes: 0 } },
   archiviste: {
     cleanTexture: {},
     lean: { resampleTolerance: 0.003, textureQuality: 80, simplify: { ratio: 0.8, error: 0.005 } },
@@ -98,12 +102,15 @@ async function merge(name, clips) {
   return base
 }
 
-/** Nettoie la texture de couleur du document (taches, marges) et, avec --debug, garde de quoi le vérifier à l'œil. */
+/** Traite la texture de couleur du document (taches, marges d'îlots) et, avec --debug, garde de quoi le vérifier à l'œil. */
 async function cleanTexture(name, doc, cleanOptions) {
   const result = await cleanCharacterTexture(doc, cleanOptions)
   const { report } = result
+  const stains = report.rounds.length
+    ? `${report.inStains} texels de taches changés (amas par tour : ${report.rounds.map((r) => r.clusters).join(', ')}), `
+    : ''
   console.log(
-    `${name} : texture ${report.width}² nettoyée — ${report.inStains} texels de taches changés (amas par tour : ${report.rounds.map((r) => r.clusters).join(', ')}), ` +
+    `${name} : texture ${report.width}² traitée — ${stains}` +
       `${report.inPadding} texels de vide remplis par la marge, ${report.changed} changés au total (${(report.share * 100).toFixed(2)} %), ` +
       `${report.changedProtected} protégés changés, écart max ${report.maxDelta}`,
   )

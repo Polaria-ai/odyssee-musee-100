@@ -13,7 +13,8 @@ import { Document, NodeIO } from '@gltf-transform/core'
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions'
 import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
-import { PROTECTED_JOINTS, cleanCharacterTexture, compareTextures, dilate, fillStains, islandLevels, keepClusters, localLevel, padAtlas } from './clean-texture-stains.mjs'
+import { padIslands } from './atlas-padding.mjs'
+import { PROTECTED_JOINTS, cleanCharacterTexture, compareTextures, dilate, fillStains, islandLevels, keepClusters, localLevel } from './clean-texture-stains.mjs'
 
 const SIZE = 128
 const GREY = 40 // anthracite : dans la plage « zone sombre » (14 à 70)
@@ -117,6 +118,17 @@ describe('nettoyage de texture : atlas synthétique', () => {
     expect(at(after, 0, 0)).toBe(0)
   })
 
+  it('sans tour de détection (passes : 0, Cyril et Rémi) : seule la marge est écrite, les taches restent telles quelles', async () => {
+    const original = makeAtlas()
+    const { after, report, zones } = await cleanCharacterTexture(await makeDocument(original), { passes: 0, padRadius: 4 })
+    expect(report.stainTexels).toBe(0)
+    expect(report.inStains).toBe(0)
+    expect(report.inPadding).toBeGreaterThan(0)
+    expect(report.changed).toBe(report.inPadding)
+    for (let y = 50; y < 56; y++) for (let x = 30; x < 36; x++) expect(at(after, x, y)).toBe(DARK) // la tache n'est pas nettoyée
+    for (let i = 0; i < SIZE * SIZE; i++) if (zones.used[i]) expect(after[i * 3], `texel utilisé ${i}`).toBe(original[i * 3])
+  })
+
   it('ne repeint pas une zone sombre voulue : un amas trop grand pour une tache, ou un îlot noir collé au manteau', async () => {
     const px = makeAtlas()
     // Grande zone sombre (20×20 = 400 texels) dans l'îlot anthracite : pas une tache (t-shirt, pli profond).
@@ -215,15 +227,16 @@ describe('nettoyage de texture : fonctions pures', () => {
     expect(mixed[4 * 3]).toBeGreaterThan(40) // sans îlots, la fenêtre 5×5 attrape les texels clairs voisins
   })
 
-  it('padAtlas n’écrit que des texels inutilisés ; compareTextures range chaque changement', () => {
+  it('la marge (padIslands) n’écrit que des texels inutilisés ; compareTextures range chaque changement', () => {
     const w = 16
     const px = new Uint8Array(w * w * 3)
     const used = new Uint8Array(w * w)
-    for (let y = 6; y < 10; y++) for (let x = 6; x < 10; x++) { used[y * w + x] = 1; px.fill(60, (y * w + x) * 3, (y * w + x) * 3 + 3) }
-    const { pixels, filled } = padAtlas(px, 3, w, w, used, () => true, 3)
+    const island = new Int32Array(w * w)
+    for (let y = 6; y < 10; y++) for (let x = 6; x < 10; x++) { used[y * w + x] = 1; island[y * w + x] = 1; px.fill(60, (y * w + x) * 3, (y * w + x) * 3 + 3) }
+    const { pixels, padded } = padIslands(px, 3, w, w, island, 3)
     for (let i = 0; i < w * w; i++) if (used[i]) expect(pixels[i * 3]).toBe(60)
-    expect(filled.reduce((s, v) => s + v, 0)).toBe(10 * 10 - 4 * 4) // couronne de 3 texels autour de l'îlot 4×4
-    const diff = compareTextures(px, pixels, 3, w, w, { used, padded: filled })
+    expect(padded.reduce((s, v) => s + v, 0)).toBe(10 * 10 - 4 * 4) // couronne de 3 texels autour de l'îlot 4×4
+    const diff = compareTextures(px, pixels, 3, w, w, { used, padded })
     expect(diff.inPadding).toBe(diff.changed)
     expect(diff.elsewhere).toBe(0)
     expect(diff.maxDelta).toBe(60)
