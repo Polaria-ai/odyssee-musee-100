@@ -1,7 +1,17 @@
-import { AnimationMixer, Box3, MeshLambertMaterial, MeshStandardMaterial, Vector3, VectorKeyframeTrack } from 'three'
+import { AnimationMixer, Box3, MeshLambertMaterial, MeshStandardMaterial, ShaderLib, Vector3, VectorKeyframeTrack } from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { describe, expect, it } from 'vitest'
-import { CULLING_MARGIN, alignRootToReference, findSkinnedMesh, fitToHeight, getCharacterAssets, makeMatteMaterial } from './characterRig'
+import {
+  CHARACTER_LOD_BIAS,
+  CULLING_MARGIN,
+  alignRootToReference,
+  applyLodBias,
+  findSkinnedMesh,
+  fitToHeight,
+  getCharacterAssets,
+  injectLodBias,
+  makeMatteMaterial,
+} from './characterRig'
 import { CHARACTERS, type CharacterDef } from './models'
 import { FIXTURE_MAP, makeTestRig, positionClip } from './rig.fixture'
 
@@ -78,6 +88,63 @@ describe('makeMatteMaterial', () => {
     const plain = new MeshStandardMaterial({ color: '#ff0000' })
     expect(makeMatteMaterial(plain).color.getHexString()).toBe('ff0000')
     expect(() => makeMatteMaterial(undefined)).not.toThrow()
+  })
+})
+
+/** Fragment shader d'un Lambert tel que three le donne à `onBeforeCompile` (morceaux `#include` encore à résoudre). */
+const LAMBERT_FRAGMENT = ShaderLib.lambert.fragmentShader
+
+describe('biais de LOD des personnages (WEL-930)', () => {
+  it('est négatif : le GPU lit un niveau de mipmap plus fin, donc moins de mélange entre îlots voisins de l\'atlas', () => {
+    expect(CHARACTER_LOD_BIAS).toBe(-2)
+  })
+
+  it('injectLodBias biaise les deux lectures de texture (couleur et émissif) du fragment shader Lambert de three', () => {
+    // Garde-fou : si une mise à jour de three renomme ces morceaux de shader, ce test échoue au lieu de laisser le biais disparaître.
+    expect(LAMBERT_FRAGMENT).toContain('#include <map_fragment>')
+    expect(LAMBERT_FRAGMENT).toContain('#include <emissivemap_fragment>')
+    const patched = injectLodBias(LAMBERT_FRAGMENT)
+    expect(patched).toContain('texture2D( map, vMapUv, -2.00 )')
+    expect(patched).toContain('texture2D( emissiveMap, vEmissiveMapUv, -2.00 )')
+    expect(patched).not.toContain('texture2D( map, vMapUv )')
+    expect(patched).not.toContain('texture2D( emissiveMap, vEmissiveMapUv )')
+    // Le reste du shader est intact (éclairage, sortie) : seuls les deux morceaux sont remplacés par leur propre texte.
+    expect(patched).toContain('#include <lights_fragment_begin>')
+    expect(patched).toContain('#include <opaque_fragment>')
+    expect(injectLodBias(LAMBERT_FRAGMENT, -1.5)).toContain('texture2D( map, vMapUv, -1.50 )')
+  })
+
+  it('injectLodBias ne change rien à un shader qui n\'a pas ces morceaux', () => {
+    expect(injectLodBias('void main() { gl_FragColor = vec4( 1.0 ); }')).toBe('void main() { gl_FragColor = vec4( 1.0 ); }')
+  })
+
+  it('makeMatteMaterial applique le biais à un matériau texturé, avec une clé de programme propre au biais', () => {
+    const matte = makeMatteMaterial(new MeshStandardMaterial({ map: FIXTURE_MAP }))
+    const shader = { fragmentShader: LAMBERT_FRAGMENT }
+    matte.onBeforeCompile(shader as never, undefined as never)
+    expect(shader.fragmentShader).toContain(`texture2D( map, vMapUv, ${CHARACTER_LOD_BIAS.toFixed(2)} )`)
+    expect(matte.customProgramCacheKey()).toContain(String(CHARACTER_LOD_BIAS))
+    // Deux biais différents ne partagent pas le même programme compilé.
+    expect(applyLodBias(new MeshLambertMaterial(), -1).customProgramCacheKey()).not.toBe(matte.customProgramCacheKey())
+  })
+
+  it('makeMatteMaterial laisse son programme d\'origine à un matériau sans texture', () => {
+    const plain = makeMatteMaterial(new MeshStandardMaterial({ color: '#ff0000' }))
+    const shader = { fragmentShader: LAMBERT_FRAGMENT }
+    plain.onBeforeCompile(shader as never, undefined as never)
+    expect(shader.fragmentShader).toBe(LAMBERT_FRAGMENT)
+  })
+
+  it('Material.clone() perd le biais : applyLodBias le redonne à un clone (fondu d\'opacité de GlbCharacter)', () => {
+    const matte = makeMatteMaterial(new MeshStandardMaterial({ map: FIXTURE_MAP }))
+    const clone = matte.clone()
+    const shader = { fragmentShader: LAMBERT_FRAGMENT }
+    clone.onBeforeCompile(shader as never, undefined as never)
+    expect(shader.fragmentShader).toBe(LAMBERT_FRAGMENT) // le clone n'a PAS le biais
+    const biased = { fragmentShader: LAMBERT_FRAGMENT }
+    expect(applyLodBias(clone)).toBe(clone)
+    clone.onBeforeCompile(biased as never, undefined as never)
+    expect(biased.fragmentShader).toContain('vMapUv, -2.00 )')
   })
 })
 

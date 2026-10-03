@@ -5,7 +5,8 @@
  *
  * - Échelle : la hauteur de jeu (`CHARACTERS[…].height`) est atteinte exactement, pieds à y = 0
  *   (`getCharacterAssets`, calculé une fois par modèle). L'origine du composant est donc « sous les pieds ».
- * - Matériau : `MeshLambertMaterial` mat partagé (même texture de couleur que l'original, trop brillant).
+ * - Matériau : `MeshLambertMaterial` mat partagé (même texture de couleur que l'original, trop brillant), avec un
+ *   biais de LOD négatif (`CHARACTER_LOD_BIAS`, WEL-930) : sans lui, des veines claires zèbrent les vêtements sombres.
  *   Seule exception : `opacity < 1` donne à CETTE instance un clone transparent (les autres ne bougent pas).
  * - Animation : un `AnimationMixer` par instance (`CharacterAnimator`), fondu enchaîné de 0,2 s entre
  *   clips, aucune allocation par image (`useFrame` n'appelle que `update`).
@@ -17,7 +18,7 @@ import type { MeshLambertMaterial } from 'three'
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
 import { preloadModel, useModel } from '../assets/useModel'
 import { CharacterAnimator } from './animator'
-import { findSkinnedMesh, getCharacterAssets } from './characterRig'
+import { applyLodBias, findSkinnedMesh, getCharacterAssets } from './characterRig'
 import { CHARACTERS, type CharacterId, type ClipName } from './models'
 
 export { pickLocomotionClip, walkTimeScale } from './locomotion'
@@ -100,7 +101,7 @@ export function GlbCharacter({ character, clip = 'idle', timeScale = 1, oneShot 
     let faded = fadedRef.current
     if (!faded || faded.map !== assets.material.map) {
       faded?.dispose()
-      faded = assets.material.clone()
+      faded = applyLodBias(assets.material.clone()) // `clone()` perd `onBeforeCompile` : le clone reprend le biais de LOD
       faded.transparent = true
       fadedRef.current = faded
     }
