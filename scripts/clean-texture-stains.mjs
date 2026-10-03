@@ -3,21 +3,24 @@
  *
  * Deux défauts se voient sur le manteau et le pantalon anthracite de l'Archiviste, et tous deux viennent de
  * l'atlas Meshy : fragmenté en milliers d'îlots, séparés de noir inutilisé, avec les mèches de cheveux gris
- * clair collées aux îlots du vêtement.
+ * clair collées aux îlots du vêtement (le second, on l'a vu depuis, n'est pas du côté de la texture : voir B).
  *
  *  A. Taches. Le remaillage laisse, dans les zones sombres et unies d'un vêtement, des amas de texels nettement
  *     plus sombres que le tissu qui les entoure (surtout le long des bords d'îlots). Ils sont détectés puis
  *     remplacés par la couleur environnante (`detectStains`, `fillStains`).
- *  B. Veines claires (hypothèse). Le filtrage de la texture (bilinéaire, puis mipmaps à distance) mélange, sur le
- *     bord d'un îlot, le noir du vide et le gris des cheveux voisins : de fines craquelures claires courent sur le
- *     manteau. On étend donc la couleur de chaque îlot dans le vide qui l'entoure (`padAtlas`, « marge » ou
- *     dilatation des bords) : seuls des texels INUTILISÉS changent, jamais un texel que le maillage affiche.
+ *  B. Marge des îlots (« dilatation », `atlas-padding.mjs`). Hypothèse de départ : le filtrage de la texture (bilinéaire, puis
+ *     mipmaps à distance) mélange, sur le bord d'un îlot, le noir du vide et le gris des cheveux voisins, d'où des craquelures
+ *     claires sur le manteau. On étend donc la couleur de chaque îlot dans le vide qui l'entoure : seuls des texels INUTILISÉS
+ *     changent, jamais un texel que le maillage affiche. HYPOTHÈSE INFIRMÉE PAR LA MESURE (WEL-930, banc d'essai du 03/10/2026) :
+ *     la marge ne change pas les veines. Elles viennent du mélange entre îlots VOISINS DANS L'ATLAS quand le GPU lit un niveau de
+ *     mipmap trop grossier (voir `CHARACTER_LOD_BIAS`, `src/characters/characterRig.ts`, qui les corrige). La marge reste
+ *     utile : un vide lisse se compresse mieux, et le filtrage ne lit plus de noir.
  *
- * EFFET MESURÉ (vérification indépendante du 03/10/2026) : faible. Les taches changées sont 3 043 texels (0,15 % des
- * texels utilisés) ; des amas sombres de 6 texels ou plus passent de 53 à 30. Les veines claires, elles, ne
- * disparaissent pas : − 2 % de pixels clairs neutres sur le bas du corps rendu en trois quarts (1 512 contre 1 482),
- * des veines blanches restent visibles sur le manteau, comme sur la veste de Cyril. Le gain réel de la marge est un
- * WebP plus léger (GLB : 409 392 → 398 360 octets), pas un tissu plus lisse.
+ * EFFET MESURÉ de la marge sur les veines (WEL-928, puis WEL-930) : nul. Taches changées : 3 043 texels (0,15 % des texels
+ * utilisés) ; des amas sombres de 6 texels ou plus passent de 53 à 30. Rendu du jeu comparé à une image suréchantillonnée
+ * (banc d'essai, 3 personnages, de dos et de trois quarts) : avec ou sans marge (40 texels ou tout le vide), la part de
+ * pixels éclaircis de plus de 25 niveaux ne bouge pas (écarts de 0,4 point au plus, sur des taux de 3 à 20 %). Le gain réel de la marge est un fichier
+ * plus léger (Archiviste, WebP : − 12 Ko ; Cyril − 0,7 Ko, Rémi − 1,3 Ko).
  *
  * Étapes, dans l'ordre :
  *  1. Zones. Les triangles du maillage sont rastérisés dans l'espace UV : on sait quels texels sont réellement
@@ -39,12 +42,12 @@
  *     voisines, qui deviennent à leur tour détectables (sur l'Archiviste : 79, 36, 24, 20, 19 puis 19 amas). Seuls
  *     les voisins du MÊME îlot UV servent de modèle. Ce qui reste est fait d'amas sans voisin sain : ils sont
  *     laissés tels quels plutôt que repeints avec une couleur qui n'est pas la leur.
- *  4. Marge (B). Couche par couche, jusqu'à `padRadius` texels (40 sur l'atlas 2048, soit 20 sur la texture livrée de
- *     1024 : au-delà, les mipmaps à distance ne mélangent plus le vide à un îlot), le vide prend la couleur des
- *     îlots voisins ; le vêtement passe avant les autres îlots dans la moyenne. `padOtherSpeed` (1 par défaut)
- *     peut ralentir les îlots qui ne sont pas du vêtement. Essais sur l'Archiviste (rendu 3D rapproché, éclairci) :
- *     marge 16 → 40, vitesses égales = un peu moins de veines claires sur le manteau (écart faible, voir « EFFET MESURÉ »), et un WebP plus léger (une marge
- *     lisse se compresse mieux qu'un fond noir bordé de franges : −11 Ko sur le GLB à qualité égale).
+ *  4. Marge (B). `padIslands` : couche par couche, jusqu'à `padRadius` texels (40 sur l'atlas 2048, soit 20 sur la texture
+ *     livrée de 1024 : au-delà, les mipmaps à distance ne mélangent plus le vide à un îlot), le vide prend la couleur de l'îlot
+ *     le plus proche (moyenne de ses texels voisins). Faite sur la texture pleine taille, avant sa réduction à 1024. Ancienne
+ *     version (WEL-928) : le vêtement passait avant les autres îlots dans la moyenne ; sans effet mesuré, remplacée par la
+ *     règle simple « îlot le plus proche », la même pour les trois personnages. Cyril et Rémi n'ont pas de taches à nettoyer
+ *     (`passes: 0`) : ils ne reçoivent que cette marge.
  *  5. Contrôle par différence. Le rapport donne le nombre de texels changés par étape et leur part ; les texels
  *     changés qui ne sont NI une tache NI du vide, et les texels PROTÉGÉS changés, doivent être nuls (sinon la
  *     fonction lève une erreur).
@@ -53,6 +56,7 @@
  * `cleanCharacterTexture` lit un document glTF Transform et décode/encode l'image (sharp).
  */
 import sharp from 'sharp'
+import { padIslands } from './atlas-padding.mjs'
 
 /** Os dont les îlots d'atlas ne sont jamais modifiés : tête, cheveux, yeux, cou et mains. */
 export const PROTECTED_JOINTS = ['Head', 'neck', 'head_end', 'headfront', 'LeftHand', 'RightHand']
@@ -83,10 +87,6 @@ export const DEFAULTS = {
   trim: 0.75,
   /** Marge : rayon (texels, atlas 2048) dont la couleur des îlots est étendue dans le vide. 0 : pas de marge. */
   padRadius: 40,
-  /** Vitesse d'extension des îlots qui ne sont pas du vêtement (1 = comme le vêtement, 0,5 = moitié moins vite). */
-  padOtherSpeed: 1,
-  /** Un îlot est du « vêtement » si sa luminance est sous cette valeur et son écart entre canaux sous `chromaMax`. */
-  clothLuminanceMax: 70,
 }
 
 const luminance = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b
@@ -403,87 +403,6 @@ export function fillStains(pixels, channels, width, height, mask, trusted, islan
 }
 
 /**
- * Marge des îlots (« edge padding ») : étend, couche par couche sur `radius` texels, la couleur des texels
- * UTILISÉS dans le vide (texels inutilisés) qui les entoure. `isCloth(i)` désigne les texels d'îlots de
- * vêtement : ils avancent à chaque couche, les autres tous les `round(1 / otherSpeed)` couches. Un texel vide
- * prend la moyenne des voisins (8) qui avancent à cette couche, ceux du vêtement d'abord. Renvoie une COPIE et
- * le masque des texels remplis ; seuls des texels inutilisés sont écrits.
- */
-export function padAtlas(pixels, channels, width, height, used, isCloth, radius, otherSpeed = 0.5) {
-  const out = Uint8Array.from(pixels)
-  const n = width * height
-  const kind = new Uint8Array(n) // 0 vide, 1 vêtement, 2 autre
-  for (let i = 0; i < n; i++) kind[i] = used[i] ? (isCloth(i) ? 1 : 2) : 0
-  const filled = new Uint8Array(n)
-  if (radius <= 0) return { pixels: out, filled }
-  const period = Math.max(1, Math.round(1 / Math.max(otherSpeed, 1e-6)))
-  const around = (p, visit) => {
-    const x = p % width, y = (p - x) / width
-    for (let dy = -1; dy <= 1; dy++) {
-      const yy = y + dy
-      if (yy < 0 || yy >= height) continue
-      for (let dx = -1; dx <= 1; dx++) {
-        if (!dx && !dy) continue
-        const xx = x + dx
-        if (xx < 0 || xx >= width) continue
-        visit(yy * width + xx)
-      }
-    }
-  }
-  // Front initial : les texels vides voisins d'un texel utilisé.
-  let frontier = []
-  const queued = new Uint8Array(n)
-  for (let p = 0; p < n; p++) {
-    if (kind[p]) around(p, (q) => {
-      if (!kind[q] && !queued[q]) {
-        queued[q] = 1
-        frontier.push(q)
-      }
-    })
-  }
-  const sum = [0, 0, 0, 0]
-  for (let layer = 1; layer <= radius && frontier.length; layer++) {
-    const otherMoves = (layer - 1) % period === 0
-    const assign = []
-    const waiting = []
-    for (const p of frontier) {
-      sum.fill(0)
-      let cloth = 0, other = 0
-      const clothSum = [0, 0, 0, 0], otherSum = [0, 0, 0, 0]
-      around(p, (q) => {
-        const k = kind[q]
-        if (k === 1) {
-          cloth++
-          for (let c = 0; c < channels; c++) clothSum[c] += out[q * channels + c]
-        } else if (k === 2 && otherMoves) {
-          other++
-          for (let c = 0; c < channels; c++) otherSum[c] += out[q * channels + c]
-        }
-      })
-      if (cloth > 0) assign.push([p, 1, clothSum.map((v) => Math.round(v / cloth))])
-      else if (other > 0) assign.push([p, 2, otherSum.map((v) => Math.round(v / other))])
-      else waiting.push(p)
-    }
-    const next = waiting
-    for (const [p, k, color] of assign) {
-      for (let c = 0; c < channels; c++) out[p * channels + c] = color[c]
-      kind[p] = k
-      filled[p] = 1
-    }
-    for (const [p] of assign) {
-      around(p, (q) => {
-        if (!kind[q] && !queued[q]) {
-          queued[q] = 1
-          next.push(q)
-        }
-      })
-    }
-    frontier = next
-  }
-  return { pixels: out, filled }
-}
-
-/**
  * Différence avant/après : texels changés au total, dans les taches (`stains`), dans le vide rempli (`padded`),
  * AILLEURS (doit rester nul) et parmi les texels utilisés ET protégés (doit rester nul) ; plus fort écart.
  */
@@ -539,13 +458,8 @@ export async function cleanCharacterTexture(document, options = {}) {
   }
   const filled = current
 
-  // B. Marge des îlots (sur l'image déjà débarrassée de ses taches).
-  const isCloth = (i) => {
-    if (zones.protectCore[i]) return false
-    const r = filled[i * channels], g = filled[i * channels + 1], b = filled[i * channels + 2]
-    return luminance(r, g, b) < o.clothLuminanceMax && Math.max(r, g, b) - Math.min(r, g, b) <= o.chromaMax
-  }
-  const { pixels: after, filled: padded } = padAtlas(filled, channels, width, height, zones.used, isCloth, o.padRadius, o.padOtherSpeed)
+  // B. Marge des îlots : le vide prend la couleur de l'îlot le plus proche (sur l'image déjà débarrassée de ses taches).
+  const { pixels: after, padded } = padIslands(filled, channels, width, height, zones.island, o.padRadius)
 
   const diff = compareTextures(pixels, after, channels, width, height, { used: zones.used, protectCore: zones.protectCore, stains: stainMask, padded })
   if (diff.changedProtected > 0) throw new Error(`Contrôle : ${diff.changedProtected} texels protégés (visage, cheveux, yeux, mains) ont changé`)

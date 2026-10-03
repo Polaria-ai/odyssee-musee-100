@@ -17,8 +17,6 @@ export interface CleanOptions {
   protectGrow: number
   trim: number
   padRadius: number
-  padOtherSpeed: number
-  clothLuminanceMax: number
 }
 export const DEFAULTS: CleanOptions
 
@@ -48,17 +46,6 @@ export function detectStains(
   options?: Partial<CleanOptions>,
 ): { mask: Uint8Array; clusters: number; stains: number; level: Float32Array }
 export function fillStains(pixels: Uint8Array, channels: number, width: number, height: number, mask: Uint8Array, trusted: Uint8Array, island?: Int32Array | null): Uint8Array
-export function padAtlas(
-  pixels: Uint8Array,
-  channels: number,
-  width: number,
-  height: number,
-  used: Uint8Array,
-  isCloth: (index: number) => boolean,
-  radius: number,
-  otherSpeed?: number,
-): { pixels: Uint8Array; filled: Uint8Array }
-
 export interface TextureDiff {
   changed: number
   inStains: number
