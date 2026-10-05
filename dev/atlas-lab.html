@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Banc d'essai des textures de personnages (dev)</title>
+    <!--
+      Banc d'essai des « veines » claires des atlas Meshy (WEL-930). Servie par `pnpm dev` seulement : Vite ne
+      construit que index.html, cette page n'entre donc jamais dans dist/.
+
+      Un personnage posé comme dans le jeu : même caméra (`cameraRig`), mêmes lumières (`charter3d`), même matériau
+      (`makeMatteMaterial`, donc avec son biais de LOD), même clip « idle ». Piloté par `dev/measure-atlas.mjs`
+      (Playwright) : window.lab.load(url, personnage, rotationY), setBias(biais) (0 = comportement d'avant le biais),
+      setFilter('mip' | 'nomip'), setDistance(m), shot(x, y, w, h, ratio) → PNG (data URL), project(x, y, z), debugLod().
+    -->
+    <style>
+      html, body { margin: 0; background: #113198; overflow: hidden; }
+      canvas { display: block; width: 390px; height: 844px; }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import * as THREE from 'three'
+      import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+      import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
+      import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
+      import { CHARACTERS } from '/src/characters/models.ts'
+      import { applyLodBias, getCharacterAssets, findSkinnedMesh } from '/src/characters/characterRig.ts'
+      import { CharacterAnimator } from '/src/characters/animator.ts'
+      import { cameraRig, cameraPositionFor, charter3d } from '/src/styles/tokens.ts'
+
+      // Écran de téléphone (iPhone 13) : 390×844 px CSS, ratio de pixels du jeu plafonné à 1,75.
+      const W = 390
+      const H = 844
+      const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: true })
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75))
+      renderer.setSize(W, H)
+      document.body.appendChild(renderer.domElement)
+
+      const scene = new THREE.Scene()
+      const light = charter3d.scene
+      scene.background = new THREE.Color(light.background)
+      scene.add(new THREE.HemisphereLight(light.hemisphere.sky, light.hemisphere.ground, light.hemisphere.intensity))
+      const sun = new THREE.DirectionalLight(light.directional.color, light.directional.intensity)
+      sun.position.set(...light.directional.position)
+      scene.add(sun)
+      scene.add(new THREE.Mesh(new THREE.PlaneGeometry(60, 60).rotateX(-Math.PI / 2), new THREE.MeshLambertMaterial({ color: '#113198' })))
+
+      const camera = new THREE.PerspectiveCamera(cameraRig.fovDeg, W / H, 0.1, 120)
+      function setDistance(distance = 17) {
+        const p = cameraPositionFor(0, 0, distance)
+        camera.position.set(p.x, p.y, p.z)
+        camera.lookAt(0, cameraRig.lookHeight, 0)
+        camera.updateMatrixWorld(true)
+      }
+      setDistance()
+
+      const loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder)
+      let current = null // { holder, animator, material }
+
+      /** Charge un GLB (url) pour `character`, de face quand `rotY` vaut 0, au premier instant (phase `phase`) du clip « idle ». */
+      async function load(url, character, rotY = 0, phase = 0.3) {
+        if (current) scene.remove(current.holder)
+        const gltf = await loader.loadAsync(url)
+        const assets = getCharacterAssets(gltf.scene, gltf.animations, CHARACTERS[character])
+        const root = cloneSkinned(gltf.scene)
+        const skinned = findSkinnedMesh(root)
+        skinned.material = assets.material
+        skinned.boundingSphere = assets.boundingSphere.clone()
+        root.scale.setScalar(assets.scale)
+        root.position.set(0, assets.offsetY, 0)
+        const holder = new THREE.Group()
+        holder.add(root)
+        holder.rotation.y = rotY
+        scene.add(holder)
+        const animator = new CharacterAnimator(root, assets.clips)
+        animator.play('idle', { startPhase: phase })
+        animator.update(0.0001)
+        current = { holder, animator, material: assets.material }
+        return true
+      }
+
+      /** Biais de LOD du matériau : 0 retire celui du jeu (état d'avant WEL-930), sinon `applyLodBias(matériau, biais)`. */
+      function setBias(bias) {
+        const m = current.material
+        if (bias) applyLodBias(m, bias)
+        else {
+          m.onBeforeCompile = () => {}
+          m.customProgramCacheKey = () => 'no-bias'
+        }
+        m.needsUpdate = true
+      }
+
+      /** 'nomip' : filtrage bilinéaire sans mipmaps (sert de vérité terrain, rendu très grand puis réduit) ; 'mip' : le filtrage du jeu. */
+      function setFilter(kind) {
+        const t = current.material.map
+        t.generateMipmaps = kind !== 'nomip'
+        t.minFilter = kind === 'nomip' ? THREE.LinearFilter : THREE.LinearMipmapLinearFilter
+        t.dispose()
+        t.needsUpdate = true
+        current.material.needsUpdate = true
+      }
+
+      /** Colore chaque pixel par son niveau de mipmap (niveau / 16 dans le rouge, avant l'encodage sRGB) : mesure du LOD réel au jeu. */
+      function debugLod() {
+        const m = current.material
+        m.onBeforeCompile = (shader) => {
+          shader.fragmentShader = shader.fragmentShader
+            .replace('#include <map_fragment>', `
+              vec2 dx = dFdx( vMapUv ) * vec2( 1024.0 );
+              vec2 dy = dFdy( vMapUv ) * vec2( 1024.0 );
+              diffuseColor = vec4( clamp( 0.5 * log2( max( dot( dx, dx ), dot( dy, dy ) ) ) / 16.0, 0.0, 1.0 ), 0.0, 1.0, 1.0 );`)
+            .replace('#include <emissivemap_fragment>', '')
+            .replace('#include <opaque_fragment>', 'gl_FragColor = vec4( diffuseColor.rgb, 1.0 );')
+        }
+        m.customProgramCacheKey = () => 'lod-debug'
+        m.needsUpdate = true
+      }
+
+      /** PNG (data URL) du rectangle (x, y, w, h) de l'écran 390×844, rendu au ratio de pixels demandé (14 : vérité terrain, à réduire 8×). */
+      function shot(x, y, w, h, ratio = 1.75) {
+        camera.setViewOffset(W, H, x, y, w, h)
+        renderer.setPixelRatio(ratio)
+        renderer.setSize(w, h, false)
+        current.animator.update(0.0001)
+        renderer.render(scene, camera)
+        const url = renderer.domElement.toDataURL('image/png')
+        camera.clearViewOffset()
+        return url
+      }
+
+      /** Position écran (px CSS) d'un point du monde. */
+      function project(x, y, z) {
+        camera.updateMatrixWorld(true)
+        const v = new THREE.Vector3(x, y, z).project(camera)
+        return { x: ((v.x + 1) / 2) * W, y: ((1 - v.y) / 2) * H }
+      }
+
+      window.lab = { load, setBias, setFilter, setDistance, debugLod, shot, project }
+      window.labReady = true
+    </script>
+  </body>
+</html>

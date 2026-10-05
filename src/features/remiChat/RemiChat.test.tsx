@@ -1,0 +1,488 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { useGame } from '../../state/gameStore'
+import { MAX_USER_MESSAGE_CHARS, type RemiBustProps, type RemiChatRequest, type RemiChatResult, type RemiStreamHandlers } from './contract'
+import { strings } from './strings'
+import { SPEAKING_TAIL_MS } from './useRemiChat'
+import { RemiChat } from './RemiChat'
+
+const playSfxMock = vi.fn()
+vi.mock('../../audio', () => ({ playSfx: (...args: unknown[]) => playSfxMock(...args) }))
+
+// Le vrai buste a son propre <Canvas> (WebGL) : absent de jsdom. On ne garde que ses propriétés.
+vi.mock('./RemiBust', () => ({
+  RemiBust: ({ mood, variant }: RemiBustProps) => <div data-testid="remi-bust" data-mood={mood} data-variant={variant} />,
+}))
+
+const streamMock = vi.fn<(request: RemiChatRequest, handlers: RemiStreamHandlers) => Promise<RemiChatResult>>()
+vi.mock('./client', () => ({
+  streamRemiReply: (request: RemiChatRequest, handlers: RemiStreamHandlers) => streamMock(request, handlers),
+}))
+
+interface Call {
+  request: RemiChatRequest
+  handlers: RemiStreamHandlers
+  resolve: (result: RemiChatResult) => void
+}
+
+function pendingClient(): Call[] {
+  const calls: Call[] = []
+  streamMock.mockImplementation(
+    (request, handlers) =>
+      new Promise<RemiChatResult>((resolve) => {
+        calls.push({ request, handlers, resolve })
+      }),
+  )
+  return calls
+}
+
+function instantClient(text = 'Réponse de Rémi.'): void {
+  streamMock.mockImplementation(async (_request, handlers) => {
+    handlers.onDelta(text)
+    return { ok: true, text }
+  })
+}
+
+const t = (key: keyof typeof strings, lang: 'fr' | 'en' = 'fr') => strings[key][lang]
+
+/** Simule un écran large en paysage (mise en page PC) ou non. */
+function stubMatchMedia(split: boolean) {
+  window.matchMedia = ((query: string) => ({
+    matches: split && query.includes('min-width: 900px'),
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  })) as never
+}
+
+const bust = () => screen.getByTestId('remi-bust')
+const input = () => screen.getByTestId('remi-chat-input') as HTMLTextAreaElement
+const send = () => screen.getByTestId('remi-chat-send') as HTMLButtonElement
+const bubbles = () => screen.queryAllByTestId('remi-chat-message')
+
+function type(value: string) {
+  fireEvent.change(input(), { target: { value } })
+}
+
+function open() {
+  act(() => useGame.getState().openRemiChat())
+}
+
+describe('RemiChat', () => {
+  const originalMatchMedia = window.matchMedia
+
+  beforeEach(() => {
+    streamMock.mockReset()
+    playSfxMock.mockClear()
+    window.matchMedia = undefined as never
+    useGame.setState({
+      lang: 'fr',
+      visitorId: 'v-test',
+      visited: {},
+      stamps: {},
+      people: [],
+      sessions: [],
+      visitedSessions: {},
+      remiChatOpen: false,
+      dialogue: null,
+      mapOpen: false,
+      stampCardOpen: false,
+    })
+  })
+
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia
+    vi.useRealTimers()
+  })
+
+  describe('structure', () => {
+    it('ne rend rien tant que le chat est fermé', () => {
+      render(<RemiChat />)
+      expect(screen.queryByTestId('remi-chat')).not.toBeInTheDocument()
+      expect(screen.queryByTestId('remi-bust')).not.toBeInTheDocument()
+    })
+
+    it('est une boîte de dialogue modale titrée « Rémi · IA », avec la mention IA et un bouton fermer', () => {
+      render(<RemiChat />)
+      open()
+      const dialog = screen.getByTestId('remi-chat')
+      expect(dialog).toHaveAttribute('role', 'dialog')
+      expect(dialog).toHaveAttribute('aria-modal', 'true')
+      const title = screen.getByRole('heading', { name: 'Rémi · IA' })
+      expect(dialog).toHaveAttribute('aria-labelledby', title.id)
+      expect(screen.getByText('Réponses générées par une IA')).toBeInTheDocument()
+      expect(screen.getByTestId('remi-chat-close')).toHaveAccessibleName(t('close'))
+    })
+
+    it('affiche d’emblée un court message de Rémi (pas l’accueil complet), sans appel réseau', () => {
+      render(<RemiChat />)
+      open()
+      expect(bubbles()).toHaveLength(1)
+      expect(bubbles()[0]).toHaveAttribute('data-role', 'assistant')
+      expect(bubbles()[0]).toHaveTextContent(t('greeting'))
+      expect(bubbles()[0]).not.toHaveTextContent('Bienvenue au Musée des 100')
+      expect(streamMock).not.toHaveBeenCalled()
+    })
+
+    it('propose les quatre suggestions de départ', () => {
+      render(<RemiChat />)
+      open()
+      const chips = screen.getAllByTestId('remi-chat-suggestion')
+      expect(chips.map((c) => c.textContent)).toEqual([
+        'Comment ça marche ?',
+        'Qui sont les 100 ?',
+        'Que sont les Archives de 2040 ?',
+        'Le programme du 6 octobre',
+      ])
+    })
+
+    it('est entièrement traduit en anglais', () => {
+      useGame.setState({ lang: 'en' })
+      render(<RemiChat />)
+      open()
+      expect(screen.getByRole('heading', { name: 'Rémi · AI' })).toBeInTheDocument()
+      expect(screen.getByText('Answers generated by an AI')).toBeInTheDocument()
+      expect(input()).toHaveAttribute('placeholder', 'Write to Rémi…')
+      expect(screen.getAllByTestId('remi-chat-suggestion')[0]).toHaveTextContent('How does it work?')
+      expect(bubbles()[0]).toHaveTextContent(t('greeting', 'en'))
+    })
+
+    it('le champ a un nom accessible et la touche « envoyer » du clavier virtuel', () => {
+      render(<RemiChat />)
+      open()
+      expect(input()).toHaveAttribute('enterkeyhint', 'send')
+      expect(input()).toHaveAccessibleName(t('inputLabel'))
+    })
+  })
+
+  describe('mise en page', () => {
+    it('téléphone : buste plein écran', () => {
+      render(<RemiChat />)
+      open()
+      expect(screen.getByTestId('remi-chat')).toHaveAttribute('data-layout', 'overlay')
+      expect(bust()).toHaveAttribute('data-variant', 'fullscreen')
+    })
+
+    it('PC (large ET paysage) : écran coupé en deux', () => {
+      stubMatchMedia(true)
+      render(<RemiChat />)
+      open()
+      expect(screen.getByTestId('remi-chat')).toHaveAttribute('data-layout', 'split')
+      expect(bust()).toHaveAttribute('data-variant', 'split')
+    })
+  })
+
+  describe('envoi et flux', () => {
+    it('le bouton envoyer est désactivé tant que le champ est vide', () => {
+      render(<RemiChat />)
+      open()
+      expect(send()).toBeDisabled()
+      type('Bonjour')
+      expect(send()).toBeEnabled()
+    })
+
+    it('envoie le message, affiche le texte au fil du flux et l’indicateur « Rémi écrit… »', async () => {
+      const calls = pendingClient()
+      render(<RemiChat />)
+      open()
+      type('Où est la sortie ?')
+      fireEvent.click(send())
+
+      expect(input()).toHaveValue('')
+      const all = bubbles()
+      expect(all.at(-1)).toHaveAttribute('data-role', 'user')
+      expect(all.at(-1)).toHaveTextContent('Où est la sortie ?')
+      expect(screen.getByTestId('remi-chat-typing')).toHaveTextContent('Rémi écrit…')
+      expect(bust()).toHaveAttribute('data-mood', 'thinking')
+
+      act(() => calls[0].handlers.onDelta('Par la '))
+      expect(bubbles().at(-1)).toHaveAttribute('data-role', 'assistant')
+      expect(bubbles().at(-1)).toHaveTextContent('Par la')
+      expect(screen.getByTestId('remi-chat-typing')).toBeInTheDocument()
+      expect(bust()).toHaveAttribute('data-mood', 'speaking')
+
+      act(() => calls[0].handlers.onDelta('porte nord.'))
+      expect(bubbles().at(-1)).toHaveTextContent('Par la porte nord.')
+
+      await act(async () => calls[0].resolve({ ok: true, text: 'Par la porte nord.' }))
+      expect(screen.queryByTestId('remi-chat-typing')).not.toBeInTheDocument()
+    })
+
+    it('annonce le message de Rémi une fois terminé, pas à chaque morceau', async () => {
+      const calls = pendingClient()
+      render(<RemiChat />)
+      open()
+      const live = screen.getByTestId('remi-chat-live')
+      expect(live).toHaveAttribute('aria-live', 'polite')
+      type('Bonjour')
+      fireEvent.click(send())
+      act(() => calls[0].handlers.onDelta('Bon'))
+      act(() => calls[0].handlers.onDelta('jour !'))
+      expect(live).toHaveTextContent('')
+      await act(async () => calls[0].resolve({ ok: true, text: 'Bonjour !' }))
+      expect(live).toHaveTextContent('Bonjour !')
+    })
+
+    it('le fil lui-même n’est pas une région vivante (sinon chaque morceau serait annoncé)', () => {
+      render(<RemiChat />)
+      open()
+      const thread = screen.getByRole('region', { name: t('threadLabel') })
+      const list = within(thread).getByRole('list')
+      expect(list).not.toHaveAttribute('aria-live')
+      expect(list.closest('[aria-live]')).toBeNull()
+      // Région défilante : focalisable au clavier pour relire l'historique.
+      expect(thread).toHaveAttribute('tabindex', '0')
+    })
+
+    it('Entrée envoie, Maj+Entrée ne fait que revenir à la ligne', async () => {
+      instantClient()
+      render(<RemiChat />)
+      open()
+      type('Premier')
+      fireEvent.keyDown(input(), { key: 'Enter', shiftKey: true })
+      expect(streamMock).not.toHaveBeenCalled()
+      await act(async () => {
+        fireEvent.keyDown(input(), { key: 'Enter' })
+      })
+      expect(streamMock).toHaveBeenCalledTimes(1)
+      expect(streamMock.mock.calls[0][0].messages.at(-1)).toEqual({ role: 'user', content: 'Premier' })
+    })
+
+    it('une suggestion part comme message du visiteur et les puces disparaissent', async () => {
+      instantClient()
+      render(<RemiChat />)
+      open()
+      await act(async () => {
+        fireEvent.click(screen.getAllByTestId('remi-chat-suggestion')[1])
+      })
+      expect(streamMock.mock.calls[0][0].messages.at(-1)).toEqual({ role: 'user', content: 'Qui sont les 100 ?' })
+      expect(bubbles().some((b) => b.getAttribute('data-role') === 'user' && b.textContent === 'Qui sont les 100 ?')).toBe(true)
+      expect(screen.queryByTestId('remi-chat-suggestion')).not.toBeInTheDocument()
+    })
+
+    it('un son discret accompagne l’envoi', async () => {
+      instantClient()
+      render(<RemiChat />)
+      open()
+      type('Bonjour')
+      await act(async () => {
+        fireEvent.click(send())
+      })
+      expect(playSfxMock).toHaveBeenCalledWith('click')
+    })
+  })
+
+  describe('plafonds', () => {
+    it('le compteur apparaît dès la première lettre', () => {
+      render(<RemiChat />)
+      open()
+      const counter = screen.getByTestId('remi-chat-counter')
+      expect(counter).toHaveAttribute('data-empty', 'true')
+      type('Salut')
+      expect(counter).toHaveAttribute('data-empty', 'false')
+      expect(counter).toHaveTextContent(`5/${MAX_USER_MESSAGE_CHARS}`)
+      expect(input()).toHaveAttribute('aria-describedby', counter.id)
+    })
+
+    it('au-delà de MAX_USER_MESSAGE_CHARS : compteur en alerte, envoi désactivé, Entrée sans effet', () => {
+      render(<RemiChat />)
+      open()
+      type('a'.repeat(MAX_USER_MESSAGE_CHARS))
+      expect(send()).toBeEnabled()
+      type('a'.repeat(MAX_USER_MESSAGE_CHARS + 1))
+      expect(send()).toBeDisabled()
+      expect(input()).toHaveAttribute('aria-invalid', 'true')
+      expect(screen.getByTestId('remi-chat-counter')).toHaveAttribute('data-over', 'true')
+      expect(screen.getByTestId('remi-chat-counter')).toHaveTextContent('message trop long')
+      fireEvent.keyDown(input(), { key: 'Enter' })
+      expect(streamMock).not.toHaveBeenCalled()
+    })
+
+    it('après un limit_reached du serveur : message de fin, saisie fermée', async () => {
+      streamMock.mockResolvedValue({ ok: false, code: 'limit_reached', partialText: '' })
+      render(<RemiChat />)
+      open()
+      type('Bonjour')
+      await act(async () => {
+        fireEvent.click(send())
+      })
+      expect(bubbles().at(-1)).toHaveTextContent('Nous avons beaucoup échangé')
+      expect(input()).toBeDisabled()
+      expect(input()).toHaveAttribute('placeholder', t('inputPlaceholderEnded'))
+      expect(send()).toBeDisabled()
+    })
+  })
+
+  describe('erreurs', () => {
+    it('service indisponible : réponse de repli scripté précédée de « Je vous réponds brièvement : »', async () => {
+      streamMock.mockResolvedValue({ ok: false, code: 'unavailable', partialText: '' })
+      render(<RemiChat />)
+      open()
+      type('Bonjour')
+      await act(async () => {
+        fireEvent.click(send())
+      })
+      const reply = bubbles().at(-1)!
+      expect(reply).toHaveAttribute('data-role', 'assistant')
+      expect(reply.textContent!.startsWith('Je vous réponds brièvement : ')).toBe(true)
+      expect(reply).toHaveTextContent("Vous n'avez pas encore ouvert de portrait")
+    })
+
+    it('trop de visiteurs : attente aimable, « Réessayer » renvoie la question', async () => {
+      streamMock.mockResolvedValue({ ok: false, code: 'rate_limited', partialText: '' })
+      render(<RemiChat />)
+      open()
+      type('Bonjour')
+      await act(async () => {
+        fireEvent.click(send())
+      })
+      expect(bubbles().at(-1)).toHaveTextContent('Un instant, beaucoup de visiteurs me parlent en même temps…')
+      instantClient('Voilà.')
+      await act(async () => {
+        fireEvent.click(screen.getByTestId('remi-chat-retry'))
+      })
+      expect(screen.queryByTestId('remi-chat-retry')).not.toBeInTheDocument()
+      expect(bubbles().at(-1)).toHaveTextContent('Voilà.')
+      expect(bubbles().filter((b) => b.getAttribute('data-role') === 'user')).toHaveLength(1)
+    })
+
+    it('message illisible : message court, la saisie reste ouverte', async () => {
+      streamMock.mockResolvedValue({ ok: false, code: 'bad_request', partialText: '' })
+      render(<RemiChat />)
+      open()
+      type('???')
+      await act(async () => {
+        fireEvent.click(send())
+      })
+      expect(bubbles().at(-1)).toHaveTextContent("Je n'ai pas pu lire ce message")
+      expect(input()).toBeEnabled()
+    })
+  })
+
+  describe('fermeture et clavier', () => {
+    it('le bouton fermer ferme le chat', () => {
+      render(<RemiChat />)
+      open()
+      fireEvent.click(screen.getByTestId('remi-chat-close'))
+      expect(useGame.getState().remiChatOpen).toBe(false)
+      expect(screen.queryByTestId('remi-chat')).not.toBeInTheDocument()
+    })
+
+    it('Échap ferme le chat', () => {
+      render(<RemiChat />)
+      open()
+      fireEvent.keyDown(window, { key: 'Escape' })
+      expect(useGame.getState().remiChatOpen).toBe(false)
+    })
+
+    it('fermer annule la requête en cours et rend la question au champ', () => {
+      const calls = pendingClient()
+      render(<RemiChat />)
+      open()
+      type('Ma question')
+      fireEvent.click(send())
+      expect(calls[0].handlers.signal?.aborted).toBe(false)
+      fireEvent.click(screen.getByTestId('remi-chat-close'))
+      expect(calls[0].handlers.signal?.aborted).toBe(true)
+      open()
+      expect(input()).toHaveValue('Ma question')
+      expect(bubbles().every((b) => b.getAttribute('data-role') === 'assistant')).toBe(true)
+    })
+
+    it('l’historique survit à la fermeture et à la réouverture', async () => {
+      instantClient('Une réponse.')
+      render(<RemiChat />)
+      open()
+      type('Question')
+      await act(async () => {
+        fireEvent.click(send())
+      })
+      expect(bubbles()).toHaveLength(3)
+      act(() => useGame.getState().closeRemiChat())
+      open()
+      expect(bubbles().map((b) => b.textContent!.slice(0, 12))).toEqual([t('greeting').slice(0, 12), 'Question', 'Une réponse.'])
+    })
+
+    it('ouvrir une autre surimpression (plan) ferme le chat', () => {
+      render(<RemiChat />)
+      open()
+      act(() => useGame.getState().setMapOpen(true))
+      expect(screen.queryByTestId('remi-chat')).not.toBeInTheDocument()
+    })
+
+    it('Tab reste dans la boîte de dialogue (le dernier bouton ramène au premier)', () => {
+      render(<RemiChat />)
+      open()
+      const dialog = screen.getByTestId('remi-chat')
+      const focusables = dialog.querySelectorAll<HTMLElement>('button:not([disabled]), textarea:not([disabled])')
+      const first = focusables[0]
+      const last = focusables[focusables.length - 1]
+      last.focus()
+      fireEvent.keyDown(last, { key: 'Tab' })
+      expect(document.activeElement).toBe(first)
+      first.focus()
+      fireEvent.keyDown(first, { key: 'Tab', shiftKey: true })
+      expect(document.activeElement).toBe(last)
+    })
+  })
+
+  describe('focus à l’ouverture', () => {
+    it('PC : le focus va sur la saisie', () => {
+      stubMatchMedia(true)
+      render(<RemiChat />)
+      open()
+      expect(input()).toHaveFocus()
+    })
+
+    it('téléphone, ouverture de bienvenue : le focus reste sur la boîte, le clavier ne surgit pas', () => {
+      render(<RemiChat />)
+      open()
+      expect(input()).not.toHaveFocus()
+      expect(screen.getByTestId('remi-chat')).toHaveFocus()
+    })
+
+    it('téléphone, réouverture avec un historique : le focus va sur la saisie', () => {
+      render(<RemiChat />)
+      open()
+      act(() => useGame.getState().closeRemiChat())
+      open()
+      expect(input()).toHaveFocus()
+    })
+  })
+
+  describe('humeur du buste', () => {
+    it('Rémi parle un instant à l’accueil, puis idle ; écoute quand le champ a le focus ou du texte', () => {
+      vi.useFakeTimers()
+      render(<RemiChat />)
+      open()
+      expect(bust()).toHaveAttribute('data-mood', 'speaking')
+      act(() => {
+        vi.advanceTimersByTime(SPEAKING_TAIL_MS)
+      })
+      expect(bust()).toHaveAttribute('data-mood', 'idle')
+      fireEvent.focus(input())
+      expect(bust()).toHaveAttribute('data-mood', 'listening')
+      fireEvent.blur(input())
+      expect(bust()).toHaveAttribute('data-mood', 'idle')
+      type('Bonjour')
+      expect(bust()).toHaveAttribute('data-mood', 'listening')
+    })
+  })
+})
+
+describe('RemiChat — fil de messages', () => {
+  it('les messages du visiteur sont à droite, ceux de Rémi à gauche (data-role)', async () => {
+    streamMock.mockReset()
+    useGame.setState({ lang: 'fr', remiChatOpen: false })
+    instantClient('Bien sûr.')
+    render(<RemiChat />)
+    act(() => useGame.getState().openRemiChat())
+    fireEvent.change(screen.getByTestId('remi-chat-input'), { target: { value: 'Une question' } })
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('remi-chat-send'))
+    })
+    const list = within(screen.getByRole('region', { name: t('threadLabel') })).getByRole('list')
+    const items = within(list).getAllByRole('listitem')
+    expect(items.map((li) => li.getAttribute('data-role'))).toEqual(['assistant', 'user', 'assistant'])
+  })
+})

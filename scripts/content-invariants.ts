@@ -1,27 +1,63 @@
 /**
- * Invariants de contenu (propriétaire : agent données — version de départ).
- * Vérifie la liste réellement servie (public/data/people.json si présent, sinon fiches d'attente).
+ * Invariants de contenu (propriétaire : agent données).
+ * Vérifie la liste réellement servie : `public/data/people.json` si présent, sinon fiches d'attente.
  */
 import { existsSync, readFileSync } from 'node:fs'
+import { parsePeople } from '../src/data/schema'
 import { generatePlaceholderPeople } from '../src/data/placeholder'
-import type { Person } from '../src/types'
+import { EXHIBIT_WINGS } from '../src/types'
+import type { ExhibitWingId } from '../src/types'
 
 const failures: string[] = []
-const people: Person[] = existsSync('public/data/people.json')
-  ? (JSON.parse(readFileSync('public/data/people.json', 'utf8')) as Person[])
-  : generatePlaceholderPeople()
+const warnings: string[] = []
 
-const ids = new Set<string>()
-for (const p of people) {
-  if (ids.has(p.id)) failures.push(`id en double : ${p.id}`)
-  ids.add(p.id)
-  if (!p.name.trim()) failures.push(`${p.id} : nom vide`)
-  if (!p.bio.fr.trim()) failures.push(`${p.id} : bio FR vide`)
-}
+// `public/data/people.json` vaut `[]` tant que la liste officielle n'est pas importée : le site
+// sert alors les fiches d'attente, c'est donc elles qu'on vérifie.
+const fromFile: unknown = existsSync('public/data/people.json')
+  ? (JSON.parse(readFileSync('public/data/people.json', 'utf8')) as unknown)
+  : null
+const rawSource: unknown = Array.isArray(fromFile) && fromFile.length > 0 ? fromFile : generatePlaceholderPeople()
+
+const { people, errors } = parsePeople(rawSource)
+for (const e of errors) failures.push(`validation : ${e}`)
+
 if (people.length > 120) failures.push(`${people.length} personnes : le musée est dimensionné pour ~100`)
 
+const counts: Record<ExhibitWingId, number> = { infrastructures: 0, industrialisation: 0, culture: 0 }
+const genericName = /^Portrait n°\d+$/
+
+for (const p of people) {
+  counts[p.wing] += 1
+
+  if (!p.placeholder && genericName.test(p.name)) {
+    failures.push(`${p.id} : nom générique « ${p.name} » sur une fiche non-placeholder`)
+  }
+
+  if (p.photoUrl && p.photoUrl.startsWith('/portraits/') && !existsSync(`public${p.photoUrl}`)) {
+    failures.push(`${p.id} : photo locale manquante (public${p.photoUrl})`)
+  }
+
+  if (!p.placeholder) {
+    if (!p.role.en.trim()) warnings.push(`${p.id} : traduction EN manquante (rôle)`)
+    if (!p.bio.en.trim()) warnings.push(`${p.id} : traduction EN manquante (bio)`)
+    if (!p.story.en.trim()) warnings.push(`${p.id} : traduction EN manquante (histoire)`)
+    if (p.quote && !p.quote.en.trim()) warnings.push(`${p.id} : traduction EN manquante (citation)`)
+    // Une organisation vide n'est censée exister que sur une fiche d'attente (l'UI/le monde y
+    // affichent un texte localisé dédié) : sur une fiche réelle, c'est probablement un oubli
+    // d'import plutôt qu'un choix — signalé, non bloquant (le champ reste facultatif).
+    if (!p.organization.trim()) warnings.push(`${p.id} : organisation vide sur une fiche non-placeholder`)
+  }
+}
+
+console.log(`Répartition par aile : ${EXHIBIT_WINGS.map((w) => `${w} ${counts[w]}`).join(', ')} (total ${people.length}).`)
+
+if (warnings.length) {
+  console.warn(`\nAvertissements non bloquants (${warnings.length}) :`)
+  for (const w of warnings) console.warn(`  - ${w}`)
+}
+
 if (failures.length) {
-  console.error('Invariants de contenu en échec :\n- ' + failures.join('\n- '))
+  console.error(`\nInvariants de contenu en échec :\n- ${failures.join('\n- ')}`)
   process.exit(1)
 }
-console.log(`Invariants de contenu : OK (${people.length} fiches)`)
+console.log(`\nInvariants de contenu : OK (${people.length} fiches)`)

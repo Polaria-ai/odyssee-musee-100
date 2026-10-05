@@ -1,0 +1,411 @@
+/**
+ * Aides E2E autour de `window.__musee` (src/scene/debugApi.ts, activée par `?e2e=1`).
+ * Les types ci-dessous sont une copie volontairement locale et minimale du contrat exposé par
+ * `MuseeDebugApi` (intégration) : elle évite de faire dépendre le projet TypeScript des tests
+ * (`tsconfig.node.json`, sans lib DOM) du code applicatif (`tsconfig.app.json`, avec lib DOM),
+ * qui référence des globals navigateur (`navigator`, `window`) absents ici. Si le contrat change
+ * côté application, ces tests échoueront à l'exécution — voir docs/TESTS.md.
+ */
+import { expect, type Page } from '@playwright/test'
+import { stubRemiDefault } from './remiApi'
+import { stubSupabase } from './supabaseStub'
+
+export type Lang = 'fr' | 'en'
+export type Screen = 'loading' | 'title' | 'play'
+export type ExhibitWingId = 'infrastructures' | 'industrialisation' | 'culture'
+
+export interface MuseePersonSummary {
+  id: string
+  wing: ExhibitWingId
+  name: string
+  order: number
+  /** `true` = fiche d'attente fictive (voir `src/data/placeholder.ts`) ; absent tant que la vraie liste n'est pas importée. */
+  placeholder?: boolean
+}
+
+export interface MuseeRoomBounds {
+  minX: number
+  maxX: number
+  minZ: number
+  maxZ: number
+}
+
+/** Sous-ensemble de `RoomLayout` (src/types/index.ts) utile aux tests de performance et du plan. */
+export interface MuseeRoomLayout {
+  id: WingId
+  bounds: MuseeRoomBounds
+}
+
+export type WingId = 'hall' | ExhibitWingId
+
+export interface MuseeLayout {
+  rooms: MuseeRoomLayout[]
+}
+
+export interface MuseeDialogue {
+  id: string
+  lines: unknown[]
+}
+
+/** Sous-ensemble utile de `GameState` (src/state/gameStore.ts) pour les tests E2E. */
+export interface MuseeGameState {
+  screen: Screen
+  lang: Lang
+  people: MuseePersonSummary[]
+  visited: Record<string, number>
+  stamps: Partial<Record<ExhibitWingId, number>>
+  openPersonId: string | null
+  nearbyPersonId: string | null
+  nearCurator: boolean
+  /** À portée du socle de l'Archiviste (bouton « Parler à l'Archiviste »). */
+  nearArchivist: boolean
+  currentRoom: string | null
+  dialogue: MuseeDialogue | null
+  dialogueIndex: number
+  stampCardOpen: boolean
+  mapOpen: boolean
+  /**
+   * Un chat IA est ouvert (uniquement par « Parler à Rémi » au comptoir ou « Parler à l'Archiviste » à son socle :
+   * l'accueil de l'entrée est la bulle de dialogue). Le nom date du seul chat de Rémi ; `chatPersona` dit lequel.
+   */
+  remiChatOpen: boolean
+  /** Persona du chat ouvert (ou du dernier ouvert) : `'remi'` au départ. */
+  chatPersona: 'remi' | 'archiviste'
+  peersCount: number
+  layout: MuseeLayout | null
+  openPerson: (personId: string) => void
+  closePerson: () => void
+  closeDialogue: () => void
+  openRemiChat: () => void
+  closeRemiChat: () => void
+  setLang: (lang: Lang) => void
+}
+
+export interface MuseePlayer {
+  x: number
+  z: number
+  rotY: number
+  moving: boolean
+  speed: number
+}
+
+export interface MuseeInput {
+  moveX: number
+  moveY: number
+  run: boolean
+  tapTarget: { x: number; z: number } | null
+}
+
+export interface MuseeRenderInfo {
+  calls: number
+  triangles: number
+  geometries: number
+  textures: number
+}
+
+export interface MuseeCameraPosition {
+  x: number
+  y: number
+  z: number
+}
+
+export interface MuseeDebugApi {
+  state: () => MuseeGameState
+  player: MuseePlayer
+  input: MuseeInput
+  teleport: (x: number, z: number, rotY?: number) => void
+  goToPerson: (personId: string) => boolean
+  renderInfo?: () => MuseeRenderInfo
+  cameraPosition?: () => MuseeCameraPosition
+  worldToScreen?: (x: number, y: number, z: number) => { clientX: number; clientY: number }
+}
+
+/** Navigue vers le musée avec la poignée de test activée (`?e2e=1`). */
+/**
+ * Ouvre le musée en mode test. Chaque appel rejoint par défaut son propre espace de salles de
+ * présence (`presenceRoom`) : les tests ne croisent jamais de vrais visiteurs ni d'autres tests.
+ * Passer `&presenceRoom=<id>` dans `extraQuery` pour réunir plusieurs contextes.
+ */
+export async function gotoMusee(page: Page, extraQuery = ''): Promise<void> {
+  // Dans le build E2E de la CI, Supabase est un faux projet (`supabaseStub.ts`) : à répondre avant toute requête.
+  await stubSupabase(page.context())
+  // Le chat avec Rémi poste sur `/api/remi` : aucun test n'appelle jamais le vrai réseau (`remiApi.ts`).
+  // Les routes d'une page (`stubRemiApi`) restent prioritaires sur cette réponse par défaut.
+  await stubRemiDefault(page.context())
+  const room = extraQuery.includes('presenceRoom=') ? '' : `&presenceRoom=e2e-${crypto.randomUUID().slice(0, 12)}`
+  await page.goto(`/?e2e=1${room}${extraQuery}`)
+}
+
+export async function museeState(page: Page): Promise<MuseeGameState> {
+  return page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: { state: () => unknown } }).__musee
+    if (!musee) throw new Error('window.__musee indisponible : ?e2e=1 est-il actif ?')
+    return musee.state()
+  }) as Promise<MuseeGameState>
+}
+
+export async function museePlayer(page: Page): Promise<MuseePlayer> {
+  return page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: { player: MuseePlayer } }).__musee
+    if (!musee) throw new Error('window.__musee indisponible : ?e2e=1 est-il actif ?')
+    return musee.player
+  })
+}
+
+/**
+ * Compteurs du renderer (`gl.info.render`, three.js), exposés par `src/scene/DebugProbe.tsx` une
+ * fois le `<Canvas>` monté. `null` tant que `DebugProbe` n'a pas encore branché la poignée (juste
+ * après le montage) : les appelants qui en ont besoin doivent le lire avec `expect.poll`.
+ */
+export async function museeRenderInfo(page: Page): Promise<MuseeRenderInfo | null> {
+  return page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+    return musee?.renderInfo ? musee.renderInfo() : null
+  })
+}
+
+/** Attend que `renderInfo()` soit disponible puis renvoie sa dernière valeur. */
+export async function waitForRenderInfo(page: Page, timeout = 5_000): Promise<MuseeRenderInfo> {
+  let last: MuseeRenderInfo | null = null
+  await expect
+    .poll(
+      async () => {
+        last = await museeRenderInfo(page)
+        return last !== null
+      },
+      { timeout },
+    )
+    .toBe(true)
+  return last as unknown as MuseeRenderInfo
+}
+
+/**
+ * Attend que la caméra cesse de bouger de façon perceptible. `teleport()` déplace le joueur
+ * instantanément, mais la caméra le suit avec un amortissement exponentiel (voir `Player.tsx`,
+ * `CAMERA_DAMP_RATE`) : elle reste un moment « en transit » entre l'ancienne et la nouvelle
+ * position. Nécessaire avant tout test qui convertit un point écran en point au sol
+ * (`screenToFloor`, via un clic/tap) juste après un `teleport()` — sinon la cible visée dépend
+ * d'une caméra encore en mouvement et peut, selon la charge de la machine (plusieurs navigateurs
+ * Playwright en parallèle, images plus rares), atterrir trop près du joueur (sous
+ * `TAP_STOP_DISTANCE`, `src/player/Player.tsx`) : le joueur ne bouge alors jamais, de façon
+ * instable (régression trouvée en vérification, pas au premier passage de ce test).
+ *
+ * La convergence se compte en IMAGES rendues, pas en secondes : `Player.tsx` borne `dt` à 1/15 s,
+ * donc, sous 15 images/s, chaque image rapproche la caméra d'un tiers du chemin restant, quelle que
+ * soit la durée réelle de l'image. Il faut ~18 images pour passer de ~10 m (saut du spawn au point
+ * libre du hall, recul de caméra du dialogue d'accueil compris) à moins de 1 cm. Les runners CI
+ * (SwiftShader, 2 cœurs) rendent ~5 images/s (déduit de la vitesse de convergence lue dans les
+ * traces du 30/09) : ~4 s de convergence. L'ancien `expect.poll` (budget 5 s, lectures espacées
+ * jusqu'à 1 s, deux lectures sous 5 mm exigées) avait besoin d'une lecture de plus que son budget :
+ * à l'expiration la caméra était déjà à ~2 mm de son repos, mais le dernier écart entre deux
+ * lectures valait encore 6 à 9 mm.
+ *
+ * D'où : (1) un échantillonnage image par image (`requestAnimationFrame`) plutôt qu'à intervalle de
+ * temps — le critère ne dépend plus de la cadence de lecture, et deux lectures d'une même image ne
+ * passent plus pour une caméra immobile — ; (2) un budget en temps réel large (20 s), sans coût
+ * quand la machine est rapide puisqu'on sort dès le calme constaté ; (3) 3 images consécutives
+ * sous `EPSILON` (5 mm) exigées, soit un résidu < ~1,5 cm à 5 images/s et < ~5 cm à 60, négligeable
+ * face aux 2,5 m de la cible visée.
+ */
+export async function waitForCameraSettled(page: Page, timeout = 20_000): Promise<void> {
+  const settled = await page.evaluate(
+    ({ timeout, EPSILON, CALM_FRAMES }) =>
+      new Promise<boolean>((resolve) => {
+        const g = globalThis as unknown as {
+          __musee?: MuseeDebugApi
+          requestAnimationFrame: (callback: () => void) => number
+        }
+        const deadline = performance.now() + timeout
+        let last: MuseeCameraPosition | null = null
+        let calmFrames = 0
+        const onFrame = () => {
+          const pos = g.__musee?.cameraPosition?.() ?? null
+          const still =
+            pos !== null &&
+            last !== null &&
+            Math.abs(pos.x - last.x) < EPSILON &&
+            Math.abs(pos.y - last.y) < EPSILON &&
+            Math.abs(pos.z - last.z) < EPSILON
+          calmFrames = still ? calmFrames + 1 : 0
+          last = pos
+          if (calmFrames >= CALM_FRAMES) return resolve(true)
+          if (performance.now() > deadline) return resolve(false)
+          g.requestAnimationFrame(onFrame)
+        }
+        g.requestAnimationFrame(onFrame)
+      }),
+    { timeout, EPSILON: 0.005, CALM_FRAMES: 3 },
+  )
+  expect(settled, `la caméra devrait cesser de bouger en moins de ${timeout} ms`).toBe(true)
+}
+
+/** Centre (x, z) de l'emprise d'une salle (`RoomLayout.bounds`) : point de téléportation stable pour s'y tenir « au milieu ». */
+export function roomCenter(bounds: MuseeRoomBounds): Vec2 {
+  return { x: (bounds.minX + bounds.maxX) / 2, z: (bounds.minZ + bounds.maxZ) / 2 }
+}
+
+interface Vec2 {
+  x: number
+  z: number
+}
+
+export async function museeInput(page: Page): Promise<MuseeInput> {
+  return page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: { input: MuseeInput } }).__musee
+    if (!musee) throw new Error('window.__musee indisponible : ?e2e=1 est-il actif ?')
+    return musee.input
+  })
+}
+
+/** Coordonnées écran d'un point du monde (caméra courante). */
+export async function worldToScreen(page: Page, x: number, y: number, z: number): Promise<{ clientX: number; clientY: number }> {
+  const pos = await page.evaluate(
+    ({ x, y, z }) => {
+      const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+      return musee?.worldToScreen ? musee.worldToScreen(x, y, z) : null
+    },
+    { x, y, z },
+  )
+  if (!pos) throw new Error('window.__musee.worldToScreen indisponible')
+  return pos
+}
+
+export async function teleport(page: Page, x: number, z: number, rotY = 0): Promise<void> {
+  await page.evaluate(
+    ({ x, z, rotY }) => {
+      const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+      musee?.teleport(x, z, rotY)
+    },
+    { x, z, rotY },
+  )
+}
+
+/** Téléporte devant le portrait demandé ; échoue le test si l'id est introuvable dans le plan. */
+export async function goToPerson(page: Page, personId: string): Promise<void> {
+  const found = await page.evaluate((id) => {
+    const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+    return musee?.goToPerson(id) ?? false
+  }, personId)
+  expect(found, `goToPerson('${personId}') aurait dû trouver un cadre`).toBe(true)
+}
+
+/** Ferme instantanément le dialogue en cours (si un), sans jouer l'animation de fermeture. */
+export async function closeAnyDialogue(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+    musee?.state().closeDialogue()
+  })
+}
+
+/** Ouvre une fiche directement via l'état (marque visitée + ouvre), sans naviguer en 3D. */
+export async function openPersonViaState(page: Page, personId: string): Promise<void> {
+  await page.evaluate((id) => {
+    const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+    musee?.state().openPerson(id)
+  }, personId)
+}
+
+export async function closePersonViaState(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+    musee?.state().closePerson()
+  })
+}
+
+/**
+ * Amène le joueur de l'écran titre à l'écran de jeu : clique « Entrer » (on entre directement
+ * au musée, en Cyril : plus d'écran de personnalisation) et attend le canvas. L'accueil de Rémi
+ * (la bulle de dialogue en bas de l'écran) s'affiche ensuite (voir `dismissWelcomeDialogue`) : on ne le ferme
+ * pas ici, chaque test décide s'il veut l'observer ou le fermer. Le chat avec Rémi · IA, lui, ne s'ouvre jamais
+ * à l'entrée (voir `openRemiChat`).
+ */
+export async function enterMuseum(page: Page): Promise<void> {
+  await expect(page.getByTestId('title-screen')).toBeVisible()
+  await page.getByTestId('enter-button').click()
+  await expect(page.locator('.app')).toHaveAttribute('data-screen', 'play')
+  await expect(page.getByTestId('game-canvas')).toBeVisible()
+}
+
+/**
+ * Ferme l'accueil de Rémi s'il est affiché : la bulle de dialogue scripté (bouton « Passer », ou clic par clic ;
+ * borné pour ne jamais boucler indéfiniment si l'app ne répond pas), puis, si un test l'avait ouvert, le chat
+ * avec Rémi · IA (bouton fermer, comme un visiteur). Les autres dialogues scriptés (tampons, Archiviste) se ferment
+ * de la même façon.
+ * Le nom est resté `dismissWelcomeDialogue` : une quarantaine d'appels en dépendent.
+ */
+export async function dismissWelcomeDialogue(page: Page): Promise<void> {
+  const chat = page.getByTestId('remi-chat')
+  // Le chat est chargé à la demande (`src/App.tsx`) : l'état peut déjà le dire ouvert alors que son code
+  // arrive encore. On se fie donc à l'état, puis on attend le chat avant de le fermer par son bouton.
+  const chatOpen = (await museeState(page).catch(() => null))?.remiChatOpen === true
+  if (chatOpen || (await chat.isVisible().catch(() => false))) {
+    await expect(chat).toBeVisible({ timeout: 60_000 })
+    await page.getByTestId('remi-chat-close').click()
+    await expect(chat).toBeHidden()
+  }
+  const box = page.getByTestId('dialogue-box')
+  // L'accueil est lancé par un effet de `App.tsx` : l'état le dit tout de suite, la bulle quelques instants plus tard.
+  const dialogueStarted = (await museeState(page).catch(() => null))?.dialogue != null
+  if (dialogueStarted) await expect(box).toBeVisible()
+  if (!(await box.isVisible().catch(() => false))) return
+  // « Passer » ferme la bulle d'un seul geste (huit répliques d'accueil, tapées lettre par lettre : cliquer sur chacune
+  // coûterait ~12 s à chaque test) ; sans lui, on avance clic par clic.
+  const skip = box.locator('button')
+  for (let i = 0; i < 30 && (await box.isVisible().catch(() => false)); i++) {
+    if (await skip.isVisible().catch(() => false)) await skip.click()
+    else await box.click()
+    await page.waitForTimeout(50)
+  }
+}
+
+/**
+ * Ouvre le chat avec Rémi · IA comme le fait l'action « Parler à Rémi » du comptoir (`interact()` appelle
+ * `openRemiChat()`), sans marcher jusqu'au comptoir. Le test du vrai geste au comptoir est dans `remi-chat.spec.ts`.
+ * Le chat est chargé à la demande : on attend qu'il soit à l'écran.
+ */
+export async function openRemiChat(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const musee = (globalThis as unknown as { __musee?: MuseeDebugApi }).__musee
+    musee?.state().openRemiChat()
+  })
+  await expect(page.getByTestId('remi-chat')).toBeVisible({ timeout: 60_000 })
+}
+
+/** Vrai si la page déborde horizontalement (scrollWidth > clientWidth), signe d'un débordement CSS. */
+export async function hasHorizontalOverflow(page: Page): Promise<boolean> {
+  return page.evaluate(() => {
+    const doc = (
+      globalThis as unknown as { document: { documentElement: { scrollWidth: number; clientWidth: number } } }
+    ).document
+    // +1 px de tolérance : arrondis sous-pixel selon le device pixel ratio.
+    return doc.documentElement.scrollWidth > doc.documentElement.clientWidth + 1
+  })
+}
+
+/** Messages console/WebGL propres au rendu logiciel SwiftShader (CI, ANGLE), tolérés. */
+const SWIFTSHADER_NOISE = /swiftshader|angle|gpu process|groupmarkernotset|software rendering|webgl.*(deprecated|performance)/i
+
+export interface ConsoleIssues {
+  errors: string[]
+  pageErrors: string[]
+}
+
+/**
+ * Attache les collecteurs `console` + `pageerror` d'une page. À appeler avant toute navigation
+ * pour ne rien manquer du chargement initial. Les avertissements WebGL/SwiftShader sont filtrés.
+ */
+export function collectConsoleIssues(page: Page): ConsoleIssues {
+  const issues: ConsoleIssues = { errors: [], pageErrors: [] }
+  page.on('console', (msg) => {
+    if (msg.type() !== 'error') return
+    const text = msg.text()
+    if (SWIFTSHADER_NOISE.test(text)) return
+    issues.errors.push(text)
+  })
+  page.on('pageerror', (err) => {
+    const text = err.message
+    if (SWIFTSHADER_NOISE.test(text)) return
+    issues.pageErrors.push(text)
+  })
+  return issues
+}

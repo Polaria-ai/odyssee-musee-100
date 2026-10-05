@@ -6,9 +6,10 @@ const KEY = 'odyssee-musee-100:v1'
 
 export interface PersistedState {
   lang?: 'fr' | 'en'
-  avatar?: unknown
   visited?: Record<string, number>
   stamps?: Record<string, number>
+  visitedSessions?: Record<string, number>
+  archivesDiscovered?: boolean
   visitorId?: string
 }
 
@@ -17,7 +18,19 @@ export function loadPersisted(): PersistedState {
     const raw = globalThis.localStorage?.getItem(KEY)
     if (!raw) return {}
     const parsed: unknown = JSON.parse(raw)
-    return parsed && typeof parsed === 'object' ? (parsed as PersistedState) : {}
+    if (!parsed || typeof parsed !== 'object') return {}
+    const state = parsed as PersistedState & { avatar?: unknown }
+    // Plus de personnalisation : tout le monde joue Cyril. Un avatar (tenue, pseudo) enregistré par une
+    // version précédente est ignoré, et effacé du stockage dès cette première lecture.
+    if ('avatar' in state) {
+      delete state.avatar
+      try {
+        globalThis.localStorage?.setItem(KEY, JSON.stringify(state))
+      } catch {
+        // Écriture refusée : l'avatar est quand même ignoré, il partira à la prochaine écriture réussie.
+      }
+    }
+    return state
   } catch {
     return {}
   }

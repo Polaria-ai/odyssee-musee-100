@@ -1,0 +1,11 @@
+# Jamais envoyé à Vercel lors d'un déploiement depuis le CLI
+.env*
+!.env.example
+node_modules
+dist
+screens
+test-results
+playwright-report
+data/private
+.vercel
+*.log

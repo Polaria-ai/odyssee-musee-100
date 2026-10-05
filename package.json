@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "preview": "vite preview --port 4173 --strictPort",
+    "preview": "vite preview --host 127.0.0.1 --port 4173 --strictPort",
     "lint": "eslint .",
     "typecheck": "tsc -b --noEmit",
     "test": "vitest run",
@@ -21,6 +21,8 @@
     "verify:content": "tsx scripts/content-invariants.ts",
     "verify": "pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm verify:bundle && pnpm verify:security && pnpm verify:content",
     "import:people": "tsx scripts/import-people.ts",
+    "preview:archives": "tsx scripts/preview-archives.ts",
+    "evening:prompt": "tsx scripts/evening-agent-prompt.ts",
     "export:local": "tsx scripts/export-local.ts"
   },
   "dependencies": {
@@ -36,6 +38,10 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^10.0.1",
+    "@gltf-transform/cli": "^4.5.0",
+    "@gltf-transform/core": "^4.5.0",
+    "@gltf-transform/extensions": "^4.5.0",
+    "@gltf-transform/functions": "^4.5.0",
     "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
@@ -50,6 +56,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.12.0",
     "jsdom": "^30.1.1",
+    "meshoptimizer": "^1.2.0",
     "papaparse": "^5.7.0",
     "sharp": "^0.35.4",
     "tsx": "^4.23.15",

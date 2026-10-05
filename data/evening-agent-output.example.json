@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "event": "odyssee-ia-2026",
+  "generatedAt": "2026-10-06T22:50:00+02:00",
+  "archives": [
+    {
+      "sessionId": "keynote-ouverture",
+      "summary": {
+        "fr": "[Exemple] Synthèse de démonstration — texte factice pour tester l'import, ne reflète aucun propos réel de la keynote d'ouverture.",
+        "en": "[Example] Demonstration summary — placeholder text used to test the import, does not reflect anything actually said during the opening keynote."
+      },
+      "quotes": [
+        {
+          "text": {
+            "fr": "[Exemple] Question factice posée depuis la salle, pour tester l'import.",
+            "en": "[Example] Placeholder question from the audience, used to test the import."
+          },
+          "author": "Public",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "sessionId": "les100-presentation",
+      "summary": {
+        "fr": "[Exemple] Synthèse de démonstration — présentation de la liste des 100 qui font l'IA en Europe et du principe du musée.",
+        "en": "[Example] Demonstration summary — introduction of the list of the 100 shaping AI in Europe and of the museum's principle."
+      },
+      "quotes": [
+        {
+          "text": {
+            "fr": "[Exemple] Commentaire factice de l'Archiviste, pour tester l'import.",
+            "en": "[Example] Placeholder comment from the Archivist, used to test the import."
+          },
+          "author": "L'Archiviste",
+          "verified": false
+        },
+        {
+          "text": {
+            "fr": "[Exemple] Question factice posée depuis la salle, pour tester l'import.",
+            "en": "[Example] Placeholder question from the floor, used to test the import."
+          },
+          "author": "Public",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "sessionId": "table-ronde-1",
+      "summary": {
+        "fr": "[Exemple] Synthèse de démonstration — texte factice, ne reflète aucun propos réel de la table ronde « De la promesse aux infrastructures ».",
+        "en": "[Example] Demonstration summary — placeholder text, does not reflect anything actually said during the 'From promise to infrastructure' panel."
+      },
+      "quotes": [
+        {
+          "text": {
+            "fr": "[Exemple] Commentaire factice de l'Archiviste, pour tester l'import.",
+            "en": "[Example] Placeholder comment from the Archivist, used to test the import."
+          },
+          "author": "L'Archiviste",
+          "verified": false
+        }
+      ]
+    },
+    {
+      "sessionId": "final",
+      "summary": {
+        "fr": "[Exemple] Synthèse de démonstration — texte factice pour le final expérimental avec IA agentique.",
+        "en": "[Example] Demonstration summary — placeholder text for the experimental finale with agentic AI."
+      },
+      "quotes": [
+        {
+          "text": {
+            "fr": "[Exemple] Depuis 2040, cette soirée reste factice tant qu'elle n'a pas été relue par un humain.",
+            "en": "[Example] From 2040, this evening remains a placeholder until it has been reviewed by a human."
+          },
+          "author": "L'Archiviste",
+          "verified": false
+        }
+      ]
+    }
+  ]
+}

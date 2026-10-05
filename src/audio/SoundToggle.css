@@ -1,0 +1,29 @@
+/* Bouton rond son on/off. Propriétaire : agent audio. Cohérent avec les boutons du HUD (ui.css). */
+.audio-sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 48px;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--font-display);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.18);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+  pointer-events: auto;
+}
+
+.audio-sound-toggle:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.audio-sound-toggle svg {
+  display: block;
+}

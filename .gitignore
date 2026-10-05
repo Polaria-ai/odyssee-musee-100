@@ -10,3 +10,7 @@ test-results
 *.log
 playwright.local.config.ts
 data/private/
+screens/
+.env*
+!.env.example
+assets-src/

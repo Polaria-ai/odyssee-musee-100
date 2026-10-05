@@ -1,13 +1,61 @@
-// STUB — propriétaire : agent interface.
+/** Écran titre : la caméra tourne au-dessus du hall derrière cette surimpression transparente. */
 import { useGame } from '../state/gameStore'
+import { OdysseeLogo } from './OdysseeLogo'
+import { useT } from '../i18n'
+import { strings } from './strings'
+import { playSfx, unlockAudio } from '../audio'
+import { SoundToggle } from '../audio/SoundToggle'
+import { TitleSignature } from '../features/signature/TitleSignature'
+import './ui.css'
 
-/** Écran titre : « L'Odyssée de l'IA — Le Musée des 100 ». */
 export function TitleScreen() {
   const setScreen = useGame((s) => s.setScreen)
+  const lang = useGame((s) => s.lang)
+  const setLang = useGame((s) => s.setLang)
+  const dataSource = useGame((s) => s.dataSource)
+  const t = useT(strings)
+
+  function handleEnter() {
+    // Débloque l'audio dans ce geste utilisateur (iOS) avant de quitter l'écran titre.
+    // Plus d'écran de personnalisation : on entre directement au musée, en Cyril.
+    unlockAudio()
+    playSfx('click')
+    setScreen('play')
+  }
+
   return (
-    <div className="screen" data-testid="title-screen">
-      <h1>Le Musée des 100</h1>
-      <button type="button" data-testid="enter-button" onClick={() => setScreen('customize')}>Entrer</button>
+    <div className="screen ui-title" data-testid="title-screen">
+      <div className="ui-title__top-right">
+        <SoundToggle />
+        <button
+          type="button"
+          className="ui-title__lang"
+          data-testid="lang-toggle"
+          aria-label={t('langSwitch')}
+          onClick={() => {
+            playSfx('click')
+            setLang(lang === 'fr' ? 'en' : 'fr')
+          }}
+        >
+          {lang === 'fr' ? 'FR · EN' : 'EN · FR'}
+        </button>
+      </div>
+
+      <div className="ui-title__panel">
+        <OdysseeLogo size={60} />
+        <h1 className="ui-title__heading">{t('titleHeading')}</h1>
+        <p className="ui-title__subtitle">{t('titleSubtitle')}</p>
+        <button type="button" className="ui-title__enter" data-testid="enter-button" onClick={handleEnter}>
+          {t('titleEnter')}
+        </button>
+        {dataSource === 'placeholder' && <p className="ui-title__banner">{t('titlePlaceholderBanner')}</p>}
+      </div>
+
+      {/* Pied : la mention existante, puis la signature Polaria juste dessous (module signature). */}
+      <div className="ui-title__bottom">
+        <p className="ui-title__footer">{t('titleFooter')}</p>
+        <TitleSignature />
+      </div>
     </div>
   )
 }

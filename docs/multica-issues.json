@@ -1,0 +1,70 @@
+{
+ "socle": {
+  "id": "01a0d500-ddea-7420-aa54-68a1ea41ca4d",
+  "identifier": "WEL-853"
+ },
+ "supabase": {
+  "id": "01a0d500-e4a1-78ab-b669-32a43a6c1acc",
+  "identifier": "WEL-854"
+ },
+ "world": {
+  "id": "01a0d500-e767-722a-aabc-3c7cb1052646",
+  "identifier": "WEL-855"
+ },
+ "player": {
+  "id": "01a0d500-ea2c-76bd-81df-70fa5dccf328",
+  "identifier": "WEL-856"
+ },
+ "npc": {
+  "id": "01a0d500-ecfd-727e-8d78-09621f836eb6",
+  "identifier": "WEL-857"
+ },
+ "ui": {
+  "id": "01a0d500-efb6-7321-a21a-04ea9cfdc0af",
+  "identifier": "WEL-858"
+ },
+ "avatar": {
+  "id": "01a0d500-f313-788a-b6c9-d8246498cbae",
+  "identifier": "WEL-859"
+ },
+ "stamps": {
+  "id": "01a0d500-f5de-70f2-8e1c-ea78b4bdc5db",
+  "identifier": "WEL-860"
+ },
+ "presence": {
+  "id": "01a0d500-f955-7b53-b942-4386eb030e1f",
+  "identifier": "WEL-861"
+ },
+ "i18n": {
+  "id": "01a0d500-fc92-7b60-9a41-4b57917f3864",
+  "identifier": "WEL-862"
+ },
+ "qa": {
+  "id": "01a0d500-ff74-7122-a4ca-b8986540709a",
+  "identifier": "WEL-863"
+ },
+ "perf": {
+  "id": "01a0d501-0290-70e0-b49c-03352d7dbcb2",
+  "identifier": "WEL-864"
+ },
+ "list": {
+  "id": "01a0d501-45b0-792b-880a-45981e2cc51c",
+  "identifier": "WEL-865"
+ },
+ "import": {
+  "id": "01a0d501-4887-7e83-98f1-0b7880ab5219",
+  "identifier": "WEL-866"
+ },
+ "deploy": {
+  "id": "01a0d501-4d01-7e81-a29d-7c81b64e3618",
+  "identifier": "WEL-867"
+ },
+ "realtime-plan": {
+  "id": "01a0d501-5121-7ba3-9715-03609514e207",
+  "identifier": "WEL-868"
+ },
+ "recette": {
+  "id": "01a0d501-5550-75f4-8370-ed34e311d903",
+  "identifier": "WEL-869"
+ }
+}

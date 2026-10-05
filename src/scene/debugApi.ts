@@ -3,7 +3,8 @@
  * Sert aux tests Playwright (téléportation, lecture d'état). Propriétaire : intégration.
  */
 import { useGame } from '../state/gameStore'
-import { input, placePlayer, player } from '../state/runtime'
+import { archivistProbe, input, placePlayer, player } from '../state/runtime'
+import type { PresenceStats } from '../features/presence/presenceSession'
 
 export interface MuseeDebugApi {
   state: () => ReturnType<typeof useGame.getState>
@@ -12,6 +13,22 @@ export interface MuseeDebugApi {
   teleport: (x: number, z: number, rotY?: number) => void
   /** Téléporte devant le portrait de `personId` et renvoie true si trouvé. */
   goToPerson: (personId: string) => boolean
+  /** Compteurs du renderer (dernière image), fournis par DebugProbe. */
+  renderInfo?: () => { calls: number; triangles: number; geometries: number; textures: number }
+  /**
+   * Position courante de la caméra (dernière image), fournie par DebugProbe. `teleport()` déplace
+   * le joueur instantanément, mais la caméra le suit avec un amortissement exponentiel (voir
+   * `Player.tsx`, `CAMERA_DAMP_RATE`) : un test qui convertit un point écran en point au sol juste
+   * après un `teleport()` doit attendre que cette position cesse de bouger (voir `waitForCameraSettled`
+   * côté E2E, `e2e/support/museeApi.ts`), sous peine de viser une caméra encore en transit.
+   */
+  cameraPosition?: () => { x: number; y: number; z: number }
+  /** Projette un point du monde en coordonnées écran (clientX/Y), pour viser un point de sol précis. */
+  worldToScreen?: (x: number, y: number, z: number) => { clientX: number; clientY: number }
+  /** État de l'Archiviste 3D (chargée ? triangles, clip demandé, rotation vers le joueur), lu sur `state/runtime.ts`. */
+  archivist: () => typeof archivistProbe
+  /** Compteurs de la session de présence (état, salle, sauts, erreurs…), posée par `usePresence` tant qu'elle tourne. */
+  presence?: () => PresenceStats
 }
 
 declare global {
@@ -36,6 +53,7 @@ export function installDebugApi(): void {
     player,
     input,
     teleport: (x, z, rotY = 0) => placePlayer(x, z, rotY),
+    archivist: () => ({ ...archivistProbe }),
     goToPerson: (personId) => {
       const frame = useGame.getState().layout?.frames.find((f) => f.personId === personId)
       if (!frame) return false

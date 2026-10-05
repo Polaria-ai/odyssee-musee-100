@@ -11,7 +11,7 @@ main.tsx → App.tsx
   ├─ <Experience/>           scene/Experience.tsx Canvas unique
   │    ├─ <Museum/>          world/               architecture, décor, portraits
   │    ├─ <StampStations/>   features/stamps/     socles à tampon
-  │    ├─ <Minerve/>         npc/                 chouette conservatrice
+  │    ├─ <Remi/>            npc/                 Rémi Godeau, accueil au comptoir (personnage GLB)
   │    ├─ <Player/>          player/              avatar, déplacement, collisions, caméra
   │    └─ <RemoteVisitors/>  features/presence/   autres visiteurs
   └─ surimpressions DOM      ui/, features/avatar, features/stamps, player/TouchJoystick
@@ -20,7 +20,8 @@ main.tsx → App.tsx
 ## Deux états
 
 - `src/state/gameStore.ts` (zustand) : état « froid » — écran, langue, avatar, fiche ouverte, visites, tampons, dialogue, toast.
-- `src/state/runtime.ts` : état « chaud » mis à jour à chaque image — entrée joystick/clavier (`input`) et position du joueur (`player`). Objets mutables, **jamais** dans React.
+- `src/state/runtime.ts` : état « chaud » mis à jour à chaque image — entrée joystick/clavier (`input`), position du joueur (`player`) et ponts DOM↔Canvas (`bridges.screenToFloor`). Objets mutables, **jamais** dans React.
+- Action principale unique : `useGame.getState().interact()` (bouton rond du HUD, Entrée/E) — regarde le portrait proche, sinon parle à Rémi. `Player` alimente `nearbyPersonId`, `nearCurator` et `currentRoom`.
 
 ## Contrat
 
@@ -33,11 +34,12 @@ main.tsx → App.tsx
 | Intégration | orchestrateur | `src/types/`, `src/state/`, `src/i18n/index.ts`, `src/scene/`, `src/App.tsx`, `src/main.tsx`, `src/styles/`, configs, `.github/`, `docs/ARCHITECTURE.md` |
 | Monde | agent `world` | `src/world/**` |
 | Joueur | agent `player` | `src/player/**` |
-| Minerve | agent `npc` | `src/npc/**` |
+| Rémi (accueil) | agent `npc` | `src/npc/**` |
 | Interface | agent `ui` | `src/ui/**` |
 | Avatar + tampons | agent `features` | `src/features/avatar/**`, `src/features/stamps/**` |
 | Présence | agent `presence` | `src/features/presence/**` |
 | Données | agent `data` | `src/data/**`, `supabase/**`, `scripts/import-people.ts`, `scripts/export-local.ts`, `scripts/content-invariants.ts`, `data/`, `docs/IMPORT.md` |
+| Audio | agent `audio` | `src/audio/**` |
 | QA | agent `qa` | `e2e/**`, `docs/TESTS.md` |
 
 Textes : chaque module a son `strings.ts` (`defineStrings`) — `src/i18n/strings.test.ts` impose FR + EN complets.
@@ -57,6 +59,12 @@ Textes : chaque module a son `strings.ts` (`defineStrings`) — `src/i18n/string
 En local sans navigateur Playwright : `PW_CHROMIUM_PATH="$HOME/.agent-browser/browsers/chrome-149.0.7827.54/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing" pnpm e2e`.
 
 La CI GitHub (`.github/workflows/ci.yml`) enchaîne tout sur chaque PR.
+
+## Rémi · IA et Archiviste · IA (V5)
+
+Le chat avec Rémi passe par une fonction Vercel, `api/remi.ts` : le navigateur poste sur `/api/remi`, la fonction appelle OpenRouter (`deepseek/deepseek-v4.1-flash`) avec `OPENROUTER_API_KEY`, qui ne quitte jamais le serveur. Contrat partagé : `src/features/remiChat/contract.ts`. Interface et buste 3D : `src/features/remiChat/` (chargés à la demande, hors du paquet d'entrée). Détails, garde-fous et coût : `docs/REMI-IA.md`.
+
+La même fonction et le même composant servent l'**Archiviste · IA** (WEL-929) : la requête porte une `persona` (`remi` par défaut, `archiviste`), `PERSONAS` (`personas.ts`) configure le chat de chaque personnage (nom, mention IA, accueil, puces, buste, accent) et le store ouvre l'un ou l'autre (`openChat(persona)` ; `remiChatOpen` vaut « un chat IA est ouvert », `chatPersona` dit lequel). Pour l'Archiviste, la fonction lit aussi les archives publiées (`session_archives`, clé `anon`) afin qu'elle ne cite que ce qui a été publié.
 
 ## Supabase
 

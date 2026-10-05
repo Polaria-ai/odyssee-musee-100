@@ -5,8 +5,11 @@
  */
 import { create } from 'zustand'
 import type {
-  AvatarConfig,
+  ArchivesLayout,
   DataSource,
+  EveningSession,
+  EveningSource,
+  SessionArchive,
   Dialogue,
   ExhibitWingId,
   Lang,
@@ -14,8 +17,9 @@ import type {
   MuseumLayout,
   Person,
   Screen,
+  WingId,
 } from '../types'
-import { DEFAULT_AVATAR, sanitizeAvatar } from '../features/avatar/options'
+import type { ChatPersona } from '../features/remiChat/contract'
 import { loadPersisted, savePersisted } from './persist'
 
 export type Quality = 'low' | 'high'
@@ -30,7 +34,6 @@ export interface Toast {
 export interface GameState {
   screen: Screen
   lang: Lang
-  avatar: AvatarConfig
   visitorId: string
 
   people: Person[]
@@ -39,13 +42,45 @@ export interface GameState {
 
   /** Portrait le plus proche à portée d'interaction (bouton « Regarder »). */
   nearbyPersonId: string | null
+  /** Le joueur est à portée du comptoir de Rémi (bouton « Parler »). */
+  nearCurator: boolean
+  /** Salle où se trouve le joueur (pastille du HUD). */
+  currentRoom: WingId | null
   /** Fiche ouverte en plein écran. */
   openPersonId: string | null
+
+  /** Programme de la soirée et archives déposées (Les Archives de 2040). */
+  sessions: EveningSession[]
+  /** Archives publiées, par identifiant de séquence. */
+  archives: Record<string, SessionArchive>
+  eveningSource: EveningSource
+  /** Plan de la salle des Archives (déjà fusionné dans `layout`, gardé pour le rendu). */
+  archivesLayout: ArchivesLayout | null
+  /** Vitrine d'archive la plus proche (bouton « Consulter »). */
+  nearbySessionId: string | null
+  /** Fiche d'archive ouverte. */
+  openSessionId: string | null
+  /** Le joueur est à portée de l'hologramme de l'Archiviste. */
+  nearArchivist: boolean
+  /** Archives consultées : id de séquence → horodatage ms. */
+  visitedSessions: Record<string, number>
+  /** Le visiteur est déjà entré dans les Archives (accueil de l'Archiviste une seule fois). */
+  archivesDiscovered: boolean
   /** Personnes déjà consultées : id → horodatage ms. */
   visited: Record<string, number>
   /** Tampons obtenus : aile → horodatage ms. */
   stamps: Partial<Record<ExhibitWingId, number>>
   stampCardOpen: boolean
+  /** Plan du musée (bouton « Plan » du HUD) : surimpression comme les autres, coupe le déplacement. */
+  mapOpen: boolean
+  /**
+   * Un chat IA est ouvert (« Parler à Rémi » au comptoir, « Parler à l'Archiviste » dans les Archives) : surimpression
+   * plein écran translucide, coupe le déplacement et met le rendu du musée en pause. Le nom date du seul chat de Rémi et
+   * reste, pour ne casser ni les tests ni la pause du rendu : il vaut pour N'IMPORTE QUELLE persona, `chatPersona` dit laquelle.
+   */
+  remiChatOpen: boolean
+  /** Persona du chat ouvert, ou du dernier ouvert (Rémi au départ). Écrite avec `remiChatOpen` par `openChat`. */
+  chatPersona: ChatPersona
 
   dialogue: Dialogue | null
   dialogueIndex: number
@@ -57,14 +92,34 @@ export interface GameState {
 
   setScreen: (screen: Screen) => void
   setLang: (lang: Lang) => void
-  setAvatar: (avatar: AvatarConfig) => void
   setMuseum: (people: Person[], layout: MuseumLayout, source: DataSource) => void
+  setEvening: (sessions: EveningSession[], archives: Record<string, SessionArchive>, source: EveningSource) => void
+  /** Remplace les archives publiées (rafraîchissement pendant la visite, voir `useArchivesRefresh`). */
+  setArchives: (archives: Record<string, SessionArchive>) => void
+  setArchivesLayout: (archivesLayout: ArchivesLayout | null) => void
+  setNearbySession: (sessionId: string | null) => void
+  setNearArchivist: (near: boolean) => void
+  openSession: (sessionId: string) => void
+  closeSession: () => void
+  /** Marque la première arrivée dans les Archives ; renvoie true si c'était la première. */
+  markArchivesDiscovered: () => boolean
   setNearby: (personId: string | null) => void
+  setNearCurator: (near: boolean) => void
+  setCurrentRoom: (room: WingId | null) => void
+  /** Action principale (bouton rond, Entrée) : regarder le portrait proche, consulter la vitrine proche, sinon parler à l'Archiviste ou à Rémi (chat IA). */
+  interact: () => void
   openPerson: (personId: string) => void
   closePerson: () => void
   markVisited: (personId: string) => void
   awardStamp: (wing: ExhibitWingId) => void
   setStampCardOpen: (open: boolean) => void
+  setMapOpen: (open: boolean) => void
+  /** Ouvre le chat IA de la persona ; referme toute autre surimpression (elles ne s'empilent jamais). */
+  openChat: (persona: ChatPersona) => void
+  /** Ouvre le chat avec Rémi · IA (`openChat('remi')`). */
+  openRemiChat: () => void
+  /** Referme le chat ouvert, quelle que soit sa persona (le nom date du seul chat de Rémi). */
+  closeRemiChat: () => void
   startDialogue: (dialogue: Dialogue) => void
   advanceDialogue: () => void
   closeDialogue: () => void
@@ -72,7 +127,7 @@ export interface GameState {
   clearToast: () => void
   setPeersCount: (count: number) => void
   setQuality: (quality: Quality) => void
-  /** Remet la progression à zéro (tampons, visites). Garde avatar et langue. */
+  /** Remet la progression à zéro (tampons, visites). Garde la langue. */
   resetProgress: () => void
 }
 
@@ -99,7 +154,7 @@ let toastSeq = 0
 export const useGame = create<GameState>()((set, get) => ({
   screen: 'loading',
   lang: initialLang(persisted.lang),
-  avatar: sanitizeAvatar(persisted.avatar) ?? DEFAULT_AVATAR,
+  // Un avatar enregistré par une version précédente est ignoré et purgé du stockage (voir `loadPersisted`).
   visitorId,
 
   people: [],
@@ -107,10 +162,24 @@ export const useGame = create<GameState>()((set, get) => ({
   dataSource: 'placeholder',
 
   nearbyPersonId: null,
+  nearCurator: false,
+  sessions: [],
+  archives: {},
+  eveningSource: 'program',
+  archivesLayout: null,
+  nearbySessionId: null,
+  openSessionId: null,
+  nearArchivist: false,
+  visitedSessions: (persisted.visitedSessions as Record<string, number>) ?? {},
+  archivesDiscovered: persisted.archivesDiscovered === true,
+  currentRoom: null,
   openPersonId: null,
   visited: (persisted.visited as Record<string, number>) ?? {},
   stamps: (persisted.stamps as Partial<Record<ExhibitWingId, number>>) ?? {},
   stampCardOpen: false,
+  mapOpen: false,
+  remiChatOpen: false,
+  chatPersona: 'remi',
 
   dialogue: null,
   dialogueIndex: 0,
@@ -124,17 +193,64 @@ export const useGame = create<GameState>()((set, get) => ({
     savePersisted({ lang })
     set({ lang })
   },
-  setAvatar: (avatar) => {
-    savePersisted({ avatar })
-    set({ avatar })
-  },
   setMuseum: (people, layout, dataSource) => set({ people, layout, dataSource }),
+  setEvening: (sessions, archives, eveningSource) => set({ sessions, archives, eveningSource }),
+  setArchives: (archives) => set({ archives }),
+  setArchivesLayout: (archivesLayout) => set({ archivesLayout }),
+  setNearbySession: (nearbySessionId) => {
+    if (get().nearbySessionId !== nearbySessionId) set({ nearbySessionId })
+  },
+  setNearArchivist: (nearArchivist) => {
+    if (get().nearArchivist !== nearArchivist) set({ nearArchivist })
+  },
+  openSession: (openSessionId) => {
+    const visited = get().visitedSessions
+    if (!visited[openSessionId]) {
+      const next = { ...visited, [openSessionId]: Date.now() }
+      savePersisted({ visitedSessions: next })
+      set({ visitedSessions: next })
+    }
+    set({ openSessionId, remiChatOpen: false })
+  },
+  closeSession: () => set({ openSessionId: null }),
+  markArchivesDiscovered: () => {
+    if (get().archivesDiscovered) return false
+    savePersisted({ archivesDiscovered: true })
+    set({ archivesDiscovered: true })
+    return true
+  },
   setNearby: (nearbyPersonId) => {
     if (get().nearbyPersonId !== nearbyPersonId) set({ nearbyPersonId })
   },
+  setNearCurator: (nearCurator) => {
+    if (get().nearCurator !== nearCurator) set({ nearCurator })
+  },
+  setCurrentRoom: (currentRoom) => {
+    if (get().currentRoom !== currentRoom) set({ currentRoom })
+  },
+  interact: () => {
+    const s = get()
+    if (isOverlayOpen(s)) return
+    if (s.nearbyPersonId) {
+      s.openPerson(s.nearbyPersonId)
+      return
+    }
+    if (s.nearbySessionId) {
+      s.openSession(s.nearbySessionId)
+      return
+    }
+    // « Parler à l'Archiviste » ouvre SON chat (WEL-929), comme « Parler à Rémi » le sien (V5) : les dialogues
+    // scriptés `talk` ne sont plus que leur repli si le service est indisponible (voir `useRemiChat.ts`).
+    // Les autres dialogues scriptés de l'Archiviste (arrivée, tampon) restent dans la bulle du jeu (`DialogueBox`).
+    if (s.nearArchivist) {
+      s.openChat('archiviste')
+      return
+    }
+    if (s.nearCurator) s.openChat('remi')
+  },
   openPerson: (openPersonId) => {
     get().markVisited(openPersonId)
-    set({ openPersonId })
+    set({ openPersonId, remiChatOpen: false })
   },
   closePerson: () => set({ openPersonId: null }),
   markVisited: (personId) => {
@@ -151,8 +267,24 @@ export const useGame = create<GameState>()((set, get) => ({
     savePersisted({ stamps: next })
     set({ stamps: next })
   },
-  setStampCardOpen: (stampCardOpen) => set({ stampCardOpen }),
-  startDialogue: (dialogue) => set({ dialogue, dialogueIndex: 0 }),
+  // Ouvrir le carnet ou le plan referme le dialogue en cours et le chat : deux surimpressions ne s'empilent jamais.
+  setStampCardOpen: (stampCardOpen) =>
+    set(stampCardOpen ? { stampCardOpen, dialogue: null, dialogueIndex: 0, remiChatOpen: false } : { stampCardOpen }),
+  setMapOpen: (mapOpen) => set(mapOpen ? { mapOpen, dialogue: null, dialogueIndex: 0, remiChatOpen: false } : { mapOpen }),
+  openChat: (chatPersona) =>
+    set({
+      remiChatOpen: true,
+      chatPersona,
+      dialogue: null,
+      dialogueIndex: 0,
+      stampCardOpen: false,
+      mapOpen: false,
+      openPersonId: null,
+      openSessionId: null,
+    }),
+  openRemiChat: () => get().openChat('remi'),
+  closeRemiChat: () => set({ remiChatOpen: false }),
+  startDialogue: (dialogue) => set({ dialogue, dialogueIndex: 0, remiChatOpen: false }),
   advanceDialogue: () => {
     const { dialogue, dialogueIndex } = get()
     if (!dialogue) return
@@ -167,12 +299,14 @@ export const useGame = create<GameState>()((set, get) => ({
   },
   setQuality: (quality) => set({ quality }),
   resetProgress: () => {
-    savePersisted({ visited: {}, stamps: {} })
-    set({ visited: {}, stamps: {}, openPersonId: null, stampCardOpen: false })
+    savePersisted({ visited: {}, stamps: {}, visitedSessions: {} })
+    set({ visited: {}, stamps: {}, visitedSessions: {}, openPersonId: null, openSessionId: null, stampCardOpen: false, remiChatOpen: false })
   },
 }))
 
 /** Vrai quand une interface recouvre le jeu : le joueur ne doit pas bouger. */
-export function isOverlayOpen(s: Pick<GameState, 'openPersonId' | 'dialogue' | 'stampCardOpen'>): boolean {
-  return s.openPersonId !== null || s.dialogue !== null || s.stampCardOpen
+export function isOverlayOpen(
+  s: Pick<GameState, 'openPersonId' | 'openSessionId' | 'dialogue' | 'stampCardOpen' | 'mapOpen' | 'remiChatOpen'>,
+): boolean {
+  return s.openPersonId !== null || s.openSessionId !== null || s.dialogue !== null || s.stampCardOpen || s.mapOpen || s.remiChatOpen
 }
