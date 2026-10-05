@@ -54,36 +54,8 @@ function pickVariant<T>(variants: readonly T[], seed: number): T {
 function welcomeDialogue(): Dialogue {
   return dialogue('welcome', [
     line(
-      "Bienvenue au Musée des 100. Je suis Rémi Godeau, directeur de la rédaction de L'Opinion, et je vous accueille.",
-      "Welcome to the Museum of the 100. I'm Rémi Godeau, editor-in-chief of L'Opinion, and I'm pleased to welcome you.",
-    ),
-    line(
-      "Il s'inscrit dans la soirée « 2026 : l'Odyssée de l'IA » et présente « Les 100 qui font l'IA en Europe ».",
-      'It is part of the evening “The AI Odyssey · 2026” and presents “The 100 people shaping AI in Europe”.',
-    ),
-    line(
-      "Trois ailes accompagnent les trois tables rondes : Infrastructures à l'ouest, Industrialisation au nord, Culture à l'est.",
-      "Three wings accompany the three round tables: Infrastructures to the west, Industrialisation to the north, Culture to the east.",
-    ),
-    line(
-      "Pour vous déplacer, glissez le pouce sur l'écran, ou touchez le sol à l'endroit où vous souhaitez aller.",
-      'To move around, slide your thumb on the screen, or tap the floor where you would like to go.',
-    ),
-    line(
-      'Approchez-vous d\'un portrait et touchez « Regarder » pour ouvrir sa fiche.',
-      'Step up to a portrait and tap “Look” to open its card.',
-    ),
-    line(
-      "Le rallye des tampons : lisez plusieurs portraits d'une même aile, et un tampon s'ajoute à votre carnet.",
-      'The stamp rally: read several portraits in the same wing, and a stamp is added to your stamp card.',
-    ),
-    line(
-      'Au sud du hall, une porte mène aux Archives de 2040 : chaque séquence de la soirée y a sa vitrine.',
-      'To the south of the hall, a door leads to the 2040 Archives: each session of the evening has its own display case.',
-    ),
-    line(
-      'Je reste à l\'accueil : au comptoir, touchez « Parler à Rémi » pour me poser vos questions par écrit.',
-      "I'll be here at the front desk: at the counter, tap “Talk to Rémi” to ask me your questions in writing.",
+      'Bienvenue au Musée des 100. Explorez les portraits, collectionnez les tampons et découvrez les Archives de 2040.',
+      'Welcome to the Museum of the 100. Explore the portraits, collect stamps and discover the 2040 Archives.',
     ),
   ])
 }

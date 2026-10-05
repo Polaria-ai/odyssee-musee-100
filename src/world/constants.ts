@@ -69,6 +69,10 @@ export const XWING_LANE_COUNT = 3
  * le socle ET franchir la première cimaise pour rejoindre le couloir du mur principal.
  */
 export const XWING_LANE_ENTRY = 3.0
+/** Traversée alignée entre les deux cimaises, entre les groupes de portraits de chaque demi-salle. */
+export const XWING_CROSS_PASSAGE_WIDTH = 2.4
+/** Passage derrière les cimaises, jusqu'au mur du fond ; inclut le recul du décor posé au fond. */
+export const XWING_REAR_PASSAGE_WIDTH = 3.6
 
 /** Aile nord (`buildNorthWing`) : décalages X des cadres d'une même rangée (cimaise transversale). */
 export const NORTH_ROW_X = [-3, -1, 1, 3] as const

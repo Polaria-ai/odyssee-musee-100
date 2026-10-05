@@ -27,12 +27,13 @@
  * `farWallX`, ni la zone d'entrée avant la 1ère rangée — voir le commentaire de chaque fonction).
  *
  * Chaque objet SOLIDE ajouté ici (pas les tapis/fleurs/éléments montés en hauteur) a une entrée dans
- * `EXTRA_FOOTPRINT` (rayon approximatif) : `propColliders` en dérive une boîte de collision. Cette boîte
- * n'est PAS branchée dans `MuseumLayout.colliders` (propriété du module architecture) — signalé en
- * knownGaps du rapport de mission, à câbler par l'intégration.
+ * `EXTRA_FOOTPRINT` (rayon approximatif) : `propColliders` en dérive un noyau de collision réduit.
+ * `scene/playerColliders.ts` l'ajoute au plan reçu par le joueur. Le plan du rendu reste séparé
+ * pour que `isClearSpot` ne rejette pas un meuble à cause de sa propre boîte de collision.
  */
 import { farWallX, type DecorPlacement, type DecorPlacementType, type MuseumArchitecture } from '../layout'
 import { aabb, circleIntersectsAabb } from '../collision'
+import { compactObjectCollider } from '../objectColliders'
 import { archivesDoor } from '../../styles/tokens'
 import { DOOR_WIDTH, HALL_HALF_DEPTH, HALL_HALF_WIDTH } from '../constants'
 import type { AABB, MuseumLayout, Vec2, WingId } from '../../types'
@@ -141,8 +142,8 @@ interface ExtraItem {
 
 /**
  * Rayon approximatif (mètres) des objets SOLIDES ajoutés par ce fichier — sert à `isClearSpot` (garde
- * une distance aux obstacles déjà connus) ET à `propColliders` (boîte de collision, non branchée dans
- * `layout.ts`). Un modèle absent d'ici est considéré non solide (tapis, fleurs, élément monté en
+ * une distance aux obstacles déjà connus) ET à `propColliders` (boîte de collision réduite,
+ * ajoutée au plan du joueur par `scene/playerColliders.ts`). Un modèle absent d'ici est considéré non solide (tapis, fleurs, élément monté en
  * hauteur) : pas de collider, clearance minimale dans `isClearSpot` (voir son appel par défaut).
  * Exporté pour `placements.test.ts` : le test réutilise ce même rayon, jamais une valeur dupliquée.
  */
@@ -405,9 +406,9 @@ export function allPropPlans(architecture: MuseumArchitecture, layout: MuseumLay
 }
 
 /**
- * Boîtes de collision (AABB) des objets SOLIDES ajoutés par `extraPropPlans` (voir `EXTRA_FOOTPRINT`) —
- * PAS branchées dans `MuseumLayout.colliders` (propriété du module architecture, jamais modifié ici) :
- * à consommer par l'intégration pour que le joueur ne les traverse plus (knownGaps du rapport de mission).
+ * Boîtes de collision (AABB) des objets SOLIDES ajoutés par `extraPropPlans` (voir `EXTRA_FOOTPRINT`).
+ * Largeur et profondeur réduites de moitié, avec le même centre. `scene/playerColliders.ts`
+ * les ajoute uniquement au plan du joueur ; le plan du rendu reste intact pour `isClearSpot`.
  */
 export function propColliders(architecture: MuseumArchitecture, layout: MuseumLayout): AABB[] {
   const items = allExtraItems(architecture).filter((it) => isClearSpot(it.position, EXTRA_FOOTPRINT[it.key] ?? 0.05, layout, it.wing))
@@ -415,7 +416,7 @@ export function propColliders(architecture: MuseumArchitecture, layout: MuseumLa
   for (const it of items) {
     const r = EXTRA_FOOTPRINT[it.key]
     if (r === undefined) continue // décor non solide (tapis, fleurs, élément monté en hauteur…)
-    boxes.push(aabb(it.position.x - r, it.position.x + r, it.position.z - r, it.position.z + r))
+    boxes.push(compactObjectCollider(aabb(it.position.x - r, it.position.x + r, it.position.z - r, it.position.z + r)))
   }
   return boxes
 }

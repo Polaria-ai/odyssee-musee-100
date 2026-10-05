@@ -23,6 +23,10 @@ main.tsx → App.tsx
 - `src/state/runtime.ts` : état « chaud » mis à jour à chaque image — entrée joystick/clavier (`input`), position du joueur (`player`) et ponts DOM↔Canvas (`bridges.screenToFloor`). Objets mutables, **jamais** dans React.
 - Action principale unique : `useGame.getState().interact()` (bouton rond du HUD, Entrée/E) — regarde le portrait proche, sinon parle à Rémi. `Player` alimente `nearbyPersonId`, `nearCurator` et `currentRoom`.
 
+Les ailes latérales (Infrastructures et Culture) ont trois couloirs reliés à l'entrée, par une traversée de 2,4 m entre les deux groupes de portraits et par un passage de 3,6 m devant la face intérieure du mur du fond. `world/layout.ts` découpe chaque cimaise en segments : les mêmes boîtes servent au rendu et aux collisions, et chaque portrait reste attaché à son segment. Pour une seule rangée, les zones du milieu et du fond forment une ouverture continue.
+
+`world/objectColliders.ts` réduit uniquement les boîtes de collision des objets solides : largeur et profondeur divisées par deux autour du même centre. La géométrie visuelle, les murs, les cimaises et les zones d'interaction gardent leurs dimensions. Le plan de base couvre le mobilier du musée et les objets des Archives ; `scene/playerColliders.ts` ajoute les collisions compactes des décors supplémentaires au seul plan reçu par le joueur, afin que le rendu ne supprime pas ces décors lors de leur placement.
+
 ## Contrat
 
 `src/types/index.ts` est la source de vérité des types. Les signatures exportées de chaque module (voir les fichiers d'origine marqués `STUB`) sont contractuelles : un module peut tout réécrire à l'intérieur, mais garde ses exports et leurs signatures. Besoin d'un changement de contrat → le signaler dans le rapport, ne pas modifier le fichier d'un autre module.

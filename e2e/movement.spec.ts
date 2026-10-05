@@ -101,6 +101,11 @@ test('flèches du clavier déplacent le joueur (desktop)', async ({ page }, test
   await expect
     .poll(async () => (await museePlayer(page)).moving, { timeout: MOVE_TIMEOUT })
     .toBe(true)
+  // `moving` devient vrai dès le début de l'accélération : attendre les 5 cm exigés avant
+  // de lire la position et de relâcher, sinon une lecture précoce peut ne voir que 4,76 cm.
+  await expect
+    .poll(async () => (await museePlayer(page)).z, { timeout: MOVE_TIMEOUT })
+    .toBeLessThan(before.z - 0.05)
   const during = await museePlayer(page)
   await page.keyboard.up('ArrowUp')
 
