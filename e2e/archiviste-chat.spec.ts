@@ -26,7 +26,7 @@ const action = (page: Page) => page.getByTestId('action-button')
 
 /** Premier message de l'Archiviste, court (`strings.ts`, `archivisteStrings.greeting`). */
 const GREETING_FR =
-  "Bonjour. Je suis l'Archiviste · IA, gardienne des Archives de 2040. Interrogez-moi sur les vitrines ou sur le programme du 6 octobre."
+  "Bonjour. Je suis l'Archiviste · IA, gardienne des Archives de 2040. Interrogez-moi sur les trois tables rondes et leurs transcriptions."
 const REMI_GREETING_FR = 'Bonjour ! Je suis Rémi · IA. Posez-moi vos questions sur le musée, les 100 ou la soirée.'
 
 interface ArchivesProbe {
@@ -115,7 +115,7 @@ test('« Parler à l’Archiviste » ouvre SON chat : nom, mention IA, accueil c
   await expect(messages(page).first()).toHaveText(GREETING_FR)
   const chips = page.getByTestId('remi-chat-suggestion')
   await expect(chips).toHaveCount(4)
-  await expect(chips).toHaveText(['Que contiennent les Archives ?', 'Le programme du 6 octobre', 'Qui êtes-vous ?', "Que s'est-il dit ce soir ?"])
+  await expect(chips).toHaveText(['Que contiennent les Archives ?', 'Les trois tables rondes', 'Qui êtes-vous ?', "Que s'est-il dit ce soir ?"])
 
   // Le buste est celui de l'Archiviste (même composant, autre personnage).
   await expect(page.getByTestId('remi-bust')).toHaveAttribute('data-character', 'archiviste')
@@ -123,7 +123,7 @@ test('« Parler à l’Archiviste » ouvre SON chat : nom, mention IA, accueil c
 })
 
 test('envoi : la requête porte persona « archiviste » et la progression des vitrines ; la réponse arrive au fil du flux', async ({ page }) => {
-  const stub = await stubRemiApi(page, { kind: 'reply', chunks: ['Chaque séquence de la soirée ', 'a sa vitrine.'] })
+  const stub = await stubRemiApi(page, { kind: 'reply', chunks: ['Seules les trois tables rondes ', 'ont une vitrine.'] })
   const p = await enterPlaying(page)
   await talkToArchivist(page, p)
 
@@ -131,7 +131,7 @@ test('envoi : la requête porte persona « archiviste » et la progression des v
   await expect(messages(page).nth(1)).toHaveAttribute('data-role', 'user')
   await expect(messages(page).nth(1)).toHaveText('Que contiennent les Archives ?')
   await expect(messages(page).nth(2)).toHaveAttribute('data-role', 'assistant')
-  await expect(messages(page).nth(2)).toHaveText('Chaque séquence de la soirée a sa vitrine.')
+  await expect(messages(page).nth(2)).toHaveText('Seules les trois tables rondes ont une vitrine.')
   await expect(page.getByTestId('remi-chat-typing')).toHaveCount(0)
   await expect(input(page)).toHaveValue('')
   await expect(page.getByTestId('remi-chat-suggestion')).toHaveCount(0)
@@ -149,13 +149,13 @@ test('envoi : la requête porte persona « archiviste » et la progression des v
 })
 
 test('une puce part comme message du visiteur', async ({ page }) => {
-  const stub = await stubRemiApi(page, { kind: 'reply', chunks: ['Les archives seront déposées après la soirée.'] })
+  const stub = await stubRemiApi(page, { kind: 'reply', chunks: ['Les transcriptions des tables rondes seront déposées après la soirée.'] })
   const p = await enterPlaying(page)
   await talkToArchivist(page, p)
 
   await page.getByTestId('remi-chat-suggestion').filter({ hasText: 'Que s\'est-il dit ce soir ?' }).click()
   await expect(messages(page).nth(1)).toHaveText("Que s'est-il dit ce soir ?")
-  await expect(messages(page).nth(2)).toHaveText('Les archives seront déposées après la soirée.')
+  await expect(messages(page).nth(2)).toHaveText('Les transcriptions des tables rondes seront déposées après la soirée.')
   expect(stub.requests.at(-1)?.persona).toBe('archiviste')
   expect(stub.requests.at(-1)?.messages.at(-1)).toEqual({ role: 'user', content: "Que s'est-il dit ce soir ?" })
 })
@@ -170,7 +170,7 @@ test('service indisponible (503) : repli au vouvoiement, puis le visiteur peut r
   await expect(reply).toHaveAttribute('data-role', 'assistant')
   await expect(reply).toContainText('Je vous réponds brièvement :')
   // Archives vides (faux projet Supabase) : l'état des vitrines, jamais une citation ni un propos de la soirée.
-  await expect(reply).toContainText(/vitrines|archives/)
+  await expect(reply).toContainText(/transcriptions|tables rondes/)
   await expect(reply).not.toContainText(/«|»/)
   await expect(input(page)).toBeEnabled()
   expect(stub.requests).toHaveLength(1)

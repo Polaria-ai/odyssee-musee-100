@@ -1,17 +1,14 @@
 /**
- * Fiche de la séquence ouverte (`openSessionId`) : programme de la soirée, puis synthèse de
- * l'Archiviste et citations une fois l'archive déposée et publiée. Même famille que la fiche
+ * Fiche d'une table ronde : programme, puis transcription intégrale une fois déposée et publiée. Même famille que la fiche
  * portrait (`src/ui/PortraitCard.tsx`, feuille qui monte du bas, glisser pour fermer), habillage
  * « archive de 2040 » (bandeau bleu nuit, liseré cyan, tampon).
  *
- * Tant qu'aucune archive publiée n'existe pour la séquence, aucun contenu n'est inventé : un
- * encart d'attente est affiché à la place de la synthèse et des citations.
+ * Tant qu'aucune transcription publiée n'existe pour la table ronde, aucun contenu n'est inventé.
  */
 import { useEffect, useRef, type TouchEvent as ReactTouchEvent } from 'react'
 import { useGame } from '../state/gameStore'
 import { useT, usePick } from '../i18n'
 import { cardStrings } from './cardStrings'
-import { splitParagraphs } from '../ui/format'
 import type { EveningSession, SessionKind } from '../types'
 import { playSfx } from '../audio'
 import './archives.css'
@@ -95,7 +92,7 @@ export function ArchiveCard() {
 
   const archive = archives[session.id]
   const published = archive?.published === true
-  const summaryParagraphs = published && archive ? splitParagraphs(p(archive.summary)) : []
+  const transcript = published && archive ? p(archive.transcript) : ''
 
   function handleTouchStart(e: ReactTouchEvent<HTMLDivElement>) {
     if ((sheetRef.current?.scrollTop ?? 0) > 0) {
@@ -187,30 +184,10 @@ export function ArchiveCard() {
         )}
 
         {published && archive ? (
-          <>
-            {summaryParagraphs.length > 0 && (
-              <div className="archive-card__summary">
-                <h3 className="archive-card__section-title">{t('archiveSummaryTitle')}</h3>
-                {summaryParagraphs.map((paragraph, i) => (
-                  <p key={`${session.id}-summary-${i}`}>{paragraph}</p>
-                ))}
-              </div>
-            )}
-            {archive.quotes.length > 0 && (
-              <div className="archive-card__quotes">
-                <h3 className="archive-card__section-title">{t('archiveQuotesTitle')}</h3>
-                {archive.quotes.map((quote, i) => (
-                  <blockquote className="archive-card__quote" key={`${session.id}-quote-${i}`}>
-                    <p>“{p(quote.text)}”</p>
-                    <footer>
-                      {quote.author}
-                      {quote.verified && <span className="archive-card__quote-verified">{t('archiveQuoteVerified')}</span>}
-                    </footer>
-                  </blockquote>
-                ))}
-              </div>
-            )}
-          </>
+          <section className="archive-card__transcript" data-testid="archive-transcript">
+            <h3 className="archive-card__section-title">{t('archiveTranscriptTitle')}</h3>
+            <div>{transcript}</div>
+          </section>
         ) : (
           <div className="archive-card__pending" data-testid="archive-pending">
             <p className="archive-card__pending-title">{t('archivePendingTitle')}</p>

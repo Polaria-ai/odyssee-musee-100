@@ -565,7 +565,7 @@ test('musée figé derrière le chat : si le contexte WebGL est perdu pendant le
 test('texte lisible sur le musée : contraste AA (au moins 4,5) mesuré sur les pixels réels derrière chaque texte', async ({ page }, testInfo) => {
   // Deux états du chat, une capture chacun, décodées dans la page : long sous SwiftShader chargé.
   test.slow()
-  await stubRemiApi(page, { kind: 'reply', chunks: ['Les Archives de 2040 sont au sud du hall. ', 'Chaque séquence de la soirée y a sa vitrine.'] })
+  await stubRemiApi(page, { kind: 'reply', chunks: ['Les Archives de 2040 sont au sud du hall. ', 'Seules les trois tables rondes y ont une vitrine.'] })
   await openChat(page)
   await page.waitForTimeout(800)
 

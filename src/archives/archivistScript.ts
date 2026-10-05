@@ -1,5 +1,5 @@
 /**
- * Dialogues de l'Archiviste, hologramme des Archives de 2040. Contenu bilingue, déterministe
+ * Dialogues de l'Archiviste, gardienne des Archives de 2040. Contenu bilingue, déterministe
  * (aucun Math.random : les variantes se choisissent à partir des compteurs de progression).
  * Ton : une IA de 2040, bienveillante et un peu mystérieuse. N'affirme jamais rien sur ce qui a
  * été dit pendant la soirée du 6 octobre 2026 — ça, seul l'agent de fin de soirée le dépose.
@@ -42,14 +42,14 @@ function firstVisitDialogue(): Dialogue {
       'surprised',
     ),
     line(
-      "Approche-toi de mon socle quand tu veux en savoir plus. Sinon, explore : chaque vitrine attend sa séquence.",
-      'Come closer to my platform whenever you want to know more. Otherwise, explore: every display case is waiting for its session.',
+      "Approche-toi de mon socle quand tu veux en savoir plus. Les trois vitrines attendent chacune la transcription d'une table ronde.",
+      'Come closer to my platform whenever you want to know more. Each of the three display cases is waiting for a panel transcript.',
       'neutral',
     ),
   ])
 }
 
-// --- Accueil complet (à l'hologramme) --------------------------------------
+// --- Accueil complet (à l'Archiviste) --------------------------------------
 
 function welcomeDialogue(): Dialogue {
   return dialogue('welcome', [
@@ -59,23 +59,23 @@ function welcomeDialogue(): Dialogue {
       'happy',
     ),
     line(
-      "Ici, chaque séquence de L'Odyssée de l'IA a sa vitrine : son heure, son thème, et bientôt une synthèse.",
-      'Here, every session of The AI Odyssey has its own display case: its time, its theme, and soon a summary.',
+      "Seules les trois tables rondes de L'Odyssée de l'IA ont leur vitrine.",
+      'Only the three panel discussions from The AI Odyssey have a display case.',
       'neutral',
     ),
     line(
-      "Certaines vitrines porteront aussi une citation marquante, glanée pendant la soirée.",
-      'Some display cases will also carry a striking quote, gathered during the evening.',
+      'Chacune affichera son horaire, son thème et sa transcription intégrale.',
+      'Each case will show its time, theme and full transcript.',
       'neutral',
     ),
     line(
-      "Mais ce soir-là n'est pas encore écrit pour moi. Les synthèses et citations n'apparaissent qu'une fois relues, à la fin de la soirée.",
-      "But that evening isn't written yet, not for me. Summaries and quotes only appear once reviewed, at the end of the night.",
+      "Les transcriptions seront déposées après la soirée et publiées après relecture.",
+      'The transcripts will be added after the event and published after review.',
       'thinking',
     ),
     line(
-      'Approche-toi d\'une vitrine et appuie sur "Consulter" pour la découvrir, remplie ou non.',
-      'Step up to a display case and tap "Consult" to discover it, filled in or not.',
+      'Approche-toi d\'une vitrine et appuie sur « Ouvrir la vitrine » pour la découvrir, remplie ou non.',
+      'Step up to a display case and tap “Open the display case” to discover it, filled in or not.',
       'neutral',
     ),
     line(
@@ -91,22 +91,22 @@ function welcomeDialogue(): Dialogue {
 const TALK_EMPTY: readonly Dialogue[] = [
   dialogue('talk-empty-0', [
     line(
-      "Pour l'instant, ces vitrines sont vides : rien n'est encore déposé. Tout se joue ce soir, dans la salle voisine.",
-      "For now, these display cases are empty: nothing has been deposited yet. Everything is happening tonight, in the next room.",
+      "Pour l'instant, les trois vitrines attendent les transcriptions des tables rondes. Rien n'est encore publié.",
+      'For now, the three display cases are waiting for the panel transcripts. Nothing has been published yet.',
       'neutral',
     ),
   ]),
   dialogue('talk-empty-1', [
     line(
-      'Les archives se remplissent à la fin de la soirée, une fois que tout a été relu. Reviens un peu plus tard !',
-      'The archives fill up at the end of the evening, once everything has been reviewed. Come back a little later!',
+      'Les transcriptions seront déposées après la soirée, une fois relues. Reviens un peu plus tard !',
+      'The transcripts will be added after the event, once reviewed. Come back a little later!',
       'thinking',
     ),
   ]),
   dialogue('talk-empty-2', [
     line(
-      "Patience : je ne peux rien affirmer sur ce qui se dit ce soir tant que ce n'est pas confirmé. Regarde le programme en attendant.",
-      "Patience: I can't state anything about tonight until it's confirmed. Have a look at the programme meanwhile.",
+      "Patience : je ne peux rien affirmer sur les échanges tant que leur transcription n'est pas publiée. Consulte les vitrines en attendant.",
+      "Patience: I can't say what was discussed until its transcript is published. Have a look at the display cases meanwhile.",
       'neutral',
     ),
   ]),
@@ -115,22 +115,22 @@ const TALK_EMPTY: readonly Dialogue[] = [
 const TALK_PARTIAL: readonly Dialogue[] = [
   dialogue('talk-partial-0', [
     line(
-      "Quelques vitrines se sont déjà remplies. Les autres suivront au fil de la relecture, sois patient·e.",
-      'A few display cases have already filled in. The others will follow as the review continues — bear with me.',
+      'Quelques transcriptions sont publiées. Les autres tables rondes suivront au fil de la relecture, sois patient·e.',
+      'Some transcripts are published. The other panels will follow as the review continues — bear with me.',
       'happy',
     ),
   ]),
   dialogue('talk-partial-1', [
     line(
-      "La mémoire de ce soir s'écrit petit à petit. Repasse par les vitrines encore vides un peu plus tard.",
-      "Tonight's memory is being written little by little. Swing back by the still-empty cases a bit later.",
+      "La mémoire des tables rondes s'écrit petit à petit. Repasse par les vitrines encore vides un peu plus tard.",
+      "The panels' record is being written little by little. Swing back by the still-empty cases a bit later.",
       'thinking',
     ),
   ]),
   dialogue('talk-partial-2', [
     line(
-      "Certaines séquences sont déjà archivées, d'autres attendent encore leur tour. Continue d'explorer !",
-      "Some sessions are already archived, others are still waiting their turn. Keep exploring!",
+      "Certaines tables rondes ont déjà leur transcription, d'autres attendent encore leur tour. Continue d'explorer !",
+      'Some panels already have transcripts, others are still waiting their turn. Keep exploring!',
       'neutral',
     ),
   ]),
@@ -139,15 +139,15 @@ const TALK_PARTIAL: readonly Dialogue[] = [
 const TALK_FULL: readonly Dialogue[] = [
   dialogue('talk-full-0', [
     line(
-      'Toutes les vitrines sont remplies : la soirée est désormais intégralement archivée. Belle lecture !',
-      "All the display cases are filled in: the evening is now fully archived. Enjoy the read!",
+      'Les trois transcriptions des tables rondes sont publiées. Belle lecture !',
+      'All three panel transcripts are published. Enjoy the read!',
       'happy',
     ),
   ]),
   dialogue('talk-full-1', [
     line(
-      'La mémoire de ce soir est complète, de la première à la dernière séquence. Merci de l\'avoir traversée avec moi.',
-      "Tonight's memory is complete, from the first session to the last. Thank you for walking through it with me.",
+      'Les trois tables rondes ont maintenant leur transcription. Merci de les avoir parcourues avec moi.',
+      'All three panels now have transcripts. Thank you for reading them with me.',
       'happy',
     ),
   ]),
@@ -170,8 +170,8 @@ function stampAwardedDialogue(): Dialogue {
       'happy',
     ),
     line(
-      "Continue de revenir : d'autres vitrines se rempliront peut-être avant la fin de la soirée.",
-      'Keep coming back: more display cases might fill in before the evening is over.',
+      'Tu peux relire les transcriptions des tables rondes quand tu le souhaites.',
+      'You can revisit the panel transcripts whenever you like.',
       'neutral',
     ),
   ])

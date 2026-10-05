@@ -21,6 +21,7 @@ import type {
 } from '../types'
 import type { ChatPersona } from '../features/remiChat/contract'
 import { loadPersisted, savePersisted } from './persist'
+import { ARCHIVE_SESSION_IDS } from '../data/eveningProgram'
 
 export type Quality = 'low' | 'high'
 
@@ -49,20 +50,20 @@ export interface GameState {
   /** Fiche ouverte en plein écran. */
   openPersonId: string | null
 
-  /** Programme de la soirée et archives déposées (Les Archives de 2040). */
+  /** Les trois tables rondes exposées dans les Archives de 2040. */
   sessions: EveningSession[]
-  /** Archives publiées, par identifiant de séquence. */
+  /** Transcriptions publiées des tables rondes, par identifiant. */
   archives: Record<string, SessionArchive>
   eveningSource: EveningSource
   /** Plan de la salle des Archives (déjà fusionné dans `layout`, gardé pour le rendu). */
   archivesLayout: ArchivesLayout | null
-  /** Vitrine d'archive la plus proche (bouton « Consulter »). */
+  /** Vitrine de table ronde la plus proche (bouton « Ouvrir la vitrine »). */
   nearbySessionId: string | null
   /** Fiche d'archive ouverte. */
   openSessionId: string | null
-  /** Le joueur est à portée de l'hologramme de l'Archiviste. */
+  /** Le joueur est à portée de l'Archiviste. */
   nearArchivist: boolean
-  /** Archives consultées : id de séquence → horodatage ms. */
+  /** Vitrines des tables rondes consultées : id → horodatage ms. */
   visitedSessions: Record<string, number>
   /** Le visiteur est déjà entré dans les Archives (accueil de l'Archiviste une seule fois). */
   archivesDiscovered: boolean
@@ -194,8 +195,19 @@ export const useGame = create<GameState>()((set, get) => ({
     set({ lang })
   },
   setMuseum: (people, layout, dataSource) => set({ people, layout, dataSource }),
-  setEvening: (sessions, archives, eveningSource) => set({ sessions, archives, eveningSource }),
-  setArchives: (archives) => set({ archives }),
+  setEvening: (sessions, archives, eveningSource) => {
+    const allowed = new Set(sessions.filter((session) => ARCHIVE_SESSION_IDS.has(session.id) && session.kind === 'table-ronde').map((session) => session.id))
+    const visitedSessions = Object.fromEntries(Object.entries(get().visitedSessions).filter(([id]) => allowed.has(id)))
+    const archiveEntries = Object.entries(archives).filter(([id, archive]) => allowed.has(id) && archive.published)
+    if (Object.keys(visitedSessions).length !== Object.keys(get().visitedSessions).length) {
+      savePersisted({ visitedSessions })
+    }
+    set({ sessions: sessions.filter((session) => allowed.has(session.id)), archives: Object.fromEntries(archiveEntries), visitedSessions, eveningSource })
+  },
+  setArchives: (archives) => {
+    const allowed = new Set(get().sessions.map((session) => session.id))
+    set({ archives: Object.fromEntries(Object.entries(archives).filter(([id, archive]) => allowed.has(id) && archive.published)) })
+  },
   setArchivesLayout: (archivesLayout) => set({ archivesLayout }),
   setNearbySession: (nearbySessionId) => {
     if (get().nearbySessionId !== nearbySessionId) set({ nearbySessionId })

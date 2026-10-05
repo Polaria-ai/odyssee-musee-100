@@ -5,8 +5,7 @@ import type { SessionArchive } from '../src/types'
 
 const archive: SessionArchive = {
   sessionId: 'table-ronde-1',
-  summary: { fr: 'Une synthèse.', en: 'A summary.' },
-  quotes: [{ text: { fr: 'Une citation.', en: '' }, author: 'Muriel Motte', verified: true }],
+  transcript: { fr: "Muriel Motte — Une transcription complète de test.", en: '' },
   archivedAt: '2026-10-06T22:50:00.000Z',
   published: false,
 }
@@ -28,10 +27,11 @@ describe('buildSeedSql', () => {
     expect(sql).not.toMatch(/published = true/)
   })
 
-  it('sans --publish : ne touche jamais à reviewed_by (NULL à l’insertion, absent de la mise à jour)', () => {
+  it('sans --publish : une mise à jour repasse en brouillon et efface le relecteur précédent', () => {
     const sql = buildSeedSql([archive], { reviewer: 'Relecteur Test' })
     expect(sql).not.toContain('Relecteur Test')
-    expect(sql).not.toContain('reviewed_by = excluded.reviewed_by')
+    expect(sql).toContain('published = excluded.published')
+    expect(sql).toContain('reviewed_by = excluded.reviewed_by')
   })
 
   it('avec --publish et --reviewer : trace la relecture dans reviewed_by', () => {
@@ -46,8 +46,8 @@ describe('buildSeedSql', () => {
   })
 
   it('échappe les apostrophes dans le SQL', () => {
-    const sql = buildSeedSql([{ ...archive, summary: { fr: "L'Archiviste s'exprime.", en: '' } }])
-    expect(sql).toContain("L''Archiviste s''exprime.")
+    const sql = buildSeedSql([{ ...archive, transcript: { fr: "L'Archiviste lit le texte.", en: '' } }])
+    expect(sql).toContain("L''Archiviste lit le texte.")
   })
 
   it('est enveloppé dans une transaction', () => {
@@ -62,19 +62,19 @@ describe('toSupabaseRow / toSupabasePushRows', () => {
   it('convertit en snake_case', () => {
     expect(toSupabaseRow(archive)).toMatchObject({
       session_id: 'table-ronde-1',
-      summary_fr: 'Une synthèse.',
-      summary_en: 'A summary.',
+      transcript_fr: 'Muriel Motte — Une transcription complète de test.',
+      transcript_en: '',
       published: false,
     })
   })
 
-  it('toSupabasePushRows omet complètement `published` quand publish=false (jamais juste false)', () => {
+  it('toSupabasePushRows garde `published=false` pour dépublier une ancienne version modifiée', () => {
     const rows = toSupabasePushRows([archive], false)
-    expect('published' in rows[0]).toBe(false)
+    expect(rows[0].published).toBe(false)
   })
 
-  it('toSupabasePushRows ajoute reviewed_by seulement à la publication', () => {
-    expect('reviewed_by' in toSupabasePushRows([archive], false, 'Relecteur Test')[0]).toBe(false)
+  it('toSupabasePushRows efface l’ancienne relecture en brouillon et la trace à la publication', () => {
+    expect(toSupabasePushRows([archive], false, 'Ancien relecteur')[0].reviewed_by).toBeNull()
     expect(toSupabasePushRows([archive], true, 'Relecteur Test')[0].reviewed_by).toBe('Relecteur Test')
   })
 
@@ -87,14 +87,13 @@ describe('toSupabaseRow / toSupabasePushRows', () => {
 describe('bout en bout : parseAgentOutput → toSessionArchives → buildEveningJson / buildSeedSql', () => {
   it('produit un fichier JSON et un SQL exploitables à partir d’une sortie d’agent valide', () => {
     const output = {
-      version: 1,
+      version: 2,
       event: 'odyssee-ia-2026',
       generatedAt: '2026-10-06T22:50:00+02:00',
       archives: [
         {
           sessionId: 'table-ronde-1',
-          summary: { fr: 'Synthèse.', en: '' },
-          quotes: [{ text: { fr: 'Citation.', en: '' }, author: 'Muriel Motte', verified: true }],
+          transcript: { fr: 'Muriel Motte — Transcription de test.', en: '' },
         },
       ],
     }

@@ -126,7 +126,7 @@ async function chatSession(name, contextOptions) {
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   const replies = [
-    ['Les Archives de 2040 sont au sud du hall. ', 'Chaque séquence de la soirée y a sa vitrine : vous pouvez les consulter une à une.'],
+    ['Les Archives de 2040 sont au sud du hall. ', 'Seules les trois tables rondes y ont une vitrine : vous pouvez consulter leur transcription.'],
     ['Je vous suggère l\'aile Infrastructures, à l\'ouest. ', 'Devant un portrait, touchez « Regarder » pour ouvrir sa fiche.'],
   ]
   let asked = 0

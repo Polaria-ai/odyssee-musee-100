@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 /**
- * Import de la sortie de l'agent de fin de soirée (voir `docs/EVENING-AGENT.md`) vers
+ * Import de la sortie de l'agent de transcription (voir `docs/EVENING-AGENT.md`) vers
  * `public/data/evening.json` et `supabase/seed/evening-archives.sql`. Toujours en brouillon
  * (`published = false`) sauf `--publish`, après relecture humaine. Ne nécessite aucune clé de
  * service : le SQL généré est appliqué séparément (SQL editor Supabase), sauf `--push`.
@@ -24,56 +24,48 @@ function sqlString(value: string | null | undefined): string {
   return `'${value.replace(/'/g, "''")}'`
 }
 
-function sqlJson(value: unknown): string {
-  return `${sqlString(JSON.stringify(value ?? []))}::jsonb`
-}
-
 export interface SeedSqlOptions {
   /**
-   * `true` seulement une fois les archives relues par un humain : sinon les nouvelles archives
-   * sont insérées `published = false` (invisibles des visiteurs — RLS ne sert que
-   * `published = true`) et une archive déjà en base garde son statut de publication actuel, quoi
-   * qu'il arrive. Défaut : `false`.
+   * `true` seulement une fois les transcriptions relues par un humain. Toute mise à jour non publiée
+   * remet également l'archive en brouillon et efface sa précédente trace de relecture.
    */
   publish?: boolean
   /**
-   * Nom de la personne qui a relu (colonne `reviewed_by`). Écrit seulement avec `publish` : une
-   * relance en brouillon ne touche jamais à la trace de relecture existante.
+   * Nom de la personne qui a relu (colonne `reviewed_by`). Un brouillon efface cette trace;
+   * elle est renseignée lors de la publication après relecture.
    */
   reviewer?: string
 }
 
 /**
  * SQL d'upsert idempotent (une transaction, `on conflict (session_id) do update`) — à relire puis
- * exécuter dans le SQL editor Supabase. `published` n'est dans la clause `do update` que si
- * `options.publish` est vrai : une relance sans `--publish` laisse donc le statut de publication
- * des archives déjà en base tel quel.
+ * exécuter dans le SQL editor Supabase. Un upsert sans `--publish` dépublie une ancienne version :
+ * une transcription modifiée doit toujours être relue avant de redevenir visible.
  */
 export function buildSeedSql(archives: SessionArchive[], options: SeedSqlOptions = {}): string {
   const published = options.publish ?? false
   const reviewer = published ? (options.reviewer ?? null) : null
   const updateAssignments = [
-    'summary_fr = excluded.summary_fr',
-    'summary_en = excluded.summary_en',
-    'quotes = excluded.quotes',
+    'transcript_fr = excluded.transcript_fr',
+    'transcript_en = excluded.transcript_en',
     'archived_at = excluded.archived_at',
-    ...(published ? ['published = true', 'reviewed_by = excluded.reviewed_by'] : []),
+    'published = excluded.published',
+    'reviewed_by = excluded.reviewed_by',
     'updated_at = now()',
   ]
   const statements = archives.map(
     (a) => `insert into public.session_archives (
-  session_id, summary_fr, summary_en, quotes, archived_at, published, reviewed_by
+  session_id, transcript_fr, transcript_en, archived_at, published, reviewed_by
 ) values (
-  ${sqlString(a.sessionId)}, ${sqlString(a.summary.fr)}, ${sqlString(a.summary.en)},
-  ${sqlJson(a.quotes)}, ${sqlString(a.archivedAt)}, ${published}, ${sqlString(reviewer)}
+  ${sqlString(a.sessionId)}, ${sqlString(a.transcript.fr)}, ${sqlString(a.transcript.en)},
+  ${sqlString(a.archivedAt)}, ${published}, ${sqlString(reviewer)}
 )
 on conflict (session_id) do update set
   ${updateAssignments.join(',\n  ')};`,
   )
   const note = published
-    ? '-- published = true : archives relues, publiées (nouvelles et déjà en base).\n'
-    : "-- published = false (brouillon) : relire les archives, puis relancer avec --publish avant la mise en ligne.\n" +
-      "-- (sans --publish, le statut de publication des archives déjà en base n'est jamais modifié.)\n"
+    ? '-- published = true : transcriptions relues, publiées (nouvelles et déjà en base).\n'
+    : '-- published = false : brouillon; toute ancienne version est dépubliée jusqu’à nouvelle relecture.\n'
   return `-- Généré par scripts/import-evening.ts — à relire, puis exécuter dans le SQL editor Supabase.\n${note}begin;\n\n${statements.join('\n\n')}\n\ncommit;\n`
 }
 
@@ -81,26 +73,22 @@ on conflict (session_id) do update set
 export function toSupabaseRow(a: SessionArchive, options: SeedSqlOptions = {}): Record<string, unknown> {
   const row: Record<string, unknown> = {
     session_id: a.sessionId,
-    summary_fr: a.summary.fr,
-    summary_en: a.summary.en,
-    quotes: a.quotes,
+    transcript_fr: a.transcript.fr,
+    transcript_en: a.transcript.en,
     archived_at: a.archivedAt,
     published: options.publish ?? false,
+    reviewed_by: options.publish ? (options.reviewer ?? null) : null,
   }
-  if (options.publish && options.reviewer) row.reviewed_by = options.reviewer
   return row
 }
 
 /**
- * Lignes prêtes pour `--push` : comme `toSupabaseRow`, mais SANS la clé `published` du tout quand
- * `publish` est faux — jamais juste `false` (même raisonnement que `scripts/import-people.ts` :
- * un upsert qui envoie `published: false` sur une archive déjà publiée la dépublierait par erreur).
+ * Lignes prêtes pour `--push`. Une transcription modifiée en brouillon dépublie toujours l'ancienne
+ * version jusqu'à ce qu'une personne relise puis republie le contenu.
  */
 export function toSupabasePushRows(archives: SessionArchive[], publish: boolean, reviewer?: string): Record<string, unknown>[] {
   return archives.map((a) => {
-    const row = toSupabaseRow(a, { publish, reviewer })
-    if (!publish) delete row.published
-    return row
+    return toSupabaseRow(a, { publish, reviewer })
   })
 }
 
@@ -210,7 +198,7 @@ async function main(): Promise<void> {
       console.log(
         args.publish
           ? '\n--push : envoi direct à Supabase, published = true.'
-          : "\n--push : envoi direct à Supabase, en brouillon (le statut de publication des archives déjà en base est laissé tel quel).",
+          : "\n--push : envoi direct à Supabase, en brouillon (l'ancienne version est dépubliée jusqu'à nouvelle relecture).",
       )
       const { createClient } = await import('@supabase/supabase-js')
       const admin = createClient(url, serviceKey, { auth: { persistSession: false } })

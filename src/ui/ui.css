@@ -344,7 +344,7 @@
   bottom: calc(16px + var(--safe-bottom));
   min-width: 76px;
   min-height: 76px;
-  /* Libellés longs (« Consulter l'archive ») : deux lignes équilibrées, forme de galet. */
+  /* Libellés longs (« Ouvrir la vitrine ») : deux lignes équilibrées, forme de galet. */
   max-width: 132px;
   padding: 8px 12px;
   border: none;

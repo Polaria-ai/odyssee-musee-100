@@ -6,9 +6,9 @@ const MAX_LINE_LENGTH = 140
 
 const tiers = [
   { name: 'programme non chargé', total: 0, published: 0 },
-  { name: 'rien de publié', total: 17, published: 0 },
-  { name: 'quelques archives publiées', total: 17, published: 5 },
-  { name: 'tout publié', total: 17, published: 17 },
+  { name: 'rien de publié', total: 3, published: 0 },
+  { name: 'quelques transcriptions publiées', total: 3, published: 1 },
+  { name: 'tout publié', total: 3, published: 3 },
 ]
 
 const SERVED = [0, 1, 2, 3]
@@ -49,19 +49,19 @@ describe('archivistChatFallback (repli du chat de l’Archiviste · IA)', () => 
   })
 
   it('tourne sur les variantes d’un palier et change de palier avec published', () => {
-    const ids = (published: number) => new Set(SERVED.map((served) => archivistChatFallback({ served, total: 17, published }).id))
+    const ids = (published: number) => new Set(SERVED.map((served) => archivistChatFallback({ served, total: 3, published }).id))
     expect(ids(0).size).toBeGreaterThan(1)
-    const all = [...ids(0), ...ids(5), ...ids(17)]
-    expect(new Set(all).size).toBe(ids(0).size + ids(5).size + ids(17).size)
+    const all = [...ids(0), ...ids(1), ...ids(3)]
+    expect(new Set(all).size).toBe(ids(0).size + ids(1).size + ids(3).size)
   })
 
   it('programme non chargé (total 0) : traité comme « rien de publié »', () => {
-    expect(archivistChatFallback({ served: 0, total: 0, published: 0 }).id).toBe(archivistChatFallback({ served: 0, total: 17, published: 0 }).id)
+    expect(archivistChatFallback({ served: 0, total: 0, published: 0 }).id).toBe(archivistChatFallback({ served: 0, total: 3, published: 0 }).id)
   })
 
   it('est déterministe et accepte un compteur quelconque', () => {
-    const input = { served: 2, total: 17, published: 5 }
+    const input = { served: 2, total: 3, published: 1 }
     expect(archivistChatFallback(input)).toEqual(archivistChatFallback(input))
-    expect(archivistChatFallback({ served: 1000, total: 17, published: 5 }).lines.length).toBeGreaterThan(0)
+    expect(archivistChatFallback({ served: 1000, total: 3, published: 1 }).lines.length).toBeGreaterThan(0)
   })
 })

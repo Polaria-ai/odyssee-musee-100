@@ -1,198 +1,28 @@
 {
-  "version": 1,
+  "version": 2,
   "event": "odyssee-ia-2026",
-  "generatedAt": "2026-09-27T21:00:00+02:00",
+  "generatedAt": "2026-09-27T22:50:00+02:00",
   "archives": [
     {
-      "sessionId": "introduction",
-      "summary": {
-        "fr": "[RÉPÉTITION] Ouverture pilotée par un agent, en écho au thème de la soirée. L'Archiviste souhaite la bienvenue et annonce le début de la soirée ; l'animateur·rice rappelle que dix-huit séquences sont au programme, entre keynotes, tables rondes et temps courts.",
-        "en": "[REHEARSAL] The opening is led by an agent, echoing the evening's theme. L'Archiviste welcomes the audience and announces the start of the evening; the host notes that eighteen sequences are on the programme, between keynotes, panels and short segments."
-      },
-      "quotes": [
-        {
-          "text": {
-            "fr": "[RÉPÉTITION] Que la soirée commence.",
-            "en": "[REHEARSAL] Let the evening begin."
-          },
-          "author": "L'Archiviste",
-          "verified": true
-        }
-      ]
-    },
-    {
-      "sessionId": "film",
-      "summary": {
-        "fr": "[RÉPÉTITION] Présentation du film d'ouverture Polaria × L'Opinion, qui pose le décor de la soirée. Le film retrace en images le chemin d'une idée jusqu'à son usage quotidien et interroge ce qu'est la souveraineté numérique aujourd'hui.",
-        "en": "[REHEARSAL] Introduction of the opening film by Polaria × L'Opinion, setting the scene for the evening. The film traces, in images, the path of an idea to its everyday use, and asks what digital sovereignty means today."
-      },
-      "quotes": [
-        {
-          "text": {
-            "fr": "[RÉPÉTITION] Ce film raconte, en images, le chemin d'une idée jusqu'à son usage quotidien.",
-            "en": "[REHEARSAL] This film tells, in images, the path of an idea to its everyday use."
-          },
-          "author": "L'Archiviste",
-          "verified": true
-        }
-      ]
-    },
-    {
-      "sessionId": "presentation",
-      "summary": {
-        "fr": "[RÉPÉTITION] Ouverture de la soirée consacrée à la souveraineté et à l'IA agentique. Le fil du programme est présenté : partir de la promesse, passer par l'infrastructure puis l'industrialisation, jusqu'au changement de culture, avec un fil rouge autour des cent portraits présentés plus tard.",
-        "en": "[REHEARSAL] Opening of an evening devoted to sovereignty and agentic AI. The programme's throughline is presented: starting from the promise, moving through infrastructure then industrialisation, up to cultural change, with a recurring thread around the hundred portraits shown later."
-      },
-      "quotes": []
-    },
-    {
-      "sessionId": "keynote-ouverture",
-      "summary": {
-        "fr": "[RÉPÉTITION] Keynote d'ouverture : la souveraineté ne se décrète pas, elle se construit séquence après séquence. Elle passe par les infrastructures, les compétences, et la capacité collective à décider de l'usage de ces outils ; un sujet qui dépasse la seule technologie pour toucher à l'organisation et aux choix publics.",
-        "en": "[REHEARSAL] Opening keynote: sovereignty cannot be decreed, it is built step by step. It relies on infrastructure, skills, and the collective capacity to decide how these tools are used; a subject that goes beyond technology alone to touch on organisation and public choices."
-      },
-      "quotes": []
-    },
-    {
-      "sessionId": "les100-presentation",
-      "summary": {
-        "fr": "[RÉPÉTITION] Présentation du projet « Les 100 » : cent portraits et parcours pour raconter l'IA autrement que par la seule technologie, en montrant des visages, des métiers et des trajectoires plutôt que des courbes. Quatre portraits seront dévoilés plus tard dans la soirée, le reste étant consultable après l'événement.",
-        "en": "[REHEARSAL] Introduction of 'Les 100': a hundred portraits and journeys telling the story of AI beyond technology alone, showing faces, jobs and paths rather than curves. Four portraits will be revealed later in the evening, with the rest available after the event."
-      },
-      "quotes": []
-    },
-    {
-      "sessionId": "magneto-1",
-      "summary": {
-        "fr": "[RÉPÉTITION] Première capsule vidéo sur les infrastructures (câbles, salles techniques, cartes de flux), présentée comme une respiration avant la première table ronde.",
-        "en": "[REHEARSAL] First video capsule on infrastructure (cables, technical rooms, flow maps), presented as a breather before the first panel."
-      },
-      "quotes": [
-        {
-          "text": {
-            "fr": "[RÉPÉTITION] Ce que l'on ne voit pas fait souvent la différence.",
-            "en": "[REHEARSAL] What we don't see often makes the difference."
-          },
-          "author": "L'Archiviste",
-          "verified": true
-        }
-      ]
-    },
-    {
       "sessionId": "table-ronde-1",
-      "summary": {
-        "fr": "[RÉPÉTITION] Première table ronde sur le passage de la promesse aux infrastructures. Il est rappelé qu'une infrastructure se pense sur une décennie et non sur un trimestre, et que la confiance est elle-même une infrastructure, au même titre que le matériel. Sur l'Europe, des signaux positifs et des inquiétudes coexistent ; le vrai sujet est la vitesse à transformer les intentions en décisions concrètes.",
-        "en": "[REHEARSAL] First panel on moving from promise to infrastructure. It is noted that infrastructure must be thought over a decade rather than a quarter, and that trust is itself an infrastructure, on a par with hardware. On Europe, positive signals and concerns coexist; the real issue is the speed of turning intentions into concrete decisions."
-      },
-      "quotes": []
-    },
-    {
-      "sessionId": "face-a-face-1",
-      "summary": {
-        "fr": "[RÉPÉTITION] Premier retour de terrain sous forme de face-à-face. Ce qui a fonctionné : commencer petit, sur un périmètre limité, avant d'élargir. Ce qui a été difficile : faire adhérer les équipes dans la durée, pas seulement au lancement. L'outil n'est jamais le seul facteur ; l'accompagnement humain compte autant, sinon plus.",
-        "en": "[REHEARSAL] First field feedback in a face-to-face format. What worked: starting small, on a limited scope, before scaling up. What was difficult: sustaining team buy-in over time, not only at launch. The tool is never the only factor; human support matters as much, if not more."
-      },
-      "quotes": []
+      "transcript": {
+        "fr": "[RÉPÉTITION] Modération — Ceci est une transcription entièrement factice.\nVoix non identifiée — Elle sert à éprouver le format, pas à rapporter des propos.",
+        "en": "[REHEARSAL] Moderator — This is a fully fictional transcript.\nUnidentified voice — It tests the format; it does not report real remarks."
+      }
     },
     {
       "sessionId": "table-ronde-2",
-      "summary": {
-        "fr": "[RÉPÉTITION] Deuxième table ronde sur le passage de l'invention à l'industrialisation : industrialiser, c'est accepter de répéter et de standardiser, alors que l'invention aime la nouveauté à chaque étape. La capacité à déployer vite est présentée comme aussi déterminante que l'idée initiale. Une intervention marquante depuis la salle a souligné que l'on rate rarement une invention par manque d'idées, mais par manque de patience pour l'industrialiser.",
-        "en": "[REHEARSAL] Second panel on moving from invention to industrialisation: industrialising means accepting repetition and standardisation, while invention favours novelty at every step. The ability to deploy quickly is presented as being as decisive as the original idea. A striking remark from the audience noted that inventions are rarely missed for lack of ideas, but for lack of patience to industrialise them."
-      },
-      "quotes": [
-        {
-          "text": {
-            "fr": "[RÉPÉTITION] On ne rate jamais une invention par manque d'idées, on la rate par manque de patience pour l'industrialiser.",
-            "en": "[REHEARSAL] You never miss out on an invention for lack of ideas, you miss out for lack of patience to industrialise it."
-          },
-          "author": "Public",
-          "verified": true
-        }
-      ]
-    },
-    {
-      "sessionId": "les100-portraits",
-      "summary": {
-        "fr": "[RÉPÉTITION] Présentation de quatre portraits parmi les cent, choisis pour leur diversité de parcours. Chacun raconte une histoire différente, avec ses doutes et ses réussites ; l'objectif est de montrer que ces parcours ne se ressemblent pas, et que c'est une richesse.",
-        "en": "[REHEARSAL] Presentation of four portraits among the hundred, chosen for the diversity of their paths. Each tells a different story, with its doubts and successes; the aim is to show that these paths do not resemble one another, and that this is a richness."
-      },
-      "quotes": []
-    },
-    {
-      "sessionId": "keynote-middle",
-      "summary": {
-        "fr": "[RÉPÉTITION] Keynote de milieu de soirée, prenant du recul sur ce qui a déjà été dit. L'industrialisation n'a de sens que si elle reste au service d'un usage, et non l'inverse ; un point d'équilibre à retrouver à chaque étape du déploiement.",
-        "en": "[REHEARSAL] Midpoint keynote, stepping back from what has already been said. Industrialisation only makes sense if it remains in service of a use, not the other way round; a balance to be found at every stage of deployment."
-      },
-      "quotes": []
-    },
-    {
-      "sessionId": "magneto-3",
-      "summary": {
-        "fr": "[RÉPÉTITION] Troisième capsule vidéo, avec des images de comparaison entre zones géographiques (Europe, Chine, États-Unis), sans commentaire chiffré.",
-        "en": "[REHEARSAL] Third video capsule, with images comparing geographic zones (Europe, China, United States), without any numeric commentary."
-      },
-      "quotes": [
-        {
-          "text": {
-            "fr": "[RÉPÉTITION] Trois manières de regarder le même sujet, trois rythmes différents.",
-            "en": "[REHEARSAL] Three ways of looking at the same subject, three different rhythms."
-          },
-          "author": "L'Archiviste",
-          "verified": true
-        }
-      ]
+      "transcript": {
+        "fr": "[RÉPÉTITION] Voix non identifiée — Deuxième transcription de démonstration, sans propos réel.",
+        "en": "[REHEARSAL] Unidentified voice — Second demonstration transcript; no real remarks."
+      }
     },
     {
       "sessionId": "table-ronde-3",
-      "summary": {
-        "fr": "[RÉPÉTITION] Troisième et dernière table ronde, sur le passage d'une posture de réaction à un vrai changement de culture. Il est rappelé que le changement de culture est plus lent que le changement d'outil, qu'il faut financer ce qui casse les habitudes, et traiter l'innovation comme une priorité stratégique plutôt qu'un sujet annexe. Une question marquante posée depuis la salle a été saluée comme une manière juste de retourner le problème.",
-        "en": "[REHEARSAL] Third and final panel, on moving from a reactive stance to a genuine cultural change. It is noted that cultural change is slower than tool change, that what breaks habits must be funded, and that innovation should be treated as a strategic priority rather than a side topic. A striking question from the audience was praised as a fair way of reframing the issue."
-      },
-      "quotes": [
-        {
-          "text": {
-            "fr": "[RÉPÉTITION] Si on attend d'être prêt pour changer de culture, on ne change jamais ; est-ce qu'on ne devrait pas plutôt changer pour être prêt ?",
-            "en": "[REHEARSAL] If we wait until we're ready to change culture, we never change; shouldn't we change in order to become ready?"
-          },
-          "author": "Public",
-          "verified": true
-        }
-      ]
-    },
-    {
-      "sessionId": "keynote-cloture",
-      "summary": {
-        "fr": "[RÉPÉTITION] Keynote de clôture : la soirée a montré un fil continu, de la promesse à la culture, en passant par l'infrastructure. Le véritable enjeu est désormais de tenir ce fil dans la durée, bien après cette soirée.",
-        "en": "[REHEARSAL] Closing keynote: the evening showed a continuous thread, from promise to culture, via infrastructure. The real challenge now is to sustain that thread over time, well beyond this evening."
-      },
-      "quotes": [
-        {
-          "text": {
-            "fr": "[RÉPÉTITION] On ne se souvient jamais d'une infrastructure, on se souvient de ce qu'elle a rendu possible.",
-            "en": "[REHEARSAL] We never remember an infrastructure, we remember what it made possible."
-          },
-          "author": "L'Archiviste",
-          "verified": true
-        }
-      ]
-    },
-    {
-      "sessionId": "final",
-      "summary": {
-        "fr": "[RÉPÉTITION] Temps final expérimental mené avec une IA agentique. Ce moment est volontairement ouvert, pour montrer un usage en train de se faire plutôt qu'un résultat figé, et rester honnête sur ce que ces outils savent, et ne savent pas encore, faire.",
-        "en": "[REHEARSAL] Final experimental segment conducted with an agentic AI. This moment is deliberately open, to show a use in the making rather than a fixed result, and to remain honest about what these tools can and cannot yet do."
-      },
-      "quotes": []
-    },
-    {
-      "sessionId": "conclusion",
-      "summary": {
-        "fr": "[RÉPÉTITION] Clôture de la soirée : remerciements à l'ensemble du public et des intervenant·es, et souhait d'une bonne fin de soirée.",
-        "en": "[REHEARSAL] Closing of the evening: thanks to the audience and to all speakers, with wishes for a good end to the evening."
-      },
-      "quotes": []
+      "transcript": {
+        "fr": "[RÉPÉTITION] Voix non identifiée — Troisième transcription de démonstration, sans propos réel.",
+        "en": "[REHEARSAL] Unidentified voice — Third demonstration transcript; no real remarks."
+      }
     }
   ]
 }

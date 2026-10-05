@@ -14,8 +14,8 @@ export const cardStrings = defineStrings({
   archiveClose: { fr: "Fermer l'archive", en: 'Close the archive' },
   archivePrev: { fr: '‹ Précédente', en: '‹ Previous' },
   archiveNext: { fr: 'Suivante ›', en: 'Next ›' },
-  archivePrevLabel: { fr: 'Séquence précédente', en: 'Previous sequence' },
-  archiveNextLabel: { fr: 'Séquence suivante', en: 'Next sequence' },
+  archivePrevLabel: { fr: 'Table ronde précédente', en: 'Previous panel discussion' },
+  archiveNextLabel: { fr: 'Table ronde suivante', en: 'Next panel discussion' },
 
   // Programme
   archiveProvisional: {
@@ -26,14 +26,12 @@ export const cardStrings = defineStrings({
   archiveSpeakersTitle: { fr: 'Intervenant·es annoncé·es', en: 'Announced speakers' },
   archiveModerator: { fr: '(modération)', en: '(moderator)' },
 
-  // Séquences déposées par l'Archiviste
-  archiveSummaryTitle: { fr: "Synthèse de l'Archiviste", en: "The Archivist's summary" },
-  archiveQuotesTitle: { fr: 'Citations', en: 'Quotes' },
-  archiveQuoteVerified: { fr: 'vérifiée', en: 'verified' },
-  archivePendingTitle: { fr: 'Archive en cours de rédaction', en: 'Archive being written' },
+  // Transcriptions déposées par l'Archiviste
+  archiveTranscriptTitle: { fr: 'Transcription intégrale', en: 'Full transcript' },
+  archivePendingTitle: { fr: 'Transcription en attente', en: 'Transcript pending' },
   archivePendingBody: {
-    fr: "L'Archiviste la déposera à la fin de la soirée.",
-    en: 'The Archivist will deposit it at the end of the evening.',
+    fr: "La transcription de cette table ronde sera déposée après la soirée, puis relue avant publication.",
+    en: 'The transcript of this panel will be added after the event and reviewed before publication.',
   },
 
   // Type de séquence (pictogramme + libellé)
@@ -49,11 +47,11 @@ export const cardStrings = defineStrings({
   archiveKindCloture: { fr: 'Clôture', en: 'Closing' },
 
   // Libellés du bouton d'action du HUD (contrat : voir contractRequests, à câbler dans Hud.tsx)
-  hudConsultArchive: { fr: "Consulter l'archive", en: 'Consult the archive' },
+  hudConsultArchive: { fr: 'Ouvrir la vitrine', en: 'Open the display case' },
   hudTalkArchivist: { fr: "Parler à l'Archiviste", en: 'Talk to the Archivist' },
 
-  // Rafraîchissement pendant la visite : de nouvelles archives viennent d'être publiées.
-  archivesNewToast: { fr: "Nouvelles archives déposées par l'Archiviste", en: 'New archives left by the Archivist' },
+  // Rafraîchissement pendant la visite : de nouvelles transcriptions viennent d'être publiées.
+  archivesNewToast: { fr: "Nouvelles transcriptions publiées par l'Archiviste", en: 'New transcripts published by the Archivist' },
 
   // Plan du musée : compteur de la salle des Archives (étiquette et légende)
   archivesMapCount: { fr: '{seen}/{total} archives consultées', en: '{seen}/{total} archives visited' },

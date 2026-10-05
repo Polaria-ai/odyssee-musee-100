@@ -1,8 +1,8 @@
 /**
- * Charge le programme de la soirée et les archives déposées par l'Archiviste :
- *  - programme : Supabase (`evening_sessions`) si peuplée, sinon le programme embarqué
- *    (`EVENING_PROGRAM`) — un programme vide n'a pas de sens, le musée doit toujours en montrer un.
- *  - archives : Supabase (`session_archives`, `published = true`) si Supabase est joignable —
+ * Charge les trois tables rondes exposées dans les Archives et leurs transcriptions :
+ *  - tables rondes : Supabase (`evening_sessions`) seulement si les trois lignes sont valides,
+ *    sinon `ARCHIVE_SESSIONS` embarqué ; la liste générale du programme reste dans `eveningProgram.ts`.
+ *  - transcriptions : Supabase (`session_archives`, `published = true`) si Supabase est joignable —
  *    y compris quand la table est encore vide, ce qui est l'état normal tant que l'Archiviste n'a
  *    rien déposé — sinon `/data/evening.json` (filtré aux archives publiées), sinon aucune archive.
  *    Contrairement au programme, une réponse Supabase vide n'est PAS un repli : c'est l'état attendu
@@ -12,7 +12,7 @@
  */
 import type { EveningSession, EveningSource, SessionArchive } from '../types'
 import { EveningSessionSchema, SessionArchiveSchema } from './eveningSchema'
-import { EVENING_PROGRAM } from './eveningProgram'
+import { ARCHIVE_SESSIONS, ARCHIVE_SESSION_IDS } from './eveningProgram'
 import { getSupabase } from './supabaseClient'
 
 const SUPABASE_TIMEOUT_MS = 4000
@@ -59,8 +59,7 @@ function mapArchiveRow(row: unknown): unknown {
   const r = row as Record<string, unknown>
   return {
     sessionId: r.session_id,
-    summary: { fr: r.summary_fr ?? '', en: r.summary_en ?? '' },
-    quotes: Array.isArray(r.quotes) ? r.quotes : [],
+    transcript: { fr: r.transcript_fr ?? '', en: r.transcript_en ?? '' },
     archivedAt: r.archived_at,
     published: r.published ?? false,
   }
@@ -91,13 +90,31 @@ async function loadSessionsFromSupabase(): Promise<EveningSession[] | null> {
     let invalid = 0
     for (const raw of data) {
       const parsed = EveningSessionSchema.safeParse(mapSessionRow(raw))
-      if (parsed.success) sessions.push(parsed.data)
-      else invalid += 1
+      if (!parsed.success) {
+        invalid += 1
+        continue
+      }
+      if (!ARCHIVE_SESSION_IDS.has(parsed.data.id)) continue
+      if (parsed.data.kind !== 'table-ronde') {
+        invalid += 1
+        continue
+      }
+      sessions.push(parsed.data)
     }
     if (invalid) warnOnce(`programme Supabase : ${invalid} séquence(s) ignorée(s) (validation).`)
     sessions.sort((a, b) => a.order - b.order)
     // Une table vide n'est pas une erreur (chantier pas encore appliqué) : repli silencieux.
-    return sessions.length ? sessions : null
+    if (!sessions.length) return null
+    const complete =
+      sessions.length === ARCHIVE_SESSIONS.length &&
+      ARCHIVE_SESSIONS.every((expected) => sessions.some((session) => session.id === expected.id))
+    if (!complete) {
+      warnOnce(
+        `programme Supabase incomplet (${sessions.length}/${ARCHIVE_SESSIONS.length} tables rondes) : repli sur le programme embarqué.`,
+      )
+      return null
+    }
+    return sessions
   } catch {
     warnOnce('programme Supabase indisponible : repli sur le programme embarqué.')
     return null
@@ -132,7 +149,9 @@ async function loadArchivesFromSupabase(): Promise<Record<string, SessionArchive
     let invalid = 0
     for (const raw of data) {
       const parsed = SessionArchiveSchema.safeParse(mapArchiveRow(raw))
-      if (parsed.success && parsed.data.published) archives[parsed.data.sessionId] = parsed.data
+      if (parsed.success && parsed.data.published && ARCHIVE_SESSION_IDS.has(parsed.data.sessionId)) {
+        archives[parsed.data.sessionId] = parsed.data
+      }
       else if (!parsed.success) invalid += 1
     }
     if (invalid) warnOnce(`archives Supabase : ${invalid} archive(s) ignorée(s) (validation).`)
@@ -166,7 +185,9 @@ async function loadArchivesFromStatic(): Promise<Record<string, SessionArchive> 
       const parsed = SessionArchiveSchema.safeParse(raw)
       // Seules les archives publiées sont affichées : `/data/evening.json` peut contenir des
       // brouillons (published = false), écrits par `scripts/import-evening.ts` avant relecture.
-      if (parsed.success && parsed.data.published) archives[parsed.data.sessionId] = parsed.data
+      if (parsed.success && parsed.data.published && ARCHIVE_SESSION_IDS.has(parsed.data.sessionId)) {
+        archives[parsed.data.sessionId] = parsed.data
+      }
     }
     return archives
   } catch {
@@ -188,7 +209,7 @@ export async function loadEvening(): Promise<{
 }> {
   const [supabaseSessions, supabaseArchives] = await Promise.all([loadSessionsFromSupabase(), loadArchivesFromSupabase()])
 
-  const sessions = supabaseSessions ?? EVENING_PROGRAM
+  const sessions = supabaseSessions ?? ARCHIVE_SESSIONS
   const source: EveningSource = supabaseSessions ? 'supabase' : 'program'
 
   const archives = supabaseArchives ?? (await loadArchivesFromStatic()) ?? {}

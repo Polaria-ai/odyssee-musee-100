@@ -307,6 +307,10 @@ export const EVENING_PROGRAM: EveningSession[] = [
   },
 ]
 
+/** Seules ces séquences ont une vitrine dans les Archives de 2040. */
+export const ARCHIVE_SESSIONS: EveningSession[] = EVENING_PROGRAM.filter((session) => session.kind === 'table-ronde')
+export const ARCHIVE_SESSION_IDS: ReadonlySet<string> = new Set(ARCHIVE_SESSIONS.map((session) => session.id))
+
 // ---------------------------------------------------------------------------
 // Informations générales de la soirée, pour un panneau d'affichage (source B + point du 24/09).
 // ---------------------------------------------------------------------------

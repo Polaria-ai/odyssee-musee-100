@@ -1,6 +1,6 @@
 /**
  * Salle des Archives de 2040 : rendu 3D complet (voir `docs/DESIGN.md`, `docs/ARCHITECTURE.md`).
- * Assemble l'ambiance fixe (`room/RoomShell.tsx`), l'Archiviste et une vitrine par séquence
+ * Assemble l'ambiance fixe (`room/RoomShell.tsx`), l'Archiviste et les trois vitrines des tables rondes
  * (`room/Vitrine.tsx`). La salle est accrochée au sud du hall et se rejoint à pied (WEL-888). Propriétaire : workflow « Archives de 2040 » (module
  * salle 3D, WEL-881). Contrat (signature) : voir `docs/ARCHITECTURE.md`.
  */
