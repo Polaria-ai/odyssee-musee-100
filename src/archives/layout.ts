@@ -10,6 +10,7 @@
 import type { AABB, ArchivesLayout, ArchiveSlot, EveningSession, MuseumLayout, Placement, Vec2 } from '../types'
 import { archivesDoor, wingThemes } from '../styles/tokens'
 import { aabb, xWall, zWall } from '../world/collision'
+import { compactObjectCollider } from '../world/objectColliders'
 import { archivesRoomStrings } from './strings'
 import {
   DOOR_CLEARANCE,
@@ -75,6 +76,8 @@ function buildCandidates(bounds: AABB, originX: number): Candidate[] {
 /**
  * Colliders de la salle, pour le plan complet. Le mur nord est percé de la porte (il double le mur
  * sud du hall, déjà percé au même endroit) : la salle reste close même testée seule.
+ * Les vitrines, le socle de l'Archiviste et le pupitre gardent un noyau solide
+ * réduit de moitié en X/Z ; leurs dimensions de rendu restent inchangées.
  */
 function buildColliders(bounds: AABB, slots: ArchiveSlot[], archivist: Placement): AABB[] {
   const doorMin = archivesDoor.x - archivesDoor.width / 2
@@ -89,13 +92,13 @@ function buildColliders(bounds: AABB, slots: ArchiveSlot[], archivist: Placement
   ]
   const r = VITRINE_FOOTPRINT_RADIUS
   for (const s of slots) {
-    colliders.push(aabb(s.position[0] - r, s.position[0] + r, s.position[2] - r, s.position[2] + r))
+    colliders.push(compactObjectCollider(aabb(s.position[0] - r, s.position[0] + r, s.position[2] - r, s.position[2] + r)))
   }
   const pr = 0.4
-  colliders.push(aabb(archivist.position.x - pr, archivist.position.x + pr, archivist.position.z - pr, archivist.position.z + pr))
+  colliders.push(compactObjectCollider(aabb(archivist.position.x - pr, archivist.position.x + pr, archivist.position.z - pr, archivist.position.z + pr)))
   const lx = archivesDoor.x + ENTRANCE_LECTERN.dx
   const lz = bounds.minZ + ENTRANCE_LECTERN.dz
-  colliders.push(aabb(lx - ENTRANCE_LECTERN.halfWidth, lx + ENTRANCE_LECTERN.halfWidth, lz - ENTRANCE_LECTERN.halfDepth, lz + ENTRANCE_LECTERN.halfDepth))
+  colliders.push(compactObjectCollider(aabb(lx - ENTRANCE_LECTERN.halfWidth, lx + ENTRANCE_LECTERN.halfWidth, lz - ENTRANCE_LECTERN.halfDepth, lz + ENTRANCE_LECTERN.halfDepth)))
   return colliders
 }
 

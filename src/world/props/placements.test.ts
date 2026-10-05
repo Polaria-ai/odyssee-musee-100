@@ -166,6 +166,30 @@ describe('extraPropPlans / propColliders', () => {
     }
   })
 
+  it('réduit tous les noyaux solides ajoutés de moitié en X/Z, sans déplacer les objets ni créer de collider décoratif', () => {
+    const people = distributions['100 fiches par défaut']
+    const architecture = buildMuseumArchitecture(people)
+    const layout = buildMuseumLayout(people)
+    const objectsBefore = JSON.stringify(allPropPlans(architecture, layout))
+    const solidItems = allExtraItems(architecture).filter((it) => {
+      const r = EXTRA_FOOTPRINT[it.key]
+      return r !== undefined && isClearSpot(it.position, r, layout, it.wing)
+    })
+    const boxes = propColliders(architecture, layout)
+    expect(boxes).toHaveLength(solidItems.length)
+    for (const [i, item] of solidItems.entries()) {
+      const originalRadius = EXTRA_FOOTPRINT[item.key]!
+      const box = boxes[i]
+      // La boîte d'origine faisait 2r × 2r : le noyau fait r × r, soit 25 % de sa surface.
+      expect(box.maxX - box.minX).toBeCloseTo(originalRadius)
+      expect(box.maxZ - box.minZ).toBeCloseTo(originalRadius)
+      expect((box.maxX - box.minX) * (box.maxZ - box.minZ)).toBeCloseTo(originalRadius ** 2)
+      expect((box.minX + box.maxX) / 2).toBeCloseTo(item.position.x)
+      expect((box.minZ + box.maxZ) / 2).toBeCloseTo(item.position.z)
+    }
+    expect(JSON.stringify(allPropPlans(architecture, layout))).toBe(objectsBefore)
+  })
+
   it('allPropPlans ne perd ni le décor `architecture.decorPlacements` ni les extras', () => {
     const people = distributions['100 fiches par défaut']
     const architecture = buildMuseumArchitecture(people)

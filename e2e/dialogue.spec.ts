@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { closeAnyDialogue, dismissWelcomeDialogue, enterMuseum, gotoMusee, museeState, openPersonViaState, closePersonViaState } from './support/museeApi'
+import { closeAnyDialogue, collectConsoleIssues, dismissWelcomeDialogue, enterMuseum, gotoMusee, museeState, openPersonViaState, closePersonViaState } from './support/museeApi'
 
 // Le texte de Rémi testé ici (accueil, tampons) est celui en français ; voir title-lang.spec.ts pour
 // pourquoi la locale doit être fixée explicitement.
@@ -49,40 +49,43 @@ test('accueil de Rémi : on arrive directement dans le jeu, la bulle de dialogue
   await expect(page.getByTestId('game-canvas')).toBeVisible()
 })
 
-test('accueil de Rémi : tap pour avancer, huit répliques dont l’invitation à parler à Rémi au comptoir, puis il se ferme', async ({ page }) => {
-  await gotoMusee(page)
-  await enterMuseum(page)
-  const box = page.getByTestId('dialogue-box')
-  await expect(box).toBeVisible()
+for (const lang of ['fr', 'en'] as const) {
+  test(`accueil de Rémi (${lang}) : une seule bulle de 30 mots maximum, tap pour révéler puis fermer`, async ({ page }, testInfo) => {
+    const issues = collectConsoleIssues(page)
+    await gotoMusee(page)
+    // Bascule par le vrai bouton du titre : l'accueil doit employer la langue choisie avant l'entrée.
+    if (lang === 'en') await page.getByTestId('lang-toggle').click()
+    await enterMuseum(page)
+    const box = page.getByTestId('dialogue-box')
+    await expect(box).toBeVisible()
 
-  // Chaque tap termine la frappe de la réplique, le suivant passe à la réplique d'après : les huit défilent dans l'ordre.
-  const expected = [
-    'Bienvenue au Musée des 100. Je suis Rémi Godeau',
-    "Il s'inscrit dans la soirée",
-    'Trois ailes accompagnent les trois tables rondes',
-    'Pour vous déplacer, glissez le pouce',
-    "Approchez-vous d'un portrait",
-    'Le rallye des tampons',
-    'Au sud du hall, une porte mène aux Archives de 2040',
-    // Dernière réplique : l'invitation à venir discuter avec Rémi au comptoir.
-    'Parler à Rémi',
-  ]
-  for (const [index, text] of expected.entries()) {
-    await revealLine(page, index)
-    await expect(box).toContainText(text)
-    if (index < expected.length - 1) await box.click()
-  }
-  expect((await museeState(page)).dialogueIndex).toBe(7)
-  await expect(box).toContainText('par écrit')
+    const before = await museeState(page)
+    expect(before.lang).toBe(lang)
+    expect(before.dialogue?.id).toBe('welcome')
+    expect(before.dialogue?.lines, 'l’entrée ne doit demander qu’une bulle').toHaveLength(1)
+    const line = before.dialogue!.lines[0] as { text: Record<'fr' | 'en', string> }
+    const text = line.text[lang]
+    const wordCount = text.trim().split(/\s+/u).length
+    expect(wordCount).toBeGreaterThan(0)
+    expect(wordCount, 'l’intro doit rester drastiquement courte').toBeLessThanOrEqual(30)
 
-  // Un dernier tap ferme la bulle ; le chat ne s'est pas ouvert pour autant.
-  await box.click()
-  await expect(box).toBeHidden()
-  const state = await museeState(page)
-  expect(state.dialogue).toBeNull()
-  expect(state.remiChatOpen).toBe(false)
-  await expect(page.getByTestId('remi-chat')).toHaveCount(0)
-})
+    await revealLine(page, 0)
+    await expect(box.locator('.ui-dialogue__text > span').first()).toHaveText(text)
+    expect((await museeState(page)).dialogueIndex).toBe(0)
+    await testInfo.attach(`intro-${lang}`, { body: await page.screenshot(), contentType: 'image/png' })
+
+    // Ce tap doit vraiment fermer l'accueil, sans atteindre une deuxième réplique.
+    await box.click()
+    await expect(box).toBeHidden()
+    const after = await museeState(page)
+    expect(after.dialogue).toBeNull()
+    expect(after.remiChatOpen).toBe(false)
+    await expect(page.getByTestId('remi-chat')).toHaveCount(0)
+    await expect(page.getByTestId('stamps-button')).toBeVisible()
+    expect(issues.errors, 'aucune erreur console pendant l’entrée').toEqual([])
+    expect(issues.pageErrors, 'aucune exception navigateur pendant l’entrée').toEqual([])
+  })
+}
 
 test('« Passer » ferme l’accueil d’un coup, le jeu reste jouable et le chat fermé', async ({ page }) => {
   await gotoMusee(page)
@@ -98,18 +101,21 @@ test('« Passer » ferme l’accueil d’un coup, le jeu reste jouable et le cha
   await expect(page.getByTestId('stamps-button')).toBeVisible()
 })
 
-test('l’accueil avance au clavier (Entrée) sur PC', async ({ page }, testInfo) => {
+test('l’accueil se révèle puis se ferme au clavier (Entrée) sur PC', async ({ page }, testInfo) => {
   test.skip(testInfo.project.name !== 'desktop', 'clavier physique : projet desktop')
   await gotoMusee(page)
   await enterMuseum(page)
   await expect(page.getByTestId('dialogue-box')).toBeVisible()
 
-  // Une première frappe termine la ligne en cours, la suivante passe à la réplique d'après.
-  for (let i = 0; i < 40 && (await museeState(page)).dialogueIndex < 1; i++) {
-    await page.keyboard.press('Enter')
-    await page.waitForTimeout(40)
-  }
-  expect((await museeState(page)).dialogueIndex).toBeGreaterThanOrEqual(1)
+  const box = page.getByTestId('dialogue-box')
+  const caret = box.locator('.ui-dialogue__caret')
+  // Si la frappe automatique n'est pas déjà terminée, Entrée la révèle ; la suivante ferme l'unique bulle.
+  if (!(await caret.isVisible())) await page.keyboard.press('Enter')
+  await expect(caret).toBeVisible()
+  expect((await museeState(page)).dialogueIndex).toBe(0)
+  await page.keyboard.press('Enter')
+  await expect(box).toBeHidden()
+  expect((await museeState(page)).dialogue).toBeNull()
   expect((await museeState(page)).remiChatOpen).toBe(false)
 })
 

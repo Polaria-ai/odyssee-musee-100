@@ -83,6 +83,17 @@ describe('buildRoomGeometry / buildComingSoonBarrierGeometry — fusion sans exc
   it('aucune arche (toutes les ailes vides) : géométrie nulle', () => {
     expect(buildDoorArchesGeometry([])).toBeNull()
   })
+
+  it('les extrémités visibles de chaque cimaise respectent son collider, sans plinthe dans le passage', () => {
+    const architecture = buildMuseumArchitecture(generatePlaceholderPeople(100))
+    for (const o of architecture.occluders) {
+      const geo = buildOccluderGeometry(o.box, o.height, charter3d.rooms[o.wing].wall)
+      geo.computeBoundingBox()
+      expect(geo.boundingBox!.min.x).toBeCloseTo(o.box.minX, 5)
+      expect(geo.boundingBox!.max.x).toBeCloseTo(o.box.maxX, 5)
+      geo.dispose()
+    }
+  })
 })
 
 // --- Charte 3D (docs/CHARTE-3D.md) : l'architecture n'emploie que les couleurs de `charter3d` -----------------
@@ -336,4 +347,3 @@ describe('sols texturés — UV monde', () => {
     expect(raised.length).toBeGreaterThan(0)
   })
 })
-

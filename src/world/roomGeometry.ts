@@ -686,7 +686,9 @@ export function buildOccluderGeometry(footprint: { minX: number; maxX: number; m
   const cz = (footprint.minZ + footprint.maxZ) / 2
   const sx = footprint.maxX - footprint.minX
   const sz = footprint.maxZ - footprint.minZ
-  const parts = [box(cx, height / 2, cz, sx, height, sz, wallColor), box(cx, PLINTH_HEIGHT / 2, cz, sx + 0.05, PLINTH_HEIGHT, sz + 0.05, charter3d.rooms.hall.plinth)]
+  // La plinthe peut déborder en épaisseur, mais reste dans les extrémités longitudinales de la
+  // cimaise : les traversées visibles ont exactement la même largeur que leurs colliders.
+  const parts = [box(cx, height / 2, cz, sx, height, sz, wallColor), box(cx, PLINTH_HEIGHT / 2, cz, sx, PLINTH_HEIGHT, sz + 0.05, charter3d.rooms.hall.plinth)]
   return mergeAll(parts)
 }
 

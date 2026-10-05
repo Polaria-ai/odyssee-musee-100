@@ -3,10 +3,13 @@ import type { ExhibitWingId, FrameSlot, MuseumLayout, Person, Vec2 } from '../ty
 import { EXHIBIT_WINGS } from '../types'
 import { archBoxHeight, buildMuseumArchitecture, buildMuseumLayout } from './layout'
 import { circleIntersectsAabb, pointInAabb } from './collision'
-import { dims, DOOR_WIDTH, MIN_WALKABLE_CORRIDOR } from './constants'
+import { CIMAISE_THICKNESS, dims, DOOR_WIDTH, FRAME_WALL_OFFSET, HALL_HALF_WIDTH, MIN_WALKABLE_CORRIDOR, ROW_STEP, VIEW_DISTANCE, WING_WIDTH, XWING_CROSS_PASSAGE_WIDTH, XWING_LANE_COUNT, XWING_LANE_ENTRY, XWING_LANE_STEP, XWING_REAR_PASSAGE_WIDTH } from './constants'
 import { archivesDoor } from '../styles/tokens'
 import { occludesPlayer, worstCaseCameraFor } from './occlusion'
 import { generatePlaceholderPeople } from '../data/placeholder'
+import { resolveMovement } from '../player/physics'
+import { playerColliders } from '../scene/playerColliders'
+import { buildFrameGeometry } from './frameGeometry'
 
 const GRID_STEP = 0.25
 
@@ -36,8 +39,11 @@ function makePeople(counts: Record<ExhibitWingId, number>): Person[] {
 const distributions: Record<string, Person[]> = {
   '100 fiches par défaut': generatePlaceholderPeople(100),
   '100/0/0': makePeople({ infrastructures: 100, industrialisation: 0, culture: 0 }),
+  '0/0/100': makePeople({ infrastructures: 0, industrialisation: 0, culture: 100 }),
+  '30/40/30 (répartition des données locales)': makePeople({ infrastructures: 30, industrialisation: 40, culture: 30 }),
   '60/30/10': makePeople({ infrastructures: 60, industrialisation: 30, culture: 10 }),
   '1 personne': makePeople({ infrastructures: 0, industrialisation: 1, culture: 0 }),
+  'petites salles latérales (2/0/3)': makePeople({ infrastructures: 2, industrialisation: 0, culture: 3 }),
   '120 personnes': generatePlaceholderPeople(120),
 }
 
@@ -53,6 +59,7 @@ interface WalkGrid {
   minX: number
   minZ: number
   walkable: Uint8Array
+  reachableFrom: Map<number, Uint8Array>
   toCell: (p: Vec2) => { cx: number; cz: number }
 }
 
@@ -78,6 +85,7 @@ function buildWalkGrid(layout: MuseumLayout): WalkGrid {
     minX,
     minZ,
     walkable,
+    reachableFrom: new Map(),
     toCell: (p) => ({ cx: Math.round((p.x - minX) / GRID_STEP), cz: Math.round((p.z - minZ) / GRID_STEP) }),
   }
 }
@@ -92,6 +100,8 @@ function isReachable(grid: WalkGrid, from: Vec2, to: Vec2): boolean {
   const goal = grid.toCell(to)
   if (!inBounds(start.cx, start.cz) || !walkable[idx(start.cx, start.cz)]) return false
   if (!inBounds(goal.cx, goal.cz) || !walkable[idx(goal.cx, goal.cz)]) return false
+  const cached = grid.reachableFrom.get(idx(start.cx, start.cz))
+  if (cached) return cached[idx(goal.cx, goal.cz)] === 1
 
   const visited = new Uint8Array(cols * rows)
   const queue: number[] = [start.cx, start.cz]
@@ -100,7 +110,6 @@ function isReachable(grid: WalkGrid, from: Vec2, to: Vec2): boolean {
   while (head < queue.length) {
     const cx = queue[head++]
     const cz = queue[head++]
-    if (cx === goal.cx && cz === goal.cz) return true
     for (const [dx, dz] of [
       [1, 0],
       [-1, 0],
@@ -116,7 +125,8 @@ function isReachable(grid: WalkGrid, from: Vec2, to: Vec2): boolean {
       queue.push(nx, nz)
     }
   }
-  return false
+  grid.reachableFrom.set(idx(start.cx, start.cz), visited)
+  return visited[idx(goal.cx, goal.cz)] === 1
 }
 
 function roomFor(layout: MuseumLayout, wing: string) {
@@ -203,14 +213,11 @@ describe.each(Object.entries(distributions))('buildMuseumLayout — %s', (_label
     }
   })
 
-  // Timeout relevé (défaut 5000 ms) : BFS sur une grille de ~0,25 m pour les grandes ailes (120
-  // personnes) peut dépasser 5 s sous charge machine (plusieurs agents en parallèle sur ce worktree,
-  // WEL-874) — flake préexistant, reproduit aussi hors de ce chantier (`git stash` + relance). Pas un
-  // ralentissement introduit ici : `colliders`/`buildWalkGrid` ne sont pas touchés par ce module.
+  // Le flood fill est mémorisé pour ce spawn : une seule exploration vérifie tous les portraits.
   it(
     'un chemin libre existe du spawn à chaque viewPoint',
     () => {
-      const grid = buildWalkGrid(layout)
+      const grid = buildWalkGrid({ ...layout, colliders: playerColliders(layout, buildMuseumArchitecture(people)) })
       for (const f of layout.frames) {
         expect(isReachable(grid, layout.spawn.position, f.viewPoint), `pas de chemin vers ${f.personId}`).toBe(true)
       }
@@ -373,13 +380,119 @@ describe('mission occultation (V2) — cimaises estompables', () => {
       const byWing = new Map<ExhibitWingId, typeof architecture.occluders>()
       for (const o of architecture.occluders) byWing.set(o.wing, [...(byWing.get(o.wing) ?? []), o])
       for (const [wing, list] of byWing) {
-        const sorted = [...list].sort((a, b) => a.box.minZ - b.box.minZ)
+        // Plusieurs segments longitudinaux appartiennent à la même lane : comparer les lanes,
+        // jamais deux morceaux séparés par la traversée (ils partagent exactement le même Z).
+        const lanes = new Map(list.map((o) => [o.box.minZ, o]))
+        const sorted = [...lanes.values()].sort((a, b) => a.box.minZ - b.box.minZ)
         for (let i = 1; i < sorted.length; i++) {
           const gap = sorted[i].box.minZ - sorted[i - 1].box.maxZ
           expect(gap, `${wing} : écart insuffisant entre les cimaises ${i - 1} et ${i}`).toBeGreaterThanOrEqual(MIN_WALKABLE_CORRIDOR)
         }
       }
     })
+  }
+})
+
+describe('salles latérales — traversées au milieu et boucle au fond', () => {
+  const frameGeometry = buildFrameGeometry()
+  frameGeometry.computeBoundingBox()
+  const frameHalfWidth = (frameGeometry.boundingBox!.max.x - frameGeometry.boundingBox!.min.x) / 2
+  frameGeometry.dispose()
+
+  for (const wing of ['infrastructures', 'culture'] as const) {
+    for (const count of [1, 2, 3, 4, 5, 10, 33, 34, 60, 100]) {
+      describe(`${wing}, ${count} portraits`, () => {
+        const people = makePeople({ infrastructures: 0, industrialisation: 0, culture: 0, [wing]: count })
+        const layout = buildMuseumLayout(people)
+        const architecture = buildMuseumArchitecture(people)
+        const colliders = playerColliders(layout, architecture)
+        const room = roomFor(layout, wing)
+        const dir = wing === 'infrastructures' ? -1 : 1
+        const hallX = dir * HALL_HALF_WIDTH
+        const xAt = (distance: number) => hallX + dir * distance
+        const rows = Math.ceil(count / XWING_LANE_COUNT)
+        const passageStart = XWING_LANE_ENTRY + Math.ceil(rows / 2) * ROW_STEP
+        const passageEnd = passageStart + XWING_CROSS_PASSAGE_WIDTH
+        const laneEnd = XWING_LANE_ENTRY + rows * ROW_STEP + XWING_CROSS_PASSAGE_WIDTH
+        const farX = dir === -1 ? room.bounds.minX : room.bounds.maxX
+        const middleX = xAt((passageStart + passageEnd) / 2)
+        const rearX = farX - dir * 3.0
+        const northZ = -WING_WIDTH / 2 + dims.wallThickness / 2 + FRAME_WALL_OFFSET + VIEW_DISTANCE
+        const southZ = -WING_WIDTH / 2 + (XWING_LANE_COUNT - 1) * XWING_LANE_STEP + CIMAISE_THICKNESS / 2 + FRAME_WALL_OFFSET + VIEW_DISTANCE
+        const occluders = architecture.occluders.filter((o) => o.wing === wing)
+
+        const walkTo = (from: Vec2, to: Vec2): Vec2 => {
+          const arrived = resolveMovement(from, { x: to.x - from.x, z: to.z - from.z }, dims.playerRadius, colliders)
+          expect(arrived.x, `trajet X ${JSON.stringify(from)} → ${JSON.stringify(to)}`).toBeCloseTo(to.x, 6)
+          expect(arrived.z, `trajet Z ${JSON.stringify(from)} → ${JSON.stringify(to)}`).toBeCloseTo(to.z, 6)
+          return arrived
+        }
+
+        it('conserve tous les portraits et leur moulure entièrement sur le bon support', () => {
+          expect(layout.frames).toHaveLength(count)
+          expect(occluders).toHaveLength(rows === 1 ? 2 : 4)
+          for (const frame of layout.frames) {
+            const owners = occluders.filter((o) => o.personIds.includes(frame.personId))
+            const isMainWall = Math.abs(frame.position[2] - (-WING_WIDTH / 2 + dims.wallThickness / 2 + FRAME_WALL_OFFSET)) < 1e-6
+            expect(owners).toHaveLength(isMainWall ? 0 : 1)
+            const support = owners[0]?.box ?? architecture.rooms.find((r) => r.room.id === wing)!.walls[0].box
+            expect(frame.position[0] - frameHalfWidth).toBeGreaterThanOrEqual(support.minX - 1e-6)
+            expect(frame.position[0] + frameHalfWidth).toBeLessThanOrEqual(support.maxX + 1e-6)
+            expect(frame.position[2]).toBeCloseTo(support.maxZ + FRAME_WALL_OFFSET, 6)
+          }
+          const attached = occluders.flatMap((o) => o.personIds)
+          expect(new Set(attached).size).toBe(attached.length)
+          expect(attached.every((id) => people.some((p) => p.id === id))).toBe(true)
+        })
+
+        it('ouvre 2,4 m entre les groupes, et 3,6 m jusqu’à la face intérieure du fond', () => {
+          const laneGroups = new Map<number, typeof occluders>()
+          for (const o of occluders) laneGroups.set(o.box.minZ, [...(laneGroups.get(o.box.minZ) ?? []), o])
+          for (const lane of laneGroups.values()) {
+            const segments = lane.map((o) => [dir * (o.box.minX - hallX), dir * (o.box.maxX - hallX)].sort((a, b) => a - b)).sort((a, b) => a[0] - b[0])
+            expect(segments[0]).toEqual(expect.arrayContaining([XWING_LANE_ENTRY]))
+            expect(segments[0][1]).toBeCloseTo(passageStart, 6)
+            if (rows > 1) {
+              expect(segments[1][0]).toBeCloseTo(passageEnd, 6)
+              expect(segments[1][1]).toBeCloseTo(laneEnd, 6)
+            }
+          }
+          expect(Math.abs(farX - xAt(laneEnd)) - dims.wallThickness / 2).toBeCloseTo(XWING_REAR_PASSAGE_WIDTH, 6)
+          expect(occluders.every((o) => layout.colliders.some((c) => JSON.stringify(c) === JSON.stringify(o.box)))).toBe(true)
+        })
+
+        it('traverse les trois couloirs au milieu avec la physique réelle, mobilier inclus', () => {
+          // Tester aussi les bords du passage : aucun meuble automatique n'en condamne l'entrée.
+          for (const u of [passageStart + dims.playerRadius + 0.05, (passageStart + passageEnd) / 2, passageEnd - dims.playerRadius - 0.05]) {
+            const x = xAt(u)
+            walkTo({ x, z: southZ }, { x, z: northZ })
+            walkTo({ x, z: northZ }, { x, z: southZ })
+          }
+        })
+
+        it('boucle continûment au fond puis revient par la traversée centrale, sans retourner à la porte', () => {
+          const lastFrameX = xAt(laneEnd - ROW_STEP / 2 - (rows === 1 ? XWING_CROSS_PASSAGE_WIDTH : 0))
+          let position = { x: lastFrameX, z: southZ }
+          for (const point of [
+            { x: rearX, z: southZ },
+            { x: rearX, z: northZ },
+            { x: middleX, z: northZ },
+            { x: middleX, z: southZ },
+            { x: lastFrameX, z: southZ },
+          ]) position = walkTo(position, point)
+        })
+
+        it('le mur du fond et les deux murs extérieurs empêchent toujours toute sortie', () => {
+          const towardFar = resolveMovement({ x: rearX, z: northZ }, { x: dir * 20, z: 0 }, dims.playerRadius, colliders)
+          expect(dir * (farX - towardFar.x)).toBeCloseTo(dims.wallThickness / 2 + dims.playerRadius, 6)
+          for (const side of [-1, 1]) {
+            const start = { x: middleX, z: side * 5 }
+            const towardSide = resolveMovement(start, { x: 0, z: side * 20 }, dims.playerRadius, colliders)
+            expect(side * towardSide.z).toBeCloseTo(WING_WIDTH / 2 - dims.wallThickness / 2 - dims.playerRadius, 6)
+          }
+        })
+      })
+    }
   }
 })
 

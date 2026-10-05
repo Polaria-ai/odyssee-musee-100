@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import type { EveningSession, Vec2 } from '../types'
-import { archivesCapacity, buildArchivesLayout, mergeArchivesIntoLayout } from './layout'
-import { circleIntersectsAabb, pointInAabb } from '../world/collision'
+import { archivesCapacity, buildArchivesLayout, ENTRANCE_LECTERN, mergeArchivesIntoLayout } from './layout'
+import { circleIntersectsAabb, pointInAabb, xWall, zWall } from '../world/collision'
 import { archivesDoor, dims } from '../styles/tokens'
 import { buildMuseumLayout } from '../world/layout'
 import { generatePlaceholderPeople } from '../data/placeholder'
-import { ARCHIVIST_TALK_RADIUS, DOOR_CLEARANCE, ROW_DEPTH, ROW_X_OFFSETS } from './room/constants'
+import { ARCHIVIST_TALK_RADIUS, DOOR_CLEARANCE, ROW_DEPTH, ROW_X_OFFSETS, VITRINE_FOOTPRINT_RADIUS, WALL_THICKNESS } from './room/constants'
 
 const GRID_STEP = 0.25
 const KINDS: EveningSession['kind'][] = ['ouverture', 'film', 'presentation', 'keynote', 'les100', 'magneto', 'table-ronde', 'face-a-face', 'final', 'cloture']
@@ -99,6 +99,44 @@ describe.each(counts)('buildArchivesLayout — %i séquence(s)', (count) => {
 
   it('déterminisme : deux appels identiques donnent le même JSON', () => {
     expect(JSON.stringify(buildArchivesLayout(sessions, hall))).toBe(JSON.stringify(layout))
+  })
+
+  it('garde les cinq segments de murs complets et réduit chaque objet de 75 % de surface, au même centre', () => {
+    const b = layout.room.bounds
+    expect(layout.colliders.slice(0, 5)).toEqual([
+      xWall(b.maxZ, b.minX, b.maxX, WALL_THICKNESS),
+      xWall(b.minZ, b.minX, archivesDoor.x - archivesDoor.width / 2, WALL_THICKNESS),
+      xWall(b.minZ, archivesDoor.x + archivesDoor.width / 2, b.maxX, WALL_THICKNESS),
+      zWall(b.minX, b.minZ, b.maxZ, WALL_THICKNESS),
+      zWall(b.maxX, b.minZ, b.maxZ, WALL_THICKNESS),
+    ])
+
+    const objects = [
+      ...layout.slots.map((s) => ({ x: s.position[0], z: s.position[2], width: 2 * VITRINE_FOOTPRINT_RADIUS, depth: 2 * VITRINE_FOOTPRINT_RADIUS })),
+      { ...layout.archivist.position, width: 0.8, depth: 0.8 },
+      { x: archivesDoor.x + ENTRANCE_LECTERN.dx, z: b.minZ + ENTRANCE_LECTERN.dz, width: 2 * ENTRANCE_LECTERN.halfWidth, depth: 2 * ENTRANCE_LECTERN.halfDepth },
+    ]
+    expect(layout.colliders).toHaveLength(5 + objects.length)
+    for (const [i, original] of objects.entries()) {
+      const c = layout.colliders[5 + i]
+      const width = c.maxX - c.minX
+      const depth = c.maxZ - c.minZ
+      expect(width).toBeCloseTo(original.width / 2)
+      expect(depth).toBeCloseTo(original.depth / 2)
+      expect(width * depth).toBeCloseTo(original.width * original.depth / 4)
+      expect((c.minX + c.maxX) / 2).toBeCloseTo(original.x)
+      expect((c.minZ + c.maxZ) / 2).toBeCloseTo(original.z)
+      expect(circleIntersectsAabb({ x: original.x, z: original.z }, dims.playerRadius, c)).toBe(true)
+    }
+  })
+
+  it('permet de longer les vitrines de plus près sans traverser leur centre solide', () => {
+    for (const [i, s] of layout.slots.entries()) {
+      const c = layout.colliders[5 + i]
+      const edge = { x: s.position[0] + 0.75, z: s.position[2] }
+      expect(circleIntersectsAabb(edge, dims.playerRadius, c)).toBe(false)
+      expect(circleIntersectsAabb({ x: s.position[0], z: s.position[2] }, dims.playerRadius, c)).toBe(true)
+    }
   })
 
   it('une vitrine par séquence, dans le même ordre', () => {

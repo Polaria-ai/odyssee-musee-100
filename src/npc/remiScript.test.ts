@@ -34,34 +34,32 @@ function reachableDialogues(): Array<{ event: RemiEvent; dialogue: Dialogue }> {
 }
 
 describe('remiDialogue', () => {
-  it('welcome : entre 5 et 8 répliques, bien formées, id stable', () => {
+  it('welcome : une seule bulle bien formée, id stable', () => {
     const d = remiDialogue({ kind: 'welcome' })
     expect(d.id).toBe('welcome')
-    expect(d.lines.length).toBeGreaterThanOrEqual(5)
-    expect(d.lines.length).toBeLessThanOrEqual(8)
+    expect(d.lines).toHaveLength(1)
     expectWellFormed(d)
   })
 
-  it('welcome : Rémi se présente, avec son nom et son titre, en français comme en anglais', () => {
-    const first = remiDialogue({ kind: 'welcome' }).lines[0].text
-    expect(first.fr).toContain('Rémi Godeau')
-    expect(first.fr).toContain("directeur de la rédaction de L'Opinion")
-    expect(first.en).toContain('Rémi Godeau')
-    expect(first.en).toContain("L'Opinion")
+  it('welcome : au plus 30 mots et deux phrases dans chaque langue', () => {
+    const { fr, en } = remiDialogue({ kind: 'welcome' }).lines[0].text
+    for (const text of [fr, en]) {
+      const words = text.trim().split(/\s+/).filter((word) => /[\p{L}\p{N}]/u.test(word))
+      expect(words.length).toBeLessThanOrEqual(30)
+      expect(text.match(/[.!?]/g)?.length ?? 0).toBeLessThanOrEqual(2)
+    }
   })
 
-  it('welcome : présente les trois ailes, le rallye des tampons et les Archives de 2040', () => {
-    const d = remiDialogue({ kind: 'welcome' })
-    const fr = d.lines.map((l) => l.text.fr).join('\n')
-    const en = d.lines.map((l) => l.text.en).join('\n')
-    for (const wing of ['Infrastructures', 'Industrialisation', 'Culture']) {
-      expect(fr).toContain(wing)
-      expect(en).toContain(wing)
-    }
-    expect(fr).toMatch(/tampon/)
-    expect(en).toMatch(/stamp/)
-    expect(d.lines.some((l) => /2040/.test(l.text.fr))).toBe(true)
-    expect(d.lines.some((l) => /2040/.test(l.text.en))).toBe(true)
+  it('welcome : invite à explorer les portraits, les tampons et les Archives de 2040', () => {
+    const { fr, en } = remiDialogue({ kind: 'welcome' }).lines[0].text
+    expect(fr).toContain('Musée des 100')
+    expect(en).toContain('Museum of the 100')
+    expect(fr).toContain('portraits')
+    expect(en).toContain('portraits')
+    expect(fr).toContain('tampons')
+    expect(en).toContain('stamps')
+    expect(fr).toContain('Archives de 2040')
+    expect(en).toContain('2040 Archives')
   })
 
   it('complete : au moins une ligne, bien formée, id stable', () => {

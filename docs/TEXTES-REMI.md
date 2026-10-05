@@ -14,7 +14,6 @@ Il ne parle pas à voix haute. À l'entrée dans le musée (tant qu'aucun portra
 2. Confirmer les points suivants, qui engagent son nom :
    - son titre, « directeur de la rédaction de L'Opinion » (anglais proposé : « editor-in-chief of L'Opinion ») ;
    - l'intitulé « Les 100 qui font l'IA en Europe », repris tel quel du titre de l'écran d'accueil du jeu, et « 2026 : l'Odyssée de l'IA » pour la soirée ;
-   - la phrase qui associe les trois ailes du musée aux trois tables rondes de la soirée (accueil, réplique 3) ;
    - le vouvoiement, choisi partout.
 3. Ajouter ou retirer ce qu'il souhaite : chaque réplique peut être réécrite, raccourcie ou supprimée.
 
@@ -30,18 +29,11 @@ Il ne parle pas à voix haute. À l'entrée dans le musée (tant qu'aucun portra
 
 ### Dialogue d'accueil
 
-*Affiché à l'entrée du visiteur dans le musée, tant qu'il n'a ouvert aucun portrait.*
+*Une seule bulle courte, affichée à l'entrée du visiteur dans le musée, tant qu'il n'a ouvert aucun portrait. Les aides de déplacement restent accessibles dans le jeu.*
 
 | # | Français | English | Validation Rémi |
 |---|---|---|---|
-| 1 | Bienvenue au Musée des 100. Je suis Rémi Godeau, directeur de la rédaction de L'Opinion, et je vous accueille. | Welcome to the Museum of the 100. I'm Rémi Godeau, editor-in-chief of L'Opinion, and I'm pleased to welcome you. | |
-| 2 | Il s'inscrit dans la soirée « 2026 : l'Odyssée de l'IA » et présente « Les 100 qui font l'IA en Europe ». | It is part of the evening “The AI Odyssey · 2026” and presents “The 100 people shaping AI in Europe”. | |
-| 3 | Trois ailes accompagnent les trois tables rondes : Infrastructures à l'ouest, Industrialisation au nord, Culture à l'est. | Three wings accompany the three round tables: Infrastructures to the west, Industrialisation to the north, Culture to the east. | |
-| 4 | Pour vous déplacer, glissez le pouce sur l'écran, ou touchez le sol à l'endroit où vous souhaitez aller. | To move around, slide your thumb on the screen, or tap the floor where you would like to go. | |
-| 5 | Approchez-vous d'un portrait et touchez « Regarder » pour ouvrir sa fiche. | Step up to a portrait and tap “Look” to open its card. | |
-| 6 | Le rallye des tampons : lisez plusieurs portraits d'une même aile, et un tampon s'ajoute à votre carnet. | The stamp rally: read several portraits in the same wing, and a stamp is added to your stamp card. | |
-| 7 | Au sud du hall, une porte mène aux Archives de 2040 : chaque séquence de la soirée y a sa vitrine. | To the south of the hall, a door leads to the 2040 Archives: each session of the evening has its own display case. | |
-| 8 | Je reste à l'accueil : au comptoir, touchez « Parler à Rémi » pour me poser vos questions par écrit. | I'll be here at the front desk: at the counter, tap “Talk to Rémi” to ask me your questions in writing. | |
+| 1 | Bienvenue au Musée des 100. Explorez les portraits, collectionnez les tampons et découvrez les Archives de 2040. | Welcome to the Museum of the 100. Explore the portraits, collect stamps and discover the 2040 Archives. | |
 
 ## 2. Conversation au comptoir
 
@@ -143,7 +135,7 @@ Ces phrases sont prononcées au nom de Rémi par l'interface du chat, sans passe
 
 ### 5.0 Premier message du chat
 
-*Affiché dès l'ouverture du chat au comptoir, sans appel au serveur : l'accueil complet (section 1) a déjà été donné dans la bulle du jeu, le chat ne le répète pas. Les suggestions de questions s'affichent juste dessous.*
+*Affiché dès l'ouverture du chat au comptoir, sans appel au serveur : le court accueil (section 1) a déjà été donné dans la bulle du jeu, le chat ne le répète pas. Les suggestions de questions s'affichent juste dessous.*
 
 | # | Français | English | Validation Rémi |
 |---|---|---|---|
@@ -197,4 +189,3 @@ Ces phrases sont prononcées au nom de Rémi par l'interface du chat, sans passe
 Validé par : ______________________  Date : ____ / ____ / 2026
 
 Corrections demandées, le cas échéant :
-

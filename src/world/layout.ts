@@ -54,11 +54,14 @@ import {
   STAMP_STATION_SIZE,
   VIEW_DISTANCE,
   WING_WIDTH,
+  XWING_CROSS_PASSAGE_WIDTH,
   XWING_LANE_COUNT,
   XWING_LANE_ENTRY,
   XWING_LANE_STEP,
+  XWING_REAR_PASSAGE_WIDTH,
 } from './constants'
 import { aabb, aabbUnion, xWall, zWall } from './collision'
+import { compactObjectCollider } from './objectColliders'
 import { roomLabels } from './strings'
 
 const DOOR_HALF = DOOR_WIDTH / 2
@@ -320,7 +323,9 @@ function wingDecorPlacements(room: RoomLayout): DecorPlacement[] {
  * `XWING_LANE_COUNT` cimaises parallèles au mur principal (une rangée de cadres face à +Z chacune)
  * plutôt que des cloisons perpendiculaires (« épis », face ±X, invisibles de face dans tous les cas).
  * Les cimaises intérieures démarrent après `NEAR_MARGIN` : le joueur peut se répartir librement entre
- * les couloirs juste après la porte, avant la première rangée.
+ * les couloirs juste après la porte, avant la première rangée. Une traversée alignée sépare les
+ * deux groupes de portraits au milieu, puis les cimaises s'arrêtent avant le mur du fond : chaque
+ * couloir peut ainsi rejoindre les deux autres sans revenir à l'entrée.
  *
  * Seul le mur principal (lane 0) est un mur « dur » fusionné dans la salle : il est la limite nord de
  * l'aile, donc jamais entre la caméra (toujours au sud du joueur) et le joueur. Les cimaises
@@ -334,9 +339,17 @@ function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: 
   const wallZNear = WING_WIDTH / 2 // côté caméra, coupé, jamais de cadre
 
   const rows = Math.ceil(count / XWING_LANE_COUNT)
-  const length = NEAR_MARGIN + rows * ROW_STEP + END_MARGIN
+  // Une rangée occupe une cellule de ROW_STEP : sa moulure complète reste à l'intérieur de cette
+  // cellule. Commencer les cellules au début des cimaises évite que le premier cadre déborde de son
+  // support (ancien centre à 3,6 m pour une cimaise commençant à 3 m, moulure large de 1,82 m).
+  const rowStart = Math.max(NEAR_MARGIN, XWING_LANE_ENTRY)
+  const firstGroupRows = Math.ceil(rows / 2)
+  const passageStart = rowStart + firstGroupRows * ROW_STEP
+  const passageEnd = passageStart + XWING_CROSS_PASSAGE_WIDTH
+  const laneEnd = rowStart + rows * ROW_STEP + XWING_CROSS_PASSAGE_WIDTH
+  const length = laneEnd + XWING_REAR_PASSAGE_WIDTH + dims.wallThickness / 2
   const farX = hallWallX + dir * length
-  const laneStartX = hallWallX + dir * XWING_LANE_ENTRY
+  const laneSegments = [[XWING_LANE_ENTRY, passageStart], [passageEnd, laneEnd]].filter(([start, end]) => end > start)
 
   const slots: FrameCandidate[] = []
   const walls: ArchBox[] = [
@@ -355,26 +368,28 @@ function buildXWing(wing: ExhibitWingId, hallWallX: number, dir: 1 | -1, count: 
   // / 2` désigne déjà la face. On ajoute donc ce même demi-mur ici pour que « lane 0 » suive la même
   // convention (`laneFrontZ` = la face, pas le centre) que toutes les autres lanes.
   const laneFrontZ: number[] = [wallZFar + dims.wallThickness / 2]
-  const laneOccluderIndex: Array<number | null> = [null] // lane 0 = mur principal, jamais occultant
+  const laneOccluderIndices: number[][] = [[]] // lane 0 = mur principal, jamais occultant
   const occluders: OccluderBuild[] = []
   for (let lane = 1; lane < XWING_LANE_COUNT; lane++) {
     const laneCenterZ = wallZFar + lane * XWING_LANE_STEP
-    const box = xWall(laneCenterZ, laneStartX, farX, CIMAISE_THICKNESS)
-    occluders.push({ box, height: CIMAISE_HEIGHT, slotIndices: [] })
-    laneOccluderIndex.push(occluders.length - 1)
+    laneOccluderIndices.push(laneSegments.map(([start, end]) => {
+      const box = xWall(laneCenterZ, hallWallX + dir * start, hallWallX + dir * end, CIMAISE_THICKNESS)
+      occluders.push({ box, height: CIMAISE_HEIGHT, slotIndices: [] })
+      return occluders.length - 1
+    }))
     laneFrontZ.push(laneCenterZ + CIMAISE_THICKNESS / 2)
   }
 
   for (let i = 0; i < rows; i++) {
-    const u = NEAR_MARGIN + i * ROW_STEP + ROW_STEP * 0.5
+    const group = i < firstGroupRows ? 0 : 1
+    const u = rowStart + i * ROW_STEP + ROW_STEP * 0.5 + group * XWING_CROSS_PASSAGE_WIDTH
     const x = hallWallX + dir * u
     for (let lane = 0; lane < XWING_LANE_COUNT; lane++) {
       if (i * XWING_LANE_COUNT + lane >= count) break
       const z = laneFrontZ[lane] + FRAME_WALL_OFFSET
       const slotIndex = slots.length
       slots.push({ position: [x, dims.frameCenterY, z], rotationY: 0, viewPoint: { x, z: z + VIEW_DISTANCE } })
-      const oi = laneOccluderIndex[lane]
-      if (oi !== null) occluders[oi].slotIndices.push(slotIndex)
+      if (lane > 0) occluders[laneOccluderIndices[lane][group]].slotIndices.push(slotIndex)
     }
   }
 
@@ -519,7 +534,7 @@ function build(people: Person[]): MuseumBuild {
 
   const rooms: RoomLayout[] = [hallRoom]
   const archRooms: MuseumArchitecture['rooms'] = [{ room: hallRoom, walls: hallWalls }]
-  const colliders: AABB[] = [...hallWalls.map((w) => w.box), counterBox]
+  const colliders: AABB[] = [...hallWalls.map((w) => w.kind === 'furniture' ? compactObjectCollider(w.box) : w.box), compactObjectCollider(counterBox)]
   const frames: FrameSlot[] = []
   const stampStations: StampStationSlot[] = []
   const occluders: Occluder[] = []
@@ -527,7 +542,7 @@ function build(people: Person[]): MuseumBuild {
 
   // Banc circulaire autour de l'Arbre des 100 : lui aussi un collider (le joueur en fait le tour).
   const treeRing = decor.tree
-  colliders.push(aabb(treeRing.center.x - treeRing.benchRadius, treeRing.center.x + treeRing.benchRadius, treeRing.center.z - treeRing.benchRadius, treeRing.center.z + treeRing.benchRadius))
+  colliders.push(compactObjectCollider(aabb(treeRing.center.x - treeRing.benchRadius, treeRing.center.x + treeRing.benchRadius, treeRing.center.z - treeRing.benchRadius, treeRing.center.z + treeRing.benchRadius)))
 
   for (const wingId of EXHIBIT_WINGS) {
     const wb = wingBuilds[wingId]
@@ -535,9 +550,9 @@ function build(people: Person[]): MuseumBuild {
     rooms.push(wb.room)
     // Le socle à tampon a un collider ici, mais son rendu appartient au module tampons (StampStations).
     const half = STAMP_STATION_SIZE / 2
-    const stationBox = aabb(wb.stampStation.x - half, wb.stampStation.x + half, wb.stampStation.z - half, wb.stampStation.z + half)
+    const stationBox = compactObjectCollider(aabb(wb.stampStation.x - half, wb.stampStation.x + half, wb.stampStation.z - half, wb.stampStation.z + half))
     archRooms.push({ room: wb.room, walls: wb.walls })
-    colliders.push(...wb.walls.map((w) => w.box), ...wb.occluders.map((o) => o.box), stationBox)
+    colliders.push(...wb.walls.map((w) => w.kind === 'furniture' ? compactObjectCollider(w.box) : w.box), ...wb.occluders.map((o) => o.box), stationBox)
     stampStations.push({ wing: wingId, position: wb.stampStation })
     decorPlacements.push(...wingDecorPlacements(wb.room))
     const people = byWing[wingId]
