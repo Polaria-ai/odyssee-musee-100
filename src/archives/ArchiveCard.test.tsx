@@ -19,7 +19,7 @@ const fictionalSessions: EveningSession[] = [
     order: 1,
     startTime: '10:00',
     durationMin: 5,
-    kind: 'ouverture',
+    kind: 'table-ronde',
     title: { fr: 'Ouverture de test', en: 'Test opening' },
     speakers: [],
     provisional: true,
@@ -43,7 +43,7 @@ const fictionalSessions: EveningSession[] = [
     order: 3,
     startTime: '10:30',
     durationMin: 10,
-    kind: 'keynote',
+    kind: 'table-ronde',
     title: { fr: 'Keynote de test', en: 'Test keynote' },
     speakers: [{ name: 'Cléa Fictive', role: { fr: 'Testeuse', en: 'Tester' }, organization: 'Studio Exemple' }],
     provisional: false,
@@ -52,14 +52,10 @@ const fictionalSessions: EveningSession[] = [
 
 const publishedArchive: SessionArchive = {
   sessionId: 'fixture-session-deux',
-  summary: {
-    fr: 'Premier paragraphe fabriqué pour le test.\n\nDeuxième paragraphe fabriqué pour le test.',
-    en: 'First paragraph made up for the test.\n\nSecond paragraph made up for the test.',
+  transcript: {
+    fr: 'Personne Testeau — Première prise de parole fabriquée pour le test.\n\nAutre Testeur — Deuxième prise de parole fabriquée pour le test.',
+    en: 'Personne Testeau — First test contribution.\n\nAutre Testeur — Second test contribution.',
   },
-  quotes: [
-    { text: { fr: 'Une citation vérifiée fabriquée pour le test.', en: 'A verified test quote.' }, author: 'Personne Testeau', verified: true },
-    { text: { fr: 'Une citation non vérifiée fabriquée pour le test.', en: 'An unverified test quote.' }, author: 'Autre Testeur', verified: false },
-  ],
   archivedAt: '2026-10-06T20:00:00.000Z',
   published: true,
 }
@@ -81,9 +77,9 @@ describe('ArchiveCard', () => {
 
     expect(screen.getByTestId('archive-card')).toBeInTheDocument()
     expect(screen.getByTestId('archive-pending')).toBeInTheDocument()
-    expect(screen.getByText('Archive en cours de rédaction')).toBeInTheDocument()
-    expect(screen.getByText("L'Archiviste la déposera à la fin de la soirée.")).toBeInTheDocument()
-    expect(screen.queryByText("Synthèse de l'Archiviste")).not.toBeInTheDocument()
+    expect(screen.getByText('Transcription en attente')).toBeInTheDocument()
+    expect(screen.getByText("La transcription de cette table ronde sera déposée après la soirée, puis relue avant publication.")).toBeInTheDocument()
+    expect(screen.queryByTestId('archive-transcript')).not.toBeInTheDocument()
   })
 
   it("affiche l'encart d'attente quand une archive existe mais n'est pas publiée", () => {
@@ -94,7 +90,7 @@ describe('ArchiveCard', () => {
     render(<ArchiveCard />)
 
     expect(screen.getByTestId('archive-pending')).toBeInTheDocument()
-    expect(screen.queryByText("Synthèse de l'Archiviste")).not.toBeInTheDocument()
+    expect(screen.queryByTestId('archive-transcript')).not.toBeInTheDocument()
   })
 
   it('affiche la mention « Programme provisoire » pour une séquence provisoire', () => {
@@ -121,7 +117,7 @@ describe('ArchiveCard', () => {
     expect(screen.getByText('(modération)')).toBeInTheDocument()
   })
 
-  it('affiche une archive publiée fabriquée dans le test : synthèse et citations', () => {
+  it('affiche la transcription intégrale d’une table ronde publiée', () => {
     useGame.setState({
       openSessionId: 'fixture-session-deux',
       archives: { 'fixture-session-deux': publishedArchive },
@@ -129,14 +125,9 @@ describe('ArchiveCard', () => {
     render(<ArchiveCard />)
 
     expect(screen.queryByTestId('archive-pending')).not.toBeInTheDocument()
-    expect(screen.getByText("Synthèse de l'Archiviste")).toBeInTheDocument()
-    expect(screen.getByText('Premier paragraphe fabriqué pour le test.')).toBeInTheDocument()
-    expect(screen.getByText('Deuxième paragraphe fabriqué pour le test.')).toBeInTheDocument()
-    expect(screen.getByText('“Une citation vérifiée fabriquée pour le test.”')).toBeInTheDocument()
-    expect(screen.getByText('vérifiée')).toBeInTheDocument()
-    // La citation non vérifiée n'affiche pas la mention.
-    expect(screen.getByText('“Une citation non vérifiée fabriquée pour le test.”')).toBeInTheDocument()
-    expect(screen.getAllByText('vérifiée')).toHaveLength(1)
+    expect(screen.getByText('Transcription intégrale')).toBeInTheDocument()
+    expect(screen.getByTestId('archive-transcript')).toHaveTextContent('Personne Testeau — Première prise de parole fabriquée pour le test.')
+    expect(screen.getByTestId('archive-transcript')).toHaveTextContent('Autre Testeur — Deuxième prise de parole fabriquée pour le test.')
   })
 
   it('joue un son à l’ouverture, à la fermeture et à la navigation (même famille que la fiche portrait)', () => {

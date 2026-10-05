@@ -5,7 +5,7 @@ vi.mock('./supabaseClient', () => ({ getSupabase: () => getSupabaseMock() }))
 
 // Import après le mock : `evening.ts` doit recevoir la version mockée de `getSupabase`.
 const { loadEvening } = await import('./evening')
-const { EVENING_PROGRAM } = await import('./eveningProgram')
+const { ARCHIVE_SESSIONS } = await import('./eveningProgram')
 
 /** Un même client sait répondre aux deux tables interrogées en parallèle par `loadEvening`. */
 function combinedClient(
@@ -23,7 +23,7 @@ function combinedClient(
 
 const supabaseSessionRow = {
   id: 'table-ronde-1',
-  ord: 7,
+  ord: 8,
   start_time: '19:01',
   duration_min: 14,
   kind: 'table-ronde',
@@ -35,11 +35,28 @@ const supabaseSessionRow = {
   provisional: true,
 }
 
+const completeSupabaseSessionRows = ARCHIVE_SESSIONS.map((session) =>
+  session.id === supabaseSessionRow.id
+    ? supabaseSessionRow
+    : {
+        id: session.id,
+        ord: session.order,
+        start_time: session.startTime,
+        duration_min: session.durationMin,
+        kind: session.kind,
+        title_fr: session.title.fr,
+        title_en: session.title.en,
+        theme_fr: session.theme?.fr,
+        theme_en: session.theme?.en,
+        speakers: session.speakers,
+        provisional: session.provisional,
+      },
+)
+
 const supabaseArchiveRow = {
   session_id: 'table-ronde-1',
-  summary_fr: 'Une synthèse.',
-  summary_en: 'A summary.',
-  quotes: [{ text: { fr: 'Une citation.', en: '' }, author: 'Muriel Motte', verified: true }],
+  transcript_fr: 'Modération — Une transcription de test.',
+  transcript_en: 'Moderator — A test transcript.',
   archived_at: '2026-10-06T22:50:00.000Z',
   published: true,
 }
@@ -59,12 +76,12 @@ describe('loadEvening', () => {
 
   it('utilise le programme et les archives Supabase quand les deux répondent avec des données valides', async () => {
     getSupabaseMock.mockReturnValue(
-      combinedClient(Promise.resolve({ data: [supabaseSessionRow], error: null }), Promise.resolve({ data: [supabaseArchiveRow], error: null })),
+      combinedClient(Promise.resolve({ data: completeSupabaseSessionRows, error: null }), Promise.resolve({ data: [supabaseArchiveRow], error: null })),
     )
     const { sessions, archives, source } = await loadEvening()
     expect(source).toBe('supabase')
-    expect(sessions.map((s) => s.id)).toEqual(['table-ronde-1'])
-    expect(archives['table-ronde-1'].summary.fr).toBe('Une synthèse.')
+    expect(sessions.map((s) => s.id)).toEqual(ARCHIVE_SESSIONS.map((session) => session.id))
+    expect(archives['table-ronde-1'].transcript.fr).toBe('Modération — Une transcription de test.')
   })
 
   it('retombe sur le programme embarqué si la table evening_sessions est vide (programme, contrairement aux archives, exige une réponse non vide)', async () => {
@@ -75,7 +92,7 @@ describe('loadEvening', () => {
     const warnSpy = vi.spyOn(console, 'warn')
     const { sessions, archives, source } = await loadEvening()
     expect(source).toBe('program')
-    expect(sessions).toEqual(EVENING_PROGRAM)
+    expect(sessions).toEqual(ARCHIVE_SESSIONS)
     // Une réponse Supabase vide (aucune archive déposée) est normale : {} directement, pas d'avertissement.
     expect(archives).toEqual({})
     expect(warnSpy).not.toHaveBeenCalled()
@@ -85,7 +102,7 @@ describe('loadEvening', () => {
     const fetchSpy = vi.fn()
     globalThis.fetch = fetchSpy as unknown as typeof fetch
     getSupabaseMock.mockReturnValue(
-      combinedClient(Promise.resolve({ data: [supabaseSessionRow], error: null }), Promise.resolve({ data: [], error: null })),
+      combinedClient(Promise.resolve({ data: completeSupabaseSessionRows, error: null }), Promise.resolve({ data: [], error: null })),
     )
     const { archives } = await loadEvening()
     expect(archives).toEqual({})
@@ -98,14 +115,14 @@ describe('loadEvening', () => {
       ok: true,
       json: async () => ({
         archives: [
-          { sessionId: 'table-ronde-1', summary: { fr: 'Publiée.', en: '' }, quotes: [], archivedAt: '2026-10-06T22:50:00.000Z', published: true },
-          { sessionId: 'table-ronde-2', summary: { fr: 'Brouillon.', en: '' }, quotes: [], archivedAt: '2026-10-06T22:50:00.000Z', published: false },
+          { sessionId: 'table-ronde-1', transcript: { fr: 'Publiée.', en: '' }, archivedAt: '2026-10-06T22:50:00.000Z', published: true },
+          { sessionId: 'table-ronde-2', transcript: { fr: 'Brouillon.', en: '' }, archivedAt: '2026-10-06T22:50:00.000Z', published: false },
         ],
       }),
     }) as unknown as typeof fetch
     const { sessions, archives, source } = await loadEvening()
     expect(source).toBe('program')
-    expect(sessions).toEqual(EVENING_PROGRAM)
+    expect(sessions).toEqual(ARCHIVE_SESSIONS)
     expect(Object.keys(archives)).toEqual(['table-ronde-1'])
   })
 
@@ -114,7 +131,7 @@ describe('loadEvening', () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new Error('hors ligne')) as unknown as typeof fetch
     const { sessions, archives, source } = await loadEvening()
     expect(source).toBe('program')
-    expect(sessions).toEqual(EVENING_PROGRAM)
+    expect(sessions).toEqual(ARCHIVE_SESSIONS)
     expect(archives).toEqual({})
   })
 
@@ -123,22 +140,22 @@ describe('loadEvening', () => {
       throw new Error('Invalid supabaseUrl: Must be a valid HTTP or HTTPS URL.')
     })
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ archives: [] }) }) as unknown as typeof fetch
-    await expect(loadEvening()).resolves.toEqual({ sessions: EVENING_PROGRAM, archives: {}, source: 'program' })
+    await expect(loadEvening()).resolves.toEqual({ sessions: ARCHIVE_SESSIONS, archives: {}, source: 'program' })
   })
 
   it('ne rejette jamais si le JSON statique est invalide (mauvaise forme)', async () => {
     getSupabaseMock.mockReturnValue(null)
     globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ not: 'the right shape' }) }) as unknown as typeof fetch
-    await expect(loadEvening()).resolves.toEqual({ sessions: EVENING_PROGRAM, archives: {}, source: 'program' })
+    await expect(loadEvening()).resolves.toEqual({ sessions: ARCHIVE_SESSIONS, archives: {}, source: 'program' })
   })
 
   it('ignore les lignes Supabase invalides sans faire échouer tout le chargement', async () => {
     getSupabaseMock.mockReturnValue(
-      combinedClient(Promise.resolve({ data: [supabaseSessionRow, { nawak: true }], error: null }), Promise.resolve({ data: [], error: null })),
+      combinedClient(Promise.resolve({ data: [...completeSupabaseSessionRows, { nawak: true }], error: null }), Promise.resolve({ data: [], error: null })),
     )
     const { sessions, source } = await loadEvening()
     expect(source).toBe('supabase')
-    expect(sessions).toHaveLength(1)
+    expect(sessions).toHaveLength(ARCHIVE_SESSIONS.length)
     // `warned` est un singleton dédié une-fois-par-session (voir le test « n'écrit jamais dans la
     // console... ») : un autre test de ce fichier a déjà pu déclencher l'avertissement avant
     // celui-ci, ce qui rendrait une assertion `warnSpy` ici dépendante de l'ordre d'exécution.

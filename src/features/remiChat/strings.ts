@@ -81,7 +81,7 @@ export const archivisteStrings = defineStrings({
 
   // Suggestions de départ (envoyées telles quelles comme message du visiteur)
   suggestionContents: { fr: 'Que contiennent les Archives ?', en: 'What do the Archives contain?' },
-  suggestionProgram: { fr: 'Le programme du 6 octobre', en: 'The October 6 program' },
+  suggestionProgram: { fr: 'Les trois tables rondes', en: 'The three panel discussions' },
   suggestionWho: { fr: 'Qui êtes-vous ?', en: 'Who are you?' },
   suggestionSaid: { fr: "Que s'est-il dit ce soir ?", en: 'What was said tonight?' },
 
@@ -91,8 +91,8 @@ export const archivisteStrings = defineStrings({
 
   // Premier message du fil : court, le visiteur vient de la saluer ou de s'approcher de son socle
   greeting: {
-    fr: "Bonjour. Je suis l'Archiviste · IA, gardienne des Archives de 2040. Interrogez-moi sur les vitrines ou sur le programme du 6 octobre.",
-    en: "Hello. I'm the Archivist · AI, keeper of the 2040 Archives. Ask me about the display cases or the October 6 program.",
+    fr: "Bonjour. Je suis l'Archiviste · IA, gardienne des Archives de 2040. Interrogez-moi sur les trois tables rondes et leurs transcriptions.",
+    en: "Hello. I'm the Archivist · AI, keeper of the 2040 Archives. Ask me about the three panel discussions and their transcripts.",
   },
 
   // Préambule du repli quand le service ne répond pas (les lignes viennent de `archivistScript.ts`)

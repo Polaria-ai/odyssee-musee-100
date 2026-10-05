@@ -14,8 +14,8 @@
  * pleine hauteur, avec un linteau et le bandeau « Les Archives de 2040 » au-dessus de la porte, quand le
  * joueur entre dans la salle (`useGame.currentRoom === 'archives'`). Voir `wallRise.ts` pour la logique.
  *
- * Le podium de l'Archiviste n'est PAS rendu ici : `src/archives/Archivist.tsx` le construit en entier
- * (socle, hologramme, anneaux, bulle de dialogue) et détecte lui-même la proximité du joueur.
+ * L'Archiviste n'est PAS rendue ici : `src/archives/Archivist.tsx` monte son personnage 3D, son socle,
+ * son halo et sa bulle d'invitation, et détecte elle-même la proximité du joueur.
  */
 import { useFrame } from '@react-three/fiber'
 import { useLayoutEffect, useMemo, useRef } from 'react'

@@ -74,18 +74,11 @@ interface EveningSession {
   kind: string
   title: { fr: string; en: string }
   speakers: SessionSpeaker[]
-  provisional: boolean
-}
-
-interface SessionArchiveQuote {
-  text: { fr: string; en: string }
-  author: string
-  verified: boolean
 }
 
 interface SessionArchive {
   sessionId: string
-  quotes: SessionArchiveQuote[]
+  transcript: { fr: string; en: string }
   published: boolean
 }
 
@@ -233,9 +226,9 @@ test('accueil de l’Archiviste à la première arrivée seulement ; retour au h
   await expect(box).toBeHidden()
 })
 
-test('archive publiée pendant la visite : la vitrine s’allume sans recharger la page', async ({ page }) => {
-  // La lecture Supabase des archives est interceptée : rien n'est publié en base. D'abord aucune
-  // archive (état de la soirée avant publication), puis une archive factice « publiée ».
+test('transcription publiée pendant la visite : la vitrine s’allume sans recharger la page', async ({ page }) => {
+  // La lecture Supabase des transcriptions est interceptée : rien n'est publié en base. D'abord aucune
+  // transcription, puis une transcription factice « publiée ».
   let published: unknown[] = []
   let reads = 0
   await page.route('**/rest/v1/session_archives*', (route) => {
@@ -246,16 +239,15 @@ test('archive publiée pendant la visite : la vitrine s’allume sans recharger 
   const archives = state.archivesLayout!
   expect(Object.keys(state.archives)).toEqual([])
   // Sans `VITE_SUPABASE_URL` dans le build, le jeu ne lit jamais Supabase et rien ne peut être
-  // publié : mieux vaut le dire que laisser attendre l'archive 10 s (voir docs/tests/archives.md).
+  // publié : mieux vaut le dire que laisser attendre la transcription 10 s (voir docs/tests/archives.md).
   expect(reads, 'le jeu doit lire session_archives au chargement : build sans VITE_SUPABASE_URL ?').toBeGreaterThan(0)
 
   const slot = archives.slots[0]
   published = [
     {
       session_id: slot.sessionId,
-      summary_fr: '[Test E2E] Synthèse factice publiée pendant la visite.',
-      summary_en: '',
-      quotes: [],
+      transcript_fr: '[Test E2E] Modération — Transcription factice publiée pendant la visite.\nIntervenant·e — Une seconde prise de parole factice.',
+      transcript_en: '',
       archived_at: '2026-10-06T23:00:00+02:00',
       published: true,
     },
@@ -264,40 +256,39 @@ test('archive publiée pendant la visite : la vitrine s’allume sans recharger 
   // Entrer dans la salle relance la lecture des archives (puis toutes les 60 s).
   await teleport(page, slot.viewPoint.x, slot.viewPoint.z)
   await expect.poll(async () => Object.keys((await archivesState(page)).archives), { timeout: 10_000 }).toEqual([slot.sessionId])
-  await expect(page.getByTestId('toast')).toContainText('Nouvelles archives')
+  await expect(page.getByTestId('toast')).toContainText('Nouvelles transcriptions')
 
   await openArchiveViaState(page, slot.sessionId)
-  await expect(page.getByTestId('archive-card')).toContainText('[Test E2E] Synthèse factice publiée pendant la visite.')
+  await expect(page.getByTestId('archive-card')).toContainText('[Test E2E] Modération — Transcription factice publiée pendant la visite.')
+  await expect(page.getByTestId('archive-card')).toContainText('Intervenant·e — Une seconde prise de parole factice.')
   await expect(page.getByTestId('archive-pending')).toHaveCount(0)
 })
 
 // ---------------------------------------------------------------------------
-// Vitrine : « Consulter l'archive » → fiche.
+// Vitrine : « Ouvrir la vitrine » → fiche.
 // ---------------------------------------------------------------------------
 
-test('vitrine : « Consulter l’archive » ouvre une fiche complète (programme provisoire, archive en attente)', async ({
+test('vitrine : « Ouvrir la vitrine » ouvre une fiche de table ronde, transcription en attente', async ({
   page,
 }) => {
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
 
-  // Une séquence encore provisoire (programme du 24/09 : intervenant·e en attente) et nommée.
-  const session = state.sessions.find((s) => s.provisional && s.speakers.length > 0) ?? state.sessions[0]
+  const session = state.sessions[0]
   const slot = archives.slots.find((s) => s.sessionId === session.id)
-  expect(slot, `pas de vitrine trouvée pour la séquence ${session.id}`).toBeTruthy()
+  expect(slot, `pas de vitrine trouvée pour la table ronde ${session.id}`).toBeTruthy()
 
   await teleport(page, slot!.viewPoint.x, slot!.viewPoint.z)
   await page.waitForTimeout(500)
 
   const actionButton = page.getByTestId('action-button')
-  await expect(actionButton).toHaveText("Consulter l'archive")
+  await expect(actionButton).toHaveText('Ouvrir la vitrine')
   await actionButton.click()
 
   const card = page.getByTestId('archive-card')
   await expect(card).toBeVisible()
   await expect(card).toContainText(session.title.fr)
   await expect(card).toContainText(session.startTime)
-  await expect(card).toContainText('Programme provisoire')
   if (session.speakers.length > 0) {
     await expect(card).toContainText(session.speakers[0].name)
   }
@@ -305,14 +296,14 @@ test('vitrine : « Consulter l’archive » ouvre une fiche complète (programme
   const archive = state.archives[session.id]
   if (!archive?.published) {
     await expect(page.getByTestId('archive-pending')).toBeVisible()
-    await expect(page.getByTestId('archive-pending')).toContainText('Archive en cours de rédaction')
+    await expect(page.getByTestId('archive-pending')).toContainText('Transcription en attente')
   }
 
   await page.keyboard.press('Escape')
   await expect(card).toBeHidden()
 })
 
-test('vitrine : navigation précédente/suivante entre séquences', async ({ page }) => {
+test('vitrine : navigation précédente/suivante entre tables rondes', async ({ page }) => {
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
   const ordered = [...state.sessions].sort((a, b) => a.order - b.order)
@@ -448,7 +439,7 @@ test('Archiviste 3D : hors du champ de la caméra (spawn du hall) elle n’est p
 // Carnet (4e tampon) et plan du musée.
 // ---------------------------------------------------------------------------
 
-test('carnet : compteur « n/4 » et 4e tampon (Archives) après 3 archives consultées', async ({ page }) => {
+test('carnet : compteur « n/4 » et 4e tampon (Archives) après 3 tables rondes consultées', async ({ page }) => {
   const state = await enterMuseumWithArchives(page)
   expect(state.sessions.length, 'au moins 3 séquences nécessaires pour ce test').toBeGreaterThanOrEqual(3)
 
@@ -496,9 +487,7 @@ test('plan du musée : la salle des Archives est dans le plan, reliée au hall',
 test('FR/EN : bascule des textes des Archives (bouton d’action, fiche)', async ({ page }) => {
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
-  // Vitrine d'une séquence encore provisoire, pour vérifier la mention dans les deux langues.
-  const provisionalIds = new Set(state.sessions.filter((s) => s.provisional).map((s) => s.id))
-  const firstSlot = archives.slots.find((s) => provisionalIds.has(s.sessionId)) ?? archives.slots[0]
+  const firstSlot = archives.slots[0]
 
   await teleport(page, archives.archivist.position.x, archives.archivist.position.z)
   await page.waitForTimeout(500)
@@ -510,20 +499,20 @@ test('FR/EN : bascule des textes des Archives (bouton d’action, fiche)', async
 
   await teleport(page, firstSlot.viewPoint.x, firstSlot.viewPoint.z)
   await page.waitForTimeout(500)
-  await expect(actionButton).toHaveText('Consult the archive')
+  await expect(actionButton).toHaveText('Open the display case')
   await actionButton.click()
 
   const card = page.getByTestId('archive-card')
   await expect(card).toBeVisible()
-  await expect(card).toContainText('Provisional program')
+  await expect(card).toContainText('Transcript pending')
   await page.keyboard.press('Escape')
   await expect(card).toBeHidden()
 
   await page.getByTestId('hud-lang').click()
-  await expect(actionButton).toHaveText("Consulter l'archive")
+  await expect(actionButton).toHaveText('Ouvrir la vitrine')
   await actionButton.click()
   await expect(card).toBeVisible()
-  await expect(card).toContainText('Programme provisoire')
+  await expect(card).toContainText('Transcription en attente')
 })
 
 // ---------------------------------------------------------------------------
@@ -546,41 +535,20 @@ test('performance : ≤ 150 appels de dessin dans la salle des Archives', async 
 })
 
 // ---------------------------------------------------------------------------
-// Contenu : rien d'inventé ; provisoire seulement ce que le programme du 24/09 laisse incomplet.
+// Contenu : seules les trois tables rondes ont une vitrine dans les Archives.
 // ---------------------------------------------------------------------------
 
-const FORBIDDEN_NAMES = ['Octave Klaba', 'Maya Noël', 'Anne Bouverot', 'Xavier Boilaud']
-
-test('contenu : plan des Archives = une vitrine par séquence (19) ; seules les séquences incomplètes au 24/09 sont provisoires ; aucune attribution interdite', async ({
+test('contenu : plan des Archives = les trois tables rondes, sans autre séquence', async ({
   page,
 }) => {
   const state = await enterMuseumWithArchives(page)
   const archives = state.archivesLayout!
 
-  expect(archives.slots.length, 'une vitrine par séquence du programme').toBe(state.sessions.length)
-  expect(state.sessions.length, 'programme de la soirée du 24/09 : 19 séquences').toBe(19)
-  expect(state.sessions.filter((s) => s.provisional).map((s) => s.id), 'séquences encore incomplètes au 24/09').toEqual([
-    'table-ronde-1',
-    'table-ronde-2',
-    'face-a-face-2',
-  ])
-
-  for (const session of state.sessions) {
-    for (const speaker of session.speakers) {
-      expect(
-        FORBIDDEN_NAMES,
-        `attribution interdite trouvée sur la séquence ${session.id} : ${speaker.name}`,
-      ).not.toContain(speaker.name)
-    }
-  }
-
-  // Défensif : si une archive a déjà été déposée et publiée (`state().archives`), aucune citation
-  // ne doit non plus attribuer l'une de ces personnes — rien n'est jamais inventé à l'avance.
-  for (const archive of Object.values(state.archives)) {
-    for (const quote of archive.quotes) {
-      expect(FORBIDDEN_NAMES, `citation attribuée à un nom interdit : ${quote.author}`).not.toContain(quote.author)
-    }
-  }
+  const expectedIds = ['table-ronde-1', 'table-ronde-2', 'table-ronde-3']
+  expect(state.sessions.map((session) => session.id)).toEqual(expectedIds)
+  expect(state.sessions.every((session) => session.kind === 'table-ronde')).toBe(true)
+  expect(archives.slots.map((slot) => slot.sessionId)).toEqual(expectedIds)
+  expect(Object.keys(state.archives).every((id) => expectedIds.includes(id))).toBe(true)
 })
 
 // ---------------------------------------------------------------------------

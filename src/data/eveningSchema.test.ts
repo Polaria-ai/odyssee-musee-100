@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ArchiveQuoteSchema,
+  ArchiveTranscriptSchema,
   EveningAgentOutputSchema,
   EveningSessionSchema,
   SessionArchiveSchema,
@@ -45,45 +45,28 @@ describe('EveningSessionSchema', () => {
   })
 })
 
-describe('ArchiveQuoteSchema', () => {
-  it('accepte une citation valide', () => {
-    expect(
-      ArchiveQuoteSchema.safeParse({ text: { fr: 'Une citation.', en: 'A quote.' }, author: 'Muriel Motte', verified: true })
-        .success,
-    ).toBe(true)
+describe('ArchiveTranscriptSchema', () => {
+  it('accepte une transcription source et une traduction facultative', () => {
+    expect(ArchiveTranscriptSchema.safeParse({ fr: 'Modération — Bonjour.', en: '' }).success).toBe(true)
   })
-  it('rejette un texte FR trop long (> 280) ou vide', () => {
-    expect(
-      ArchiveQuoteSchema.safeParse({ text: { fr: 'x'.repeat(281), en: '' }, author: 'Muriel Motte', verified: false }).success,
-    ).toBe(false)
-    expect(
-      ArchiveQuoteSchema.safeParse({ text: { fr: '', en: '' }, author: 'Muriel Motte', verified: false }).success,
-    ).toBe(false)
-  })
-  it('rejette un auteur vide', () => {
-    expect(
-      ArchiveQuoteSchema.safeParse({ text: { fr: 'Une citation.', en: '' }, author: '', verified: false }).success,
-    ).toBe(false)
+  it('rejette une transcription française vide ou une version trop longue', () => {
+    expect(ArchiveTranscriptSchema.safeParse({ fr: '  ', en: '' }).success).toBe(false)
+    expect(ArchiveTranscriptSchema.safeParse({ fr: 'x'.repeat(40_001), en: '' }).success).toBe(false)
   })
 })
 
 describe('SessionArchiveSchema', () => {
   const base = {
     sessionId: 'table-ronde-1',
-    summary: { fr: 'Une synthèse.', en: 'A summary.' },
-    quotes: [],
+    transcript: { fr: 'Modération — Transcription de test.', en: '' },
     archivedAt: '2026-10-06T22:50:00.000Z',
     published: false,
   }
   it('accepte une archive valide', () => {
     expect(SessionArchiveSchema.safeParse(base).success).toBe(true)
   })
-  it('rejette plus de 5 citations', () => {
-    const quotes = Array.from({ length: 6 }, () => ({ text: { fr: 'x', en: '' }, author: 'Public', verified: false }))
-    expect(SessionArchiveSchema.safeParse({ ...base, quotes }).success).toBe(false)
-  })
-  it('rejette un summary FR trop long (> 1200)', () => {
-    expect(SessionArchiveSchema.safeParse({ ...base, summary: { fr: 'x'.repeat(1201), en: '' } }).success).toBe(false)
+  it('rejette une transcription FR trop longue (> 40 000)', () => {
+    expect(SessionArchiveSchema.safeParse({ ...base, transcript: { fr: 'x'.repeat(40_001), en: '' } }).success).toBe(false)
   })
   it('rejette un archivedAt qui n’est pas une date ISO', () => {
     expect(SessionArchiveSchema.safeParse({ ...base, archivedAt: '06/10/2026' }).success).toBe(false)
@@ -93,11 +76,11 @@ describe('SessionArchiveSchema', () => {
 describe('EveningAgentOutputSchema', () => {
   it('rejette une version ou un event différents', () => {
     expect(
-      EveningAgentOutputSchema.safeParse({ version: 2, event: 'odyssee-ia-2026', generatedAt: '2026-10-06T22:50:00Z', archives: [] })
+      EveningAgentOutputSchema.safeParse({ version: 1, event: 'odyssee-ia-2026', generatedAt: '2026-10-06T22:50:00Z', archives: [] })
         .success,
     ).toBe(false)
     expect(
-      EveningAgentOutputSchema.safeParse({ version: 1, event: 'autre-soiree', generatedAt: '2026-10-06T22:50:00Z', archives: [] })
+      EveningAgentOutputSchema.safeParse({ version: 2, event: 'autre-soiree', generatedAt: '2026-10-06T22:50:00Z', archives: [] })
         .success,
     ).toBe(false)
   })
@@ -105,79 +88,37 @@ describe('EveningAgentOutputSchema', () => {
 
 describe('parseAgentOutput', () => {
   const validOutput = {
-    version: 1,
+    version: 2,
     event: 'odyssee-ia-2026',
     generatedAt: '2026-10-06T22:50:00+02:00',
     archives: [
       {
         sessionId: 'table-ronde-1',
-        summary: { fr: 'Synthèse.', en: 'Summary.' },
-        quotes: [
-          { text: { fr: 'Citation de la modératrice.', en: '' }, author: 'Muriel Motte', verified: true },
-          { text: { fr: 'Question du public.', en: '' }, author: 'Public', verified: false },
-          { text: { fr: 'Commentaire de l’hologramme.', en: '' }, author: "L'Archiviste", verified: false },
-        ],
+        transcript: { fr: 'Muriel Motte — Modération.\nPublic — Question.', en: '' },
       },
     ],
   }
 
-  it('accepte une sortie valide, avec auteur de séquence, "Public" et "L\'Archiviste"', () => {
+  it('accepte une transcription de table ronde', () => {
     const { accepted, errors, generatedAt } = parseAgentOutput(validOutput)
     expect(errors).toEqual([])
     expect(accepted).toHaveLength(1)
-    expect(accepted[0].quotes).toHaveLength(3)
+    expect(accepted[0].transcript.fr).toContain('Muriel Motte')
     expect(generatedAt).toBe('2026-10-06T22:50:00+02:00')
   })
 
-  it('accepte un auteur de la liste générale, même hors de cette séquence', () => {
-    const output = {
-      ...validOutput,
-      archives: [
-        {
-          sessionId: 'table-ronde-1',
-          summary: { fr: 'Synthèse.', en: '' },
-          quotes: [{ text: { fr: 'Citation.', en: '' }, author: 'Charles Gorintin', verified: false }],
-        },
-      ],
-    }
-    const { accepted, errors } = parseAgentOutput(output)
-    expect(errors).toEqual([])
-    expect(accepted[0].quotes).toHaveLength(1)
-  })
-
-  it('rejette (et retire) une citation dont l’auteur est inconnu, sans perdre le reste de l’archive', () => {
-    const output = {
-      ...validOutput,
-      archives: [
-        {
-          sessionId: 'table-ronde-1',
-          summary: { fr: 'Synthèse.', en: '' },
-          quotes: [
-            { text: { fr: 'Citation valide.', en: '' }, author: 'Muriel Motte', verified: true },
-            { text: { fr: 'Citation invalide.', en: '' }, author: 'Quelqu’un d’inventé', verified: false },
-          ],
-        },
-      ],
-    }
-    const { accepted, errors } = parseAgentOutput(output)
-    expect(errors).toHaveLength(1)
-    expect(errors[0]).toMatch(/Quelqu’un d’inventé/)
-    expect(accepted[0].quotes).toHaveLength(1)
-    expect(accepted[0].quotes[0].author).toBe('Muriel Motte')
-  })
-
-  it('rejette une archive entière dont la séquence est inconnue', () => {
-    const output = { ...validOutput, archives: [{ ...validOutput.archives[0], sessionId: 'table-ronde-99' }] }
+  it('rejette une archive entière dont la séquence ne fait pas partie des tables rondes', () => {
+    const output = { ...validOutput, archives: [{ ...validOutput.archives[0], sessionId: 'introduction' }] }
     const { accepted, errors } = parseAgentOutput(output)
     expect(accepted).toEqual([])
-    expect(errors[0]).toMatch(/table-ronde-99/)
+    expect(errors[0]).toMatch(/introduction/)
   })
 
   it('rejette une séquence en double, garde la première', () => {
-    const output = { ...validOutput, archives: [validOutput.archives[0], { ...validOutput.archives[0], summary: { fr: 'Autre.', en: '' } }] }
+    const output = { ...validOutput, archives: [validOutput.archives[0], { ...validOutput.archives[0], transcript: { fr: 'Autre.', en: '' } }] }
     const { accepted, errors } = parseAgentOutput(output)
     expect(accepted).toHaveLength(1)
-    expect(accepted[0].summary.fr).toBe('Synthèse.')
+    expect(accepted[0].transcript.fr).toContain('Modération')
     expect(errors.some((e) => e.includes('double'))).toBe(true)
   })
 
@@ -198,12 +139,12 @@ describe('parseAgentOutput', () => {
 describe('toSessionArchives', () => {
   it('ajoute archivedAt et published à chaque entrée', () => {
     const archives = toSessionArchives(
-      [{ sessionId: 'table-ronde-1', summary: { fr: 'x', en: '' }, quotes: [] }],
+      [{ sessionId: 'table-ronde-1', transcript: { fr: 'x', en: '' } }],
       '2026-10-06T22:50:00Z',
       true,
     )
     expect(archives).toEqual([
-      { sessionId: 'table-ronde-1', summary: { fr: 'x', en: '' }, quotes: [], archivedAt: '2026-10-06T22:50:00Z', published: true },
+      { sessionId: 'table-ronde-1', transcript: { fr: 'x', en: '' }, archivedAt: '2026-10-06T22:50:00Z', published: true },
     ])
   })
 })

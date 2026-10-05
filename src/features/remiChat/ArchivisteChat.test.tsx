@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { useGame } from '../../state/gameStore'
 import { generatePlaceholderPeople } from '../../data/placeholder'
-import { EVENING_PROGRAM } from '../../data/eveningProgram'
+import { ARCHIVE_SESSIONS } from '../../data/eveningProgram'
 import type { SessionArchive } from '../../types'
 import { archivisteStrings, strings } from './strings'
 import { PERSONAS, personaConfig } from './personas'
@@ -48,8 +48,7 @@ async function ask(text: string) {
 
 const archive = (sessionId: string): SessionArchive => ({
   sessionId,
-  summary: { fr: 'Synthèse.', en: 'Summary.' },
-  quotes: [],
+  transcript: { fr: 'Transcription intégrale.', en: 'Full transcript.' },
   archivedAt: '2026-10-06T23:00:00+02:00',
   published: true,
 })
@@ -63,7 +62,7 @@ beforeEach(() => {
     visited: {},
     stamps: {},
     people: generatePlaceholderPeople(12),
-    sessions: EVENING_PROGRAM,
+    sessions: ARCHIVE_SESSIONS,
     archives: {},
     visitedSessions: {},
     remiChatOpen: false,
@@ -99,13 +98,13 @@ describe('configuration des personas', () => {
   it('les puces de l’Archiviste, en FR et en EN', () => {
     expect(PERSONAS.archiviste.suggestions.map((s) => s.fr)).toEqual([
       'Que contiennent les Archives ?',
-      'Le programme du 6 octobre',
+      'Les trois tables rondes',
       'Qui êtes-vous ?',
       "Que s'est-il dit ce soir ?",
     ])
     expect(PERSONAS.archiviste.suggestions.map((s) => s.en)).toEqual([
       'What do the Archives contain?',
-      'The October 6 program',
+      'The three panel discussions',
       'Who are you?',
       'What was said tonight?',
     ])
@@ -184,7 +183,7 @@ describe('chat de l’Archiviste · IA', () => {
     const request = streamMock.mock.calls[0][0]
     expect(request.persona).toBe('archiviste')
     expect(request.messages.at(-1)).toEqual({ role: 'user', content: 'Que contiennent les Archives ?' })
-    expect(request.context).toEqual({ visitedCount: 2, stampsCount: 1, total: EVENING_PROGRAM.length })
+    expect(request.context).toEqual({ visitedCount: 1, stampsCount: 1, total: ARCHIVE_SESSIONS.length })
     expect(request.visitorId).toBe('v-test')
     expect(bubbles().map((b) => b.getAttribute('data-role'))).toEqual(['assistant', 'user', 'assistant'])
     expect(bubbles().at(-1)).toHaveTextContent('Les vitrines se remplissent après la soirée.')
@@ -219,7 +218,7 @@ describe('chat de l’Archiviste · IA', () => {
     const last = bubbles().at(-1)!
     expect(last).toHaveAttribute('data-fallback')
     expect(last.textContent).toContain(archivisteStrings.fallbackPreface.fr)
-    expect(last.textContent).toMatch(/vitrines|archives/i)
+    expect(last.textContent).toMatch(/transcriptions|tables rondes/i)
     expect(last.textContent).not.toMatch(/Reviens|Regarde|Approche-toi/)
   })
 
@@ -277,7 +276,7 @@ describe('textes et progression par persona', () => {
     stampsCount: 1,
     total: 100,
     archivesToVisit: false,
-    archives: { consulted: 2, total: 19, published: 0 },
+    archives: { consulted: 2, total: 3, published: 0 },
   }
 
   it('greetingText : le texte de la persona, FR et EN', () => {
@@ -289,31 +288,31 @@ describe('textes et progression par persona', () => {
     expect(fallbackText('fr', progress, 0)).toBe(fallbackText('fr', progress, 0, 'remi'))
     const text = fallbackText('fr', progress, 0, 'archiviste')
     expect(text.startsWith(archivisteStrings.fallbackPreface.fr)).toBe(true)
-    expect(text).toMatch(/vitrines sont vides|déposées après la soirée/)
+    expect(text).toMatch(/transcriptions|déposées après la soirée/)
     // Une fois des archives publiées, le repli change de palier.
-    const published = fallbackText('fr', { ...progress, archives: { consulted: 2, total: 19, published: 19 } }, 0, 'archiviste')
-    expect(published).toMatch(/intégralement archivée|mémoire de cette soirée est complète/)
+    const published = fallbackText('fr', { ...progress, archives: { consulted: 3, total: 3, published: 3 } }, 0, 'archiviste')
+    expect(published).toMatch(/trois transcriptions|trois tables rondes/)
   })
 
   it('fallbackText de l’Archiviste sans état des archives : traité comme « rien de publié »', () => {
     const { archives: _omitted, ...bare } = progress
-    expect(fallbackText('fr', bare, 0, 'archiviste')).toMatch(/vitrines sont vides|déposées après la soirée/)
+    expect(fallbackText('fr', bare, 0, 'archiviste')).toMatch(/transcriptions|déposées après la soirée/)
   })
 
   it('chatContext : portraits pour Rémi, vitrines pour l’Archiviste', () => {
     expect(chatContext(progress, 'remi')).toEqual({ visitedCount: 4, stampsCount: 1, total: 100 })
-    expect(chatContext(progress, 'archiviste')).toEqual({ visitedCount: 2, stampsCount: 1, total: 19 })
+    expect(chatContext(progress, 'archiviste')).toEqual({ visitedCount: 2, stampsCount: 1, total: 3 })
     const { archives: _omitted, ...bare } = progress
     expect(chatContext(bare, 'archiviste')).toEqual({ visitedCount: 4, stampsCount: 1, total: 100 })
   })
 
   it('l’état des archives publiées vient du store : published = archives publiées reçues', async () => {
     streamMock.mockResolvedValue({ ok: false, code: 'unavailable', partialText: '' })
-    useGame.setState({ archives: Object.fromEntries(EVENING_PROGRAM.slice(0, 3).map((s) => [s.id, archive(s.id)])) })
+    useGame.setState({ archives: Object.fromEntries(ARCHIVE_SESSIONS.map((s) => [s.id, archive(s.id)])) })
     render(<AiChats />)
     openArchiviste()
     await ask('Question')
-    // Quelques archives (3 sur 19) : palier « partiel ».
-    expect(bubbles().at(-1)!.textContent).toMatch(/Quelques vitrines|s'écrit petit à petit/)
+    // Les trois transcriptions publiées : palier complet.
+    expect(bubbles().at(-1)!.textContent).toMatch(/trois transcriptions|trois tables rondes/)
   })
 })

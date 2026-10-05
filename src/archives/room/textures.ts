@@ -223,9 +223,8 @@ export function drawSessionPictogram(ctx: CanvasRenderingContext2D, kind: Sessio
 }
 
 /**
- * Capsule holographique d'une vitrine : pictogramme, titre, heure et type. Jamais de synthèse ni de
- * citation ici (voir `ArchiveCard.tsx`, propriétaire d'une autre phase) — seul l'état (archivée/en
- * attente) change la teinte : cyan vif en attente, corail une fois archivée.
+ * Capsule holographique d'une vitrine : pictogramme, titre, heure et type. La transcription est
+ * consultable dans `ArchiveCard.tsx`; seul l'état (publiée/en attente) change ici la teinte.
  */
 const capsuleCache = new Map<string, CanvasTexture>()
 export function drawCapsuleScreen(session: Pick<EveningSession, 'kind' | 'title' | 'startTime'>, lang: Lang, archived: boolean): CanvasTexture {

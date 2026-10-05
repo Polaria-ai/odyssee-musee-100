@@ -1,8 +1,8 @@
 /**
  * Une vitrine d'archive : socle + capsule holographique (géométrie procédurale partagée, comme
  * `PortraitFrame.tsx`/`StampStations.tsx` — un modèle CC0 par vitrine dépasserait largement le budget
- * de dessin pour jusqu'à 24 séquences, voir `room/models.ts`). Écran = texture canvas unique (titre +
- * heure + pictogramme, voir `room/textures.ts`) ; jamais de synthèse ni de citation ici.
+ * de dessin pour les vitrines de tables rondes, voir `room/models.ts`). Écran = texture canvas unique
+ * (titre + heure + pictogramme, voir `room/textures.ts`); le texte intégral s'ouvre dans la fiche.
  */
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'

@@ -2,7 +2,7 @@
  * Faux projet Supabase des E2E en CI. Sans `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` dans le
  * build, `getSupabase()` (`src/data/supabaseClient.ts`) renvoie `null` : le jeu ne fait alors aucune
  * requête Supabase, et un test qui intercepte les lectures `/rest/v1/…` n'est jamais sollicité (c'est
- * ce qui rendait rouge `archives.spec.ts` › « archive publiée pendant la visite » en CI, où il n'y a
+ * ce qui rendait rouge `archives.spec.ts` › « transcription publiée pendant la visite » en CI, où il n'y a
  * ni `.env.local` ni secret). `playwright.config.ts` fournit donc ces deux valeurs factices au build E2E
  * de la CI, et `stubSupabase` (appelé par `gotoMusee`) répond à leur place : aucun réseau, aucun vrai
  * projet, et aucun changement du code applicatif.

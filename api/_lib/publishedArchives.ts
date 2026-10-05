@@ -20,24 +20,17 @@
  * Vercel exécute `api/` en ESM, où un import sans extension ne se résout pas).
  */
 import type { EveningSession } from '../../src/types/index.js'
-import { ARCHIVES_CACHE_MS, ARCHIVES_FAILURE_CACHE_MS, ARCHIVES_TIMEOUT_MS, MAX_ARCHIVE_QUOTES, MAX_ARCHIVE_SUMMARY_CHARS, MAX_QUOTE_CHARS } from './config.js'
+import { ARCHIVE_SESSION_IDS } from '../../src/data/eveningProgram.js'
+import { ARCHIVES_CACHE_MS, ARCHIVES_FAILURE_CACHE_MS, ARCHIVES_TIMEOUT_MS, MAX_ARCHIVE_TRANSCRIPT_CHARS } from './config.js'
 
 export interface ArchivesEnv {
   VITE_SUPABASE_URL?: string
   VITE_SUPABASE_ANON_KEY?: string
 }
 
-export interface PublishedQuote {
-  text: { fr: string; en: string }
-  author: string
-  /** Vérifiée mot pour mot sur l'enregistrement avant publication. */
-  verified: boolean
-}
-
 export interface PublishedArchive {
   sessionId: string
-  summary: { fr: string; en: string }
-  quotes: PublishedQuote[]
+  transcript: { fr: string; en: string }
 }
 
 /**
@@ -75,16 +68,6 @@ function cleanText(value: unknown, max: number): string | null {
   return text.length > max ? null : text
 }
 
-function parseQuote(raw: unknown): PublishedQuote | null {
-  if (!isRecord(raw) || !isRecord(raw.text)) return null
-  const fr = cleanText(raw.text.fr, MAX_QUOTE_CHARS)
-  const en = cleanText(raw.text.en ?? '', MAX_QUOTE_CHARS)
-  const author = cleanText(raw.author, 120)
-  // Le français est obligatoire (c'est la version d'origine) ; une citation sans auteur n'est pas citable.
-  if (!fr || en === null || !author) return null
-  return { text: { fr, en }, author, verified: raw.verified === true }
-}
-
 /**
  * Lignes brutes de `session_archives` → archives valides. Seules les lignes `published = true` sont gardées (la
  * politique de la table le garantit déjà ; on ne s'y fie pas pour un texte qui part dans un prompt). Une ligne
@@ -97,16 +80,12 @@ export function parseArchiveRows(rows: unknown): PublishedArchive[] {
   for (const row of rows) {
     if (!isRecord(row) || row.published !== true) continue
     const sessionId = typeof row.session_id === 'string' ? row.session_id : ''
-    if (!SESSION_ID_RE.test(sessionId) || seen.has(sessionId)) continue
-    const fr = cleanText(row.summary_fr, MAX_ARCHIVE_SUMMARY_CHARS)
-    const en = cleanText(row.summary_en ?? '', MAX_ARCHIVE_SUMMARY_CHARS)
+    if (!SESSION_ID_RE.test(sessionId) || !ARCHIVE_SESSION_IDS.has(sessionId) || seen.has(sessionId)) continue
+    const fr = cleanText(row.transcript_fr, MAX_ARCHIVE_TRANSCRIPT_CHARS)
+    const en = cleanText(row.transcript_en ?? '', MAX_ARCHIVE_TRANSCRIPT_CHARS)
     if (!fr || en === null) continue
-    const quotes = (Array.isArray(row.quotes) ? row.quotes : [])
-      .slice(0, MAX_ARCHIVE_QUOTES)
-      .map(parseQuote)
-      .filter((q): q is PublishedQuote => q !== null)
     seen.add(sessionId)
-    out.push({ sessionId, summary: { fr, en }, quotes })
+    out.push({ sessionId, transcript: { fr, en } })
   }
   return out
 }
@@ -121,7 +100,7 @@ export function orderByProgram(archives: readonly PublishedArchive[], program: r
 function archivesUrl(base: string): string | null {
   try {
     const url = new URL('/rest/v1/session_archives', base)
-    url.searchParams.set('select', 'session_id,summary_fr,summary_en,quotes,published')
+    url.searchParams.set('select', 'session_id,transcript_fr,transcript_en,published')
     url.searchParams.set('published', 'eq.true')
     return url.toString()
   } catch {

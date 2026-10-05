@@ -4,7 +4,7 @@
  * plafonds comptés séparément. Aucun appel réel : OpenRouter et Supabase sont des `fetch` simulés.
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { EVENING_PROGRAM } from '../../src/data/eveningProgram.js'
+import { ARCHIVE_SESSIONS } from '../../src/data/eveningProgram.js'
 import type { RemiStreamEvent } from '../../src/features/remiChat/contract.js'
 import { OPENROUTER_URL } from './config.js'
 import { buildArchivistePrompt } from './archivistePrompt.js'
@@ -17,12 +17,11 @@ import { jsonRequest, parseSse, readAll, sseResponse, UPSTREAM_DONE, upstreamDel
 const API_KEY = 'cle-de-test-sans-valeur-0123456789'
 const SUPABASE = 'https://projet-de-test.supabase.co'
 const ANON = 'anon-de-test-sans-valeur'
-const [first] = EVENING_PROGRAM
+const [first] = ARCHIVE_SESSIONS
 
 const published: PublishedArchive = {
   sessionId: first.id,
-  summary: { fr: 'Synthèse publiée de la première séquence.', en: 'Published summary of the first session.' },
-  quotes: [{ text: { fr: 'Une phrase publiée, mot pour mot.', en: 'A published sentence, word for word.' }, author: 'Public', verified: true }],
+  transcript: { fr: 'Modération — Transcription publiée de la première table ronde.', en: 'Moderator — Published transcript of the first panel.' },
 }
 
 const okStream = () => sseResponse([upstreamDelta('Bonjour'), upstreamDelta(' et bienvenue.', 'stop'), UPSTREAM_DONE])
@@ -84,7 +83,7 @@ describe('routage par persona', () => {
   })
 
   it('persona archiviste : le prompt de l’Archiviste, avec les archives publiées', async () => {
-    const context = { visitedCount: 1, stampsCount: 0, total: 19 }
+    const context = { visitedCount: 1, stampsCount: 0, total: 3 }
     const response = await h.handle(jsonRequest(validPayload({ persona: 'archiviste', lang: 'en', context })))
     expect(response.status).toBe(200)
     expect(response.headers.get('content-type')).toContain('text/event-stream')
@@ -98,12 +97,17 @@ describe('routage par persona', () => {
     expect(h.logs[0]).toMatchObject({ outcome: 'ok', persona: 'archiviste', archives: 1 })
   })
 
-  it('les synthèses et citations publiées arrivent telles quelles dans le prompt envoyé à OpenRouter', async () => {
-    await readAll(await h.handle(jsonRequest(validPayload({ persona: 'archiviste' }))))
-    const system = systemPromptSent(h)
-    expect(system).toContain(published.summary.fr)
-    expect(system).toContain(published.quotes[0].text.fr)
-    expect(system).toContain(published.quotes[0].text.en)
+  it('les transcriptions publiées arrivent telles quelles dans le prompt envoyé à OpenRouter', async () => {
+    await readAll(await h.handle(jsonRequest(validPayload({ persona: 'archiviste', lang: 'fr' }))))
+    const frenchSystem = systemPromptSent(h)
+    expect(frenchSystem).toContain(published.transcript.fr)
+    expect(frenchSystem).not.toContain(published.transcript.en)
+
+    h.fetchMock.mockClear()
+    await readAll(await h.handle(jsonRequest(validPayload({ persona: 'archiviste', lang: 'en' }))))
+    const englishSystem = systemPromptSent(h)
+    expect(englishSystem).toContain(published.transcript.en)
+    expect(englishSystem).not.toContain(published.transcript.fr)
   })
 
   it('l’historique de l’Archiviste part tel quel, avec le même plafond de 12 messages', async () => {
@@ -135,7 +139,7 @@ describe('panne ou absence des archives', () => {
     expect(response.status).toBe(200)
     expect(parseSse(await readAll(response)).at(-1)).toEqual({ type: 'done' })
     expect(systemPromptSent(h)).toBe(buildArchivistePrompt({ lang: 'fr', archives: null }))
-    expect(systemPromptSent(h)).not.toContain(published.summary.fr)
+    expect(systemPromptSent(h)).not.toContain(published.transcript.fr)
     expect(h.logs[0]).toMatchObject({ outcome: 'ok', archives: 'unavailable' })
   })
 
@@ -168,9 +172,8 @@ describe('panne ou absence des archives', () => {
 
     const row = {
       session_id: first.id,
-      summary_fr: published.summary.fr,
-      summary_en: published.summary.en,
-      quotes: published.quotes,
+      transcript_fr: published.transcript.fr,
+      transcript_en: published.transcript.en,
       published: true,
     }
 
@@ -180,7 +183,7 @@ describe('panne ou absence des archives', () => {
       const supabaseCall = r.fetchMock.mock.calls.find(([url]) => (url as string).startsWith(SUPABASE)) as [string, RequestInit]
       expect(new URL(supabaseCall[0]).pathname).toBe('/rest/v1/session_archives')
       expect((supabaseCall[1].headers as Record<string, string>).apikey).toBe(ANON)
-      expect(systemPromptSent(r)).toContain(published.summary.fr)
+      expect(systemPromptSent(r)).toContain(published.transcript.fr)
     })
 
     it('Supabase en panne : la réponse part quand même, avec un prompt sans archives', async () => {

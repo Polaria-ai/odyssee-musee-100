@@ -1,22 +1,24 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { EVENING_PROGRAM, EVENING_SPEAKERS } from '../src/data/eveningProgram'
+import { ARCHIVE_SESSIONS, EVENING_PROGRAM, EVENING_SPEAKERS } from '../src/data/eveningProgram'
 import { parseAgentOutput } from '../src/data/eveningSchema'
 import { buildEveningAgentPrompt } from './evening-agent-prompt'
 
 describe('buildEveningAgentPrompt', () => {
   const prompt = buildEveningAgentPrompt()
 
-  it('contient chaque séquence du programme et chaque intervenant·e annoncé·e', () => {
-    for (const s of EVENING_PROGRAM) expect(prompt).toContain(`"id": "${s.id}"`)
-    for (const sp of EVENING_SPEAKERS) expect(prompt).toContain(sp.name)
+  it('ne contient que les trois tables rondes et leurs intervenant·es', () => {
+    for (const s of ARCHIVE_SESSIONS) expect(prompt).toContain(`"id": "${s.id}"`)
+    for (const s of EVENING_PROGRAM.filter((item) => item.kind !== 'table-ronde')) {
+      expect(prompt).not.toContain(`"id": "${s.id}"`)
+    }
+    for (const s of ARCHIVE_SESSIONS) for (const speaker of s.speakers) expect(prompt).toContain(speaker.name)
   })
 
   it('reprend les règles précisées par la répétition du 27/09', () => {
-    expect(prompt).toContain('Ne déduis jamais l\'identité d\'une voix')
-    expect(prompt).toContain('jamais du seul programme')
-    expect(prompt).toContain('utilise "Public"')
-    expect(prompt).toContain('aucun nom confirmé')
+    expect(prompt).toContain('N\'identifie jamais une voix par déduction')
+    expect(prompt).toContain('Voix non identifiée')
+    expect(prompt).toContain('N\'archive aucune autre partie de la soirée')
   })
 })
 
@@ -34,13 +36,12 @@ describe('données factices du dépôt (exemple et répétition du 27/09)', () =
     }
   })
 
-  it('la sortie de répétition passe l’import sans rejet, toute marquée [RÉPÉTITION]', () => {
+  it('la sortie de répétition contient uniquement les trois transcriptions factices', () => {
     const { accepted, errors } = parseAgentOutput(rehearsal)
     expect(errors).toEqual([])
-    expect(accepted.length).toBe(16)
+    expect(accepted.length).toBe(3)
     for (const a of accepted) {
-      expect(a.summary.fr.startsWith('[RÉPÉTITION]')).toBe(true)
-      for (const q of a.quotes) expect(q.text.fr.startsWith('[RÉPÉTITION]')).toBe(true)
+      expect(a.transcript.fr.startsWith('[RÉPÉTITION]')).toBe(true)
     }
   })
 })

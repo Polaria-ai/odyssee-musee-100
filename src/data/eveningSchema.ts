@@ -1,12 +1,12 @@
 /**
- * Schémas de validation (zod) du programme de la soirée et des archives déposées par l'agent
- * de fin de soirée. Fidèle aux types `EveningSession` / `SessionArchive` / `ArchiveQuote`
+ * Schémas de validation (zod) du programme de la soirée et des transcriptions déposées par l'agent
+ * de transcription. Fidèle aux types `EveningSession` / `SessionArchive`
  * (`src/types`). Utilisé par `evening.ts` (repli Supabase/JSON) et `scripts/import-evening.ts`.
  * Propriétaire : workflow « Archives de 2040 ».
  */
 import { z } from 'zod'
-import type { ArchiveQuote, EveningSession, Localized, SessionArchive, SessionSpeaker } from '../types'
-import { EVENING_PROGRAM, EVENING_SPEAKERS } from './eveningProgram'
+import { MAX_ARCHIVE_TRANSCRIPT_CHARS, type EveningSession, type Localized, type SessionArchive, type SessionSpeaker } from '../types'
+import { ARCHIVE_SESSIONS, EVENING_PROGRAM } from './eveningProgram'
 
 const KEBAB_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/
@@ -54,28 +54,26 @@ export const EveningSessionSchema = z.object({
   provisional: z.boolean(),
 }) satisfies z.ZodType<EveningSession>
 
-/** Une citation : texte ≤ 280 caractères (FR et EN), auteur obligatoire, vérifiée ou non. */
-export const ArchiveQuoteSchema = z.object({
-  text: boundedLocalized(280),
-  author: z.string().trim().min(1, 'auteur obligatoire'),
-  verified: z.boolean(),
-}) satisfies z.ZodType<ArchiveQuote>
+/** Transcription intégrale : FR obligatoire, EN facultatif, jusqu'à 40 000 caractères par langue. */
+export const ArchiveTranscriptSchema = z.object({
+  fr: z.string().trim().min(1, 'transcription FR requise').max(MAX_ARCHIVE_TRANSCRIPT_CHARS),
+  en: z.string().max(MAX_ARCHIVE_TRANSCRIPT_CHARS),
+})
 
 export const SessionArchiveSchema = z.object({
   sessionId: z.string().regex(KEBAB_ID_RE, 'sessionId : kebab-case'),
-  summary: boundedLocalized(1200),
-  quotes: z.array(ArchiveQuoteSchema).max(5, '5 citations maximum par séquence'),
+  transcript: ArchiveTranscriptSchema,
   archivedAt: z.string().regex(ISO_DATETIME_RE, 'archivedAt : date ISO 8601'),
   published: z.boolean(),
 }) satisfies z.ZodType<SessionArchive>
 
-/** Ce que l'agent de fin de soirée dépose pour une séquence : pas encore d'horodatage ni de statut de publication (ajoutés à l'import). */
+/** Ce que l'agent de transcription dépose pour une table ronde : sans horodatage ni statut de publication (ajoutés à l'import). */
 export const AgentArchiveEntrySchema = SessionArchiveSchema.omit({ archivedAt: true, published: true })
 export type AgentArchiveEntry = z.infer<typeof AgentArchiveEntrySchema>
 
-/** Sortie attendue de l'agent de fin de soirée. Voir `docs/EVENING-AGENT.md`. */
+/** Sortie attendue de l'agent de transcription. Voir `docs/EVENING-AGENT.md`. */
 export const EveningAgentOutputSchema = z.object({
-  version: z.literal(1),
+  version: z.literal(2),
   event: z.literal('odyssee-ia-2026'),
   generatedAt: z.string().regex(ISO_DATETIME_RE, 'generatedAt : date ISO 8601'),
   archives: z.array(AgentArchiveEntrySchema).max(EVENING_PROGRAM.length, 'plus d’archives que de séquences au programme'),
@@ -86,24 +84,18 @@ function describeZodError(error: z.ZodError): string {
   return error.issues.map((issue) => `${issue.path.join('.') || '(racine)'} : ${issue.message}`).join(' ; ')
 }
 
-/** Auteur·es autorisé·es pour une citation, quelle que soit la séquence : la liste générale, plus les deux voix génériques. */
-const GENERAL_AUTHORS: readonly string[] = [...EVENING_SPEAKERS.map((s) => s.name), 'Public', "L'Archiviste"]
-
 export interface ParseAgentOutputResult {
-  /** Archives acceptées (citations invalides retirées individuellement, reste conservé). */
+  /** Transcriptions acceptées pour les trois tables rondes. */
   accepted: AgentArchiveEntry[]
-  /** Rejets, lisibles, un par ligne : séquence inconnue, doublon, ou citation à l'auteur non reconnu. */
+  /** Rejets lisibles, un par ligne : séquence hors tables rondes ou doublon. */
   errors: string[]
   /** Horodatage de dépôt annoncé par l'agent, `null` si le fichier n'a pas passé la validation de forme. */
   generatedAt: string | null
 }
 
 /**
- * Valide la sortie brute de l'agent de fin de soirée : forme (zod), puis pour chaque archive
- * une séquence connue au programme (sinon l'archive entière est ignorée), puis pour chaque
- * citation un·e auteur·e reconnu·e — intervenant·e de CETTE séquence, ou de la liste générale,
- * ou « Public »/« L'Archiviste » (sinon seule cette citation est retirée, le reste de l'archive
- * est conservé). Ne rejette jamais : renvoie toujours un rapport, jamais une exception.
+ * Valide la sortie brute de l'agent : seules les trois tables rondes sont acceptées, les autres
+ * séquences sont explicitement rejetées. Ne rejette jamais : renvoie toujours un rapport.
  */
 export function parseAgentOutput(input: unknown): ParseAgentOutputResult {
   const result = EveningAgentOutputSchema.safeParse(input)
@@ -111,7 +103,7 @@ export function parseAgentOutput(input: unknown): ParseAgentOutputResult {
     return { accepted: [], errors: [describeZodError(result.error)], generatedAt: null }
   }
 
-  const knownSessions = new Map(EVENING_PROGRAM.map((s) => [s.id, s]))
+  const knownSessions = new Map(ARCHIVE_SESSIONS.map((s) => [s.id, s]))
   const errors: string[] = []
   const seenSessionIds = new Set<string>()
   const accepted: AgentArchiveEntry[] = []
@@ -119,7 +111,7 @@ export function parseAgentOutput(input: unknown): ParseAgentOutputResult {
   for (const entry of result.data.archives) {
     const session = knownSessions.get(entry.sessionId)
     if (!session) {
-      errors.push(`${entry.sessionId} : séquence inconnue au programme, archive ignorée`)
+      errors.push(`${entry.sessionId} : seules les tables rondes sont archivées, entrée ignorée`)
       continue
     }
     if (seenSessionIds.has(entry.sessionId)) {
@@ -128,19 +120,7 @@ export function parseAgentOutput(input: unknown): ParseAgentOutputResult {
     }
     seenSessionIds.add(entry.sessionId)
 
-    const sessionAuthors = new Set(session.speakers.map((sp) => sp.name))
-    const quotes: ArchiveQuote[] = []
-    entry.quotes.forEach((quote, i) => {
-      if (sessionAuthors.has(quote.author) || GENERAL_AUTHORS.includes(quote.author)) {
-        quotes.push(quote)
-      } else {
-        errors.push(
-          `${entry.sessionId} citation ${i + 1} : auteur « ${quote.author} » non reconnu pour cette séquence, citation ignorée`,
-        )
-      }
-    })
-
-    accepted.push({ sessionId: entry.sessionId, summary: entry.summary, quotes })
+    accepted.push(entry)
   }
 
   return { accepted, errors, generatedAt: result.data.generatedAt }

@@ -136,7 +136,7 @@ async function main(): Promise<void> {
     await page.evaluate((sid) => (globalThis as unknown as WithMusee).__musee.state().openSession(sid), id)
     await page.getByTestId('archive-card').waitFor()
     await shot(`${n}-${id}-haut`, 700)
-    // Bas de la fiche (citations) : on fait défiler les conteneurs défilables de la fiche.
+    // Bas de la fiche (fin de la transcription) : on fait défiler les conteneurs de la fiche.
     await page.evaluate(() => {
       type Scrollable = { scrollHeight: number; clientHeight: number; scrollTop: number }
       const doc = (globalThis as unknown as { document: { querySelectorAll: (sel: string) => ArrayLike<Scrollable> } }).document

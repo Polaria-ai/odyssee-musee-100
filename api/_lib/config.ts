@@ -11,6 +11,7 @@ import {
   MAX_USER_MESSAGE_CHARS,
   REMI_MODEL,
 } from '../../src/features/remiChat/contract.js'
+import { MAX_ARCHIVE_TRANSCRIPT_CHARS } from '../../src/types/index.js'
 
 export { MAX_HISTORY_MESSAGES, MAX_MESSAGES_PER_VISITOR, MAX_USER_MESSAGE_CHARS, REMI_MODEL }
 
@@ -43,15 +44,10 @@ export const ARCHIVES_CACHE_MS = 60_000
 export const ARCHIVES_FAILURE_CACHE_MS = 10_000
 /** Délai de lecture des archives (corps compris) : bien en deçà du délai accordé à OpenRouter, jamais bloquant. */
 export const ARCHIVES_TIMEOUT_MS = 2500
-/** Bornes de la table `session_archives` (voir `supabase/migrations/20260925120000_evening.sql` et `eveningSchema.ts`). */
-export const MAX_ARCHIVE_SUMMARY_CHARS = 1200
-export const MAX_ARCHIVE_QUOTES = 5
-export const MAX_QUOTE_CHARS = 280
+/** Borne partagée avec le schéma d'import et le type du jeu. */
+export { MAX_ARCHIVE_TRANSCRIPT_CHARS }
 /**
- * Part du prompt réservée aux archives publiées : au-delà, les dernières séquences sont écartées entières, jamais coupées
- * en deux. 48 000 caractères (~14 000 jetons) tiennent les 19 séquences d'une soirée ordinaire (~1 900 caractères chacune,
- * soit ~36 000 : une synthèse de ~700 et trois citations en deux langues, mesuré sur des archives factices de cette taille) ;
- * seules des archives au maximum de leurs bornes sur toutes les séquences (~4 000 caractères chacune) dépasseraient, et les
- * dernières seraient alors signalées comme non reprises (« n'en dis rien, renvoie vers la vitrine »).
+ * Trois transcriptions (jusqu'à 40 000 caractères chacune) tiennent dans ce plafond avec leurs repères.
+ * Les transcriptions ne sont jamais coupées : une entrée entière est écartée si le plafond est dépassé.
  */
-export const MAX_ARCHIVES_PROMPT_CHARS = 48_000
+export const MAX_ARCHIVES_PROMPT_CHARS = 122_000

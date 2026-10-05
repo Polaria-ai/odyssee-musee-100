@@ -5,6 +5,8 @@
  */
 
 export type Lang = 'fr' | 'en'
+/** Taille maximale d'une transcription de table ronde par langue (contrat d'import, UI et API). */
+export const MAX_ARCHIVE_TRANSCRIPT_CHARS = 40_000
 
 /** Texte bilingue. `en` peut être vide : l'UI retombe alors sur `fr`. */
 export interface Localized {
@@ -138,7 +140,7 @@ export interface Dialogue {
 export type DataSource = 'supabase' | 'static' | 'placeholder'
 
 // ---------------------------------------------------------------------------
-// Les Archives de 2040 — la soirée, séquence par séquence
+// Les Archives de 2040 — les trois tables rondes et leurs transcriptions
 // ---------------------------------------------------------------------------
 
 export type SessionKind =
@@ -177,19 +179,11 @@ export interface EveningSession {
   provisional: boolean
 }
 
-export interface ArchiveQuote {
-  text: Localized
-  /** Nom de l'intervenant·e, tel qu'annoncé au programme. */
-  author: string
-  /** Vérifiée sur l'enregistrement avant publication. */
-  verified: boolean
-}
-
-/** Ce que l'agent de fin de soirée dépose pour une séquence. Jamais inventé à l'avance. */
+/** Transcription intégrale d'une table ronde, déposée puis relue avant publication. */
 export interface SessionArchive {
   sessionId: string
-  summary: Localized
-  quotes: ArchiveQuote[]
+  /** Texte de la transcription source et, si disponible, sa traduction. `en` vide → repli FR. */
+  transcript: Localized
   /** Horodatage ISO du dépôt. */
   archivedAt: string
   /** Relu et validé par un humain : seules les archives publiées sont affichées. */

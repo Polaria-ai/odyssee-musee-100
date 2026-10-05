@@ -52,9 +52,9 @@ describe('archivistDialogue', () => {
   describe('talk', () => {
     const tiers: Array<{ name: string; consulted: number; total: number; published: number }> = [
       { name: 'programme non chargé', consulted: 0, total: 0, published: 0 },
-      { name: 'rien de publié', consulted: 0, total: 17, published: 0 },
-      { name: 'quelques archives publiées', consulted: 2, total: 17, published: 5 },
-      { name: 'tout publié', consulted: 17, total: 17, published: 17 },
+      { name: 'rien de publié', consulted: 0, total: 3, published: 0 },
+      { name: 'quelques transcriptions publiées', consulted: 2, total: 3, published: 1 },
+      { name: 'tout publié', consulted: 3, total: 3, published: 3 },
     ]
 
     it.each(tiers)('$name : au moins une ligne, bien formée', ({ consulted, total, published }) => {
@@ -71,22 +71,22 @@ describe('archivistDialogue', () => {
     })
 
     it('varie selon published : rien / partiel / tout ne renvoient pas le même dialogue', () => {
-      const empty = archivistDialogue({ kind: 'talk', consulted: 3, total: 17, published: 0 })
-      const partial = archivistDialogue({ kind: 'talk', consulted: 3, total: 17, published: 5 })
-      const full = archivistDialogue({ kind: 'talk', consulted: 3, total: 17, published: 17 })
+      const empty = archivistDialogue({ kind: 'talk', consulted: 3, total: 3, published: 0 })
+      const partial = archivistDialogue({ kind: 'talk', consulted: 3, total: 3, published: 1 })
+      const full = archivistDialogue({ kind: 'talk', consulted: 3, total: 3, published: 3 })
       const ids = [empty.id, partial.id, full.id]
       expect(new Set(ids).size).toBe(ids.length)
     })
 
     it('programme non chargé (total 0) : traité comme "rien de publié"', () => {
       const notLoaded = archivistDialogue({ kind: 'talk', consulted: 0, total: 0, published: 0 })
-      const emptyProgram = archivistDialogue({ kind: 'talk', consulted: 0, total: 17, published: 0 })
+      const emptyProgram = archivistDialogue({ kind: 'talk', consulted: 0, total: 3, published: 0 })
       expect(notLoaded.id).toBe(emptyProgram.id)
     })
 
     it('varie de façon déterministe à partir de consulted, au sein d’un même palier', () => {
       const results = Array.from({ length: 6 }, (_, i) =>
-        archivistDialogue({ kind: 'talk', consulted: i, total: 17, published: 0 }),
+        archivistDialogue({ kind: 'talk', consulted: i, total: 3, published: 0 }),
       )
       results.forEach(expectWellFormed)
       const distinctIds = new Set(results.map((d) => d.id))
@@ -94,8 +94,8 @@ describe('archivistDialogue', () => {
     })
 
     it('est déterministe : même entrée, même sortie', () => {
-      const a = archivistDialogue({ kind: 'talk', consulted: 4, total: 17, published: 5 })
-      const b = archivistDialogue({ kind: 'talk', consulted: 4, total: 17, published: 5 })
+      const a = archivistDialogue({ kind: 'talk', consulted: 2, total: 3, published: 1 })
+      const b = archivistDialogue({ kind: 'talk', consulted: 2, total: 3, published: 1 })
       expect(a).toEqual(b)
     })
   })

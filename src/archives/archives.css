@@ -218,52 +218,15 @@
   font-style: italic;
 }
 
-.archive-card__summary {
+.archive-card__transcript {
   margin: 0 0 16px;
 }
 
-.archive-card__summary p {
-  margin: 0 0 10px;
+.archive-card__transcript > div {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   line-height: 1.55;
   color: var(--ink);
-}
-
-.archive-card__quotes {
-  margin: 0 0 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.archive-card__quote {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--archive-cyan);
-  background: var(--paper);
-}
-
-.archive-card__quote p {
-  margin: 0 0 6px;
-  font-style: italic;
-  color: var(--ink);
-}
-
-.archive-card__quote footer {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--ink-soft);
-}
-
-.archive-card__quote-verified {
-  margin-left: 6px;
-  padding: 1px 8px;
-  border-radius: var(--radius-pill);
-  background: var(--leaf);
-  color: var(--on-accent);
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
 }
 
 .archive-card__pending {

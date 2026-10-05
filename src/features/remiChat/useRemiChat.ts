@@ -73,12 +73,15 @@ export interface RemiChatProgress {
 /** Progression de la partie, lue à la demande (jamais figée dans une fermeture). */
 function readProgress(): RemiChatProgress {
   const g = useGame.getState()
+  const sessionIds = new Set(g.sessions.map((session) => session.id))
+  const consultedSessions = Object.keys(g.visitedSessions).filter((id) => sessionIds.has(id))
+  const publishedArchives = Object.keys(g.archives).filter((id) => sessionIds.has(id))
   return {
     visitedCount: Object.keys(g.visited).length,
     stampsCount: Object.keys(g.stamps).length,
     total: g.people.length,
-    archivesToVisit: g.sessions.length > 0 && Object.keys(g.visitedSessions).length === 0,
-    archives: { consulted: Object.keys(g.visitedSessions).length, total: g.sessions.length, published: Object.keys(g.archives).length },
+    archivesToVisit: g.sessions.length > 0 && consultedSessions.length === 0,
+    archives: { consulted: consultedSessions.length, total: g.sessions.length, published: publishedArchives.length },
   }
 }
 

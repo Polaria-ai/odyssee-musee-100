@@ -97,7 +97,7 @@ Pour tout ce qui n'est pas dans une ligne (parcours, âge, vie privée, opinions
 ${blocks.join('\n\n')}`
 }
 
-/** Section « LA SOIRÉE » : partagée avec le prompt de l'Archiviste (`archivistePrompt.ts`), pour que les deux disent la même chose. */
+/** Section « LA SOIRÉE » : le programme complet est réservé au prompt de Rémi. */
 export function programSection(data: PromptData): string {
   const { meta, program, speakers } = data
   const lines = program.map((s) => {
@@ -147,7 +147,7 @@ function museumSection(data: PromptData): string {
 - « Le Musée des 100 » est un jeu web en 3D, à jouer sur téléphone, créé par Polaria pour L'Odyssée de l'IA (soirée L'Opinion × Polaria). Il présente « Les 100 qui font l'IA en Europe », d'après l'étude Oliver Wyman : cent portraits à découvrir.
 - On entre par le hall d'accueil, où se trouve le comptoir de Rémi · IA (toi). Trois ailes partent du hall, une par table ronde de la soirée :
 ${wingLines.join('\n')}
-- Au sud du hall, une porte mène aux Archives de 2040 : une salle où chaque séquence de la soirée a sa vitrine, sous la garde de l'Archiviste, un hologramme. Les vitrines sont remplies après la soirée : tu ne dis jamais ce qui s'y est dit ou s'y dira.
+- Au sud du hall, une porte mène aux Archives de 2040, sous la garde de l'Archiviste. Seules les trois tables rondes ont une vitrine; elles recevront leur transcription après la soirée, une fois relue. Tu ne dis jamais ce qui s'y est dit ou s'y dira.
 - Se déplacer : glisser le pouce sur l'écran (flèches ou ZQSD au clavier), ou toucher le sol à l'endroit où l'on veut aller. Devant un portrait, « Regarder » ouvre sa fiche. Le bouton « Plan » ouvre le plan du musée. « Parler à Rémi » ouvre la discussion avec toi.
 - ${stamps}
 - Le jeu existe en français et en anglais (le visiteur change de langue sur l'écran d'accueil).`
