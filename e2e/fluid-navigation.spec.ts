@@ -165,6 +165,16 @@ for (const object of objects) {
     // Le rayon du joueur (.35 m) rendait ce trajet bloquant avec l'ancienne boîte.
     expect(object.offset).toBeLessThan(object.half + 0.35)
     await teleport(page, sideX, object.z - object.travel, 0)
+    if (object.name === 'vitrine des Archives') {
+      // L'arrivée dans la salle ouvre son accueil une fois : le visiteur le ferme avant de marcher.
+      // Sinon l'overlay suspend le Player et on attribuerait à tort cet arrêt à un collider.
+      await expect.poll(async () => (await museeState(page)).currentRoom).toBe('archives')
+      const box = page.getByTestId('dialogue-box')
+      await expect(box).toBeVisible()
+      await expect(box).toContainText("L'Archiviste")
+      await box.getByRole('button', { name: 'Passer' }).click()
+      await expect(box).toBeHidden()
+    }
     const around = await walk(page, 'z', 1, object.z + object.travel)
     expect(around.samples.every((p) => Math.abs(p.x - sideX) < 0.1), 'contournement droit, sans déviation par collision').toBe(true)
     expect((await museePlayer(page)).z).toBeGreaterThan(object.z + object.half)
