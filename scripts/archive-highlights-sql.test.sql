@@ -281,7 +281,7 @@ select pg_temp.expect_highlights_rejected(
   'Highlight excerpts must be exact nonempty passages from the French transcript, at most 2000 characters'
 );
 select pg_temp.expect_highlights_rejected(
-  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,excerpt}', to_jsonb(U&'\00A0\FEFF'))),
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,excerpt}', to_jsonb(U&'\00A0\FEFF'::text))),
   'Highlight excerpts must be exact nonempty passages from the French transcript, at most 2000 characters'
 );
 update public.session_archives
