@@ -32,11 +32,11 @@ L'agent génère un JSON au format version 2. Chaque entrée correspond à une s
 
 ## Règles de transcription et de publication
 
-1. Reprendre les paroles dans leur ordre, avec leurs étiquettes de locuteur telles que confirmées par la source. Ne jamais déduire une identité à partir d'une voix ou du programme.
+1. Reprendre les paroles dans leur ordre. Les étiquettes de locuteur sont facultatives si la captation ne sépare pas les voix. Ne jamais déduire une identité à partir d'une voix ou du programme.
 2. Ne pas résumer, compléter ni reformuler. Conserver les reprises et hésitations; ajouter seulement la ponctuation nécessaire à la lecture. Marquer un passage inaudible par `[inaudible]`.
-3. Garder les passages de salle et de modération s'ils figurent dans la captation. Si une voix n'est pas identifiée, écrire « Voix non identifiée ».
-4. Une personne relit la transcription entière et les attributions de locuteur à côté de la captation avant publication.
-5. Toute transcription modifiée repasse en brouillon. Une publication exige `--publish` et un nom de relecteur·rice.
+3. Garder les passages de salle et de modération s'ils figurent dans la captation. Sans identification de locuteur, conserver le texte brut ou utiliser « Voix non identifiée ».
+4. Décision de Baptiste du 6 octobre : publication rapide des transcriptions brutes à son « go », sans relecture humaine préalable. Les corrections peuvent être publiées ensuite.
+5. Une publication exige `--publish`. `--reviewer` est facultatif et ne doit être renseigné que si une personne a réellement relu le texte. Sans relecture, `reviewed_by` reste `NULL`.
 
 ## Procédure
 
@@ -53,20 +53,20 @@ L'agent génère un JSON au format version 2. Chaque entrée correspond à une s
    pnpm exec tsx scripts/import-evening.ts --file sortie-agent.json --dry-run
    ```
 
-4. Relire les transcriptions intégrales, les identifiants et les noms de locuteur. Corriger le JSON source si nécessaire.
+4. Vérifier automatiquement les identifiants, le format et les limites de longueur. La première publication conserve le texte reçu, sans attribution ajoutée.
 5. Générer le brouillon à relire dans `public/data/evening.json` et `supabase/seed/evening-archives.sql` :
 
    ```sh
    pnpm exec tsx scripts/import-evening.ts --file sortie-agent.json
    ```
 
-6. Après relecture humaine, régénérer la sortie publiée et appliquer le SQL dans Supabase :
+6. Au « go » de Baptiste, générer la sortie publiée et appliquer le SQL dans Supabase :
 
    ```sh
-   pnpm exec tsx scripts/import-evening.ts --file sortie-agent.json --publish --reviewer "Nom de la personne"
+   pnpm exec tsx scripts/import-evening.ts --file sortie-agent.json --publish
    ```
 
-   Le fichier SQL produit peut aussi être exécuté dans l'éditeur SQL Supabase. `--push` existe pour l'opération directe avec la clé de service locale; cette procédure ne l'utilise pas.
+   Le fichier SQL produit peut être appliqué avec `supabase db query --linked --file supabase/seed/evening-archives.sql` ou dans l'éditeur SQL Supabase. `--push` existe pour l'opération directe avec la clé de service locale. Après correction et relecture réelle, ajouter `--reviewer "Nom de la personne"` à une nouvelle publication.
 
 7. La migration `supabase/migrations/20261005100000_roundtable_transcripts.sql` doit être appliquée avant la première importation de transcriptions. Elle rend les anciens résumés invisibles en les passant en brouillon; elle ne supprime pas leurs lignes. Les séquences non rondes restent dans `evening_sessions` pour le programme général.
 8. Si Supabase est indisponible, `public/data/evening.json` sert de repli statique et nécessite un redéploiement du jeu.
