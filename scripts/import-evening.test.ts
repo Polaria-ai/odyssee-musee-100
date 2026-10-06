@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { spawnSync } from 'node:child_process'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join, resolve } from 'node:path'
 import { buildEveningJson, buildSeedSql, toSupabasePushRows, toSupabaseRow } from './import-evening'
 import { parseAgentOutput, toSessionArchives } from '../src/data/eveningSchema'
 import type { SessionArchive } from '../src/types'
@@ -43,6 +47,8 @@ describe('buildSeedSql', () => {
   it('avec --publish : ajoute published = true à la clause de mise à jour', () => {
     const sql = buildSeedSql([archive], { publish: true })
     expect(sql).toContain('published = true')
+    expect(sql).toContain('sans relecture préalable')
+    expect(sql).toContain('true, NULL')
   })
 
   it('échappe les apostrophes dans le SQL', () => {
@@ -81,6 +87,30 @@ describe('toSupabaseRow / toSupabasePushRows', () => {
   it('toSupabasePushRows inclut published=true quand publish=true', () => {
     const rows = toSupabasePushRows([archive], true)
     expect(rows[0].published).toBe(true)
+    expect(rows[0].reviewed_by).toBeNull()
+  })
+})
+
+describe('publication CLI sans relecteur', () => {
+  it('accepte --publish --dry-run sans inventer un relecteur', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'musee-import-test-'))
+    try {
+      const file = join(directory, 'transcripts.json')
+      writeFileSync(file, JSON.stringify({
+        version: 2,
+        event: 'odyssee-ia-2026',
+        generatedAt: archive.archivedAt,
+        archives: [{ sessionId: archive.sessionId, transcript: archive.transcript }],
+      }))
+      const result = spawnSync(resolve('node_modules/.bin/tsx'), [
+        resolve('scripts/import-evening.ts'), '--file', file, '--publish', '--dry-run',
+      ], { cwd: directory, encoding: 'utf8' })
+      expect(result.status, result.stderr).toBe(0)
+      expect(result.stdout).toContain('1 / 1 archive(s) acceptée(s)')
+      expect(result.stdout).toContain('aucun fichier écrit, aucun envoi Supabase')
+    } finally {
+      rmSync(directory, { recursive: true, force: true })
+    }
   })
 })
 

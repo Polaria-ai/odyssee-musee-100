@@ -2,12 +2,12 @@
 /**
  * Import de la sortie de l'agent de transcription (voir `docs/EVENING-AGENT.md`) vers
  * `public/data/evening.json` et `supabase/seed/evening-archives.sql`. Toujours en brouillon
- * (`published = false`) sauf `--publish`, après relecture humaine. Ne nécessite aucune clé de
+ * (`published = false`) sauf `--publish`, sur demande de publication. Ne nécessite aucune clé de
  * service : le SQL généré est appliqué séparément (SQL editor Supabase), sauf `--push`.
  * Propriétaire : workflow « Archives de 2040 ».
  *
- * Usage : pnpm exec tsx scripts/import-evening.ts --file <sortie-agent.json> [--dry-run] [--publish --reviewer "<nom>"] [--push]
- * `--publish` exige `--reviewer` : la base garde le nom de la personne qui a relu (`reviewed_by`).
+ * Usage : pnpm exec tsx scripts/import-evening.ts --file <sortie-agent.json> [--dry-run] [--publish] [--reviewer "<nom>"] [--push]
+ * `--reviewer` est facultatif et ne sert que si une relecture a réellement eu lieu.
  */
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -26,13 +26,13 @@ function sqlString(value: string | null | undefined): string {
 
 export interface SeedSqlOptions {
   /**
-   * `true` seulement une fois les transcriptions relues par un humain. Toute mise à jour non publiée
-   * remet également l'archive en brouillon et efface sa précédente trace de relecture.
+   * `true` sur demande explicite de publication. Toute mise à jour non publiée remet l'archive
+   * en brouillon et efface sa précédente trace de relecture.
    */
   publish?: boolean
   /**
    * Nom de la personne qui a relu (colonne `reviewed_by`). Un brouillon efface cette trace;
-   * elle est renseignée lors de la publication après relecture.
+   * elle reste vide pour une publication sans relecture.
    */
   reviewer?: string
 }
@@ -40,7 +40,7 @@ export interface SeedSqlOptions {
 /**
  * SQL d'upsert idempotent (une transaction, `on conflict (session_id) do update`) — à relire puis
  * exécuter dans le SQL editor Supabase. Un upsert sans `--publish` dépublie une ancienne version :
- * une transcription modifiée doit toujours être relue avant de redevenir visible.
+ * une transcription modifiée doit faire l'objet d'une nouvelle demande de publication.
  */
 export function buildSeedSql(archives: SessionArchive[], options: SeedSqlOptions = {}): string {
   const published = options.publish ?? false
@@ -64,9 +64,11 @@ on conflict (session_id) do update set
   ${updateAssignments.join(',\n  ')};`,
   )
   const note = published
-    ? '-- published = true : transcriptions relues, publiées (nouvelles et déjà en base).\n'
-    : '-- published = false : brouillon; toute ancienne version est dépubliée jusqu’à nouvelle relecture.\n'
-  return `-- Généré par scripts/import-evening.ts — à relire, puis exécuter dans le SQL editor Supabase.\n${note}begin;\n\n${statements.join('\n\n')}\n\ncommit;\n`
+    ? reviewer
+      ? '-- published = true : transcriptions publiées avec une relecture renseignée.\n'
+      : '-- published = true : transcriptions publiées sans relecture préalable.\n'
+    : '-- published = false : brouillon; toute ancienne version est dépubliée jusqu’à nouvelle publication.\n'
+  return `-- Généré par scripts/import-evening.ts — exécuter dans Supabase.\n${note}begin;\n\n${statements.join('\n\n')}\n\ncommit;\n`
 }
 
 /** `SessionArchive` (camelCase) → ligne Supabase (snake_case), pour `--push`. */
@@ -84,7 +86,7 @@ export function toSupabaseRow(a: SessionArchive, options: SeedSqlOptions = {}): 
 
 /**
  * Lignes prêtes pour `--push`. Une transcription modifiée en brouillon dépublie toujours l'ancienne
- * version jusqu'à ce qu'une personne relise puis republie le contenu.
+ * version jusqu'à une nouvelle publication explicite du contenu.
  */
 export function toSupabasePushRows(archives: SessionArchive[], publish: boolean, reviewer?: string): Record<string, unknown>[] {
   return archives.map((a) => {
@@ -138,17 +140,11 @@ async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2))
   if (!args.file) {
     console.error(
-      'Usage : tsx scripts/import-evening.ts --file <sortie-agent.json> [--dry-run] [--publish --reviewer "<nom>"] [--push]',
+      'Usage : tsx scripts/import-evening.ts --file <sortie-agent.json> [--dry-run] [--publish] [--reviewer "<nom>"] [--push]',
     )
     process.exitCode = 1
     return
   }
-  if (args.publish && !args.reviewer) {
-    console.error('--publish exige --reviewer "<nom de la personne qui a relu>" : aucune publication sans relecture humaine tracée.')
-    process.exitCode = 1
-    return
-  }
-
   let raw: unknown
   try {
     const text = await readFile(resolve(args.file), 'utf8')
@@ -185,7 +181,7 @@ async function main(): Promise<void> {
   await writeFile('supabase/seed/evening-archives.sql', buildSeedSql(archives, { publish: args.publish, reviewer: args.reviewer }), 'utf8')
   console.log(
     `\nÉcrit : public/data/evening.json, supabase/seed/evening-archives.sql (published = ${args.publish} — ${
-      args.publish ? 'relu, prêt à publier' : 'brouillon, relire avant --publish'
+      args.publish ? (args.reviewer ? 'relecture renseignée' : 'sans relecture préalable') : 'brouillon'
     }).`,
   )
 
@@ -198,7 +194,7 @@ async function main(): Promise<void> {
       console.log(
         args.publish
           ? '\n--push : envoi direct à Supabase, published = true.'
-          : "\n--push : envoi direct à Supabase, en brouillon (l'ancienne version est dépubliée jusqu'à nouvelle relecture).",
+          : "\n--push : envoi direct à Supabase, en brouillon (l'ancienne version est dépubliée jusqu'à nouvelle publication).",
       )
       const { createClient } = await import('@supabase/supabase-js')
       const admin = createClient(url, serviceKey, { auth: { persistSession: false } })
