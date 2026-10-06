@@ -5,7 +5,7 @@
  * Propriétaire : workflow « Archives de 2040 ».
  */
 import { z } from 'zod'
-import { MAX_ARCHIVE_TRANSCRIPT_CHARS, type EveningSession, type Localized, type SessionArchive, type SessionSpeaker } from '../types'
+import { MAX_ARCHIVE_TRANSCRIPT_CHARS, type ArchiveHighlight, type EveningSession, type Localized, type SessionArchive, type SessionSpeaker } from '../types'
 import { ARCHIVE_SESSIONS, EVENING_PROGRAM } from './eveningProgram'
 
 const KEBAB_ID_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
@@ -60,15 +60,55 @@ export const ArchiveTranscriptSchema = z.object({
   en: z.string().max(MAX_ARCHIVE_TRANSCRIPT_CHARS),
 })
 
-export const SessionArchiveSchema = z.object({
+/** Synthèse courte : chaque extrait source reste un passage français exact de la transcription. */
+export const ArchiveHighlightSchema = z.object({
+  id: z.string().regex(KEBAB_ID_RE, 'id de bulle : kebab-case'),
+  title: boundedLocalized(100),
+  body: boundedLocalized(800),
+  source: z.object({
+    // Préserver les espaces et retours à la ligne d'une citation : ne pas la normaliser.
+    excerpt: z.string().min(1).max(2000).refine((text) => text.trim().length > 0, 'extrait source requis'),
+    startSec: z.number().finite().nonnegative().optional(),
+    endSec: z.number().finite().nonnegative().optional(),
+  }).superRefine((source, ctx) => {
+    if (source.startSec !== undefined && source.endSec !== undefined && source.endSec < source.startSec) {
+      ctx.addIssue({ code: 'custom', path: ['endSec'], message: 'endSec doit être supérieur ou égal à startSec' })
+    }
+  }),
+}) satisfies z.ZodType<ArchiveHighlight>
+
+const SessionArchiveObjectSchema = z.object({
   sessionId: z.string().regex(KEBAB_ID_RE, 'sessionId : kebab-case'),
   transcript: ArchiveTranscriptSchema,
+  highlights: z.array(ArchiveHighlightSchema).max(12, '12 bulles maximum par table ronde').optional(),
   archivedAt: z.string().regex(ISO_DATETIME_RE, 'archivedAt : date ISO 8601'),
   published: z.boolean(),
-}) satisfies z.ZodType<SessionArchive>
+})
+
+function validateHighlightSources(
+  archive: { transcript: { fr: string }; highlights?: ArchiveHighlight[] },
+  ctx: z.RefinementCtx,
+): void {
+  const seen = new Set<string>()
+  for (const [index, highlight] of (archive.highlights ?? []).entries()) {
+    if (seen.has(highlight.id)) {
+      ctx.addIssue({ code: 'custom', path: ['highlights', index, 'id'], message: 'id de bulle en double dans la table ronde' })
+    }
+    seen.add(highlight.id)
+    if (!archive.transcript.fr.includes(highlight.source.excerpt)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['highlights', index, 'source', 'excerpt'],
+        message: 'l’extrait source doit être un passage exact de la transcription française',
+      })
+    }
+  }
+}
+
+export const SessionArchiveSchema = SessionArchiveObjectSchema.superRefine(validateHighlightSources) satisfies z.ZodType<SessionArchive>
 
 /** Ce que l'agent de transcription dépose pour une table ronde : sans horodatage ni statut de publication (ajoutés à l'import). */
-export const AgentArchiveEntrySchema = SessionArchiveSchema.omit({ archivedAt: true, published: true })
+export const AgentArchiveEntrySchema = SessionArchiveObjectSchema.omit({ archivedAt: true, published: true }).superRefine(validateHighlightSources)
 export type AgentArchiveEntry = z.infer<typeof AgentArchiveEntrySchema>
 
 /** Sortie attendue de l'agent de transcription. Voir `docs/EVENING-AGENT.md`. */

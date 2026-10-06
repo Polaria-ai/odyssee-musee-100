@@ -179,15 +179,31 @@ export interface EveningSession {
   provisional: boolean
 }
 
-/** Transcription intégrale d'une table ronde, déposée puis relue avant publication. */
+/** Une idée clé reformulée à partir d'un passage exact de la transcription source. */
+export interface ArchiveHighlight {
+  id: string
+  title: Localized
+  body: Localized
+  source: {
+    /** Passage français copié mot pour mot dans la transcription de cette table ronde. */
+    excerpt: string
+    /** Repères depuis le début de l'enregistrement, seulement si un alignement existe. */
+    startSec?: number
+    endSec?: number
+  }
+}
+
+/** Transcription intégrale d'une table ronde et ses idées clés, publiées sur demande. */
 export interface SessionArchive {
   sessionId: string
   /** Texte de la transcription source et, si disponible, sa traduction. `en` vide → repli FR. */
   transcript: Localized
   /** Horodatage ISO du dépôt. */
   archivedAt: string
-  /** Relu et validé par un humain : seules les archives publiées sont affichées. */
+  /** Autorisé à la publication : seules les archives publiées sont affichées. */
   published: boolean
+  /** Synthèses thématiques facultatives, chacune accompagnée d'un passage source. */
+  highlights?: ArchiveHighlight[]
 }
 
 export type EveningSource = 'supabase' | 'static' | 'program'

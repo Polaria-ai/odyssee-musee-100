@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { buildEveningJson, buildSeedSql, toSupabasePushRows, toSupabaseRow } from './import-evening'
@@ -14,12 +14,25 @@ const archive: SessionArchive = {
   published: false,
 }
 
+const archiveWithHighlights: SessionArchive = {
+  ...archive,
+  highlights: [{
+    id: 'idee-de-test',
+    title: { fr: "L'idée de test", en: '' },
+    body: { fr: 'Une synthèse de test sourcée.', en: 'A sourced test summary.' },
+    source: { excerpt: 'Une transcription complète de test.', startSec: 12.5, endSec: 20 },
+  }],
+}
+
 describe('buildEveningJson', () => {
   it('enveloppe les archives dans { archives }', () => {
     expect(buildEveningJson([archive])).toEqual({ archives: [archive] })
   })
   it('produit { archives: [] } pour une liste vide (forme livrée par défaut)', () => {
     expect(buildEveningJson([])).toEqual({ archives: [] })
+  })
+  it('conserve la transcription et ses bulles dans le même document statique', () => {
+    expect(buildEveningJson([archiveWithHighlights]).archives[0]).toEqual(archiveWithHighlights)
   })
 })
 
@@ -62,6 +75,20 @@ describe('buildSeedSql', () => {
     expect(sql).toContain('begin;')
     expect(sql).toContain('commit;')
   })
+
+  it('remplace transcription et bulles dans le même upsert et échappe aussi le JSON', () => {
+    const sql = buildSeedSql([archiveWithHighlights], { publish: true })
+    expect(sql).toContain('transcript_fr = excluded.transcript_fr')
+    expect(sql).toContain('highlights = excluded.highlights')
+    expect(sql).toContain("L''idée de test")
+    expect(sql).toContain("'" + JSON.stringify(archiveWithHighlights.highlights).replace(/'/g, "''") + "'::jsonb")
+    expect(sql.match(/insert into public\.session_archives/g)).toHaveLength(1)
+    expect(sql).toContain('true, NULL')
+  })
+
+  it('écrit un tableau vide pour une ancienne entrée sans bulles afin de ne pas garder des extraits périmés', () => {
+    expect(buildSeedSql([archive])).toContain("'[]'::jsonb")
+  })
 })
 
 describe('toSupabaseRow / toSupabasePushRows', () => {
@@ -89,6 +116,15 @@ describe('toSupabaseRow / toSupabasePushRows', () => {
     expect(rows[0].published).toBe(true)
     expect(rows[0].reviewed_by).toBeNull()
   })
+
+  it('inclut les bulles dans le même payload Supabase et garde la relecture à NULL', () => {
+    expect(toSupabasePushRows([archiveWithHighlights], true)[0]).toMatchObject({
+      transcript_fr: archiveWithHighlights.transcript.fr,
+      highlights: archiveWithHighlights.highlights,
+      reviewed_by: null,
+    })
+    expect(toSupabaseRow(archive).highlights).toEqual([])
+  })
 })
 
 describe('publication CLI sans relecteur', () => {
@@ -108,6 +144,31 @@ describe('publication CLI sans relecteur', () => {
       expect(result.status, result.stderr).toBe(0)
       expect(result.stdout).toContain('1 / 1 archive(s) acceptée(s)')
       expect(result.stdout).toContain('aucun fichier écrit, aucun envoi Supabase')
+    } finally {
+      rmSync(directory, { recursive: true, force: true })
+    }
+  })
+
+  it('génère ensemble JSON et SQL avec les bulles v2, sans réseau ni relecteur', () => {
+    const directory = mkdtempSync(join(tmpdir(), 'musee-highlight-import-test-'))
+    try {
+      const file = join(directory, 'transcripts.json')
+      writeFileSync(file, JSON.stringify({
+        version: 2,
+        event: 'odyssee-ia-2026',
+        generatedAt: archive.archivedAt,
+        archives: [{ sessionId: archiveWithHighlights.sessionId, transcript: archiveWithHighlights.transcript, highlights: archiveWithHighlights.highlights }],
+      }))
+      const result = spawnSync(resolve('node_modules/.bin/tsx'), [
+        resolve('scripts/import-evening.ts'), '--file', file, '--publish',
+      ], { cwd: directory, encoding: 'utf8' })
+      expect(result.status, result.stderr).toBe(0)
+      const json = JSON.parse(readFileSync(join(directory, 'public/data/evening.json'), 'utf8'))
+      expect(json.archives[0]).toEqual({ ...archiveWithHighlights, published: true })
+      const sql = readFileSync(join(directory, 'supabase/seed/evening-archives.sql'), 'utf8')
+      expect(sql).toContain('highlights = excluded.highlights')
+      expect(sql).toContain('sans relecture préalable')
+      expect(sql).toContain('true, NULL')
     } finally {
       rmSync(directory, { recursive: true, force: true })
     }

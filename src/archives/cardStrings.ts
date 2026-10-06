@@ -30,9 +30,15 @@ export const cardStrings = defineStrings({
   archiveTranscriptTitle: { fr: 'Transcription intégrale', en: 'Full transcript' },
   archivePendingTitle: { fr: 'Transcription en attente', en: 'Transcript pending' },
   archivePendingBody: {
-    fr: "La transcription de cette table ronde sera déposée après la soirée, puis relue avant publication.",
-    en: 'The transcript of this panel will be added after the event and reviewed before publication.',
+    fr: 'La transcription de cette table ronde sera disponible après son import.',
+    en: 'The transcript of this panel will be available after it is imported.',
   },
+
+  // Bulles thématiques : l'extrait source reste celui de la transcription française.
+  archiveHighlightsTitle: { fr: 'À retenir', en: 'Key takeaways' },
+  archiveHighlightShowSource: { fr: 'Voir le passage source', en: 'Show the source passage' },
+  archiveHighlightHideSource: { fr: 'Masquer le passage source', en: 'Hide the source passage' },
+  archiveHighlightSourceTime: { fr: 'Dans l’enregistrement · {time}', en: 'In the recording · {time}' },
 
   // Type de séquence (pictogramme + libellé)
   archiveKindOuverture: { fr: 'Ouverture', en: 'Opening' },

@@ -11,6 +11,7 @@ import { useT, usePick } from '../i18n'
 import { cardStrings } from './cardStrings'
 import type { EveningSession, SessionKind } from '../types'
 import { playSfx } from '../audio'
+import { ArchiveHighlights } from './ArchiveHighlights'
 import './archives.css'
 
 const SWIPE_CLOSE_THRESHOLD = 90
@@ -59,6 +60,9 @@ export function ArchiveCard() {
   const session: EveningSession | null = openSessionId ? (sessions.find((s) => s.id === openSessionId) ?? null) : null
 
   useEffect(() => {
+    // Précédent/suivant se trouvent après le long transcript : la nouvelle fiche repart du haut
+    // pour présenter son titre et ses bulles, sans conserver la position de l'ancienne table.
+    if (session && sheetRef.current) sheetRef.current.scrollTop = 0
     // Même précaution que la fiche portrait : `preventScroll` évite que le focus natif ne fasse
     // défiler la feuille pour amener le titre dans le viewport (écran paysage bas, voir WEL-863).
     if (session) titleRef.current?.focus({ preventScroll: true })
@@ -184,10 +188,13 @@ export function ArchiveCard() {
         )}
 
         {published && archive ? (
-          <section className="archive-card__transcript" data-testid="archive-transcript">
-            <h3 className="archive-card__section-title">{t('archiveTranscriptTitle')}</h3>
-            <div>{transcript}</div>
-          </section>
+          <>
+            <ArchiveHighlights key={session.id} highlights={archive.highlights} />
+            <section className="archive-card__transcript" data-testid="archive-transcript">
+              <h3 className="archive-card__section-title">{t('archiveTranscriptTitle')}</h3>
+              <div>{transcript}</div>
+            </section>
+          </>
         ) : (
           <div className="archive-card__pending" data-testid="archive-pending">
             <p className="archive-card__pending-title">{t('archivePendingTitle')}</p>

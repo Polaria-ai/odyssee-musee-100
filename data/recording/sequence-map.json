@@ -1,0 +1,228 @@
+{
+  "version": 1,
+  "source": {
+    "recordingTitle": "Nouvel enregistrement 36",
+    "transcriptionMethod": "Apple Voice Memos native transcription",
+    "file": "data/recording/nouvel-enregistrement-36.txt",
+    "characters": 111162,
+    "bytes": 114661,
+    "sha256": "9a7177cab47987a575536d56a026de95a02f6df428595eebabae967744349dc3",
+    "charOffsets": "Zero-based Unicode character offsets; endChar is exclusive. This source contains no characters outside the BMP, so offsets also match JavaScript UTF-16 indices.",
+    "timestampsAvailable": false,
+    "startsMidOpening": true,
+    "closingThanksPresent": true,
+    "lastSentenceComplete": false,
+    "lastRecordedText": "ense embaucher en quelques mois.  Mais notre ambition elle vient de créer une entreprise et si possible en faire un leader mondial. Merci merci beaucoup Laurence, merci Merci d'avoir terminé cette soirée. Merci beaucoup de votre attention et je vais ",
+    "publishedTranscriptExtraction": "source.slice(startChar,endChar).trim(); words and paragraph separators are unchanged."
+  },
+  "coverage": {
+    "sequenceCount": 11,
+    "coveredCharacters": 111162,
+    "exactContiguousPartition": true
+  },
+  "sequences": [
+    {
+      "id": "opening-excerpt",
+      "kind": "opening",
+      "title": {
+        "fr": "Ouverture — extrait enregistré",
+        "en": "Opening — recorded excerpt"
+      },
+      "startChar": 0,
+      "endChar": 817,
+      "characters": 817,
+      "startAnchor": "Et la soirée va nous montrer qu'il va falloir faire des choix. Alors je crois qu'on va voir dans la soirée que les point",
+      "endAnchor": "gir sur toute la chaîne de valeur de l'IA et il va falloir jouer à une échelle qui n'est pas nationale mais européenne. ",
+      "sha256Utf8": "a85761852eb2793d50b443e651ea3a3b48504afcb55833c49326ee0b407c07b9",
+      "includedInGameArchives": false
+    },
+    {
+      "id": "keynote-defense",
+      "kind": "keynote",
+      "title": {
+        "fr": "IA de défense et souveraineté",
+        "en": "Defence AI and sovereignty"
+      },
+      "startChar": 817,
+      "endChar": 15329,
+      "characters": 14512,
+      "startAnchor": "Merci Cyril on va se retrouver beaucoup plus longuement à la fin de cette soirée avec plein de surprises et je vous prop",
+      "endAnchor": " financier un petit peu et d'une direction qui soit acceptée. Merci beaucoup de m'avoir écouté. Merci beaucoup Bertel.  ",
+      "sha256Utf8": "917530bfba0f8bd8f6961aa58b62ec661f6e5ddbb5a6a7652ccc89bc2ef2f9c1",
+      "includedInGameArchives": false
+    },
+    {
+      "id": "top-100-overview",
+      "kind": "presentation",
+      "title": {
+        "fr": "Présentation de la sélection des 100",
+        "en": "Introducing the selection of 100"
+      },
+      "startChar": 15329,
+      "endChar": 19944,
+      "characters": 4615,
+      "startAnchor": "Alors vous vous faites partie des 100 qui font l'IA en Europe d'après l'opinion. Vous allez tous pouvoir, je crois qu'il",
+      "endAnchor": "-delà des licornes, on continuera à créer comment on arrive à les présonner et les faire grandir en Europe.  Ça marche. ",
+      "sha256Utf8": "eb4606a1cc44201fc24b1301536128d6165d0b948424fe120446d9e9867d8fcc",
+      "includedInGameArchives": false
+    },
+    {
+      "id": "table-ronde-1",
+      "kind": "roundtable",
+      "title": {
+        "fr": "De la promesse aux infrastructures",
+        "en": "From promise to infrastructure"
+      },
+      "startChar": 19944,
+      "endChar": 36774,
+      "characters": 16830,
+      "startAnchor": "Merci beaucoup Zineb. Nous continuons notre soirée avec notre premier débat.  Il y a de la promesse de l'insure et je vo",
+      "endAnchor": "le vertu. Bon écoutez merci beaucoup Marie pile à la fin de notre temps, merci beaucoup.  C'était vraiment passionnant. ",
+      "sha256Utf8": "c1291058d10dede919d0d0e01b036d7096e53bb0cb02164e1ea2b5cec010e42d",
+      "includedInGameArchives": true
+    },
+    {
+      "id": "face-a-face-fdj",
+      "kind": "face-a-face",
+      "title": {
+        "fr": "Du prototype à la valeur en entreprise",
+        "en": "From prototypes to business value"
+      },
+      "startChar": 36774,
+      "endChar": 54210,
+      "characters": 17436,
+      "startAnchor": "Alors nous continuons notre soirée avec un face-à-face donc j'appelle à nouveau Rémi Godot ainsi que Jessica Cchera et S",
+      "endAnchor": " comme ça qu'on pourra faire de l vraiment un game changer dans les entreprises.  Merci Sébastien. Merci à vous. Merci. ",
+      "sha256Utf8": "2cc8bd825e4eb0b9a6cdd4e6a0c5071d16a3563392a0a884535aba18ba0e4e1a",
+      "includedInGameArchives": false
+    },
+    {
+      "id": "table-ronde-2",
+      "kind": "roundtable",
+      "title": {
+        "fr": "De l’invention à l’industrialisation",
+        "en": "From invention to industrialisation"
+      },
+      "startChar": 54210,
+      "endChar": 67984,
+      "characters": 13774,
+      "startAnchor": "voilà on va enchaîner en parlant maintenant de notre deuxième transition qui est qui est le passage à la phase d'industr",
+      "endAnchor": "e la souveraineté.  Il faut être souverain comment être souverain en étant leader mondial, même si c'est sur une niche. ",
+      "sha256Utf8": "628a0a3730a0f00517488ab0165f03bd7d0898f385fc5acffc7176f7f590c2ac",
+      "includedInGameArchives": true
+    },
+    {
+      "id": "top-100-four-portraits",
+      "kind": "presentation",
+      "title": {
+        "fr": "Quatre portraits parmi les 100",
+        "en": "Four profiles from the 100"
+      },
+      "startChar": 67984,
+      "endChar": 72600,
+      "characters": 4616,
+      "startAnchor": "Bravo à vous,vous, on va découvment de présenter ce portrait parmi les 100 typhons liés en Europe. Et j'invite très vite",
+      "endAnchor": "important de l'avoir parce qu'elle incarnait un autre Un autre circuit, voilà l'est interviewé dans le supp exactement. ",
+      "sha256Utf8": "746c471c9db74b1bf45c51efd0d97bbd83cf28abfaf1ba6445702e57dd48a223",
+      "includedInGameArchives": false
+    },
+    {
+      "id": "keynote-electrons-souverainete",
+      "kind": "keynote",
+      "title": {
+        "fr": "Électrons et souveraineté",
+        "en": "Electrons and sovereignty"
+      },
+      "startChar": 72600,
+      "endChar": 84182,
+      "characters": 11582,
+      "startAnchor": "Merci Grégoire, merci alors maintenant nous allons retrouver de l'accueillir Charles Bourin.  Bonsoir Charles, cofondate",
+      "endAnchor": "ue. Donc aujourd'hui la fenêtre est ouverte mais elle ne le restera pas longtemps donc c'est à nous jouer. Merci à toi. ",
+      "sha256Utf8": "9f61a6d8275e7097146dda255f321f8f2add5e6d47a3aafa88030ee34acc9526",
+      "includedInGameArchives": false
+    },
+    {
+      "id": "table-ronde-3",
+      "kind": "roundtable",
+      "title": {
+        "fr": "De la réaction au changement de culture",
+        "en": "From reaction to cultural change"
+      },
+      "startChar": 84182,
+      "endChar": 100057,
+      "characters": 15875,
+      "startAnchor": "merci donc on a retenu à l'adoption la frontière et les data centers et on va tout de suite enchaîner avec notre troisiè",
+      "endAnchor": "urope a encore une carte à jouer dans le concert des nations numériques.  Merci à tous les trois pour vos informations. ",
+      "sha256Utf8": "6eb28864caba93e640bd02bd298e1509d377828e2b5467d2f09e9fdb48f6658d",
+      "includedInGameArchives": true
+    },
+    {
+      "id": "final-world-models",
+      "kind": "interview",
+      "title": {
+        "fr": "Entretien final — modèles du monde et ambition mondiale",
+        "en": "Final interview — world models and global ambition"
+      },
+      "startChar": 100057,
+      "endChar": 111044,
+      "characters": 10987,
+      "startAnchor": "écoutez maintenant je suis ravi d'accueillir Laurent Souly, CO, Machine, James, Amy L Bonsoir Laurent. Bonne Merci d'êtr",
+      "endAnchor": "er en quelques mois.  Mais notre ambition elle vient de créer une entreprise et si possible en faire un leader mondial. ",
+      "sha256Utf8": "5787fcb8958d566e0d7937592a25a849c87f3534a621ee5e224d4a3b29099352",
+      "includedInGameArchives": false
+    },
+    {
+      "id": "closing-excerpt",
+      "kind": "closing",
+      "title": {
+        "fr": "Remerciements de fin — phrase finale interrompue",
+        "en": "Closing thanks — final sentence cut off"
+      },
+      "startChar": 111044,
+      "endChar": 111162,
+      "characters": 118,
+      "startAnchor": "Merci merci beaucoup Laurence, merci Merci d'avoir terminé cette soirée. Merci beaucoup de votre attention et je vais ",
+      "endAnchor": "Merci merci beaucoup Laurence, merci Merci d'avoir terminé cette soirée. Merci beaucoup de votre attention et je vais ",
+      "sha256Utf8": "b9eca884d4e557e6ab625f229c4adba7dc03d1286efe8c215ee8a188c0c80142",
+      "includedInGameArchives": false
+    }
+  ],
+  "roundtableValidation": [
+    {
+      "sessionId": "table-ronde-1",
+      "transcriptChars": 16830,
+      "highlights": 7,
+      "exactSourceExcerpts": true,
+      "maxTitleChars": 59,
+      "maxBodyChars": 283,
+      "maxExcerptChars": 1187,
+      "transcriptSha256": "c1291058d10dede919d0d0e01b036d7096e53bb0cb02164e1ea2b5cec010e42d"
+    },
+    {
+      "sessionId": "table-ronde-2",
+      "transcriptChars": 13774,
+      "highlights": 8,
+      "exactSourceExcerpts": true,
+      "maxTitleChars": 56,
+      "maxBodyChars": 275,
+      "maxExcerptChars": 1687,
+      "transcriptSha256": "628a0a3730a0f00517488ab0165f03bd7d0898f385fc5acffc7176f7f590c2ac"
+    },
+    {
+      "sessionId": "table-ronde-3",
+      "transcriptChars": 15875,
+      "highlights": 7,
+      "exactSourceExcerpts": true,
+      "maxTitleChars": 49,
+      "maxBodyChars": 289,
+      "maxExcerptChars": 1945,
+      "transcriptSha256": "6eb28864caba93e640bd02bd298e1509d377828e2b5467d2f09e9fdb48f6658d"
+    }
+  ],
+  "editorialPolicy": {
+    "rawTranscriptsUnmodified": true,
+    "speakerAttributionsAdded": false,
+    "timestampsInvented": false,
+    "highlightClaims": "Faithful summaries of statements made during the discussion, not independently verified external facts."
+  }
+}

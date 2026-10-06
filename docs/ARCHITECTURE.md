@@ -70,6 +70,8 @@ Le chat avec Rémi passe par une fonction Vercel, `api/remi.ts` : le navigateur 
 
 La même fonction et le même composant servent l'**Archiviste · IA** (WEL-929) : la requête porte une `persona` (`remi` par défaut, `archiviste`), `PERSONAS` (`personas.ts`) configure le chat de chaque personnage (nom, mention IA, accueil, puces, buste, accent) et le store ouvre l'un ou l'autre (`openChat(persona)` ; `remiChatOpen` vaut « un chat IA est ouvert », `chatPersona` dit lequel). L'Archiviste ne reçoit que les métadonnées des trois tables rondes et leurs transcriptions publiées (`session_archives`, clé `anon`); Rémi conserve le programme complet.
 
+Chaque fiche de table ronde peut aussi afficher des bulles « À retenir » (`SessionArchive.highlights`). Les résumés FR/EN sont des composants DOM, sans objet 3D supplémentaire. Chaque bulle ouvre un extrait français exact de la transcription associée ; les repères dans l'enregistrement sont facultatifs et ne sont affichés que lorsqu'ils ont été fournis. Schémas TypeScript/Zod, importeur et trigger PostgreSQL valident le même contrat (12 bulles maximum, ids uniques, longueurs bornées, extrait présent dans le texte). Les anciennes archives sans bulles restent compatibles. La transcription source de l'enregistrement et sa partition sont conservées dans `data/recording/`, hors du bundle et des fichiers statiques servis au jeu.
+
 ## Supabase
 
 Projet `odyssee-musee-100` (`snqwuvqhxaysaygwqkdq`, eu-west-3). Table `people` en lecture publique (lignes publiées), photos dans `public/portraits/` (statique) ou bucket `portraits`. Présence via Realtime (canaux partitionnés, quotas du plan gratuit : voir `src/features/presence/`).
