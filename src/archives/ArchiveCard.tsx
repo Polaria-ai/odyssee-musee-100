@@ -60,6 +60,9 @@ export function ArchiveCard() {
   const session: EveningSession | null = openSessionId ? (sessions.find((s) => s.id === openSessionId) ?? null) : null
 
   useEffect(() => {
+    // Précédent/suivant se trouvent après le long transcript : la nouvelle fiche repart du haut
+    // pour présenter son titre et ses bulles, sans conserver la position de l'ancienne table.
+    if (session && sheetRef.current) sheetRef.current.scrollTop = 0
     // Même précaution que la fiche portrait : `preventScroll` évite que le focus natif ne fasse
     // défiler la feuille pour amener le titre dans le viewport (écran paysage bas, voir WEL-863).
     if (session) titleRef.current?.focus({ preventScroll: true })

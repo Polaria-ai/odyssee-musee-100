@@ -153,15 +153,15 @@ select pg_temp.expect_highlights_rejected(
 );
 select pg_temp.expect_highlights_rejected(
   jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,startSec}', '-1')),
-  'Highlight startSec must be a nonnegative number'
+  'Highlight startSec must be a finite nonnegative number'
 );
 select pg_temp.expect_highlights_rejected(
   jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,endSec}', '-1')),
-  'Highlight endSec must be a nonnegative number'
+  'Highlight endSec must be a finite nonnegative number'
 );
 select pg_temp.expect_highlights_rejected(
   jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,startSec}', '"10"')),
-  'Highlight startSec must be a nonnegative number'
+  'Highlight startSec must be a finite nonnegative number'
 );
 select pg_temp.expect_highlights_rejected(null, 'Archive highlights must be a JSON array');
 select pg_temp.expect_highlights_rejected('null', 'Archive highlights must be a JSON array');
@@ -199,6 +199,133 @@ set highlights = jsonb_build_array(
   jsonb_set(jsonb_set(pg_temp.highlight() #- '{source,startSec}' #- '{source,endSec}', '{title,en}', '""'), '{body,en}', '""')
 )
 where session_id = 'table-ronde-1';
+
+-- Régressions Unicode TestCI : les limites sont celles de String.length/Zod (UTF-16),
+-- et non char_length. Un emoji non BMP occupe deux unités, un caractère BMP en occupe une.
+select pg_temp.assert_true(
+  public.archive_text_utf16_length('') = 0
+  and public.archive_text_utf16_length('TestCI') = 6
+  and public.archive_text_utf16_length(U&'\+01F600') = 2
+  and public.archive_text_utf16_length(repeat(U&'\+01F600', 50)) = 100,
+  'Unicode length matches JavaScript UTF-16 units'
+);
+select pg_temp.assert_true(
+  public.archive_trim_js(U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF'
+    || 'TestCI' || U&'\FEFF\3000\205F\202F\2029\2028\200A\2009\2008\2007\2006\2005\2004\2003\2002\2001\2000\1680\00A0\0020\000D\000C\000B\000A\0009') = 'TestCI'
+  and public.archive_trim_js(U&'\0085\200B' || 'TestCI' || U&'\200B\0085') = U&'\0085\200B' || 'TestCI' || U&'\200B\0085',
+  'trim removes exactly ECMAScript edge whitespace, preserving NEL and zero-width space'
+);
+
+-- Les maxima exacts 100/800/2000 sont acceptés, même avec des espaces Unicode au bord
+-- des champs FR (trim avant mesure). L'extrait est conservé brut et présent après trim du texte.
+update public.session_archives
+set transcript_fr = U&'\00A0\FEFF' || 'TestCI Unicode. ' || repeat(U&'\+01F600', 1001)
+    || ' TestCI première idée.' || U&'\2029\3000',
+    highlights = jsonb_build_array(jsonb_build_object(
+      'id', 'testci-unicode-limit',
+      'title', jsonb_build_object(
+        'fr', U&'\00A0' || repeat(U&'\+01F600', 50) || U&'\FEFF',
+        'en', repeat(U&'\+01F600', 50)
+      ),
+      'body', jsonb_build_object(
+        'fr', U&'\3000' || repeat(U&'\+01F600', 400) || U&'\2029',
+        'en', repeat(U&'\+01F600', 400)
+      ),
+      'source', jsonb_build_object('excerpt', repeat(U&'\+01F600', 1000))
+    ))
+where session_id = 'table-ronde-1';
+select pg_temp.assert_true(
+  (select public.archive_text_utf16_length(public.archive_trim_js(highlights #>> '{0,title,fr}')) = 100
+     and public.archive_text_utf16_length(highlights #>> '{0,title,en}') = 100
+     and public.archive_text_utf16_length(public.archive_trim_js(highlights #>> '{0,body,fr}')) = 800
+     and public.archive_text_utf16_length(highlights #>> '{0,body,en}') = 800
+     and public.archive_text_utf16_length(highlights #>> '{0,source,excerpt}') = 2000
+   from public.session_archives where session_id = 'table-ronde-1'),
+  'exact UTF-16 field limits are accepted'
+);
+
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{title,en}', to_jsonb(repeat(U&'\+01F600', 51)))),
+  'Highlight titles require FR and EN strings, with a nonempty FR title of at most 100 characters'
+);
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{title,fr}', to_jsonb(U&'\00A0' || repeat(U&'\+01F600', 51) || U&'\FEFF'))),
+  'Highlight titles require FR and EN strings, with a nonempty FR title of at most 100 characters'
+);
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{body,en}', to_jsonb(repeat(U&'\+01F600', 401)))),
+  'Highlight bodies require FR and EN strings, with a nonempty FR body of at most 800 characters'
+);
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{body,fr}', to_jsonb(U&'\3000' || repeat(U&'\+01F600', 401) || U&'\2029'))),
+  'Highlight bodies require FR and EN strings, with a nonempty FR body of at most 800 characters'
+);
+-- 1001 emoji existent réellement dans le transcript : le rejet vérifie la taille, pas une absence.
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,excerpt}', to_jsonb(repeat(U&'\+01F600', 1001)))),
+  'Highlight excerpts must be exact nonempty passages from the French transcript, at most 2000 characters'
+);
+
+-- Rechercher l'extrait dans le transcript après le même trim que Zod. Des bords présents
+-- uniquement dans le texte brut ne constituent pas un passage visible dans la fiche du jeu.
+update public.session_archives
+set transcript_fr = U&'\00A0\FEFF' || 'TestCI première idée.' || U&'\2029\3000',
+    highlights = jsonb_build_array(pg_temp.highlight())
+where session_id = 'table-ronde-1';
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,excerpt}', to_jsonb(U&'\00A0\FEFF' || 'TestCI première idée.'))),
+  'Highlight excerpts must be exact nonempty passages from the French transcript, at most 2000 characters'
+);
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,excerpt}', to_jsonb('TestCI première idée.' || U&'\2029\3000'))),
+  'Highlight excerpts must be exact nonempty passages from the French transcript, at most 2000 characters'
+);
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,excerpt}', to_jsonb(U&'\00A0\FEFF'))),
+  'Highlight excerpts must be exact nonempty passages from the French transcript, at most 2000 characters'
+);
+update public.session_archives
+set transcript_fr = ' TestCI première idée. ', highlights = jsonb_build_array(pg_temp.highlight())
+where session_id = 'table-ronde-1';
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,excerpt}', to_jsonb(' TestCI première idée. '::text))),
+  'Highlight excerpts must be exact nonempty passages from the French transcript, at most 2000 characters'
+);
+
+-- Les espaces Unicode internes restent dans le transcript et sont citables exactement.
+update public.session_archives
+set transcript_fr = U&'\FEFF' || 'TestCI première idée.' || U&'\00A0' || 'TestCI suite.' || U&'\3000',
+    highlights = jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,excerpt}',
+      to_jsonb('TestCI première idée.' || U&'\00A0' || 'TestCI suite.')))
+where session_id = 'table-ronde-1';
+select pg_temp.assert_true(
+  (select strpos(public.archive_trim_js(transcript_fr), highlights #>> '{0,source,excerpt}') > 0
+   from public.session_archives where session_id = 'table-ronde-1'),
+  'Unicode whitespace inside a source passage is preserved'
+);
+
+-- JSONB numeric accepte des nombres que JSON.parse convertit en Infinity. Les horodatages
+-- SQL doivent rester bornés à Number.MAX_VALUE, comme z.number().finite() côté client.
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,startSec}', to_jsonb(1e400::numeric))),
+  'Highlight startSec must be a finite nonnegative number'
+);
+select pg_temp.expect_highlights_rejected(
+  jsonb_build_array(jsonb_set(pg_temp.highlight(), '{source,endSec}', to_jsonb(1e400::numeric))),
+  'Highlight endSec must be a finite nonnegative number'
+);
+update public.session_archives
+set highlights = jsonb_build_array(jsonb_set(
+  jsonb_set(pg_temp.highlight(), '{source,startSec}', to_jsonb(1.7976931348623157e308::numeric)),
+  '{source,endSec}', to_jsonb(1.7976931348623157e308::numeric)
+))
+where session_id = 'table-ronde-1';
+select pg_temp.assert_true(
+  (select (highlights #>> '{0,source,startSec}')::numeric = 1.7976931348623157e308::numeric
+     and (highlights #>> '{0,source,endSec}')::numeric = 1.7976931348623157e308::numeric
+   from public.session_archives where session_id = 'table-ronde-1'),
+  'largest finite JavaScript timestamp is accepted'
+);
 
 -- Le propriétaire garde trois lignes; anon doit n'en voir que les deux publiées.
 update public.session_archives set published = false where session_id = 'table-ronde-3';

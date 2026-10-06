@@ -17,6 +17,29 @@ alter table public.session_archives
       end
     );
 
+-- JavaScript/Zod compte les unités UTF-16, PostgreSQL les points Unicode. Les caractères
+-- hors du BMP comptent donc pour deux unités dans toutes les limites du contrat client.
+-- Ces fonctions pures n'accèdent à aucune table ni à aucun état de publication.
+create or replace function public.archive_text_utf16_length(value text)
+returns integer
+language sql immutable strict
+set search_path = ''
+as $$
+  select coalesce(sum(case when ascii(code_point) > 65535 then 2 else 1 end), 0)::integer
+  from regexp_split_to_table($1, '') as code_points(code_point)
+  where code_point <> '';
+$$;
+
+-- Ensemble exact de String.trim() ECMAScript (WhiteSpace + LineTerminator), sans NEL
+-- ni espace de largeur nulle. Seuls les bords sont retirés, comme dans le schéma Zod.
+create or replace function public.archive_trim_js(value text)
+returns text
+language sql immutable strict
+set search_path = ''
+as $$
+  select btrim($1, U&'\0009\000A\000B\000C\000D\0020\00A0\1680\2000\2001\2002\2003\2004\2005\2006\2007\2008\2009\200A\2028\2029\202F\205F\3000\FEFF');
+$$;
+
 create or replace function public.session_archives_validate_highlights()
 returns trigger
 language plpgsql
@@ -51,17 +74,15 @@ begin
     if jsonb_typeof(highlight -> 'title') is distinct from 'object'
        or jsonb_typeof(highlight #> '{title,fr}') is distinct from 'string'
        or jsonb_typeof(highlight #> '{title,en}') is distinct from 'string'
-       or (highlight #>> '{title,fr}') !~ '[^[:space:]]'
-       or char_length(btrim(highlight #>> '{title,fr}')) not between 1 and 100
-       or char_length(highlight #>> '{title,en}') > 100 then
+       or public.archive_text_utf16_length(public.archive_trim_js(highlight #>> '{title,fr}')) not between 1 and 100
+       or public.archive_text_utf16_length(highlight #>> '{title,en}') > 100 then
       raise exception 'Highlight titles require FR and EN strings, with a nonempty FR title of at most 100 characters';
     end if;
     if jsonb_typeof(highlight -> 'body') is distinct from 'object'
        or jsonb_typeof(highlight #> '{body,fr}') is distinct from 'string'
        or jsonb_typeof(highlight #> '{body,en}') is distinct from 'string'
-       or (highlight #>> '{body,fr}') !~ '[^[:space:]]'
-       or char_length(btrim(highlight #>> '{body,fr}')) not between 1 and 800
-       or char_length(highlight #>> '{body,en}') > 800 then
+       or public.archive_text_utf16_length(public.archive_trim_js(highlight #>> '{body,fr}')) not between 1 and 800
+       or public.archive_text_utf16_length(highlight #>> '{body,en}') > 800 then
       raise exception 'Highlight bodies require FR and EN strings, with a nonempty FR body of at most 800 characters';
     end if;
 
@@ -71,25 +92,27 @@ begin
       raise exception 'Each highlight requires a French source excerpt';
     end if;
     excerpt := source ->> 'excerpt';
-    if excerpt !~ '[^[:space:]]' or char_length(excerpt) > 2000
-       or new.transcript_fr is null or strpos(new.transcript_fr, excerpt) = 0 then
+    if public.archive_trim_js(excerpt) = '' or public.archive_text_utf16_length(excerpt) > 2000
+       or new.transcript_fr is null or strpos(public.archive_trim_js(new.transcript_fr), excerpt) = 0 then
       raise exception 'Highlight excerpts must be exact nonempty passages from the French transcript, at most 2000 characters';
     end if;
 
     if source ? 'startSec' then
       if jsonb_typeof(source -> 'startSec') is distinct from 'number' then
-        raise exception 'Highlight startSec must be a nonnegative number';
+        raise exception 'Highlight startSec must be a finite nonnegative number';
       end if;
-      if (source ->> 'startSec')::numeric < 0 then
-        raise exception 'Highlight startSec must be a nonnegative number';
+      if (source ->> 'startSec')::numeric < 0
+         or (source ->> 'startSec')::numeric > 1.7976931348623157e308::numeric then
+        raise exception 'Highlight startSec must be a finite nonnegative number';
       end if;
     end if;
     if source ? 'endSec' then
       if jsonb_typeof(source -> 'endSec') is distinct from 'number' then
-        raise exception 'Highlight endSec must be a nonnegative number';
+        raise exception 'Highlight endSec must be a finite nonnegative number';
       end if;
-      if (source ->> 'endSec')::numeric < 0 then
-        raise exception 'Highlight endSec must be a nonnegative number';
+      if (source ->> 'endSec')::numeric < 0
+         or (source ->> 'endSec')::numeric > 1.7976931348623157e308::numeric then
+        raise exception 'Highlight endSec must be a finite nonnegative number';
       end if;
     end if;
     if source ? 'startSec' and source ? 'endSec'

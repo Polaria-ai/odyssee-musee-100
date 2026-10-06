@@ -136,6 +136,18 @@ async function expectCompleteTranscript(page: Page, row: ArchiveRow): Promise<vo
   expect(await text.textContent()).toBe(row.transcript_fr)
 }
 
+async function sheetScrollTop(page: Page): Promise<number> {
+  return page.getByTestId('archive-card').locator('.archive-card__sheet').evaluate((element) =>
+    (element as unknown as { scrollTop: number }).scrollTop,
+  )
+}
+
+async function expectCardStartsAtTop(page: Page, session: ArchivesState['sessions'][number]): Promise<void> {
+  await expect.poll(() => sheetScrollTop(page)).toBe(0)
+  await expect(page.getByTestId('archive-card').getByRole('heading', { name: session.title.fr, exact: true })).toBeInViewport()
+  await expect(page.getByTestId('archive-highlight').first()).toBeInViewport()
+}
+
 test('bulles : exactement trois tables rondes, navigation réelle et transcript intégral préservé', async ({ page }, testInfo) => {
   const issues = collectConsoleIssues(page)
   const hasTouch = testInfo.project.use.hasTouch === true
@@ -157,13 +169,25 @@ test('bulles : exactement trois tables rondes, navigation réelle et transcript 
     await expect(source).toBeVisible()
     expect(await source.textContent()).toBe(row.highlights![0].source.excerpt)
     await expectCompleteTranscript(page, row)
-    if (index < rows.length - 1) await activate(page.getByTestId('archive-next'), hasTouch)
+    if (index < rows.length - 1) {
+      // Le bouton est réellement rejoint au bas du transcript avant de naviguer.
+      await page.getByTestId('archive-next').scrollIntoViewIfNeeded()
+      await expect.poll(() => sheetScrollTop(page)).toBeGreaterThan(0)
+      await activate(page.getByTestId('archive-next'), hasTouch)
+      await expectCardStartsAtTop(page, state.sessions[index + 1])
+    }
   }
 
   await expect(page.getByTestId('archive-next')).toBeDisabled()
+  await page.getByTestId('archive-prev').scrollIntoViewIfNeeded()
+  await expect.poll(() => sheetScrollTop(page)).toBeGreaterThan(0)
   await activate(page.getByTestId('archive-prev'), hasTouch)
+  await expectCardStartsAtTop(page, state.sessions[1])
   await expect(page.getByTestId('archive-highlight-source').first()).toBeHidden()
+  await page.getByTestId('archive-prev').scrollIntoViewIfNeeded()
+  await expect.poll(() => sheetScrollTop(page)).toBeGreaterThan(0)
   await activate(page.getByTestId('archive-prev'), hasTouch)
+  await expectCardStartsAtTop(page, state.sessions[0])
   await expect(page.getByTestId('archive-highlight-source').first()).toBeHidden()
   await expect(page.getByTestId('archive-card')).toContainText(rows[0].highlights![0].title.fr)
   await expect(page.getByTestId('archive-prev')).toBeDisabled()

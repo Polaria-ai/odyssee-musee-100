@@ -235,6 +235,27 @@ describe('ArchiveCard', () => {
     expect(useGame.getState().openSessionId).toBe('fixture-session-deux')
   })
 
+  it('revient en haut de la feuille à chaque changement de table ronde depuis le bas du transcript', () => {
+    useGame.setState({ openSessionId: 'fixture-session-un' })
+    const { container } = render(<ArchiveCard />)
+    const sheet = container.querySelector<HTMLDivElement>('.archive-card__sheet')!
+
+    sheet.scrollTop = 1600
+    fireEvent.click(screen.getByTestId('archive-next'))
+    expect(sheet.scrollTop).toBe(0)
+    expect(screen.getByRole('heading', { name: 'Table ronde de test' })).toHaveFocus()
+
+    sheet.scrollTop = 2400
+    fireEvent.click(screen.getByTestId('archive-next'))
+    expect(sheet.scrollTop).toBe(0)
+    expect(screen.getByRole('heading', { name: 'Keynote de test' })).toHaveFocus()
+
+    sheet.scrollTop = 3200
+    fireEvent.click(screen.getByTestId('archive-prev'))
+    expect(sheet.scrollTop).toBe(0)
+    expect(screen.getByRole('heading', { name: 'Table ronde de test' })).toHaveFocus()
+  })
+
   it('Échap ferme la fiche', () => {
     useGame.setState({ openSessionId: 'fixture-session-un' })
     render(<ArchiveCard />)
