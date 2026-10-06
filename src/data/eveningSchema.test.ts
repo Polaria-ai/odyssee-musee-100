@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  ArchiveHighlightSchema,
   ArchiveTranscriptSchema,
   EveningAgentOutputSchema,
   EveningSessionSchema,
@@ -8,6 +9,47 @@ import {
   parseAgentOutput,
   toSessionArchives,
 } from './eveningSchema'
+
+const highlight = {
+  id: 'idee-de-test',
+  title: { fr: 'Une idée de test', en: '' },
+  body: { fr: 'Cette synthèse de test renvoie au passage source.', en: '' },
+  source: { excerpt: 'Une idée de test à garder.' },
+}
+
+describe('ArchiveHighlightSchema', () => {
+  it('accepte une bulle FR avec repli anglais et sans horodatage inventé', () => {
+    expect(ArchiveHighlightSchema.parse(highlight)).toEqual(highlight)
+  })
+
+  it('préserve mot pour mot les espaces et sauts de ligne de l’extrait', () => {
+    const exact = { ...highlight, source: { excerpt: ' Une idée de test.\n' } }
+    expect(ArchiveHighlightSchema.parse(exact).source.excerpt).toBe(' Une idée de test.\n')
+  })
+
+  it.each([
+    ['id non kebab', { ...highlight, id: 'Id De Test' }],
+    ['titre FR vide', { ...highlight, title: { fr: '  ', en: '' } }],
+    ['titre FR trop long', { ...highlight, title: { fr: 'x'.repeat(101), en: '' } }],
+    ['titre EN trop long', { ...highlight, title: { fr: 'Titre', en: 'x'.repeat(101) } }],
+    ['corps FR vide', { ...highlight, body: { fr: '  ', en: '' } }],
+    ['corps FR trop long', { ...highlight, body: { fr: 'x'.repeat(801), en: '' } }],
+    ['corps EN trop long', { ...highlight, body: { fr: 'Corps', en: 'x'.repeat(801) } }],
+    ['extrait vide', { ...highlight, source: { excerpt: '  \n' } }],
+    ['extrait trop long', { ...highlight, source: { excerpt: 'x'.repeat(2001) } }],
+    ['début négatif', { ...highlight, source: { ...highlight.source, startSec: -1 } }],
+    ['fin négative', { ...highlight, source: { ...highlight.source, endSec: -1 } }],
+    ['début infini', { ...highlight, source: { ...highlight.source, startSec: Infinity } }],
+    ['fin antérieure', { ...highlight, source: { ...highlight.source, startSec: 30, endSec: 29 } }],
+    ['horodatage texte', { ...highlight, source: { ...highlight.source, startSec: '30' } }],
+  ])('rejette %s', (_label, value) => {
+    expect(ArchiveHighlightSchema.safeParse(value).success).toBe(false)
+  })
+
+  it('accepte des secondes exactes non négatives, dont zéro et une fraction', () => {
+    expect(ArchiveHighlightSchema.safeParse({ ...highlight, source: { ...highlight.source, startSec: 0, endSec: 12.5 } }).success).toBe(true)
+  })
+})
 
 function makeSession(overrides: Record<string, unknown> = {}) {
   return {
@@ -71,6 +113,38 @@ describe('SessionArchiveSchema', () => {
   it('rejette un archivedAt qui n’est pas une date ISO', () => {
     expect(SessionArchiveSchema.safeParse({ ...base, archivedAt: '06/10/2026' }).success).toBe(false)
   })
+
+  const withHighlight = {
+    ...base,
+    transcript: { fr: 'Préface.\nUne idée de test à garder.\nFin.', en: '' },
+    highlights: [highlight],
+  }
+
+  it('accepte une bulle dont l’extrait est exactement présent dans le transcript FR', () => {
+    expect(SessionArchiveSchema.parse(withHighlight).highlights).toEqual([highlight])
+  })
+
+  it('ne crée pas de bulles dans une ancienne archive qui n’en possède pas', () => {
+    expect(SessionArchiveSchema.parse(base)).toEqual(base)
+  })
+
+  it('rejette un extrait absent ou réécrit, même si le titre est valide', () => {
+    const result = SessionArchiveSchema.safeParse({ ...withHighlight, highlights: [{ ...highlight, source: { excerpt: 'Une idée de test inventée.' } }] })
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.error.issues[0].path).toEqual(['highlights', 0, 'source', 'excerpt'])
+  })
+
+  it('rejette les ids de bulles en double dans une table ronde', () => {
+    const result = SessionArchiveSchema.safeParse({ ...withHighlight, highlights: [highlight, highlight] })
+    expect(result.success).toBe(false)
+    if (!result.success) expect(result.error.issues.some((issue) => issue.message.includes('double'))).toBe(true)
+  })
+
+  it('accepte douze bulles et rejette la treizième', () => {
+    const highlights = Array.from({ length: 13 }, (_, i) => ({ ...highlight, id: `idee-${i}` }))
+    expect(SessionArchiveSchema.safeParse({ ...withHighlight, highlights: highlights.slice(0, 12) }).success).toBe(true)
+    expect(SessionArchiveSchema.safeParse({ ...withHighlight, highlights }).success).toBe(false)
+  })
 })
 
 describe('EveningAgentOutputSchema', () => {
@@ -105,6 +179,17 @@ describe('parseAgentOutput', () => {
     expect(accepted).toHaveLength(1)
     expect(accepted[0].transcript.fr).toContain('Muriel Motte')
     expect(generatedAt).toBe('2026-10-06T22:50:00+02:00')
+  })
+
+  it('conserve les bulles facultatives dans le format v2 et vérifie leur extrait avant import', () => {
+    const output = {
+      ...validOutput,
+      archives: [{ sessionId: 'table-ronde-1', transcript: { fr: highlight.source.excerpt, en: '' }, highlights: [highlight] }],
+    }
+    expect(parseAgentOutput(output).accepted[0].highlights).toEqual([highlight])
+    const invalid = { ...output, archives: [{ ...output.archives[0], transcript: { fr: 'Texte différent.', en: '' } }] }
+    expect(parseAgentOutput(invalid).accepted).toEqual([])
+    expect(parseAgentOutput(invalid).errors.join(' ')).toContain('passage exact')
   })
 
   it('rejette une archive entière dont la séquence ne fait pas partie des tables rondes', () => {

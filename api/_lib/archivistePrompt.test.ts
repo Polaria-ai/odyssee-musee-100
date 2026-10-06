@@ -37,6 +37,14 @@ describe('périmètre de l’Archiviste', () => {
     expect(ARCHIVES_STAMP_VITRINES).toBe(ARCHIVES_STAMP_MIN)
     expect(fixed).toContain(`au moins ${ARCHIVES_STAMP_MIN} vitrines`)
   })
+
+  it('décrit les bulles sourcées sans annoncer une relecture humaine inexistante', () => {
+    expect(fixed).toContain('bulles « À retenir »')
+    expect(fixed).toContain('passage source exact')
+    expect(fixed).not.toContain('relecture humaine')
+    expect(fixed).not.toContain('relues, puis publiées')
+    expect(buildArchivesBlock([], 'fr')).not.toContain('relues avant')
+  })
 })
 
 describe('transcriptions publiées injectées', () => {

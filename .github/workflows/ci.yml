@@ -14,6 +14,37 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  archives_sql:
+    name: Archives · PostgreSQL invariants
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: odyssee_ci
+        options: >-
+          --health-cmd "pg_isready -U postgres -d odyssee_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate migrations, highlights and public read permissions
+        run: |
+          for archive_sql_file in \
+            scripts/archive-highlights-sql.bootstrap.sql \
+            supabase/migrations/20260925120000_evening.sql \
+            supabase/migrations/20261005100000_roundtable_transcripts.sql \
+            supabase/migrations/20261006193000_archive_highlights.sql \
+            scripts/archive-highlights-sql.test.sql
+          do
+            docker exec -i "${{ job.services.postgres.id }}" \
+              psql -X -U postgres -d odyssee_ci --set ON_ERROR_STOP=1 \
+              < "$archive_sql_file"
+          done
+
   quality:
     name: Lint · Typecheck · Unit tests
     runs-on: ubuntu-latest

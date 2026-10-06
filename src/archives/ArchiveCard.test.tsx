@@ -78,7 +78,7 @@ describe('ArchiveCard', () => {
     expect(screen.getByTestId('archive-card')).toBeInTheDocument()
     expect(screen.getByTestId('archive-pending')).toBeInTheDocument()
     expect(screen.getByText('Transcription en attente')).toBeInTheDocument()
-    expect(screen.getByText("La transcription de cette table ronde sera déposée après la soirée, puis relue avant publication.")).toBeInTheDocument()
+    expect(screen.getByText('La transcription de cette table ronde sera disponible après son import.')).toBeInTheDocument()
     expect(screen.queryByTestId('archive-transcript')).not.toBeInTheDocument()
   })
 
@@ -128,6 +128,77 @@ describe('ArchiveCard', () => {
     expect(screen.getByText('Transcription intégrale')).toBeInTheDocument()
     expect(screen.getByTestId('archive-transcript')).toHaveTextContent('Personne Testeau — Première prise de parole fabriquée pour le test.')
     expect(screen.getByTestId('archive-transcript')).toHaveTextContent('Autre Testeur — Deuxième prise de parole fabriquée pour le test.')
+    expect(screen.queryByTestId('archive-highlights')).not.toBeInTheDocument()
+  })
+
+  it('affiche les bulles d’une archive publiée avant sa transcription intégrale', () => {
+    useGame.setState({
+      openSessionId: 'fixture-session-deux',
+      archives: {
+        'fixture-session-deux': {
+          ...publishedArchive,
+          highlights: [{
+            id: 'fixture-point',
+            title: { fr: 'Une idée résumée de test', en: 'A summarized test idea' },
+            body: { fr: 'Une synthèse fictive de la prise de parole.', en: 'A fictional summary of the contribution.' },
+            source: { excerpt: 'Première prise de parole fabriquée pour le test.' },
+          }],
+        },
+      },
+    })
+    render(<ArchiveCard />)
+    expect(screen.getByRole('heading', { name: 'À retenir' })).toBeInTheDocument()
+    expect(screen.getByTestId('archive-highlights').compareDocumentPosition(screen.getByTestId('archive-transcript')))
+      .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(screen.getByRole('heading', { name: 'Une idée résumée de test' })).toBeInTheDocument()
+  })
+
+  it('n’affiche aucune bulle ni passage source pour une archive non publiée', () => {
+    useGame.setState({
+      openSessionId: 'fixture-session-deux',
+      archives: {
+        'fixture-session-deux': {
+          ...publishedArchive,
+          published: false,
+          highlights: [{
+            id: 'fixture-point',
+            title: { fr: 'Un titre privé de test', en: '' },
+            body: { fr: 'Un brouillon fictif.', en: '' },
+            source: { excerpt: 'Première prise de parole fabriquée pour le test.' },
+          }],
+        },
+      },
+    })
+    render(<ArchiveCard />)
+    expect(screen.getByTestId('archive-pending')).toBeInTheDocument()
+    expect(screen.queryByTestId('archive-highlights')).not.toBeInTheDocument()
+    expect(screen.queryByText('Un titre privé de test')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('archive-highlight-source')).not.toBeInTheDocument()
+  })
+
+  it('referme les passages source lorsqu’on change de table ronde', () => {
+    const archiveWithHighlight = {
+      ...publishedArchive,
+      highlights: [{
+        id: 'fixture-point',
+        title: { fr: 'Un titre de test', en: '' },
+        body: { fr: 'Un résumé fictif.', en: '' },
+        source: { excerpt: 'Première prise de parole fabriquée pour le test.' },
+      }],
+    }
+    useGame.setState({
+      openSessionId: 'fixture-session-deux',
+      archives: {
+        'fixture-session-deux': archiveWithHighlight,
+        'fixture-session-trois': { ...archiveWithHighlight, sessionId: 'fixture-session-trois' },
+      },
+    })
+    render(<ArchiveCard />)
+    fireEvent.click(screen.getByRole('button', { name: 'Voir le passage source' }))
+    expect(screen.getByTestId('archive-highlight-source')).toBeVisible()
+    fireEvent.click(screen.getByTestId('archive-next'))
+    expect(screen.getByTestId('archive-highlight-source')).not.toBeVisible()
+    expect(screen.getByRole('button', { name: 'Voir le passage source' })).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('joue un son à l’ouverture, à la fermeture et à la navigation (même famille que la fiche portrait)', () => {

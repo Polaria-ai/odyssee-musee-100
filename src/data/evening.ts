@@ -60,6 +60,7 @@ function mapArchiveRow(row: unknown): unknown {
   return {
     sessionId: r.session_id,
     transcript: { fr: r.transcript_fr ?? '', en: r.transcript_en ?? '' },
+    highlights: r.highlights ?? undefined,
     archivedAt: r.archived_at,
     published: r.published ?? false,
   }
@@ -184,7 +185,7 @@ async function loadArchivesFromStatic(): Promise<Record<string, SessionArchive> 
     for (const raw of rawArchives) {
       const parsed = SessionArchiveSchema.safeParse(raw)
       // Seules les archives publiées sont affichées : `/data/evening.json` peut contenir des
-      // brouillons (published = false), écrits par `scripts/import-evening.ts` avant relecture.
+      // brouillons (published = false), écrits par `scripts/import-evening.ts` avant publication.
       if (parsed.success && parsed.data.published && ARCHIVE_SESSION_IDS.has(parsed.data.sessionId)) {
         archives[parsed.data.sessionId] = parsed.data
       }
@@ -218,7 +219,7 @@ export async function loadEvening(): Promise<{
 }
 
 /**
- * Archives publiées, relues dans Supabase seulement (rafraîchissement pendant la visite, voir
+ * Archives publiées dans Supabase seulement (rafraîchissement pendant la visite, voir
  * `src/archives/useArchivesRefresh.ts`). `null` si Supabase est injoignable : l'appelant garde alors
  * ce qu'il a, sans jamais retomber sur `/data/evening.json` en cours de partie.
  */

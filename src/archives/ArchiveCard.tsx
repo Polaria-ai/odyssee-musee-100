@@ -11,6 +11,7 @@ import { useT, usePick } from '../i18n'
 import { cardStrings } from './cardStrings'
 import type { EveningSession, SessionKind } from '../types'
 import { playSfx } from '../audio'
+import { ArchiveHighlights } from './ArchiveHighlights'
 import './archives.css'
 
 const SWIPE_CLOSE_THRESHOLD = 90
@@ -184,10 +185,13 @@ export function ArchiveCard() {
         )}
 
         {published && archive ? (
-          <section className="archive-card__transcript" data-testid="archive-transcript">
-            <h3 className="archive-card__section-title">{t('archiveTranscriptTitle')}</h3>
-            <div>{transcript}</div>
-          </section>
+          <>
+            <ArchiveHighlights key={session.id} highlights={archive.highlights} />
+            <section className="archive-card__transcript" data-testid="archive-transcript">
+              <h3 className="archive-card__section-title">{t('archiveTranscriptTitle')}</h3>
+              <div>{transcript}</div>
+            </section>
+          </>
         ) : (
           <div className="archive-card__pending" data-testid="archive-pending">
             <p className="archive-card__pending-title">{t('archivePendingTitle')}</p>

@@ -61,6 +61,13 @@ const supabaseArchiveRow = {
   published: true,
 }
 
+const archiveHighlight = {
+  id: 'transcription-de-test',
+  title: { fr: 'Une transcription', en: '' },
+  body: { fr: 'Cette bulle montre un passage de test.', en: '' },
+  source: { excerpt: 'Une transcription de test.', startSec: 12.5, endSec: 20 },
+}
+
 describe('loadEvening', () => {
   const originalFetch = globalThis.fetch
 
@@ -82,6 +89,49 @@ describe('loadEvening', () => {
     expect(source).toBe('supabase')
     expect(sessions.map((s) => s.id)).toEqual(ARCHIVE_SESSIONS.map((session) => session.id))
     expect(archives['table-ronde-1'].transcript.fr).toBe('Modération — Une transcription de test.')
+  })
+
+  it('lit les bulles de la ligne Supabase avec leurs extraits et horodatages', async () => {
+    getSupabaseMock.mockReturnValue(
+      combinedClient(Promise.resolve({ data: [], error: null }), Promise.resolve({ data: [{ ...supabaseArchiveRow, highlights: [archiveHighlight] }], error: null })),
+    )
+    const { archives } = await loadEvening()
+    expect(archives['table-ronde-1'].highlights).toEqual([archiveHighlight])
+    expect(archives['table-ronde-1'].transcript.fr).toBe(supabaseArchiveRow.transcript_fr)
+  })
+
+  it('garde lisibles les anciennes lignes Supabase sans colonne highlights', async () => {
+    getSupabaseMock.mockReturnValue(
+      combinedClient(Promise.resolve({ data: [], error: null }), Promise.resolve({ data: [supabaseArchiveRow], error: null })),
+    )
+    const { archives } = await loadEvening()
+    expect(archives['table-ronde-1'].highlights).toBeUndefined()
+    expect(archives['table-ronde-1'].transcript.fr).toBe(supabaseArchiveRow.transcript_fr)
+  })
+
+  it('ignore une archive dont une bulle cite un texte absent de sa transcription', async () => {
+    getSupabaseMock.mockReturnValue(
+      combinedClient(Promise.resolve({ data: [], error: null }), Promise.resolve({
+        data: [{ ...supabaseArchiveRow, highlights: [{ ...archiveHighlight, source: { excerpt: 'Un autre texte non publié.' } }] }],
+        error: null,
+      })),
+    )
+    expect((await loadEvening()).archives).toEqual({})
+  })
+
+  it('conserve les bulles publiées dans le repli statique et exclut toujours les brouillons', async () => {
+    getSupabaseMock.mockReturnValue(null)
+    const archive = {
+      sessionId: 'table-ronde-1',
+      transcript: { fr: supabaseArchiveRow.transcript_fr, en: '' },
+      highlights: [archiveHighlight],
+      archivedAt: supabaseArchiveRow.archived_at,
+      published: true,
+    }
+    globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ archives: [archive, { ...archive, sessionId: 'table-ronde-2', published: false }] }) }) as unknown as typeof fetch
+    const { archives } = await loadEvening()
+    expect(Object.keys(archives)).toEqual(['table-ronde-1'])
+    expect(archives['table-ronde-1'].highlights).toEqual([archiveHighlight])
   })
 
   it('retombe sur le programme embarqué si la table evening_sessions est vide (programme, contrairement aux archives, exige une réponse non vide)', async () => {

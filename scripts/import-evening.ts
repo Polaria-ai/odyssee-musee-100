@@ -48,6 +48,7 @@ export function buildSeedSql(archives: SessionArchive[], options: SeedSqlOptions
   const updateAssignments = [
     'transcript_fr = excluded.transcript_fr',
     'transcript_en = excluded.transcript_en',
+    'highlights = excluded.highlights',
     'archived_at = excluded.archived_at',
     'published = excluded.published',
     'reviewed_by = excluded.reviewed_by',
@@ -55,9 +56,10 @@ export function buildSeedSql(archives: SessionArchive[], options: SeedSqlOptions
   ]
   const statements = archives.map(
     (a) => `insert into public.session_archives (
-  session_id, transcript_fr, transcript_en, archived_at, published, reviewed_by
+  session_id, transcript_fr, transcript_en, highlights, archived_at, published, reviewed_by
 ) values (
   ${sqlString(a.sessionId)}, ${sqlString(a.transcript.fr)}, ${sqlString(a.transcript.en)},
+  ${sqlString(JSON.stringify(a.highlights ?? []))}::jsonb,
   ${sqlString(a.archivedAt)}, ${published}, ${sqlString(reviewer)}
 )
 on conflict (session_id) do update set
@@ -77,6 +79,7 @@ export function toSupabaseRow(a: SessionArchive, options: SeedSqlOptions = {}): 
     session_id: a.sessionId,
     transcript_fr: a.transcript.fr,
     transcript_en: a.transcript.en,
+    highlights: a.highlights ?? [],
     archived_at: a.archivedAt,
     published: options.publish ?? false,
     reviewed_by: options.publish ? (options.reviewer ?? null) : null,
