@@ -15,6 +15,9 @@ export const archivesRoomStrings = defineStrings({
   eveningDate: { fr: 'Soirée du 6 octobre 2026', en: 'Evening of October 6, 2026' },
   // Bandeau rappelant que le programme n'est pas confirmé (sur le panneau d'entrée, juste après la porte).
   provisionalBanner: { fr: 'Programme au 24 septembre, susceptible d’évoluer', en: 'Programme as of 24 September, subject to change' },
+  publishedSummary: { fr: '{panels} tables rondes · {highlights} idées clés', en: '{panels} panels · {highlights} key ideas' },
+  pendingSummary: { fr: '3 tables rondes · transcriptions en attente', en: '3 panels · transcripts pending' },
+  bubbleInstruction: { fr: 'Touchez une idée clé pour la lire', en: 'Tap a key idea to read it' },
 })
 
 /** Libellé bilingue de chaque type de séquence, sous le pictogramme d'une vitrine. */

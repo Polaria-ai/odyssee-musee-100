@@ -337,15 +337,24 @@ function paintArchivesFloor(bounds: AABB, slots: ArchiveSlot[]): CanvasTexture {
 }
 
 /**
- * Grand panneau d'entrée (titre de la salle + date de la soirée + mention « provisoire ») : posé bien
+ * Grand panneau d'entrée (titre de la salle + état publié + instruction) : posé bien
  * en vue depuis l'arrivée, comme la grande bannière du hall (voir docs/DESIGN.md). Un seul panneau, plus
  * lisible, porte toute l'information plutôt que de l'éparpiller.
  */
 const entranceSignCache = new Map<string, CanvasTexture>()
-export function drawEntranceSign(lang: Lang): CanvasTexture {
-  return cachedTexture(entranceSignCache, lang, () => paintEntranceSign(lang))
+export function entranceSignText(lang: Lang, panels: number, highlights: number): { status: string; instruction: string } {
+  return {
+    status: panels > 0
+      ? pick(archivesRoomStrings.publishedSummary, lang).replace('{panels}', String(panels)).replace('{highlights}', String(highlights))
+      : pick(archivesRoomStrings.pendingSummary, lang),
+    instruction: pick(archivesRoomStrings.bubbleInstruction, lang),
+  }
 }
-function paintEntranceSign(lang: Lang): CanvasTexture {
+export function drawEntranceSign(lang: Lang, panels = 0, highlights = 0): CanvasTexture {
+  const key = `${lang}:${panels}:${highlights}`
+  return cachedTexture(entranceSignCache, key, () => paintEntranceSign(lang, panels, highlights))
+}
+function paintEntranceSign(lang: Lang, panels: number, highlights: number): CanvasTexture {
   const w = 512
   const h = 176
   const sign = charter.sign
@@ -368,14 +377,14 @@ function paintEntranceSign(lang: Lang): CanvasTexture {
     ctx.font = canvasFont(600, fitSize(ctx, title, w - 60, 600, 34, 22))
     ctx.fillText(title, w / 2, h * 0.43)
 
-    ctx.font = canvasFont(600, 18)
+    const text = entranceSignText(lang, panels, highlights)
+    ctx.font = canvasFont(600, fitSize(ctx, text.status, w - 50, 600, 22, 14))
     ctx.fillStyle = sign.date
-    ctx.fillText(pick(archivesRoomStrings.eveningDate, lang), w / 2, h * 0.66)
+    ctx.fillText(text.status, w / 2, h * 0.66)
 
-    const provisional = pick(archivesRoomStrings.provisionalBanner, lang)
-    ctx.font = canvasFont(500, fitSize(ctx, provisional, w - 50, 500, 16, 11))
+    ctx.font = canvasFont(500, fitSize(ctx, text.instruction, w - 50, 500, 16, 11))
     ctx.fillStyle = sign.provisional
-    ctx.fillText(provisional, w / 2, h * 0.88)
+    ctx.fillText(text.instruction, w / 2, h * 0.88)
   })
 }
 

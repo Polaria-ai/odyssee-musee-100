@@ -45,6 +45,15 @@ describe('périmètre de l’Archiviste', () => {
     expect(fixed).not.toContain('relues, puis publiées')
     expect(buildArchivesBlock([], 'fr')).not.toContain('relues avant')
   })
+
+  it('indique l’accès direct aux thèmes dans la salle sans utiliser le programme comme attribution', () => {
+    expect(fixed).toContain('visibles directement dans la salle')
+    expect(fixed).toContain("compteur d'idées au-dessus de la vitrine")
+    expect(fixed).toContain('Toucher ou cliquer un thème')
+    expect(fixed).toContain('résumé et son passage source exact')
+    expect(fixed).toContain('Tous les thèmes et la transcription')
+    expect(fixed).toContain("Ils ne permettent pas d'attribuer un passage de transcription à une personne")
+  })
 })
 
 describe('transcriptions publiées injectées', () => {

@@ -15,6 +15,7 @@ import { RoomShell } from './room/RoomShell'
 import { Vitrine, pulseIdleCapsule } from './room/Vitrine'
 import { PROXIMITY_CHECK_INTERVAL } from './room/constants'
 import { Archivist } from './Archivist'
+import { ArchiveRoomBubbles } from './ArchiveRoomBubbles'
 
 /**
  * Vitrine proche (bouton « Consulter ») : détection toutes les ~120 ms sur `runtime.player`, seulement
@@ -65,6 +66,7 @@ export function ArchivesRoom({ archives }: { archives: ArchivesLayout }) {
   return (
     <group>
       <RoomShell archives={archives} lang={lang} />
+      <ArchiveRoomBubbles archives={archives} />
       <Archivist placement={archives.archivist} />
       {archives.slots.map((slot) => {
         const session = sessionById.get(slot.sessionId)

@@ -39,6 +39,12 @@ export const cardStrings = defineStrings({
   archiveHighlightShowSource: { fr: 'Voir le passage source', en: 'Show the source passage' },
   archiveHighlightHideSource: { fr: 'Masquer le passage source', en: 'Hide the source passage' },
   archiveHighlightSourceTime: { fr: 'Dans l’enregistrement · {time}', en: 'In the recording · {time}' },
+  archiveFocusedSourceTitle: { fr: 'Passage source exact', en: 'Source passage · FR' },
+  archiveAllHighlights: { fr: 'Tous les thèmes et la transcription', en: 'All themes and the transcript' },
+  archiveRoomBubblesLabel: { fr: 'Idées clés des tables rondes', en: 'Key ideas from the panels' },
+  archiveBubblePanel: { fr: 'Table ronde {number}', en: 'Panel {number}' },
+  archiveBubbleCount: { fr: '{count} idées clés', en: '{count} key ideas' },
+  archiveBubbleInstruction: { fr: 'Touchez une idée clé pour la lire', en: 'Tap a key idea to read it' },
 
   // Type de séquence (pictogramme + libellé)
   archiveKindOuverture: { fr: 'Ouverture', en: 'Opening' },

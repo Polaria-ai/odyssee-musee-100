@@ -63,7 +63,7 @@ const publishedArchive: SessionArchive = {
 describe('ArchiveCard', () => {
   beforeEach(() => {
     playSfxMock.mockClear()
-    useGame.setState({ lang: 'fr', sessions: fictionalSessions, archives: {}, openSessionId: null })
+    useGame.setState({ lang: 'fr', sessions: fictionalSessions, archives: {}, openSessionId: null, openArchiveHighlightId: null })
   })
 
   it('ne rend rien sans séquence ouverte', () => {
@@ -151,6 +151,53 @@ describe('ArchiveCard', () => {
     expect(screen.getByTestId('archive-highlights').compareDocumentPosition(screen.getByTestId('archive-transcript')))
       .toBe(Node.DOCUMENT_POSITION_FOLLOWING)
     expect(screen.getByRole('heading', { name: 'Une idée résumée de test' })).toBeInTheDocument()
+  })
+
+  it('présente le thème choisi avant le programme, avec sa source exacte visible et un retour à la table complète', () => {
+    const highlight = {
+      id: 'fixture-chosen',
+      title: { fr: 'Idée fictive choisie', en: 'Chosen fictional idea' },
+      body: { fr: 'Résumé de test centré sur cette idée.', en: 'A test summary focused on this idea.' },
+      source: { excerpt: 'Première prise de parole fabriquée pour le test.' },
+    }
+    useGame.setState({
+      openSessionId: 'fixture-session-deux', openArchiveHighlightId: highlight.id,
+      archives: { 'fixture-session-deux': { ...publishedArchive, highlights: [highlight, { ...highlight, id: 'fixture-other', title: { fr: 'Autre thème fictif', en: '' } }] } },
+    })
+    const { container } = render(<ArchiveCard />)
+    const title = screen.getByRole('heading', { level: 2, name: highlight.title.fr })
+    expect(title).toHaveFocus()
+    expect(screen.getByTestId('archive-highlight-detail')).toHaveAttribute('data-highlight-id', highlight.id)
+    expect(screen.getByTestId('archive-focused-source')).toBeVisible()
+    expect(screen.getByTestId('archive-focused-source').textContent).toBe(highlight.source.excerpt)
+    expect(screen.getByTestId('archive-focused-source')).toHaveAttribute('lang', 'fr')
+    expect(screen.queryByText('Personne Testeau')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Programme provisoire/)).not.toBeInTheDocument()
+    expect(screen.queryByText('Un thème fabriqué pour le test.')).not.toBeInTheDocument()
+    expect(screen.queryByText('Autre thème fictif')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('archive-transcript')).not.toBeInTheDocument()
+    const sheet = container.querySelector<HTMLDivElement>('.archive-card__sheet')!
+    sheet.scrollTop = 400
+    fireEvent.click(screen.getByTestId('archive-all-highlights'))
+    expect(useGame.getState().openArchiveHighlightId).toBeNull()
+    expect(sheet.scrollTop).toBe(0)
+    expect(screen.getByRole('heading', { level: 2, name: 'Table ronde de test' })).toHaveFocus()
+    expect(screen.getByTestId('archive-transcript')).toBeInTheDocument()
+    expect(screen.getAllByTestId('archive-highlight')).toHaveLength(2)
+  })
+
+  it('ne présente plus le programme provisoire comme statut d’une transcription publiée', () => {
+    useGame.setState({ openSessionId: 'fixture-session-deux', archives: { 'fixture-session-deux': publishedArchive } })
+    render(<ArchiveCard />)
+    expect(screen.getByTestId('archive-transcript')).toBeInTheDocument()
+    expect(screen.queryByText(/Programme provisoire/)).not.toBeInTheDocument()
+  })
+
+  it('ignore une sélection de thème périmée ou non publiée', () => {
+    useGame.setState({ openSessionId: 'fixture-session-deux', openArchiveHighlightId: 'absent', archives: { 'fixture-session-deux': publishedArchive } })
+    render(<ArchiveCard />)
+    expect(screen.queryByTestId('archive-highlight-detail')).not.toBeInTheDocument()
+    expect(screen.getByTestId('archive-transcript')).toBeInTheDocument()
   })
 
   it('n’affiche aucune bulle ni passage source pour une archive non publiée', () => {

@@ -61,6 +61,8 @@ export interface GameState {
   nearbySessionId: string | null
   /** Fiche d'archive ouverte. */
   openSessionId: string | null
+  /** Thème choisi depuis une bulle de la salle ; null affiche toute la table ronde. */
+  openArchiveHighlightId: string | null
   /** Le joueur est à portée de l'Archiviste. */
   nearArchivist: boolean
   /** Vitrines des tables rondes consultées : id → horodatage ms. */
@@ -101,6 +103,8 @@ export interface GameState {
   setNearbySession: (sessionId: string | null) => void
   setNearArchivist: (near: boolean) => void
   openSession: (sessionId: string) => void
+  /** Ouvre uniquement le thème publié demandé, dans sa table ronde parente. */
+  openArchiveHighlight: (sessionId: string, highlightId: string) => void
   closeSession: () => void
   /** Marque la première arrivée dans les Archives ; renvoie true si c'était la première. */
   markArchivesDiscovered: () => boolean
@@ -170,6 +174,7 @@ export const useGame = create<GameState>()((set, get) => ({
   archivesLayout: null,
   nearbySessionId: null,
   openSessionId: null,
+  openArchiveHighlightId: null,
   nearArchivist: false,
   visitedSessions: (persisted.visitedSessions as Record<string, number>) ?? {},
   archivesDiscovered: persisted.archivesDiscovered === true,
@@ -202,11 +207,17 @@ export const useGame = create<GameState>()((set, get) => ({
     if (Object.keys(visitedSessions).length !== Object.keys(get().visitedSessions).length) {
       savePersisted({ visitedSessions })
     }
-    set({ sessions: sessions.filter((session) => allowed.has(session.id)), archives: Object.fromEntries(archiveEntries), visitedSessions, eveningSource })
+    const nextArchives = Object.fromEntries(archiveEntries)
+    const { openSessionId, openArchiveHighlightId } = get()
+    const selectedStillPublished = openSessionId && nextArchives[openSessionId]?.highlights?.some((highlight) => highlight.id === openArchiveHighlightId)
+    set({ sessions: sessions.filter((session) => allowed.has(session.id)), archives: nextArchives, visitedSessions, eveningSource, openArchiveHighlightId: selectedStillPublished ? openArchiveHighlightId : null })
   },
   setArchives: (archives) => {
     const allowed = new Set(get().sessions.map((session) => session.id))
-    set({ archives: Object.fromEntries(Object.entries(archives).filter(([id, archive]) => allowed.has(id) && archive.published)) })
+    const nextArchives = Object.fromEntries(Object.entries(archives).filter(([id, archive]) => allowed.has(id) && archive.published))
+    const { openSessionId, openArchiveHighlightId } = get()
+    const selectedStillPublished = openSessionId && nextArchives[openSessionId]?.highlights?.some((highlight) => highlight.id === openArchiveHighlightId)
+    set({ archives: nextArchives, openArchiveHighlightId: selectedStillPublished ? openArchiveHighlightId : null })
   },
   setArchivesLayout: (archivesLayout) => set({ archivesLayout }),
   setNearbySession: (nearbySessionId) => {
@@ -222,9 +233,23 @@ export const useGame = create<GameState>()((set, get) => ({
       savePersisted({ visitedSessions: next })
       set({ visitedSessions: next })
     }
-    set({ openSessionId, remiChatOpen: false })
+    set({ openSessionId, openArchiveHighlightId: null, remiChatOpen: false })
   },
-  closeSession: () => set({ openSessionId: null }),
+  openArchiveHighlight: (openSessionId, openArchiveHighlightId) => {
+    const s = get()
+    const session = s.sessions.find((entry) => entry.id === openSessionId)
+    const archive = s.archives[openSessionId]
+    // Un ancien bouton ou un appel avec un mauvais id ne doit jamais exposer un brouillon ou
+    // fabriquer une fiche. Les bulles utilisent exactement les trois transcriptions publiées.
+    if (!session || session.kind !== 'table-ronde' || !ARCHIVE_SESSION_IDS.has(openSessionId) || !archive?.published || !archive.highlights?.some((highlight) => highlight.id === openArchiveHighlightId)) return
+    let visitedSessions = s.visitedSessions
+    if (!visitedSessions[openSessionId]) {
+      visitedSessions = { ...visitedSessions, [openSessionId]: Date.now() }
+      savePersisted({ visitedSessions })
+    }
+    set({ openSessionId, openArchiveHighlightId, visitedSessions, remiChatOpen: false, dialogue: null, dialogueIndex: 0, stampCardOpen: false, mapOpen: false, openPersonId: null })
+  },
+  closeSession: () => set({ openSessionId: null, openArchiveHighlightId: null }),
   markArchivesDiscovered: () => {
     if (get().archivesDiscovered) return false
     savePersisted({ archivesDiscovered: true })
@@ -293,6 +318,7 @@ export const useGame = create<GameState>()((set, get) => ({
       mapOpen: false,
       openPersonId: null,
       openSessionId: null,
+      openArchiveHighlightId: null,
     }),
   openRemiChat: () => get().openChat('remi'),
   closeRemiChat: () => set({ remiChatOpen: false }),
@@ -312,7 +338,7 @@ export const useGame = create<GameState>()((set, get) => ({
   setQuality: (quality) => set({ quality }),
   resetProgress: () => {
     savePersisted({ visited: {}, stamps: {}, visitedSessions: {} })
-    set({ visited: {}, stamps: {}, visitedSessions: {}, openPersonId: null, openSessionId: null, stampCardOpen: false, remiChatOpen: false })
+    set({ visited: {}, stamps: {}, visitedSessions: {}, openPersonId: null, openSessionId: null, openArchiveHighlightId: null, stampCardOpen: false, remiChatOpen: false })
   },
 }))
 
