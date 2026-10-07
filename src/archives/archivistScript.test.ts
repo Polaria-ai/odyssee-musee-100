@@ -37,6 +37,15 @@ describe('archivistDialogue', () => {
     expect(moods.size).toBeGreaterThanOrEqual(2)
   })
 
+  it('l’accueil présente les bulles publiées et leur passage source sans annoncer une future relecture', () => {
+    const welcome = archivistDialogue({ kind: 'welcome' })
+    const first = archivistDialogue({ kind: 'firstVisit' })
+    const text = [...welcome.lines, ...first.lines].map((line) => `${line.text.fr} ${line.text.en}`).join(' ')
+    expect(text).toMatch(/idées clés publiées/)
+    expect(text).toMatch(/passage exact/)
+    expect(text).not.toMatch(/attendent chacune|waiting for a panel transcript|relecture|after review|will show/i)
+  })
+
   it('firstVisit : courte, bien formée, id stable', () => {
     const d = archivistDialogue({ kind: 'firstVisit' })
     expect(d.id).toBe('firstVisit')

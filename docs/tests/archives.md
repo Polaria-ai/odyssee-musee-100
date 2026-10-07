@@ -2,14 +2,15 @@
 
 Complète `docs/TESTS.md` (stratégie générale, poignée `window.__musee`, locale des specs) : cette
 page ne documente que la suite dédiée à la salle des Archives de 2040. Propriétaire : agent QA E2E
-— `e2e/archives*.spec.ts` et ce fichier uniquement (n'édite jamais l'application ni `e2e/support/**`).
+— specs Archives et ce fichier (aucun changement applicatif).
 
 ## Lancer la suite
 
 ```
 VITE_SUPABASE_URL=https://e2e-stub.supabase.co VITE_SUPABASE_ANON_KEY=e2e-stub-anon-key pnpm build \
   && pnpm exec vite preview --host 127.0.0.1 --port 4373 --strictPort &
-E2E_BASE_URL=http://127.0.0.1:4373 pnpm exec playwright test e2e/archives.spec.ts
+E2E_BASE_URL=http://127.0.0.1:4373 pnpm exec playwright test \
+  e2e/archives.spec.ts e2e/archive-highlights.spec.ts e2e/archive-room-bubbles.spec.ts
 ```
 
 Les deux variables du build sont le faux projet Supabase de la CI (voir « Supabase en E2E » plus bas) ; avec un vrai `.env.local` on peut s'en passer. Sans l'un ni l'autre, « archive publiée pendant la visite » échoue d'emblée sur « le jeu doit lire session_archives au chargement ».
@@ -19,7 +20,8 @@ En local sans navigateur Playwright téléchargé :
 ```
 E2E_BASE_URL=http://127.0.0.1:4373 \
 PW_CHROMIUM_PATH="$HOME/.agent-browser/browsers/chrome-149.0.7827.54/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing" \
-pnpm exec playwright test e2e/archives.spec.ts --workers=2
+pnpm exec playwright test e2e/archives.spec.ts e2e/archive-highlights.spec.ts \
+  e2e/archive-room-bubbles.spec.ts --workers=2
 ```
 
 ## Fichier
@@ -27,6 +29,22 @@ pnpm exec playwright test e2e/archives.spec.ts --workers=2
 | Fichier | Couvre |
 |---|---|
 | `e2e/archives.spec.ts` | Porte sud du hall franchie **à pied** au clavier, accueil de l'Archiviste à la première arrivée, retour au hall par la même porte ; les seules vitrines sont `table-ronde-1`, `table-ronde-2` et `table-ronde-3` ; « Ouvrir la vitrine » affiche le thème, l'horaire, les intervenant·es annoncé·es et le message d'attente tant que la transcription n'est pas publiée ; navigation précédente/suivante limitée aux trois tables rondes ; Échap ferme la fiche ; « Parler à l'Archiviste » ouvre son chat IA ; le tampon Archives est obtenu après consultation des trois vitrines ; plan du musée (5 salles), bascule FR/EN, performance, accessibilité et absence d'erreur console ; une transcription publiée pendant la visite apparaît sans rechargement et son texte intégral s'affiche dans la fiche. |
+| `e2e/archive-highlights.spec.ts` | Ouverture réelle via le HUD des trois fiches complètes, navigation précédente/suivante avec retour en haut de la fiche, transcriptions intégrales préservées, extraits exacts, FR/EN et repli français, cibles tactiles, largeur 320 px et contrôle Axe ; anciennes archives sans thèmes et brouillons. |
+| `e2e/archive-room-bubbles.spec.ts` | Les 22 thèmes fictifs (7/8/7) sont ouverts chacun par leur vrai bouton dans la salle, avec tap sur mobile ; trois groupes seulement, titre et extrait exact du thème choisi, une seule fiche ; choix manuel d'un autre compteur conservé malgré la proximité, Tab/Entrée/Espace/Échap, FR/EN et repli français ; groupe contenu dans le viewport à 320 px, cibles ≥ 48 px, Axe ; accès à la transcription complète puis reprise réelle du joystick, avec glissé tactile sur mobile ; aucun thème de brouillon, de keynote ou d'ancienne archive sans thèmes. |
+
+### Parcours des bulles visibles
+
+La spec de la salle intercepte `session_archives` avec des données entièrement fictives. La poignée
+`window.__musee` sert uniquement à préparer la position du joueur et à lire son état : aucun appel
+à `openSession` ou `openArchiveHighlight` n'ouvre une fiche. Le dialogue de la première arrivée est
+fermé par ses vrais contrôles.
+
+Les trois nuages conservent leurs 22 boutons dans le DOM, mais une seule liste de titres est
+déployée à la fois. Le test rejoint chaque vitrine, fait défiler sa liste si nécessaire et active
+chaque thème. Il compare strictement le passage français affiché avec celui du transcript fictif.
+Le choix d'un autre compteur est vérifié après plusieurs contrôles de proximité, sans déplacer
+le joueur. La fermeture rétablit la zone du joystick ; un vrai glissé doit ensuite déplacer le
+joueur et relâcher l'entrée à zéro.
 
 ### Supabase en E2E
 

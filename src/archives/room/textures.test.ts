@@ -4,7 +4,18 @@
  */
 import { describe, expect, it } from 'vitest'
 import { charter3d } from '../../styles/tokens'
-import { withAlpha } from './textures'
+import { entranceSignText, withAlpha } from './textures'
+
+describe('panneau d’entrée publié', () => {
+  it('affiche les3 tables et22 idées, avec instruction tactile FR/EN', () => {
+    expect(entranceSignText('fr', 3, 22)).toEqual({ status: '3 tables rondes · 22 idées clés', instruction: 'Touchez une idée clé pour la lire' })
+    expect(entranceSignText('en', 3, 22)).toEqual({ status: '3 panels · 22 key ideas', instruction: 'Tap a key idea to read it' })
+  })
+  it('garde un état en attente quand rien n’est publié', () => {
+    expect(entranceSignText('fr', 0, 0).status).toBe('3 tables rondes · transcriptions en attente')
+    expect(entranceSignText('en', 0, 0).status).toBe('3 panels · transcripts pending')
+  })
+})
 
 describe('withAlpha', () => {
   it('garde la teinte du jeton et ne change que l’opacité', () => {

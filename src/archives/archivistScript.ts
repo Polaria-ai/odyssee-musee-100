@@ -42,8 +42,8 @@ function firstVisitDialogue(): Dialogue {
       'surprised',
     ),
     line(
-      "Approche-toi de mon socle quand tu veux en savoir plus. Les trois vitrines attendent chacune la transcription d'une table ronde.",
-      'Come closer to my platform whenever you want to know more. Each of the three display cases is waiting for a panel transcript.',
+      "Les trois vitrines rassemblent les tables rondes. Approche-toi d'une vitrine pour découvrir ses idées clés publiées.",
+      'The three cases bring together the panels. Step closer to a case to discover its published key ideas.',
       'neutral',
     ),
   ])
@@ -64,13 +64,13 @@ function welcomeDialogue(): Dialogue {
       'neutral',
     ),
     line(
-      'Chacune affichera son horaire, son thème et sa transcription intégrale.',
-      'Each case will show its time, theme and full transcript.',
+      'Les idées clés publiées apparaissent en bulles près de leur vitrine.',
+      'Published key ideas appear as bubbles beside their display case.',
       'neutral',
     ),
     line(
-      "Les transcriptions seront déposées après la soirée et publiées après relecture.",
-      'The transcripts will be added after the event and published after review.',
+      'Touchez une bulle pour lire son résumé et le passage exact de la transcription.',
+      'Tap a bubble to read its summary and the exact transcript passage.',
       'thinking',
     ),
     line(
@@ -98,8 +98,8 @@ const TALK_EMPTY: readonly Dialogue[] = [
   ]),
   dialogue('talk-empty-1', [
     line(
-      'Les transcriptions seront déposées après la soirée, une fois relues. Reviens un peu plus tard !',
-      'The transcripts will be added after the event, once reviewed. Come back a little later!',
+      'Les transcriptions seront disponibles après leur import. Reviens un peu plus tard !',
+      'The transcripts will be available after they are imported. Come back a little later!',
       'thinking',
     ),
   ]),
@@ -115,8 +115,8 @@ const TALK_EMPTY: readonly Dialogue[] = [
 const TALK_PARTIAL: readonly Dialogue[] = [
   dialogue('talk-partial-0', [
     line(
-      'Quelques transcriptions sont publiées. Les autres tables rondes suivront au fil de la relecture, sois patient·e.',
-      'Some transcripts are published. The other panels will follow as the review continues — bear with me.',
+      'Quelques transcriptions sont publiées. Les autres tables rondes suivront au fil des imports.',
+      'Some transcripts are published. The other panels will follow as they are imported.',
       'happy',
     ),
   ]),

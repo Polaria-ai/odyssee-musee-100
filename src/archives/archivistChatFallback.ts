@@ -27,8 +27,8 @@ function pickVariant<T>(variants: readonly T[], seed: number): T {
 const CHAT_FALLBACK_EMPTY: readonly Dialogue[] = [
   dialogue('chat-fallback-empty-0', [
     line(
-      "Pour l'instant, les transcriptions des trois tables rondes ne sont pas publiées. Elles seront déposées après la soirée, après relecture.",
-      'The three panel transcripts are not published yet. They will be added after the event, once reviewed.',
+      "Pour l'instant, les transcriptions des trois tables rondes ne sont pas publiées. Elles seront disponibles après leur import.",
+      'The three panel transcripts are not published yet. They will be available after they are imported.',
       'neutral',
     ),
   ]),
@@ -41,8 +41,8 @@ const CHAT_FALLBACK_EMPTY: readonly Dialogue[] = [
   ]),
   dialogue('chat-fallback-empty-2', [
     line(
-      'Les transcriptions seront déposées après la soirée, une fois relues. Repassez devant les vitrines un peu plus tard.',
-      'The transcripts will be added after the event, once reviewed. Come back to the display cases a little later.',
+      'Les transcriptions seront disponibles après leur import. Repassez devant les vitrines un peu plus tard.',
+      'The transcripts will be available after they are imported. Come back to the display cases a little later.',
       'neutral',
     ),
   ]),
@@ -51,8 +51,8 @@ const CHAT_FALLBACK_EMPTY: readonly Dialogue[] = [
 const CHAT_FALLBACK_PARTIAL: readonly Dialogue[] = [
   dialogue('chat-fallback-partial-0', [
     line(
-      'Quelques transcriptions sont publiées. Les autres tables rondes suivront au fil de la relecture : repassez un peu plus tard.',
-      'Some transcripts are published. The other panels will follow as the review continues: come back a little later.',
+      'Quelques transcriptions sont publiées. Les autres tables rondes suivront au fil des imports : repassez un peu plus tard.',
+      'Some transcripts are published. The other panels will follow as they are imported: come back a little later.',
       'happy',
     ),
   ]),

@@ -55,6 +55,13 @@ describe('archivistChatFallback (repli du chat de l’Archiviste · IA)', () => 
     expect(new Set(all).size).toBe(ids(0).size + ids(1).size + ids(3).size)
   })
 
+  it('les replis n’annoncent plus une relecture humaine avant publication', () => {
+    for (const tier of tiers) for (const served of SERVED) {
+      const text = archivistChatFallback({ ...tier, served }).lines.map((line) => `${line.text.fr} ${line.text.en}`).join(' ')
+      expect(text).not.toMatch(/relecture|relues|reviewed|review continues/i)
+    }
+  })
+
   it('programme non chargé (total 0) : traité comme « rien de publié »', () => {
     expect(archivistChatFallback({ served: 0, total: 0, published: 0 }).id).toBe(archivistChatFallback({ served: 0, total: 3, published: 0 }).id)
   })

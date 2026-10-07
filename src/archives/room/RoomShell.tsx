@@ -29,6 +29,7 @@ import { approach, occludesPlayer, type OcclusionObstacle } from '../../world/oc
 import { FLOOR_SPECS, ROOM_FLOOR_KIND } from '../../world/floorSpec'
 import { useFloorMaterialOver } from '../../world/useFloorMaterial'
 import { ENTRANCE_LECTERN } from '../layout'
+import { archivePublicationStats } from '../archiveBubbleCloud'
 import { drawArchivesBanner, drawArchivesFloor, drawEntranceSign } from './textures'
 import { ARCHIVES_MODELS } from './models'
 import { DecorModel } from './DecorModel'
@@ -267,12 +268,14 @@ function Accents({ archives }: { archives: ArchivesLayout }) {
 }
 
 /**
- * Panneau d'entrée (titre + date + mention provisoire) sur un pupitre bas (`Shell`), juste après la porte,
+ * Panneau d'entrée (titre + état publié + instruction) sur un pupitre bas (`Shell`), juste après la porte,
  * à l'ouest du passage. Incliné vers la caméra plutôt que dressé : un panneau vertical à cet endroit
  * se trouverait entre la caméra et un joueur resté dans le hall.
  */
 function EntranceSign({ archives, lang }: { archives: ArchivesLayout; lang: Lang }) {
-  const tex = useMemo(() => drawEntranceSign(lang), [lang])
+  const records = useGame((state) => state.archives)
+  const stats = archivePublicationStats(archives, records)
+  const tex = useMemo(() => drawEntranceSign(lang, stats.panels, stats.highlights), [lang, stats.panels, stats.highlights])
   const x = archives.door.x + ENTRANCE_LECTERN.dx
   const z = archives.room.bounds.minZ + ENTRANCE_LECTERN.dz
   return (

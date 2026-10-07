@@ -12,6 +12,7 @@ import { cardStrings } from './cardStrings'
 import type { EveningSession, SessionKind } from '../types'
 import { playSfx } from '../audio'
 import { ArchiveHighlights } from './ArchiveHighlights'
+import { ArchiveHighlightDetail } from './ArchiveHighlightDetail'
 import './archives.css'
 
 const SWIPE_CLOSE_THRESHOLD = 90
@@ -45,6 +46,7 @@ const KIND_LABEL_KEY: Record<SessionKind, keyof typeof cardStrings> = {
 
 export function ArchiveCard() {
   const openSessionId = useGame((s) => s.openSessionId)
+  const openArchiveHighlightId = useGame((s) => s.openArchiveHighlightId)
   const sessions = useGame((s) => s.sessions)
   const archives = useGame((s) => s.archives)
   const closeSession = useGame((s) => s.closeSession)
@@ -68,7 +70,7 @@ export function ArchiveCard() {
     if (session) titleRef.current?.focus({ preventScroll: true })
     // Ne réagit qu'au changement de séquence affichée, pas à chaque nouvelle référence de `session`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.id])
+  }, [session?.id, openArchiveHighlightId])
 
   // Son d'ouverture/fermeture sur la transition fermé↔ouvert, pas sur la navigation précédent/suivant.
   useEffect(() => {
@@ -97,6 +99,7 @@ export function ArchiveCard() {
   const archive = archives[session.id]
   const published = archive?.published === true
   const transcript = published && archive ? p(archive.transcript) : ''
+  const focusedHighlight = published ? archive?.highlights?.find((highlight) => highlight.id === openArchiveHighlightId) : undefined
 
   function handleTouchStart(e: ReactTouchEvent<HTMLDivElement>) {
     if ((sheetRef.current?.scrollTop ?? 0) > 0) {
@@ -153,18 +156,20 @@ export function ArchiveCard() {
           <span className="archive-card__kind">
             <span aria-hidden="true">{KIND_ICON[session.kind]}</span> {t(KIND_LABEL_KEY[session.kind])}
           </span>
-          <span className="archive-card__time">{t('archiveTime', { time: session.startTime, duration: session.durationMin })}</span>
+          {!focusedHighlight && <span className="archive-card__time">{t('archiveTime', { time: session.startTime, duration: session.durationMin })}</span>}
         </p>
 
         <h2 id="archive-card-title" className="archive-card__title" ref={titleRef} tabIndex={-1}>
-          {p(session.title)}
+          {p(focusedHighlight?.title ?? session.title)}
         </h2>
 
-        {session.theme && <p className="archive-card__theme">{p(session.theme)}</p>}
+        {focusedHighlight && <p className="archive-highlight-detail__panel">{p(session.title)}</p>}
 
-        {session.provisional && <p className="archive-card__provisional">{t('archiveProvisional')}</p>}
+        {!focusedHighlight && session.theme && <p className="archive-card__theme">{p(session.theme)}</p>}
 
-        {session.speakers.length > 0 && (
+        {!focusedHighlight && !published && session.provisional && <p className="archive-card__provisional">{t('archiveProvisional')}</p>}
+
+        {!focusedHighlight && session.speakers.length > 0 && (
           <div className="archive-card__speakers">
             <h3 className="archive-card__section-title">{t('archiveSpeakersTitle')}</h3>
             <ul>
@@ -187,7 +192,9 @@ export function ArchiveCard() {
           </div>
         )}
 
-        {published && archive ? (
+        {focusedHighlight ? (
+          <ArchiveHighlightDetail sessionId={session.id} highlight={focusedHighlight} onShowAll={() => openSession(session.id)} />
+        ) : published && archive ? (
           <>
             <ArchiveHighlights key={session.id} highlights={archive.highlights} />
             <section className="archive-card__transcript" data-testid="archive-transcript">
